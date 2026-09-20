@@ -2,8 +2,6 @@
 
 **Travel Lab** is a runnable comparison website: give two agent teams the same trip brief, watch their decisions, and inspect their plans and measurements. The question is whether using Jev for coordination helps without reducing task quality.
 
-[Agents](../README.md) · [Community category](https://aiengineer.help/c/agents-workflows/7)
-
 ## Run locally
 
 Requires **Node.js 22.12+** and npm. `npm ci` installs LangGraph, TypeScript, the TS runtime, and the browser bundler. No model downloads or special hardware are required.
