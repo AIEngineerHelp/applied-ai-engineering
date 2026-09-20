@@ -1,0 +1,1251 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-20T07:57:47.748Z",
+  "datasetHash": "ddcdad916d4dc62bef18f90a332a3a74224490d13f7d2ade4bf8b0bdc963ec33",
+  "repetitions": 3,
+  "cases": [
+    {
+      "id": "repair-meal-with-alternative",
+      "group": "agent",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "reason": "A vegetarian replacement is already researched; revise rather than search again."
+    },
+    {
+      "id": "research-when-all-known-places-closed",
+      "group": "agent",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "reason": "Current activity evidence cannot fill the plan because every known activity is excluded."
+    },
+    {
+      "id": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "reason": "The researched catalog includes enough lower-cost options; revise the expensive draft before searching."
+    },
+    {
+      "id": "research-after-first-budget-failure",
+      "group": "agent",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "reason": "The current evidence is too expensive; one failed draft is not proof that cheaper web options do not exist."
+    },
+    {
+      "id": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "reason": "The review found mutually exclusive user constraints that cannot be repaired by choosing another known venue."
+    },
+    {
+      "id": "search-one-of-two-gaps",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "reason": "Both activity and meal evidence are missing. Either first search is valid; this case must not force an arbitrary order."
+    },
+    {
+      "id": "repair-vegetarian-evidence",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "reason": "Activities are sufficient, but the only meal conflicts with the dietary requirement."
+    }
+  ],
+  "configuration": {
+    "geminiModel": "gemini-3.8-flash",
+    "jevModel": "jev-latest",
+    "instruction": "See CHOICE_INSTRUCTION in src/providers.ts"
+  },
+  "samples": [
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 2136,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2136,
+          "inputTokens": 1231,
+          "outputTokens": 183,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 942,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 941,
+          "inputTokens": 2429,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "researcher",
+      "preferred": true,
+      "correct": true,
+      "ms": 339,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 339,
+          "inputTokens": 2518,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 5300,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 5300,
+          "inputTokens": 1285,
+          "outputTokens": 1326,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 2849,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2849,
+          "inputTokens": 1230,
+          "outputTokens": 181,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 984,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 984,
+          "inputTokens": 2423,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "planner",
+      "preferred": false,
+      "correct": false,
+      "ms": 349,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 349,
+          "inputTokens": 2451,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 7479,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 7479,
+          "inputTokens": 1237,
+          "outputTokens": 2106,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 1877,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1877,
+          "inputTokens": 1250,
+          "outputTokens": 201,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 911,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 911,
+          "inputTokens": 2450,
+          "outputTokens": 44,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 309,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 309,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 2119,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2119,
+          "inputTokens": 165,
+          "outputTokens": 147,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 1949,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1949,
+          "inputTokens": 983,
+          "outputTokens": 141,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 1005,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1005,
+          "inputTokens": 1984,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 333,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 333,
+          "inputTokens": 2429,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 2643,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2643,
+          "inputTokens": 1231,
+          "outputTokens": 271,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 5219,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 5219,
+          "inputTokens": 1285,
+          "outputTokens": 1062,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "researcher",
+      "preferred": true,
+      "correct": true,
+      "ms": 875,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 875,
+          "inputTokens": 2518,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 411,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 411,
+          "inputTokens": 2423,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 4875,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 4875,
+          "inputTokens": 1230,
+          "outputTokens": 359,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 7054,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 7054,
+          "inputTokens": 1237,
+          "outputTokens": 1839,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "planner",
+      "preferred": false,
+      "correct": false,
+      "ms": 1069,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1069,
+          "inputTokens": 2451,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 364,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 364,
+          "inputTokens": 2450,
+          "outputTokens": 44,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 1946,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1946,
+          "inputTokens": 1250,
+          "outputTokens": 225,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 1952,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1952,
+          "inputTokens": 165,
+          "outputTokens": 160,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 376,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 376,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 354,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 354,
+          "inputTokens": 1984,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 3154,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 3154,
+          "inputTokens": 983,
+          "outputTokens": 212,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 2030,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2029,
+          "inputTokens": 1231,
+          "outputTokens": 176,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-meal-with-alternative",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 1040,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1040,
+          "inputTokens": 2429,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "researcher",
+      "preferred": true,
+      "correct": true,
+      "ms": 377,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 377,
+          "inputTokens": 2518,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-when-all-known-places-closed",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 4138,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 4138,
+          "inputTokens": 1285,
+          "outputTokens": 894,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 1882,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1882,
+          "inputTokens": 1230,
+          "outputTokens": 207,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-expensive-draft-with-cheap-evidence",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "acceptable": [
+        "planner"
+      ],
+      "choice": "planner",
+      "preferred": true,
+      "correct": true,
+      "ms": 1019,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1019,
+          "inputTokens": 2423,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "planner",
+      "preferred": false,
+      "correct": false,
+      "ms": 345,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 345,
+          "inputTokens": 2451,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "research-after-first-budget-failure",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "researcher",
+      "acceptable": [
+        "researcher"
+      ],
+      "choice": "clarify",
+      "preferred": false,
+      "correct": false,
+      "ms": 10971,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 10970,
+          "inputTokens": 1237,
+          "outputTokens": 3209,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 2360,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2359,
+          "inputTokens": 1250,
+          "outputTokens": 214,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "ask-about-conflicting-requirements",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "clarify",
+      "acceptable": [
+        "clarify"
+      ],
+      "choice": "clarify",
+      "preferred": true,
+      "correct": true,
+      "ms": 874,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 874,
+          "inputTokens": 2450,
+          "outputTokens": 44,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 352,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 352,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-one-of-two-gaps",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_places",
+      "acceptable": [
+        "search_places",
+        "search_food"
+      ],
+      "choice": "search_places",
+      "preferred": true,
+      "correct": true,
+      "ms": 1949,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1949,
+          "inputTokens": 165,
+          "outputTokens": 190,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 2086,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2086,
+          "inputTokens": 983,
+          "outputTokens": 156,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "repair-vegetarian-evidence",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_food",
+      "acceptable": [
+        "search_food"
+      ],
+      "choice": "search_food",
+      "preferred": true,
+      "correct": true,
+      "ms": 985,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 985,
+          "inputTokens": 1984,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "gemini": {
+      "total": 21,
+      "correct": 15,
+      "accuracy": 0.7142857142857143,
+      "errors": 0,
+      "medianMs": 2360,
+      "p90Ms": 7054,
+      "inputTokens": 22143,
+      "outputTokens": 13459,
+      "estimatedUsd": null,
+      "modelVersions": [
+        "gemini-3.8-flash"
+      ]
+    },
+    "jev": {
+      "total": 21,
+      "correct": 18,
+      "accuracy": 0.8571428571428571,
+      "errors": 0,
+      "medianMs": 411,
+      "p90Ms": 1019,
+      "inputTokens": 44298,
+      "outputTokens": 876,
+      "estimatedUsd": null,
+      "modelVersions": [
+        "jev-1.13.0"
+      ]
+    }
+  }
+}

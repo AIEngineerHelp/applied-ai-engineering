@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Travel Lab — Plan a trip</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/planner.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body class="planner-view">
+    <header class="topbar">
+      <a class="brand" href="/">Travel Lab</a>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="/" aria-current="page">Workspace</a>
+        <a href="/history">History</a>
+      </nav>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro-copy">
+          <p class="eyebrow">THE TRAVEL PLANNING EXPERIMENT</p>
+          <h1 id="page-title">The trip is yours.<br /><em>The route is up for debate.</em></h1>
+          <p>Give two AI teams the same travel brief. Explore their itineraries, then see how each team made its decisions.</p>
+        </div>
+        <div class="travel-scene" aria-hidden="true">
+          <div class="scene-sun"></div>
+          <div class="scene-hill scene-hill-back"></div>
+          <div class="scene-hill scene-hill-front"></div>
+          <div class="scene-road"></div>
+          <div class="scene-pin"><span></span></div>
+          <div class="scene-caption"><span>TRAVEL LAB</span><strong>Go somewhere good.</strong></div>
+        </div>
+      </section>
+      <section class="workspace" aria-label="Travel planning comparison">
+        <aside class="brief">
+          <div class="brief-heading"><div><p class="eyebrow">01 / YOUR BRIEF</p><h2>Where shall we take you?</h2></div><p>Set the essentials. Both planners get exactly the same brief.</p></div>
+          <form id="trip-form">
+            <div class="trip-fields">
+              <div class="destination-field">
+                <label for="destination">Destination</label
+                ><input id="destination" type="text" maxlength="100" value="Jaipur" placeholder="Where to?" required />
+              </div>
+              <div class="form-row">
+                <div>
+                  <label for="days">Days</label
+                  ><select id="days">
+                    <option>1</option>
+                    <option>2</option>
+                    <option selected>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="people">Travelers</label
+                  ><select id="people">
+                    <option>1</option>
+                    <option selected>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                  </select>
+                </div>
+              </div>
+              <div class="budget-field">
+                <label for="budget"
+                  >Total budget
+                  <span class="label-note">INR · everyone included</span></label
+                >
+                <div class="money-input">
+                  <span>₹</span
+                  ><input
+                    id="budget"
+                    type="number"
+                    min="1000"
+                    max="300000"
+                    step="100"
+                    value="15000"
+                    required
+                  />
+                </div>
+                <p class="hint">
+                  Covers estimated activities and one meal a day. Transport,
+                  flights, and stays are extra.
+                </p>
+              </div>
+            </div>
+            <fieldset>
+              <legend>Interests</legend>
+              <div class="chips" id="interest-chips">
+                <label
+                  ><input
+                    type="checkbox"
+                    name="interest"
+                    value="culture"
+                    checked
+                  /><span>Culture</span></label
+                ><label
+                  ><input
+                    type="checkbox"
+                    name="interest"
+                    value="art"
+                    checked
+                  /><span>Art & design</span></label
+                ><label
+                  ><input type="checkbox" name="interest" value="nature" /><span
+                    >Nature</span
+                  ></label
+                ><label
+                  ><input
+                    type="checkbox"
+                    name="interest"
+                    value="photography"
+                  /><span>Photography</span></label
+                ><label
+                  ><input type="checkbox" name="interest" value="food" /><span
+                    >Food</span
+                  ></label
+                >
+              </div>
+            </fieldset>
+            <label class="check-row"
+              ><input id="vegetarian" type="checkbox" checked /> Vegetarian
+              meals</label
+            >
+
+            <details class="twists">
+              <summary>More preferences</summary>
+              <label for="rain">Rainy day</label
+              ><select id="rain">
+                <option value="0">No rain constraint</option>
+                <option value="1">Day 1 · stay indoors</option>
+                <option value="2">Day 2 · stay indoors</option>
+                <option value="3">Day 3 · stay indoors</option></select
+              ><label for="closure">Place to avoid</label
+              ><input id="closure" type="text" maxlength="120" placeholder="Optional place name" />
+              ><label for="notes">Additional preferences</label
+              ><textarea
+                id="notes"
+                rows="2"
+                maxlength="600"
+                placeholder="Quiet places, local art…"
+              ></textarea>
+              <p class="hint">
+                The planners will consider these preferences.
+              </p>
+            </details>
+            <button class="primary" id="run" type="submit">
+              Start planning <span>→</span></button
+            ><button class="stop" id="stop" type="button" hidden>
+              Stop planning
+            </button>
+          </form>
+        </aside>
+        <div class="arena">
+          <div class="arena-toolbar">
+            <div>
+              <p class="eyebrow">02 / THE ITINERARIES</p>
+              <h2>Two ways to plan your trip</h2>
+              <p id="run-status" role="status" aria-live="polite">
+                Choose your trip, then select Start planning.
+              </p>
+            </div>
+            <div class="arena-actions">
+              <button class="text-button" id="download" disabled>
+                Download run ↓
+              </button>
+            </div>
+          </div>
+          <p id="saved-status" class="hint">
+            Search ID appears here when you start. Every run is saved locally.
+          </p>
+          <div class="result-tabs" role="tablist" aria-label="Result view">
+            <button id="plan-tab" type="button" role="tab" aria-selected="true" aria-controls="plan-view">The plans</button>
+            <button id="analysis-tab" type="button" role="tab" aria-selected="false" aria-controls="performance-panel" disabled>Timing &amp; decisions</button>
+          </div>
+          <div id="plan-view" role="tabpanel" aria-labelledby="plan-tab">
+            <div class="teams" id="teams"></div>
+          </div>
+          <section class="metrics-wrap performance-panel" id="performance-panel" role="tabpanel" aria-labelledby="analysis-tab" hidden>
+            <div class="performance-heading">
+              <div>
+                <p class="eyebrow">RUN ANALYSIS</p>
+                <h3>How the planners decided</h3>
+                <p>Follow their choices, then compare what those choices cost in time.</p>
+              </div>
+            </div>
+            <section class="comparison-summary" id="comparison-summary" aria-label="Completed run comparison" hidden></section>
+            <section class="decision-section" aria-labelledby="decision-title">
+              <div class="analysis-section-heading"><div><p class="eyebrow">THIS TRIP</p><h4 id="decision-title">Decision paths</h4></div><p>Choices are shown in the order each team made them. A different search result can change later choices.</p></div>
+              <div class="decision-paths" id="decision-paths"></div>
+              <div id="run-inspection"></div>
+            </section>
+            <section class="benchmark-section" aria-labelledby="benchmark-title">
+              <div class="analysis-section-heading"><div><p class="eyebrow">REPEATED TESTS</p><h4 id="benchmark-title">Controlled routing tests</h4></div><p>The same saved states and legal actions were given to each coordinator. These tests measure routing only.</p></div>
+              <div id="benchmark-summary" class="benchmark-summary"><p>Loading published benchmark…</p></div>
+            </section>
+            <div class="performance-heading metrics-heading"><div><p class="eyebrow">THIS TRIP</p><h4>Run measurements</h4></div></div>
+            <div class="coordination-overview" id="coordination-overview" aria-label="Coordination time by team"></div>
+            <p class="coordination-note">Sum of decision model calls, including response time; rule-only steps are excluded. This is one run, and teams may research different evidence.</p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Measure</th>
+                    <th>Gemini</th>
+                    <th>Gemini + Typesafe</th>
+                  </tr>
+                </thead>
+                <tbody id="metrics"></tbody>
+              </table>
+            </div>
+            <p class="hint" id="score-note">
+              API cost estimates appear in INR only when a USD-to-INR rate is
+              configured on the server.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div id="error" class="toast" role="alert" hidden></div>
+  </body>
+</html>

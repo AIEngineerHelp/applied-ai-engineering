@@ -1,0 +1,282 @@
+{
+  "version": "bengaluru-inr-synthetic-v1",
+  "city": "Bengaluru",
+  "currency": "INR",
+  "provenance": "Hand-authored synthetic learning fixtures. All prices are illustrative INR amounts, not currency conversions or live travel quotes. Names reference local neighborhoods; availability and durations are fictional.",
+  "transitPerPersonPerDay": 300,
+  "places": [
+    {
+      "id": "bengaluru-1",
+      "name": "Old Bengaluru walk",
+      "area": "Basavanagudi",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "bengaluru-2",
+      "name": "Local craft gallery",
+      "area": "Central Bengaluru",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 210,
+      "minutes": 90
+    },
+    {
+      "id": "bengaluru-3",
+      "name": "Printmaking studio",
+      "area": "Indiranagar",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 760,
+      "minutes": 120
+    },
+    {
+      "id": "bengaluru-4",
+      "name": "Lakeside promenade",
+      "area": "Basavanagudi",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "bengaluru-5",
+      "name": "Garden paths",
+      "area": "Central Bengaluru",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 130,
+      "minutes": 90
+    },
+    {
+      "id": "bengaluru-6",
+      "name": "City stories museum",
+      "area": "Indiranagar",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 290,
+      "minutes": 120
+    },
+    {
+      "id": "bengaluru-7",
+      "name": "Design reading room",
+      "area": "Basavanagudi",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "bengaluru-8",
+      "name": "Neighborhood market",
+      "area": "Central Bengaluru",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 90
+    },
+    {
+      "id": "bengaluru-9",
+      "name": "Street photography walk",
+      "area": "Indiranagar",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "bengaluru-10",
+      "name": "Contemporary art gallery",
+      "area": "Basavanagudi",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "photography"
+      ],
+      "indoor": true,
+      "price": 920,
+      "minutes": 100
+    },
+    {
+      "id": "bengaluru-11",
+      "name": "Independent music archive",
+      "area": "Central Bengaluru",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "bengaluru-12",
+      "name": "Shaded park walk",
+      "area": "Indiranagar",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "bengaluru-13",
+      "name": "Coffee tasting room",
+      "area": "Basavanagudi",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 380,
+      "minutes": 70
+    },
+    {
+      "id": "bengaluru-14",
+      "name": "Photography library",
+      "area": "Central Bengaluru",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "art"
+      ],
+      "indoor": true,
+      "price": 170,
+      "minutes": 80
+    },
+    {
+      "id": "bengaluru-15",
+      "name": "Paper art exhibition",
+      "area": "Indiranagar",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "bengaluru-16",
+      "name": "Vegetarian meals kitchen",
+      "area": "Basavanagudi",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 460,
+      "minutes": 60
+    },
+    {
+      "id": "bengaluru-17",
+      "name": "Garden vegetable curry",
+      "area": "Central Bengaluru",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 420,
+      "minutes": 60
+    },
+    {
+      "id": "bengaluru-18",
+      "name": "Millet lunch table",
+      "area": "Indiranagar",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 550,
+      "minutes": 60
+    },
+    {
+      "id": "bengaluru-19",
+      "name": "Everyday idli & sambar",
+      "area": "Basavanagudi",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 270,
+      "minutes": 45
+    },
+    {
+      "id": "bengaluru-20",
+      "name": "Neighborhood grill",
+      "area": "Central Bengaluru",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 590,
+      "minutes": 60
+    },
+    {
+      "id": "bengaluru-21",
+      "name": "Local biryani counter",
+      "area": "Indiranagar",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 400,
+      "minutes": 45
+    }
+  ]
+}

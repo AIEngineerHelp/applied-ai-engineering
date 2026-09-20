@@ -1,0 +1,2945 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-20T04:35:09.916Z",
+  "datasetHash": "cf1d157e6b54e97cefc21b38aa4f1ca36f20f0cc6b082cf9f0124b8158839736",
+  "repetitions": 2,
+  "cases": [
+    {
+      "id": "standard",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "rain-day",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 1,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "closed-venue",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [
+          "asakusa-walk"
+        ],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "rain-and-closure",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 1,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [
+          "craft-gallery"
+        ],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "infeasible-budget",
+      "expectedOutcome": "needs_input",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 1000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    }
+  ],
+  "configuration": {
+    "geminiModel": "gemini-3.8-flash",
+    "jevModel": "jev-latest"
+  },
+  "runs": [
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Tour",
+        "summary": "A two-day exploration of traditional and modern arts and culture across Asakusa and Ueno, featuring vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover Japanese craftsmanship in Kuramae and Asakusa with woodblock printing and local craft exhibitions, followed by a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo cultural heritage and design archives in Ueno paired with a comforting vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences. It stays well within the budget, respects the vegetarian requirement with appropriate dining options, focuses on culture and art activities in geographically cohesive areas (Asakusa and Ueno), and passes all deterministic checks."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 18634,
+      "decisionMs": 6339,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2630,
+          "inputTokens": 166,
+          "outputTokens": 197,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3164,
+          "inputTokens": 144,
+          "outputTokens": 497,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2744,
+          "inputTokens": 159,
+          "outputTokens": 449,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1959,
+          "inputTokens": 1022,
+          "outputTokens": 200,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4084,
+          "inputTokens": 1090,
+          "outputTokens": 964,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1749,
+          "inputTokens": 1181,
+          "outputTokens": 126,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2269,
+          "inputTokens": 1667,
+          "outputTokens": 454,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Tour",
+        "summary": "A two-day exploration of Tokyo's traditional and contemporary arts and culture in Asakusa and Ueno with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover Japanese craftsmanship and printmaking traditions in Asakusa followed by a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in city history and design aesthetics in Ueno paired with a flavorful garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly matches all constraints and preferences. It stays well within budget, respects vegetarian meal requirements, focuses strongly on culture and art activities in consistent geographic areas each day, and passes all validation checks."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 16049,
+      "decisionMs": 2728,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 847,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3192,
+          "inputTokens": 144,
+          "outputTokens": 475,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2071,
+          "inputTokens": 159,
+          "outputTokens": 261,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 959,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5173,
+          "inputTokens": 1090,
+          "outputTokens": 1324,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 921,
+          "inputTokens": 2324,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2863,
+          "inputTokens": 1653,
+          "outputTokens": 252,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture & Art Itinerary",
+        "summary": "A 2-day cultural and artistic journey through Asakusa and Ueno with indoor explorations on rainy Day 1 and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A completely indoor, art- and craft-focused day in Kuramae and Asakusa to stay dry during the rain, complemented by a nourishing vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Exploring local heritage and design culture in Ueno paired with a hearty vegetarian curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints: it features culture- and art-focused activities, ensures indoor venues and meals during rainy Day 1, provides vegetarian dining, avoids closed spots, and remains comfortably within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 15155,
+      "decisionMs": 2180,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 338,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3954,
+          "inputTokens": 144,
+          "outputTokens": 685,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2042,
+          "inputTokens": 159,
+          "outputTokens": 200,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 921,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4304,
+          "inputTokens": 1090,
+          "outputTokens": 1205,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 920,
+          "inputTokens": 2347,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2654,
+          "inputTokens": 1680,
+          "outputTokens": 494,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A relaxed two-day exploration of traditional and modern arts across Asakusa and Ueno, featuring all-indoor activities on the rainy first day and delicious vegetarian dining throughout.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A rainy day focused entirely indoors exploring traditional crafts and woodblock printing in Asakusa, paired with a vegetarian lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural exploration of Ueno's history and design archives followed by a hearty vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all constraints: all stops on the rainy day are indoors, all meals are vegetarian, all activities align with the culture and art interests, and the total cost is well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 20067,
+      "decisionMs": 6194,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1980,
+          "inputTokens": 166,
+          "outputTokens": 173,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2887,
+          "inputTokens": 144,
+          "outputTokens": 607,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1970,
+          "inputTokens": 159,
+          "outputTokens": 367,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2062,
+          "inputTokens": 1022,
+          "outputTokens": 154,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6030,
+          "inputTokens": 1090,
+          "outputTokens": 1572,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2151,
+          "inputTokens": 1193,
+          "outputTokens": 120,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2966,
+          "inputTokens": 1676,
+          "outputTokens": 473,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A balanced 2-day cultural and artistic journey exploring traditional craft and printmaking in Asakusa followed by history and design in Ueno, complemented by vegetarian-friendly dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Experience local craft traditions and woodblock printmaking in Asakusa with a healthy vegetarian lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Explore historical and design collections in Ueno followed by a savory garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all requirements. Both days feature activities aligned with culture and art interests in coherent neighborhoods (Asakusa and Ueno), include vegetarian dining options, adhere well within the budget, avoid closed venues, and respect all scheduling constraints."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 18328,
+      "decisionMs": 5740,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1635,
+          "inputTokens": 170,
+          "outputTokens": 240,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3275,
+          "inputTokens": 148,
+          "outputTokens": 678,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2549,
+          "inputTokens": 163,
+          "outputTokens": 351,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2358,
+          "inputTokens": 981,
+          "outputTokens": 183,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4103,
+          "inputTokens": 1049,
+          "outputTokens": 1156,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1746,
+          "inputTokens": 1145,
+          "outputTokens": 116,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2641,
+          "inputTokens": 1620,
+          "outputTokens": 291,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Art and Culture Journey",
+        "summary": "A relaxed two-day cultural itinerary exploring traditional craft, printmaking, historic exhibits, and design archives with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover artisanal crafts and traditional woodblock printing techniques in Asakusa before enjoying a vegetarian green bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo urban history and modern design collections in Ueno, complemented by a hearty vegetable curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly meets all requirements, featuring engaging art and cultural activities in Asakusa and Ueno with vegetarian dining, while staying well within the budget and time limits."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 17302,
+      "decisionMs": 4312,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 959,
+          "inputTokens": 519,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3331,
+          "inputTokens": 148,
+          "outputTokens": 848,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2149,
+          "inputTokens": 163,
+          "outputTokens": 243,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1027,
+          "inputTokens": 2016,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4486,
+          "inputTokens": 1049,
+          "outputTokens": 1303,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 2325,
+          "inputTokens": 2256,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3004,
+          "inputTokens": 1620,
+          "outputTokens": 466,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Culture and Art Highlights",
+        "summary": "A two-day itinerary immersed in Tokyo's art and cultural traditions, starting with indoor paper and printmaking arts in Asakusa for a rainy day, followed by museum and design archives in Ueno, paired with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Rainy day exploration of traditional woodblock printing and paper arts in Asakusa, paired with a wholesome vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Cultural immersion through city history exhibits and design collections in Ueno, complemented by vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly fulfills all criteria: all activities match the culture and art interests, Day 1 venues are completely indoors for the rainy day, both meals are vegetarian, closed venues are avoided, and the total cost is well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 16180,
+      "decisionMs": 2272,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 406,
+          "inputTokens": 516,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2773,
+          "inputTokens": 147,
+          "outputTokens": 499,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2134,
+          "inputTokens": 162,
+          "outputTokens": 149,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 962,
+          "inputTokens": 2019,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6336,
+          "inputTokens": 1048,
+          "outputTokens": 1638,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 903,
+          "inputTokens": 2284,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2641,
+          "inputTokens": 1638,
+          "outputTokens": 562,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Art and Culture Itinerary",
+        "summary": "A two-day Tokyo plan focusing on art and culture, featuring an all-indoor itinerary in Asakusa for the rainy first day and exploring museums and design spaces in Ueno on the second day, complete with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A fully indoor day in Asakusa exploring traditional woodblock printing and paper arts to stay out of the rain, paired with a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural exploration of Ueno visiting the city history museum and the design reading room, followed by vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences. It fully aligns with interests in art and culture, keeps all activities and meals indoors on the rainy first day, provides vegetarian meals each day, avoids closed venues, and stays well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 20691,
+      "decisionMs": 5304,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2038,
+          "inputTokens": 169,
+          "outputTokens": 199,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5732,
+          "inputTokens": 147,
+          "outputTokens": 488,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2046,
+          "inputTokens": 162,
+          "outputTokens": 371,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1638,
+          "inputTokens": 980,
+          "outputTokens": 140,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5125,
+          "inputTokens": 1048,
+          "outputTokens": 1715,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1628,
+          "inputTokens": 1167,
+          "outputTokens": 134,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2463,
+          "inputTokens": 1656,
+          "outputTokens": 352,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Culture and Art Exploration",
+        "summary": "A budget-conscious 2-day Tokyo itinerary focusing on rich cultural traditions and art spaces across Asakusa, Ueno, and Shibuya with vegetarian meals.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "asakusa-walk"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore design and print culture at the reading room in Ueno followed by a historic cultural walk through Asakusa, finishing with warm vegetarian noodles."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "market-lane",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Immerse in the bustling street culture of Ameyoko market lanes before heading to Shibuya's iconic cultural sights, paired with everyday vegetarian noodles."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The itinerary exceeds the total budget of 1000 for 2 people, coming out to 1560 across the two days."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 8,
+      "coordinationCalls": 4,
+      "workerCalls": 4,
+      "wallMs": 32652,
+      "decisionMs": 12396,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2236,
+          "inputTokens": 165,
+          "outputTokens": 192,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2250,
+          "inputTokens": 143,
+          "outputTokens": 417,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2147,
+          "inputTokens": 158,
+          "outputTokens": 285,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1842,
+          "inputTokens": 1021,
+          "outputTokens": 170,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 13978,
+          "inputTokens": 1089,
+          "outputTokens": 4748,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2195,
+          "inputTokens": 1200,
+          "outputTokens": 165,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1857,
+          "inputTokens": 1702,
+          "outputTokens": 213,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 6122,
+          "inputTokens": 1814,
+          "outputTokens": 1631,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": false,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "step_limit",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Budget Culture and Art Exploration",
+        "summary": "A 2-day culture and art itinerary optimized to achieve the absolute lowest possible cost in the catalog by selecting zero-fee cultural and art activities and the most affordable vegetarian meal. At 1,560 for two travelers across two days, this plan represents the minimum obtainable expenditure within the given options.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "market-lane"
+            ],
+            "meal": "budget-noodles",
+            "note": "Visit Ueno's free design reading room and vibrant Ameyoko market lanes, followed by an economical vegetarian noodle meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "asakusa-walk",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Experience iconic cultural photo walks through historic Asakusa and Shibuya at zero admission cost, paired again with budget vegetable noodles."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The itinerary exceeds the budget of 1,000 with an estimated total cost of 1,560 for two travelers."
+        }
+      },
+      "steps": 12,
+      "modelCalls": 23,
+      "coordinationCalls": 11,
+      "workerCalls": 12,
+      "wallMs": 87777,
+      "decisionMs": 8687,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1058,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2416,
+          "inputTokens": 143,
+          "outputTokens": 287,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2223,
+          "inputTokens": 158,
+          "outputTokens": 316,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 973,
+          "inputTokens": 2091,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 18097,
+          "inputTokens": 1089,
+          "outputTokens": 5979,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 980,
+          "inputTokens": 2351,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2327,
+          "inputTokens": 1682,
+          "outputTokens": 262,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 318,
+          "inputTokens": 3358,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 13136,
+          "inputTokens": 1865,
+          "outputTokens": 3657,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 966,
+          "inputTokens": 2409,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2042,
+          "inputTokens": 1674,
+          "outputTokens": 188,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 348,
+          "inputTokens": 3400,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 10118,
+          "inputTokens": 1874,
+          "outputTokens": 3265,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1034,
+          "inputTokens": 2509,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1981,
+          "inputTokens": 1730,
+          "outputTokens": 201,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 495,
+          "inputTokens": 3526,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 10828,
+          "inputTokens": 1971,
+          "outputTokens": 3592,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1126,
+          "inputTokens": 2580,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2156,
+          "inputTokens": 1728,
+          "outputTokens": 148,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 408,
+          "inputTokens": 3594,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 11504,
+          "inputTokens": 1994,
+          "outputTokens": 2982,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 978,
+          "inputTokens": 2640,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2198,
+          "inputTokens": 1713,
+          "outputTokens": 191,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Exploration",
+        "summary": "A 2-day cultural and artistic journey through Asakusa and Ueno featuring traditional crafts, woodblock prints, museum collections, design exhibits, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover artisanal craft traditions and woodblock printmaking in Asakusa paired with a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Explore Tokyo history and innovative design archives in Ueno accompanied by a savory garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly fulfills the task requirements. All chosen activities align directly with culture and art interests, both meals satisfy the vegetarian preference, the plan remains comfortably within budget, and daily pacing is well-balanced."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 15126,
+      "decisionMs": 2390,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 379,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2860,
+          "inputTokens": 144,
+          "outputTokens": 544,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2353,
+          "inputTokens": 159,
+          "outputTokens": 350,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1020,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5220,
+          "inputTokens": 1090,
+          "outputTokens": 1271,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 991,
+          "inputTokens": 2335,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2282,
+          "inputTokens": 1661,
+          "outputTokens": 297,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Art and Culture Journey",
+        "summary": "A two-day exploration of Tokyo's rich art and cultural heritage across Asakusa and Ueno, featuring craft galleries, printmaking, historic exhibitions, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Immerse in traditional and contemporary craftsmanship in Asakusa, visiting the craft gallery and woodblock print studio before enjoying a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover Tokyo's history and design innovations in Ueno with visits to the city history museum and design reading room, accompanied by a flavorful vegetable curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all requirements: it covers the requested 2 days for 2 people within budget, provides vegetarian meal options each day, aligns closely with the art and culture interests using valid catalog places, and passes all deterministic schedule and budget checks."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 25262,
+      "decisionMs": 7196,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2209,
+          "inputTokens": 166,
+          "outputTokens": 176,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 8866,
+          "inputTokens": 144,
+          "outputTokens": 576,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2026,
+          "inputTokens": 159,
+          "outputTokens": 266,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2760,
+          "inputTokens": 1022,
+          "outputTokens": 118,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4914,
+          "inputTokens": 1090,
+          "outputTokens": 1120,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2226,
+          "inputTokens": 1207,
+          "outputTokens": 208,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2241,
+          "inputTokens": 1707,
+          "outputTokens": 293,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture & Art Exploration",
+        "summary": "A 2-day curated journey focusing on Tokyo's traditional and modern arts, tailored for vegetarian dining and featuring an all-indoor itinerary on the rainy first day.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "An all-indoor cultural day in Asakusa exploring traditional crafts and woodblock printing, paired with a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural exploration of Ueno visiting history and design spaces alongside a hearty vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly matches all constraints, including vegetarian meals, indoor activities for the rainy day, interests in culture and art, and falls well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 25388,
+      "decisionMs": 6473,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2278,
+          "inputTokens": 166,
+          "outputTokens": 193,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2657,
+          "inputTokens": 144,
+          "outputTokens": 496,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1842,
+          "inputTokens": 159,
+          "outputTokens": 293,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2148,
+          "inputTokens": 1022,
+          "outputTokens": 178,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 11570,
+          "inputTokens": 1090,
+          "outputTokens": 1068,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2046,
+          "inputTokens": 1186,
+          "outputTokens": 119,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2827,
+          "inputTokens": 1667,
+          "outputTokens": 478,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A two-day exploration of Tokyo's traditional and contemporary arts and culture across Asakusa and Ueno, tailored for vegetarian dining and indoor rainy weather on the first day.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Enjoy an indoor, art-focused day in Asakusa exploring craft design and woodblock printing, paired with a nourishing vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover Tokyo history and design aesthetics in Ueno, complemented by a hearty vegetarian curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints and preferences. All stops match the requested culture and art interests, Day 1 is entirely indoors to accommodate rain, all meals are vegetarian, and the total cost is well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 17138,
+      "decisionMs": 2856,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 902,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3330,
+          "inputTokens": 144,
+          "outputTokens": 477,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3164,
+          "inputTokens": 159,
+          "outputTokens": 221,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1026,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5021,
+          "inputTokens": 1090,
+          "outputTokens": 1331,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 928,
+          "inputTokens": 2347,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2748,
+          "inputTokens": 1681,
+          "outputTokens": 431,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Exploration",
+        "summary": "A two-day cultural and artistic journey through traditional Asakusa and the museums of Ueno, tailored with vegetarian dining and relaxing paced visits.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Experience traditional woodblock printing and Japanese crafts in Asakusa, complemented by a fresh vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Delve into local history and design culture in Ueno, followed by hearty garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all user requirements and preferences. It stays well within the designated budget, includes vegetarian dining options each day, avoids closed venues, and focuses directly on culture and art activities."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 14350,
+      "decisionMs": 2236,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 316,
+          "inputTokens": 519,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3497,
+          "inputTokens": 148,
+          "outputTokens": 746,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2360,
+          "inputTokens": 163,
+          "outputTokens": 358,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1016,
+          "inputTokens": 2016,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4281,
+          "inputTokens": 1049,
+          "outputTokens": 1419,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 903,
+          "inputTokens": 2254,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1956,
+          "inputTokens": 1617,
+          "outputTokens": 302,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Discovery",
+        "summary": "A two-day exploration of Tokyo's rich art and cultural heritage across Asakusa and Ueno, featuring craft workshops, printmaking, historic exhibits, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Immerse in traditional Asakusa craftsmanship and woodblock printmaking followed by a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Explore city history and design culture in Ueno, complemented by a flavorful vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly fulfills all criteria: both days feature activities aligning with art and culture, vegetarian dining is respected, closed venues are avoided, and the total cost is well within budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 17391,
+      "decisionMs": 6094,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1691,
+          "inputTokens": 170,
+          "outputTokens": 109,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2606,
+          "inputTokens": 148,
+          "outputTokens": 582,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1937,
+          "inputTokens": 163,
+          "outputTokens": 281,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2134,
+          "inputTokens": 981,
+          "outputTokens": 241,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4618,
+          "inputTokens": 1049,
+          "outputTokens": 1413,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2269,
+          "inputTokens": 1144,
+          "outputTokens": 171,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2116,
+          "inputTokens": 1622,
+          "outputTokens": 181,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A 2-day cultural journey across Asakusa and Ueno featuring traditional woodblock and paper arts, museum visits, and vegetarian dining, with all indoor stops planned for the rainy first day.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A fully indoor rainy day exploring traditional printmaking and paper crafts in Asakusa, followed by a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Ueno's history and design collections with a hearty vegetarian curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences: all venues are open and from the catalog, day 1 is entirely indoor for the rainy day, both meals are vegetarian, activities focus on culture and art, and the total cost is well within the budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 19158,
+      "decisionMs": 5910,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2143,
+          "inputTokens": 169,
+          "outputTokens": 165,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3070,
+          "inputTokens": 147,
+          "outputTokens": 629,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1800,
+          "inputTokens": 162,
+          "outputTokens": 385,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2085,
+          "inputTokens": 980,
+          "outputTokens": 175,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6246,
+          "inputTokens": 1048,
+          "outputTokens": 1696,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1681,
+          "inputTokens": 1155,
+          "outputTokens": 70,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2114,
+          "inputTokens": 1635,
+          "outputTokens": 310,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Culture and Art Exploration",
+        "summary": "A two-day itinerary focused on traditional and contemporary culture and art in Asakusa and Ueno, featuring vegetarian dining and all-indoor activities on the rainy first day.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Rainy day in Asakusa exploring woodblock printmaking and paper arts indoors, followed by a plant-based meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Cultural immersion in Ueno exploring local history and design archives paired with a vegetarian garden curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints: all activities and meals fit within the budget, adhere to vegetarian dining, keep to indoor venues on the designated rainy day, match the requested culture and art interests, and avoid closed venues."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 15532,
+      "decisionMs": 2937,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 974,
+          "inputTokens": 516,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3597,
+          "inputTokens": 147,
+          "outputTokens": 588,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2272,
+          "inputTokens": 162,
+          "outputTokens": 275,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1001,
+          "inputTokens": 2019,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4501,
+          "inputTokens": 1048,
+          "outputTokens": 1411,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 962,
+          "inputTokens": 2271,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2204,
+          "inputTokens": 1628,
+          "outputTokens": 289,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": false,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "step_limit",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Culture and Art Essentials",
+        "summary": "A 2-day Tokyo cultural itinerary designed to achieve the lowest possible cost across the evidence catalog. All selected activities have zero admission fees, and meals are set to Everyday vegetable noodles, the lowest-priced vegetarian option available at 390 per person per meal. Across 2 people and 2 days, the unavoidable catalog floor is 1,560, which minimizes expenses against the 1,000 target.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "market-lane"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore Ueno with free admission to the Design reading room and Ameyoko market lanes, paired with the catalog minimum meal at Everyday vegetable noodles."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "asakusa-walk",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Enjoy zero-cost cultural explorations of Asakusa and Shibuya Crossing, dining again at Everyday vegetable noodles to keep total trip cost at the absolute catalog minimum."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The deterministic checks failed because the estimated total cost of 1,560 exceeds the user's specified budget of 1,000 by 560."
+        }
+      },
+      "steps": 12,
+      "modelCalls": 23,
+      "coordinationCalls": 11,
+      "workerCalls": 12,
+      "wallMs": 79684,
+      "decisionMs": 8061,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 337,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3879,
+          "inputTokens": 143,
+          "outputTokens": 626,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2137,
+          "inputTokens": 158,
+          "outputTokens": 311,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 917,
+          "inputTokens": 2091,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 15705,
+          "inputTokens": 1089,
+          "outputTokens": 5303,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1074,
+          "inputTokens": 2344,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1836,
+          "inputTokens": 1673,
+          "outputTokens": 250,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 358,
+          "inputTokens": 3345,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 10314,
+          "inputTokens": 1857,
+          "outputTokens": 3280,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 971,
+          "inputTokens": 2433,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2088,
+          "inputTokens": 1711,
+          "outputTokens": 208,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 351,
+          "inputTokens": 3429,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 10661,
+          "inputTokens": 1906,
+          "outputTokens": 3276,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 992,
+          "inputTokens": 2547,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3917,
+          "inputTokens": 1775,
+          "outputTokens": 258,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 378,
+          "inputTokens": 3586,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 9697,
+          "inputTokens": 2032,
+          "outputTokens": 3361,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1455,
+          "inputTokens": 2609,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2325,
+          "inputTokens": 1760,
+          "outputTokens": 194,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 400,
+          "inputTokens": 3609,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6761,
+          "inputTokens": 2013,
+          "outputTokens": 2205,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 825,
+          "inputTokens": 2674,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2248,
+          "inputTokens": 1760,
+          "outputTokens": 195,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Culture and Art Tour",
+        "summary": "A budget-conscious two-day exploration highlighting Tokyo's cultural heritage and art scene, paired with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "market-lane"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore design reading archives and historic market lanes in Ueno with vegetarian noodles for lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "asakusa-walk",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Immerse in traditional Asakusa streets and the iconic Shibuya cultural walking route."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The itinerary exceeds the total budget of 1,000 for 2 people, coming out to 1,560 (an excess of 560 due to meal costs across both days)."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 8,
+      "coordinationCalls": 4,
+      "workerCalls": 4,
+      "wallMs": 34708,
+      "decisionMs": 12479,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2268,
+          "inputTokens": 165,
+          "outputTokens": 154,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5842,
+          "inputTokens": 143,
+          "outputTokens": 1009,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3032,
+          "inputTokens": 158,
+          "outputTokens": 302,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2155,
+          "inputTokens": 1021,
+          "outputTokens": 164,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 11652,
+          "inputTokens": 1089,
+          "outputTokens": 4085,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1774,
+          "inputTokens": 1166,
+          "outputTokens": 266,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1684,
+          "inputTokens": 1643,
+          "outputTokens": 192,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 6282,
+          "inputTokens": 1768,
+          "outputTokens": 1728,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "error": null
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "runs": 10,
+      "correctOutcomes": 10,
+      "completed": 8,
+      "independentlyValid": 8,
+      "medianWallMs": 20379,
+      "modelCalls": 72,
+      "coordinationCalls": 32,
+      "workerCalls": 40,
+      "totalDecisionMs": 74125
+    },
+    "hybrid": {
+      "runs": 10,
+      "correctOutcomes": 8,
+      "completed": 8,
+      "independentlyValid": 8,
+      "medianWallMs": 16114.5,
+      "modelCalls": 102,
+      "coordinationCalls": 46,
+      "workerCalls": 56,
+      "totalDecisionMs": 38659
+    }
+  }
+}

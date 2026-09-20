@@ -30,3 +30,10 @@ coverage/
 
 # Local project tracking, post drafts, design iterations, and temporary notes
 /working/
+
+# Local run history (contains prompts and responses)
+.runs/
+
+# Generated browser bundles for the travel-planner example
+agents/travel-planner-gemini-typesafe/public/app.js
+agents/travel-planner-gemini-typesafe/public/history.js

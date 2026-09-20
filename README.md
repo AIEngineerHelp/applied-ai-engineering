@@ -22,6 +22,12 @@ The directories follow the community’s learning categories; `agents/` is the s
 
 General and Site Feedback remain community discussion spaces rather than code directories. Product Breakdowns maps to `showcase/`, matching its community URL slug.
 
+## First project
+
+[Building a Multi-Agent Travel Planner with Gemini and TypeSafe AI](agents/travel-planner-gemini-typesafe/README.md)
+
+Travel Lab compares Gemini-only coordination with Jev agent and tool selection, using the same Gemini workers and limits. The TypeScript website researches live places with Gemini Google Search grounding, shows decision traces and evidence, and saves each run. Synthetic catalogs remain for offline tests and evaluation. Local web-search smoke comparisons completed for both teams; controlled routing and whole-agent benchmark results are included. Public-deployment review remains outstanding.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

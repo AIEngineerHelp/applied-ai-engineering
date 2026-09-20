@@ -1,0 +1,4637 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-20T04:55:02.778Z",
+  "datasetHash": "cf1d157e6b54e97cefc21b38aa4f1ca36f20f0cc6b082cf9f0124b8158839736",
+  "repetitions": 2,
+  "cases": [
+    {
+      "id": "standard",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "rain-day",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 1,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "closed-venue",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [
+          "asakusa-walk"
+        ],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "rain-and-closure",
+      "expectedOutcome": "completed",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 24000,
+        "vegetarian": true,
+        "rainDay": 1,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [
+          "craft-gallery"
+        ],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    },
+    {
+      "id": "infeasible-budget",
+      "expectedOutcome": "needs_input",
+      "task": {
+        "city": "Tokyo",
+        "days": 2,
+        "people": 2,
+        "budget": 1000,
+        "vegetarian": true,
+        "rainDay": 0,
+        "interests": [
+          "culture",
+          "art"
+        ],
+        "closed": [],
+        "notes": ""
+      },
+      "catalogVersion": "tokyo-inr-synthetic-v2"
+    }
+  ],
+  "configuration": {
+    "geminiModel": "gemini-3.8-flash",
+    "jevModel": "jev-latest"
+  },
+  "runs": [
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Exploration",
+        "summary": "A two-day immersive journey through Tokyo's traditional and contemporary artistic traditions, exploring heritage craft galleries and printmaking in Asakusa, alongside historical exhibitions and design libraries in Ueno.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover traditional craftwork and woodblock printing techniques in Asakusa, complemented by a nourishing vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Delve into Tokyo's civic history and graphic design resources around Ueno, paired with garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences, featuring cultural and artistic venues in Asakusa and Ueno with matching vegetarian dining options within the designated budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 16587,
+      "decisionMs": 6514,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2278,
+          "inputTokens": 166,
+          "outputTokens": 187,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2514,
+          "inputTokens": 144,
+          "outputTokens": 436,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2043,
+          "inputTokens": 159,
+          "outputTokens": 297,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2351,
+          "inputTokens": 1022,
+          "outputTokens": 237,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3231,
+          "inputTokens": 1090,
+          "outputTokens": 867,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1884,
+          "inputTokens": 1192,
+          "outputTokens": 136,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2252,
+          "inputTokens": 1675,
+          "outputTokens": 297,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2514,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2043,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 3231,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2252,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A curated 2-day Tokyo itinerary focusing on traditional and modern art and culture across Asakusa and Ueno, featuring vegetarian dining and manageable schedules.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Immerse in Asakusa's artisan traditions with craft gallery exhibits and a hands-on woodblock print studio, paired with a vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover regional history and design in Ueno, complemented by a nourishing vegetarian curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all requirements. It covers the requested culture and art interests across Asakusa and Ueno, includes verified vegetarian dining for both days, stays well within the budget, and adheres to all timing and schedule constraints."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 13905,
+      "decisionMs": 2256,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 989,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3597,
+          "inputTokens": 144,
+          "outputTokens": 598,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2151,
+          "inputTokens": 159,
+          "outputTokens": 328,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 924,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3607,
+          "inputTokens": 1090,
+          "outputTokens": 1027,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 342,
+          "inputTokens": 2345,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2272,
+          "inputTokens": 1682,
+          "outputTokens": 396,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3598,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2151,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 3607,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2273,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Itinerary",
+        "summary": "A two-day exploration of Tokyo's rich cultural and artistic heritage across Asakusa and Ueno, featuring indoor galleries and printmaking on the rainy first day, followed by museum and design archives on the second day, paired with delicious vegetarian meals.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A rainy day spent exploring traditional craftwork and woodblock printing indoors in Asakusa, followed by a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural day in Ueno discovering historical city exhibits and design archives, paired with vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary perfectly satisfies all constraints and preferences, featuring indoor art and culture activities on the rainy first day, vegetarian dining throughout, and remaining well within budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 14243,
+      "decisionMs": 2357,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 360,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2608,
+          "inputTokens": 144,
+          "outputTokens": 513,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2125,
+          "inputTokens": 159,
+          "outputTokens": 308,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 980,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4702,
+          "inputTokens": 1090,
+          "outputTokens": 1341,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1015,
+          "inputTokens": 2358,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2427,
+          "inputTokens": 1691,
+          "outputTokens": 378,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2608,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2126,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4702,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2428,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A 2-day exploration of Tokyo's traditional and contemporary arts and culture across Asakusa and Ueno, featuring all-indoor activities on rainy Day 1 and vegetarian-friendly meals throughout.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A rain-friendly day in Asakusa focused on traditional crafts and woodblock printing, paired with a nourishing vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "An inspiring day immersed in Ueno's civic history and graphic design resources, complemented by vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences. It stays well within budget, respects the vegetarian requirement, ensures all Day 1 stops are indoors for the rainy forecast, aligns closely with the culture and art interests, and maintains a relaxed schedule grouped logically by neighborhood."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 18533,
+      "decisionMs": 5795,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1580,
+          "inputTokens": 166,
+          "outputTokens": 223,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2468,
+          "inputTokens": 144,
+          "outputTokens": 442,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2063,
+          "inputTokens": 159,
+          "outputTokens": 234,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2064,
+          "inputTokens": 1022,
+          "outputTokens": 162,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5833,
+          "inputTokens": 1090,
+          "outputTokens": 1709,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2151,
+          "inputTokens": 1202,
+          "outputTokens": 238,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2352,
+          "inputTokens": 1688,
+          "outputTokens": 268,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2468,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2063,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5833,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2352,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Art and Culture Exploration",
+        "summary": "A two-day journey through traditional and contemporary art and culture in Asakusa and Ueno, featuring craft workshops, printmaking, history, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Immerse in Asakusa craft heritage and woodblock printmaking, complemented by a wholesome vegetarian green bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover Tokyo city history and design culture in Ueno followed by a savory garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints, interests, dietary preferences, and budget requirements."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 19890,
+      "decisionMs": 6686,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2355,
+          "inputTokens": 170,
+          "outputTokens": 156,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3981,
+          "inputTokens": 148,
+          "outputTokens": 716,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2046,
+          "inputTokens": 163,
+          "outputTokens": 217,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2355,
+          "inputTokens": 981,
+          "outputTokens": 132,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4778,
+          "inputTokens": 1049,
+          "outputTokens": 1109,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1976,
+          "inputTokens": 1144,
+          "outputTokens": 143,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2378,
+          "inputTokens": 1625,
+          "outputTokens": 306,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3981,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2046,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4779,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2378,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture & Art Exploration",
+        "summary": "A relaxed two-day journey through traditional crafts in Asakusa and civic design and history in Ueno, featuring vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover artisanal craftwork and traditional woodblock printing in Asakusa, complemented by a fresh vegetarian bowl."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo history and creative design resources around Ueno, followed by vegetarian garden curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints: it features verified culture and art activities in Asakusa and Ueno, provides vegetarian dining each day, avoids closed venues, and stays well within the allocated budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 15942,
+      "decisionMs": 2786,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 908,
+          "inputTokens": 519,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4205,
+          "inputTokens": 148,
+          "outputTokens": 606,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2219,
+          "inputTokens": 163,
+          "outputTokens": 345,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 945,
+          "inputTokens": 2016,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4366,
+          "inputTokens": 1049,
+          "outputTokens": 1144,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 932,
+          "inputTokens": 2256,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2342,
+          "inputTokens": 1618,
+          "outputTokens": 281,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 4205,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2220,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4366,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2343,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Art and Culture Two-Day Itinerary",
+        "summary": "A balanced 2-day cultural and artistic journey through Asakusa and Ueno, featuring all-indoor traditional arts on the rainy first day and museum exploration on the second, paired with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A fully indoor day in Asakusa designed for rainy weather, focusing on traditional printmaking and paper arts, followed by a wholesome vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "An inspiring day in Ueno exploring local history and design archives, complemented by a hearty vegetable curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints: all activities match the culture and art interests, Day 1 is entirely indoor for the rainy day, all meals are vegetarian, closed venues are avoided, and the total cost is well within budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 21077,
+      "decisionMs": 2320,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 346,
+          "inputTokens": 516,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6627,
+          "inputTokens": 147,
+          "outputTokens": 477,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1823,
+          "inputTokens": 162,
+          "outputTokens": 304,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1028,
+          "inputTokens": 2019,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 7564,
+          "inputTokens": 1048,
+          "outputTokens": 1735,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 945,
+          "inputTokens": 2288,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2721,
+          "inputTokens": 1652,
+          "outputTokens": 419,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 6627,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 1823,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 7564,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2722,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A relaxed two-day exploration of Tokyo's traditional and contemporary arts and culture across Asakusa and Ueno, featuring indoor workshops during rainy weather and vegetarian dining throughout.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "An entirely indoor cultural day in Asakusa designed for rainy weather, exploring woodblock printing and traditional paper crafts alongside a vegetarian lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A focused day of art and history in Ueno visiting the city history museum and design reading room, complemented by a comforting vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all task requirements: it accommodates two travelers within the specified budget, ensures indoor activities on the rainy first day, provides vegetarian meals each day, aligns closely with art and culture interests, and avoids closed venues."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 20701,
+      "decisionMs": 6258,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2054,
+          "inputTokens": 169,
+          "outputTokens": 221,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2974,
+          "inputTokens": 147,
+          "outputTokens": 656,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2238,
+          "inputTokens": 162,
+          "outputTokens": 321,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2467,
+          "inputTokens": 980,
+          "outputTokens": 163,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 6755,
+          "inputTokens": 1048,
+          "outputTokens": 2000,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1736,
+          "inputTokens": 1162,
+          "outputTokens": 108,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2458,
+          "inputTokens": 1654,
+          "outputTokens": 492,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2974,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2238,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 6755,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2459,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "baseline",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Culture and Art Highlights",
+        "summary": "A 2-day cultural journey through Tokyo exploring historical market lanes, design archives, and famous city walks while staying well within budget.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "market-lane"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore Japanese design collections in Ueno followed by the vibrant cultural lanes of Ameyoko, paired with vegetarian noodles."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "asakusa-walk",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Discover traditional historic architecture on an Asakusa walking tour before experiencing the contemporary urban culture of Shibuya."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The itinerary exceeds the budget of 1000 for 2 people, reaching a total cost of 1560 (780 per day from meals for 2 people)."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 8,
+      "coordinationCalls": 4,
+      "workerCalls": 4,
+      "wallMs": 35725,
+      "decisionMs": 11975,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2562,
+          "inputTokens": 165,
+          "outputTokens": 179,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3746,
+          "inputTokens": 143,
+          "outputTokens": 724,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2486,
+          "inputTokens": 158,
+          "outputTokens": 222,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2462,
+          "inputTokens": 1021,
+          "outputTokens": 150,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 15146,
+          "inputTokens": 1089,
+          "outputTokens": 4854,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2048,
+          "inputTokens": 1179,
+          "outputTokens": 142,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2348,
+          "inputTokens": 1665,
+          "outputTokens": 208,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 4902,
+          "inputTokens": 1788,
+          "outputTokens": 1162,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3747,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2486,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 15146,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2349,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "clarify",
+          "source": "model"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 1,
+      "team": "hybrid",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Budget Cultural Journey",
+        "summary": "A 2-day cultural and art-focused Tokyo itinerary designed with zero-cost activities and the lowest-cost vegetarian dining to minimize expenses.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "asakusa-walk",
+              "design-library"
+            ],
+            "meal": "budget-noodles",
+            "note": "Walk through historic Asakusa and visit the Ueno design reading room, paired with an affordable bowl of vegetarian noodles."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "market-lane",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore the cultural lanes of Ameyoko market and the iconic Shibuya crossing, keeping costs strictly at the absolute minimum."
+          }
+        ]
+      },
+      "review": null,
+      "steps": 6,
+      "modelCalls": 9,
+      "coordinationCalls": 4,
+      "workerCalls": 5,
+      "wallMs": 32880,
+      "decisionMs": 3567,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1179,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4091,
+          "inputTokens": 143,
+          "outputTokens": 809,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2098,
+          "inputTokens": 158,
+          "outputTokens": 229,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 977,
+          "inputTokens": 2091,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 11142,
+          "inputTokens": 1089,
+          "outputTokens": 3719,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1029,
+          "inputTokens": 2344,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2102,
+          "inputTokens": 1686,
+          "outputTokens": 286,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 381,
+          "inputTokens": 3346,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 9853,
+          "inputTokens": 1859,
+          "outputTokens": 3186,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 4091,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2098,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 11143,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2102,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 5,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "revise_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 5,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "revise_itinerary",
+          "ms": 9853,
+          "error": null
+        },
+        {
+          "step": 6,
+          "kind": "agent",
+          "agent": null,
+          "choice": "clarify",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Itinerary",
+        "summary": "A relaxed two-day exploration of traditional and modern arts in Asakusa and Ueno featuring vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Explore Kuramae craft traditions and woodblock printmaking in Asakusa, complemented by a vegetarian bowl lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo cultural history and design archives in Ueno, followed by garden vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary fully satisfies all constraints: both days align with your culture and art interests, meals meet your vegetarian requirements, activities stay well within the budget, and all deterministic checks passed."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 15562,
+      "decisionMs": 2879,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 945,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3152,
+          "inputTokens": 144,
+          "outputTokens": 569,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2343,
+          "inputTokens": 159,
+          "outputTokens": 344,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 979,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4548,
+          "inputTokens": 1090,
+          "outputTokens": 1292,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 955,
+          "inputTokens": 2330,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2623,
+          "inputTokens": 1660,
+          "outputTokens": 443,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3153,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2343,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4548,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2624,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "standard",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Art and Culture Exploration",
+        "summary": "A two-day cultural journey through Asakusa and Ueno focusing on traditional craft, woodblock printmaking, and urban design, complemented by vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Discover artisanal crafts and Japanese woodblock printing techniques in Asakusa, paired with fresh plant-based dining."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo's cultural history and design archives in Ueno, followed by vegetarian vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all requirements, aligning perfectly with the requested culture and art interests, adhering to the budget, respecting vegetarian dietary preferences, and maintaining geographic coherence each day."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 21611,
+      "decisionMs": 6154,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1882,
+          "inputTokens": 166,
+          "outputTokens": 196,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3151,
+          "inputTokens": 144,
+          "outputTokens": 598,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2227,
+          "inputTokens": 159,
+          "outputTokens": 262,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2058,
+          "inputTokens": 1022,
+          "outputTokens": 183,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5555,
+          "inputTokens": 1090,
+          "outputTokens": 1137,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2213,
+          "inputTokens": 1187,
+          "outputTokens": 185,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4511,
+          "inputTokens": 1671,
+          "outputTokens": 549,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3151,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2227,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5555,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 4511,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A 2-day exploration of Tokyo's rich art and cultural heritage, featuring rainy-day indoor craft and print studios in Asakusa followed by museum and design archives in Ueno, complemented with delicious vegetarian meals.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A fully indoor itinerary for a rainy day exploring traditional crafts and woodblock printing in Kuramae and Asakusa, paired with fresh vegetarian fare."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural day in Ueno delving into urban history and design collections, finished with a hearty vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all constraints: it matches the culture and art interests, respects the vegetarian diet, keeps all Day 1 activities and meals indoors for the rainy day, stays well within budget, and adheres to the relaxed schedule limits."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 21912,
+      "decisionMs": 8631,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 3586,
+          "inputTokens": 166,
+          "outputTokens": 195,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3006,
+          "inputTokens": 144,
+          "outputTokens": 434,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2303,
+          "inputTokens": 159,
+          "outputTokens": 306,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2681,
+          "inputTokens": 1022,
+          "outputTokens": 169,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5303,
+          "inputTokens": 1090,
+          "outputTokens": 1509,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2364,
+          "inputTokens": 1211,
+          "outputTokens": 102,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2653,
+          "inputTokens": 1702,
+          "outputTokens": 478,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3006,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2303,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5304,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2653,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-day",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A curated 2-day exploration of traditional and modern arts in Asakusa and Ueno, fully indoor for rainy day 1 and featuring vegetarian dining throughout.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A rainy-day exploration of traditional Japanese crafts and woodblock printing in Asakusa, paired with a fresh vegetarian lunch."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Immerse in Tokyo cultural history and design archives in Ueno, complemented by a hearty vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences, including rainy-day indoor activities on day 1, vegetarian dining, matching cultural and art interests, and staying well within budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 14633,
+      "decisionMs": 2799,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1080,
+          "inputTokens": 512,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3273,
+          "inputTokens": 144,
+          "outputTokens": 466,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2081,
+          "inputTokens": 159,
+          "outputTokens": 404,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 826,
+          "inputTokens": 2092,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4143,
+          "inputTokens": 1090,
+          "outputTokens": 1279,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 893,
+          "inputTokens": 2344,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2321,
+          "inputTokens": 1680,
+          "outputTokens": 286,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3273,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2082,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4143,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2321,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Tour",
+        "summary": "A 2-day cultural and artistic journey exploring traditional and contemporary crafts, history, and design in Asakusa and Ueno with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Immerse in Asakusa's artisanal heritage with craft gallery displays and woodblock printmaking, complemented by fresh vegetarian fare."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover Tokyo's history and design culture around Ueno, followed by a warm vegetarian curry lunch."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences, featuring cultural and artistic activities in Asakusa and Ueno with vegetarian meals, all within budget and verified schedules."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 14621,
+      "decisionMs": 2265,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 351,
+          "inputTokens": 519,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2205,
+          "inputTokens": 148,
+          "outputTokens": 284,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2454,
+          "inputTokens": 163,
+          "outputTokens": 298,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 953,
+          "inputTokens": 2016,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5692,
+          "inputTokens": 1049,
+          "outputTokens": 1334,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 959,
+          "inputTokens": 2264,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1987,
+          "inputTokens": 1634,
+          "outputTokens": 230,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2205,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2454,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5693,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 1988,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "closed-venue",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6120,
+      "plan": {
+        "title": "Tokyo Culture and Art Two-Day Itinerary",
+        "summary": "A relaxed two-day exploration of traditional and modern arts in Asakusa and Ueno, featuring craft workshops, museum visits, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "craft-gallery",
+              "print-studio"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "Spend the day exploring hands-on traditional Japanese crafts and woodblock printing in Asakusa, followed by a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "Discover cultural history and contemporary design in Ueno, complemented by a hearty vegetarian curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all constraints and preferences. It stays well within budget, includes vegetarian meals, respects closed venues, aligns with art and culture interests, and passes all schedule and feasibility checks."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 18834,
+      "decisionMs": 6732,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2133,
+          "inputTokens": 170,
+          "outputTokens": 231,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1966,
+          "inputTokens": 148,
+          "outputTokens": 323,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2365,
+          "inputTokens": 163,
+          "outputTokens": 299,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2449,
+          "inputTokens": 981,
+          "outputTokens": 114,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5635,
+          "inputTokens": 1049,
+          "outputTokens": 1636,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2149,
+          "inputTokens": 1146,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2118,
+          "inputTokens": 1628,
+          "outputTokens": 413,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 1967,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2365,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5635,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2119,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Art and Culture Itinerary",
+        "summary": "A two-day exploration of traditional and modern Japanese arts and culture across Asakusa and Ueno, featuring indoor workshops during the rainy day and enriching museum visits paired with vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A fully indoor day in Asakusa exploring traditional woodblock printing and paper arts, complemented by a nourishing vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A culture and art-filled day in Ueno visiting the city history museum and design reading room, followed by vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary satisfies all constraints and preferences: all selected activities and meals are indoor on the designated rainy day, align with the requested culture and art interests, respect vegetarian dining requirements, avoid closed venues, and remain well within the total budget."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 20808,
+      "decisionMs": 6182,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2021,
+          "inputTokens": 169,
+          "outputTokens": 131,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 3734,
+          "inputTokens": 147,
+          "outputTokens": 897,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2557,
+          "inputTokens": 162,
+          "outputTokens": 272,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2251,
+          "inputTokens": 980,
+          "outputTokens": 163,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 5971,
+          "inputTokens": 1048,
+          "outputTokens": 1467,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1909,
+          "inputTokens": 1156,
+          "outputTokens": 189,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2346,
+          "inputTokens": 1643,
+          "outputTokens": 324,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 3734,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2557,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 5971,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2347,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "rain-and-closure",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "completed",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "completed",
+      "completed": true,
+      "validationPassed": true,
+      "validationIssues": [],
+      "estimatedTripInr": 6240,
+      "plan": {
+        "title": "Tokyo Art and Culture Itinerary",
+        "summary": "A two-day exploration of traditional and modern Japanese arts and culture across Asakusa and Ueno, featuring vegetarian dining and indoor cultural activities on the rainy day.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "print-studio",
+              "paper-workshop"
+            ],
+            "meal": "asakusa-bowl",
+            "note": "A rainy first day dedicated to indoor Asakusa craft arts, exploring woodblock printing and paper craft followed by a vegetarian meal."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "city-museum",
+              "design-library"
+            ],
+            "meal": "ueno-curry",
+            "note": "A cultural day in Ueno delving into city history and design reading rooms, complemented by a hearty vegetable curry."
+          }
+        ]
+      },
+      "review": {
+        "passed": true,
+        "specialist": {
+          "satisfied": true,
+          "feedback": "The itinerary meets all requirements, including dietary needs, rain-day indoor activities, interests in art and culture, budget limits, and venue availability."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 7,
+      "coordinationCalls": 3,
+      "workerCalls": 4,
+      "wallMs": 14311,
+      "decisionMs": 2897,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 951,
+          "inputTokens": 516,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2291,
+          "inputTokens": 147,
+          "outputTokens": 446,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2050,
+          "inputTokens": 162,
+          "outputTokens": 200,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 935,
+          "inputTokens": 2019,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 4622,
+          "inputTokens": 1048,
+          "outputTokens": 1381,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1011,
+          "inputTokens": 2276,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2428,
+          "inputTokens": 1637,
+          "outputTokens": 447,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2292,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2051,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 4622,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2428,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "finish",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "hybrid",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Budget Culture and Art Tour",
+        "summary": "A 2-day Tokyo itinerary tailored to culture and art, selected using the lowest-cost options in the catalog (all free activities and the most affordable vegetarian meal) to keep total expenditure as close to the target budget as possible.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "design-library",
+              "asakusa-walk"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore Japanese art and design at the free Design reading room, followed by a cultural walk through historic Asakusa, dining on value-priced vegetarian noodles."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "market-lane",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Soak in local street culture at Ameyoko market lanes and iconic Shibuya crossing at zero admission cost, paired once again with budget-friendly vegetarian noodles."
+          }
+        ]
+      },
+      "review": null,
+      "steps": 6,
+      "modelCalls": 9,
+      "coordinationCalls": 4,
+      "workerCalls": 5,
+      "wallMs": 35355,
+      "decisionMs": 2741,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 428,
+          "inputTokens": 511,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2459,
+          "inputTokens": 143,
+          "outputTokens": 228,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2861,
+          "inputTokens": 158,
+          "outputTokens": 267,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 974,
+          "inputTokens": 2091,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 12355,
+          "inputTokens": 1089,
+          "outputTokens": 3631,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 965,
+          "inputTokens": 2348,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2302,
+          "inputTokens": 1689,
+          "outputTokens": 270,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 373,
+          "inputTokens": 3338,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 12614,
+          "inputTokens": 1850,
+          "outputTokens": 3616,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 2459,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2861,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 12355,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2303,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 5,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "revise_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 5,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "revise_itinerary",
+          "ms": 12614,
+          "error": null
+        },
+        {
+          "step": 6,
+          "kind": "agent",
+          "agent": null,
+          "choice": "clarify",
+          "source": "prerequisite rule"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "infeasible-budget",
+      "catalogVersion": "tokyo-inr-synthetic-v2",
+      "expectedOutcome": "needs_input",
+      "meetsExpectation": true,
+      "repetition": 2,
+      "team": "baseline",
+      "status": "needs_input",
+      "completed": false,
+      "validationPassed": false,
+      "validationIssues": [
+        "Estimated day-plan cost exceeds budget by ₹560."
+      ],
+      "estimatedTripInr": 1560,
+      "plan": {
+        "title": "Tokyo Cultural and Artistic Highlights",
+        "summary": "A budget-friendly 2-day cultural and artistic itinerary through Tokyo featuring historic neighborhood walks, design exhibits, and vegetarian dining.",
+        "days": [
+          {
+            "day": 1,
+            "activities": [
+              "asakusa-walk",
+              "design-library"
+            ],
+            "meal": "budget-noodles",
+            "note": "Explore Asakusa's cultural streets followed by browsing contemporary art and design at the reading room in Ueno."
+          },
+          {
+            "day": 2,
+            "activities": [
+              "market-lane",
+              "shibuya-crossing"
+            ],
+            "meal": "budget-noodles",
+            "note": "Wander through the historic Ameyoko market lanes in Ueno and capture iconic Tokyo culture during a Shibuya photo walk."
+          }
+        ]
+      },
+      "review": {
+        "passed": false,
+        "specialist": {
+          "satisfied": false,
+          "feedback": "The itinerary fails deterministic checks because the estimated day-plan cost of 1560 exceeds the budget of 1000 by 560."
+        }
+      },
+      "steps": 5,
+      "modelCalls": 8,
+      "coordinationCalls": 4,
+      "workerCalls": 4,
+      "wallMs": 40241,
+      "decisionMs": 14810,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2247,
+          "inputTokens": 165,
+          "outputTokens": 166,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 1756,
+          "inputTokens": 143,
+          "outputTokens": 204,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2539,
+          "inputTokens": 158,
+          "outputTokens": 338,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2429,
+          "inputTokens": 1021,
+          "outputTokens": 173,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 18866,
+          "inputTokens": 1089,
+          "outputTokens": 5972,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2250,
+          "inputTokens": 1182,
+          "outputTokens": 181,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "worker",
+          "model": "gemini-3.8-flash",
+          "ms": 2249,
+          "inputTokens": 1672,
+          "outputTokens": 242,
+          "estimatedUsd": null,
+          "error": null
+        },
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 7883,
+          "inputTokens": 1789,
+          "outputTokens": 2101,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 1,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_places",
+          "source": "model"
+        },
+        {
+          "step": 1,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_places",
+          "ms": 1757,
+          "error": null
+        },
+        {
+          "step": 2,
+          "kind": "agent",
+          "agent": null,
+          "choice": "researcher",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool",
+          "agent": "researcher",
+          "choice": "search_food",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "agent": "researcher",
+          "tool": "search_food",
+          "ms": 2539,
+          "error": null
+        },
+        {
+          "step": 3,
+          "kind": "agent",
+          "agent": null,
+          "choice": "planner",
+          "source": "model"
+        },
+        {
+          "step": 3,
+          "kind": "tool",
+          "agent": "planner",
+          "choice": "draft_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "agent": "planner",
+          "tool": "draft_itinerary",
+          "ms": 18866,
+          "error": null
+        },
+        {
+          "step": 4,
+          "kind": "agent",
+          "agent": null,
+          "choice": "reviewer",
+          "source": "model"
+        },
+        {
+          "step": 4,
+          "kind": "tool",
+          "agent": "reviewer",
+          "choice": "review_itinerary",
+          "source": "prerequisite rule"
+        },
+        {
+          "step": 4,
+          "kind": "tool_result",
+          "agent": "reviewer",
+          "tool": "review_itinerary",
+          "ms": 2250,
+          "error": null
+        },
+        {
+          "step": 5,
+          "kind": "agent",
+          "agent": null,
+          "choice": "clarify",
+          "source": "model"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "runs": 10,
+      "correctOutcomes": 10,
+      "completed": 8,
+      "independentlyValid": 8,
+      "medianWallMs": 20754.5,
+      "modelCalls": 72,
+      "coordinationCalls": 32,
+      "workerCalls": 40,
+      "totalDecisionMs": 79737
+    },
+    "hybrid": {
+      "runs": 10,
+      "correctOutcomes": 10,
+      "completed": 8,
+      "independentlyValid": 8,
+      "medianWallMs": 15097.5,
+      "modelCalls": 74,
+      "coordinationCalls": 32,
+      "workerCalls": 42,
+      "totalDecisionMs": 26867
+    }
+  }
+}

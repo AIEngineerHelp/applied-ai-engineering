@@ -1,0 +1,282 @@
+{
+  "version": "tokyo-inr-synthetic-v2",
+  "city": "Tokyo",
+  "currency": "INR",
+  "provenance": "Hand-authored synthetic learning fixtures. All prices are illustrative INR amounts, not currency conversions or live travel quotes. Names reference local neighborhoods; availability and durations are fictional.",
+  "transitPerPersonPerDay": 450,
+  "places": [
+    {
+      "id": "asakusa-walk",
+      "name": "Asakusa neighborhood walk",
+      "area": "Asakusa",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "craft-gallery",
+      "name": "Kuramae craft gallery",
+      "area": "Asakusa",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 300,
+      "minutes": 90
+    },
+    {
+      "id": "print-studio",
+      "name": "Woodblock print studio",
+      "area": "Asakusa",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 1080,
+      "minutes": 120
+    },
+    {
+      "id": "riverside",
+      "name": "Sumida riverside stroll",
+      "area": "Asakusa",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "ueno-garden",
+      "name": "Ueno garden paths",
+      "area": "Ueno",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 180,
+      "minutes": 90
+    },
+    {
+      "id": "city-museum",
+      "name": "City history museum",
+      "area": "Ueno",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 420,
+      "minutes": 120
+    },
+    {
+      "id": "design-library",
+      "name": "Design reading room",
+      "area": "Ueno",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "market-lane",
+      "name": "Ameyoko market lanes",
+      "area": "Ueno",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 90
+    },
+    {
+      "id": "shibuya-crossing",
+      "name": "Shibuya photo walk",
+      "area": "Shibuya",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "digital-gallery",
+      "name": "Shibuya digital art gallery",
+      "area": "Shibuya",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "photography"
+      ],
+      "indoor": true,
+      "price": 1320,
+      "minutes": 100
+    },
+    {
+      "id": "music-archive",
+      "name": "Independent music archive",
+      "area": "Shibuya",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 360,
+      "minutes": 90
+    },
+    {
+      "id": "yoyogi-paths",
+      "name": "Yoyogi park paths",
+      "area": "Shibuya",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "tea-room",
+      "name": "Tea culture room",
+      "area": "Ueno",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 540,
+      "minutes": 70
+    },
+    {
+      "id": "photo-library",
+      "name": "Tokyo photo library",
+      "area": "Shibuya",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "art"
+      ],
+      "indoor": true,
+      "price": 240,
+      "minutes": 80
+    },
+    {
+      "id": "paper-workshop",
+      "name": "Paper arts exhibition",
+      "area": "Asakusa",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 360,
+      "minutes": 90
+    },
+    {
+      "id": "asakusa-bowl",
+      "name": "Green bowl kitchen",
+      "area": "Asakusa",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 660,
+      "minutes": 60
+    },
+    {
+      "id": "ueno-curry",
+      "name": "Garden vegetable curry",
+      "area": "Ueno",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 600,
+      "minutes": 60
+    },
+    {
+      "id": "shibuya-tofu",
+      "name": "Tofu & sesame table",
+      "area": "Shibuya",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 780,
+      "minutes": 60
+    },
+    {
+      "id": "budget-noodles",
+      "name": "Everyday vegetable noodles",
+      "area": "Ueno",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 390,
+      "minutes": 45
+    },
+    {
+      "id": "asakusa-grill",
+      "name": "Neighborhood grill",
+      "area": "Asakusa",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 840,
+      "minutes": 60
+    },
+    {
+      "id": "shibuya-ramen",
+      "name": "Corner ramen counter",
+      "area": "Shibuya",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 570,
+      "minutes": 45
+    }
+  ]
+}

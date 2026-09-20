@@ -1,0 +1,30 @@
+{
+  "name": "travel-planner-gemini-typesafe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A reproducible comparison of Gemini and Jev multi-agent coordination.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build:client": "esbuild client/app.ts client/history.ts --bundle --format=esm --outdir=public --entry-names=[name]",
+    "build": "npm run check && npm run build:client",
+    "start": "npm run build:client && node --env-file-if-exists=.env --import=tsx src/server.ts",
+    "dev": "npm run build:client && node --watch --env-file-if-exists=.env --import=tsx src/server.ts",
+    "test": "node --import=tsx --test tests/*.test.ts",
+    "check": "tsc --noEmit",
+    "eval": "node --env-file-if-exists=.env --import=tsx scripts/evaluate.ts",
+    "benchmark": "node --env-file-if-exists=.env --import=tsx scripts/benchmark.ts",
+    "benchmark:agent": "node --env-file-if-exists=.env --import=tsx scripts/agent-benchmark.ts"
+  },
+  "dependencies": {
+    "@langchain/langgraph": "^1.4.16"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "version": "jaipur-inr-synthetic-v1",
+  "city": "Jaipur",
+  "currency": "INR",
+  "provenance": "Hand-authored synthetic learning fixtures. All prices are illustrative INR amounts, not currency conversions or live travel quotes. Names reference local neighborhoods; availability and durations are fictional.",
+  "transitPerPersonPerDay": 300,
+  "places": [
+    {
+      "id": "jaipur-1",
+      "name": "Pink City lanes",
+      "area": "Old City",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "jaipur-2",
+      "name": "Block-print gallery",
+      "area": "Civil Lines",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 210,
+      "minutes": 90
+    },
+    {
+      "id": "jaipur-3",
+      "name": "Textile print studio",
+      "area": "C Scheme",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 760,
+      "minutes": 120
+    },
+    {
+      "id": "jaipur-4",
+      "name": "Garden promenade",
+      "area": "Old City",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "jaipur-5",
+      "name": "Heritage garden",
+      "area": "Civil Lines",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 130,
+      "minutes": 90
+    },
+    {
+      "id": "jaipur-6",
+      "name": "Rajasthan stories museum",
+      "area": "C Scheme",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 290,
+      "minutes": 120
+    },
+    {
+      "id": "jaipur-7",
+      "name": "Design reading room",
+      "area": "Old City",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "jaipur-8",
+      "name": "Old City bazaar",
+      "area": "Civil Lines",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 90
+    },
+    {
+      "id": "jaipur-9",
+      "name": "Architecture photo walk",
+      "area": "C Scheme",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "jaipur-10",
+      "name": "Contemporary art gallery",
+      "area": "Old City",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "photography"
+      ],
+      "indoor": true,
+      "price": 920,
+      "minutes": 100
+    },
+    {
+      "id": "jaipur-11",
+      "name": "Folk music archive",
+      "area": "Civil Lines",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "jaipur-12",
+      "name": "Shaded garden trail",
+      "area": "C Scheme",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "jaipur-13",
+      "name": "Chai tasting room",
+      "area": "Old City",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 380,
+      "minutes": 70
+    },
+    {
+      "id": "jaipur-14",
+      "name": "Photography library",
+      "area": "Civil Lines",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "art"
+      ],
+      "indoor": true,
+      "price": 170,
+      "minutes": 80
+    },
+    {
+      "id": "jaipur-15",
+      "name": "Paper craft exhibition",
+      "area": "C Scheme",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "jaipur-16",
+      "name": "Vegetarian thali kitchen",
+      "area": "Old City",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 460,
+      "minutes": 60
+    },
+    {
+      "id": "jaipur-17",
+      "name": "Garden dal & rice",
+      "area": "Civil Lines",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 420,
+      "minutes": 60
+    },
+    {
+      "id": "jaipur-18",
+      "name": "Millet lunch table",
+      "area": "C Scheme",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 550,
+      "minutes": 60
+    },
+    {
+      "id": "jaipur-19",
+      "name": "Everyday vegetable poha",
+      "area": "Old City",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 270,
+      "minutes": 45
+    },
+    {
+      "id": "jaipur-20",
+      "name": "Neighborhood grill",
+      "area": "Civil Lines",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 590,
+      "minutes": 60
+    },
+    {
+      "id": "jaipur-21",
+      "name": "Local curry counter",
+      "area": "C Scheme",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 400,
+      "minutes": 45
+    }
+  ]
+}

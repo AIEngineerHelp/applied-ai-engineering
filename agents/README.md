@@ -10,7 +10,9 @@ Use this category for tool use, agent coordination, memory, context management, 
 
 ## Projects and resources
 
-No projects yet. Add a project here when it fits the scope above.
+| Project | What it explores | Status |
+| --- | --- | --- |
+| [Travel planner with Gemini and TypeSafe](travel-planner-gemini-typesafe/README.md) | Compare Gemini-only coordination with Jev agent and tool selection using live web research | Runnable TypeScript prototype with controlled benchmark results |
 
 ## Adding a contribution
 

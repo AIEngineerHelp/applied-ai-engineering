@@ -1,0 +1,1777 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-20T04:19:47.190Z",
+  "datasetHash": "574475eb1981d973ef852091657bb8f5e6c16375aafa3e131781783fb11fbd40",
+  "repetitions": 3,
+  "cases": [
+    {
+      "id": "draft-after-research",
+      "group": "agent",
+      "expected": "planner",
+      "reason": "Both evidence sets are ready; no draft exists."
+    },
+    {
+      "id": "draft-after-search-retry",
+      "group": "agent",
+      "expected": "planner",
+      "reason": "The missing meal search succeeded; drafting is now possible."
+    },
+    {
+      "id": "review-first-draft",
+      "group": "agent",
+      "expected": "reviewer",
+      "reason": "A draft exists and has not been checked."
+    },
+    {
+      "id": "review-revised-draft",
+      "group": "agent",
+      "expected": "reviewer",
+      "reason": "The revision has not been reviewed yet."
+    },
+    {
+      "id": "replace-insufficient-activities",
+      "group": "agent",
+      "expected": "researcher",
+      "reason": "One researched activity cannot supply four distinct activity slots."
+    },
+    {
+      "id": "replace-unsuitable-meals",
+      "group": "agent",
+      "expected": "researcher",
+      "reason": "The sole researched meal is unsuitable for a vegetarian request."
+    },
+    {
+      "id": "revise-closed-stop",
+      "group": "agent",
+      "expected": "planner",
+      "reason": "Other researched activities are available; revise the closed stop out of the draft."
+    },
+    {
+      "id": "revise-rain-day",
+      "group": "agent",
+      "expected": "planner",
+      "reason": "Indoor researched alternatives exist for the rainy day."
+    },
+    {
+      "id": "search-more-activities",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_places",
+      "reason": "The failed review needs more distinct activities, while meal evidence is sufficient."
+    },
+    {
+      "id": "search-indoor-activities",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_places",
+      "reason": "No indoor activity is present for the rainy day."
+    },
+    {
+      "id": "search-vegetarian-meals",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_food",
+      "reason": "The only researched meal conflicts with the vegetarian requirement."
+    },
+    {
+      "id": "search-replacement-meal",
+      "group": "tool",
+      "agent": "researcher",
+      "expected": "search_food",
+      "reason": "The sole researched meal is closed; activity evidence is sufficient."
+    }
+  ],
+  "configuration": {
+    "geminiModel": "gemini-3.8-flash",
+    "jevModel": "jev-latest",
+    "instruction": "See CHOICE_INSTRUCTION in src/providers.ts"
+  },
+  "samples": [
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2338,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2338,
+          "inputTokens": 1084,
+          "outputTokens": 186,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 933,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 933,
+          "inputTokens": 2201,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 358,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 358,
+          "inputTokens": 2232,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 1907,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1907,
+          "inputTokens": 1101,
+          "outputTokens": 157,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 2285,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2285,
+          "inputTokens": 1197,
+          "outputTokens": 395,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 956,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 955,
+          "inputTokens": 2381,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 323,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 323,
+          "inputTokens": 2416,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 2414,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2414,
+          "inputTokens": 1213,
+          "outputTokens": 175,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 2113,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2113,
+          "inputTokens": 625,
+          "outputTokens": 206,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 845,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 845,
+          "inputTokens": 1324,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 299,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 299,
+          "inputTokens": 2008,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 2047,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2047,
+          "inputTokens": 993,
+          "outputTokens": 184,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2103,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2103,
+          "inputTokens": 1230,
+          "outputTokens": 180,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 857,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 857,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 328,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 327,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2118,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2117,
+          "inputTokens": 1231,
+          "outputTokens": 178,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 2412,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2412,
+          "inputTokens": 616,
+          "outputTokens": 146,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 898,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 898,
+          "inputTokens": 1301,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 330,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 330,
+          "inputTokens": 1705,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 2194,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2194,
+          "inputTokens": 830,
+          "outputTokens": 184,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 2146,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2146,
+          "inputTokens": 984,
+          "outputTokens": 164,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 1026,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1026,
+          "inputTokens": 1985,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 348,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 347,
+          "inputTokens": 1991,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 1,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 2464,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2463,
+          "inputTokens": 987,
+          "outputTokens": 139,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 363,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 363,
+          "inputTokens": 2201,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2253,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2253,
+          "inputTokens": 1084,
+          "outputTokens": 183,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2206,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2206,
+          "inputTokens": 1101,
+          "outputTokens": 218,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 1104,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1104,
+          "inputTokens": 2232,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 330,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 330,
+          "inputTokens": 2381,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 2401,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2401,
+          "inputTokens": 1197,
+          "outputTokens": 282,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 2460,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2460,
+          "inputTokens": 1213,
+          "outputTokens": 199,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 1029,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1029,
+          "inputTokens": 2416,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 417,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 417,
+          "inputTokens": 1324,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 2031,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2031,
+          "inputTokens": 625,
+          "outputTokens": 264,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 2512,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2512,
+          "inputTokens": 993,
+          "outputTokens": 190,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 1106,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1106,
+          "inputTokens": 2008,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 333,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 333,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 1885,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1884,
+          "inputTokens": 1230,
+          "outputTokens": 250,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2125,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2125,
+          "inputTokens": 1231,
+          "outputTokens": 209,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 984,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 984,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 385,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 385,
+          "inputTokens": 1301,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 1943,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1943,
+          "inputTokens": 616,
+          "outputTokens": 139,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 2178,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2178,
+          "inputTokens": 830,
+          "outputTokens": 186,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 1265,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1264,
+          "inputTokens": 1705,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 722,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 722,
+          "inputTokens": 1985,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 1969,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1968,
+          "inputTokens": 984,
+          "outputTokens": 167,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 2288,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2287,
+          "inputTokens": 987,
+          "outputTokens": 150,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 2,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 953,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 953,
+          "inputTokens": 1991,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2184,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2184,
+          "inputTokens": 1084,
+          "outputTokens": 139,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-research",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 377,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 377,
+          "inputTokens": 2201,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 372,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 372,
+          "inputTokens": 2232,
+          "outputTokens": 37,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "draft-after-search-retry",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2210,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2210,
+          "inputTokens": 1101,
+          "outputTokens": 166,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 2981,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2981,
+          "inputTokens": 1197,
+          "outputTokens": 625,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-first-draft",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 966,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 966,
+          "inputTokens": 2381,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 397,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 397,
+          "inputTokens": 2416,
+          "outputTokens": 46,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "review-revised-draft",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "reviewer",
+      "choice": "reviewer",
+      "correct": true,
+      "ms": 1581,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1581,
+          "inputTokens": 1213,
+          "outputTokens": 199,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 1867,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1867,
+          "inputTokens": 625,
+          "outputTokens": 143,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-insufficient-activities",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 360,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 360,
+          "inputTokens": 1324,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 360,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 360,
+          "inputTokens": 2008,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "replace-unsuitable-meals",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "researcher",
+      "choice": "researcher",
+      "correct": true,
+      "ms": 2146,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2146,
+          "inputTokens": 993,
+          "outputTokens": 197,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 2049,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2049,
+          "inputTokens": 1230,
+          "outputTokens": 229,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-closed-stop",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 1132,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 1132,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 330,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 329,
+          "inputTokens": 2430,
+          "outputTokens": 45,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "revise-rain-day",
+      "group": "agent",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "planner",
+      "choice": "planner",
+      "correct": true,
+      "ms": 1821,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1821,
+          "inputTokens": 1231,
+          "outputTokens": 143,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 2231,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2231,
+          "inputTokens": 616,
+          "outputTokens": 142,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-more-activities",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 836,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 836,
+          "inputTokens": 1301,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 361,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 361,
+          "inputTokens": 1705,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-indoor-activities",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_places",
+      "choice": "search_places",
+      "correct": true,
+      "ms": 1793,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1792,
+          "inputTokens": 830,
+          "outputTokens": 134,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 1942,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 1942,
+          "inputTokens": 984,
+          "outputTokens": 159,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-vegetarian-meals",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 342,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 342,
+          "inputTokens": 1985,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "jev",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 395,
+      "error": null,
+      "calls": [
+        {
+          "provider": "jev",
+          "stage": "coordination",
+          "model": "jev-1.13.0",
+          "ms": 395,
+          "inputTokens": 1991,
+          "outputTokens": 34,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "caseId": "search-replacement-meal",
+      "group": "tool",
+      "repetition": 3,
+      "provider": "gemini",
+      "expected": "search_food",
+      "choice": "search_food",
+      "correct": true,
+      "ms": 2226,
+      "error": null,
+      "calls": [
+        {
+          "provider": "gemini",
+          "stage": "coordination",
+          "model": "gemini-3.8-flash",
+          "ms": 2225,
+          "inputTokens": 987,
+          "outputTokens": 129,
+          "estimatedUsd": null,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "gemini": {
+      "total": 36,
+      "correct": 36,
+      "accuracy": 1,
+      "errors": 0,
+      "medianMs": 2162,
+      "p90Ms": 2460,
+      "inputTokens": 36273,
+      "outputTokens": 7136,
+      "estimatedUsd": null,
+      "modelVersions": [
+        "gemini-3.8-flash"
+      ]
+    },
+    "jev": {
+      "total": 36,
+      "correct": 36,
+      "accuracy": 1,
+      "errors": 0,
+      "medianMs": 396,
+      "p90Ms": 1104,
+      "inputTokens": 73212,
+      "outputTokens": 1446,
+      "estimatedUsd": null,
+      "modelVersions": [
+        "jev-1.13.0"
+      ]
+    }
+  }
+}

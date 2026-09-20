@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run history — Travel Lab</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/planner.css" />
+    <script type="module" src="/history.js"></script>
+  </head>
+  <body class="history-view">
+    <header class="topbar">
+      <a class="brand" href="/">Travel Lab</a>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="/">Workspace</a>
+        <a href="/history" aria-current="page">History</a>
+      </nav>
+    </header>
+    <main class="history-page">
+      <section class="history-heading">
+        <div>
+          <p class="eyebrow">PAST JOURNEYS</p>
+          <h1>Your trips, revisited.</h1>
+          <p>Every itinerary and decision is saved here. Pick up any comparison right where you left it.</p>
+        </div>
+        <button id="refresh-history" class="text-button" type="button">Refresh</button>
+      </section>
+      <section aria-label="Saved searches">
+        <div id="history-list" class="history-grid" aria-live="polite">Loading saved runs…</div>
+      </section>
+    </main>
+    <div id="error" class="toast" role="alert" hidden></div>
+  </body>
+</html>

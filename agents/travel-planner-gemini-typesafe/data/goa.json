@@ -1,0 +1,282 @@
+{
+  "version": "goa-inr-synthetic-v1",
+  "city": "Goa",
+  "currency": "INR",
+  "provenance": "Hand-authored synthetic learning fixtures. All prices are illustrative INR amounts, not currency conversions or live travel quotes. Names reference local neighborhoods; availability and durations are fictional.",
+  "transitPerPersonPerDay": 400,
+  "places": [
+    {
+      "id": "goa-1",
+      "name": "Latin Quarter walk",
+      "area": "Panjim",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "goa-2",
+      "name": "Goan craft gallery",
+      "area": "Fontainhas",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 210,
+      "minutes": 90
+    },
+    {
+      "id": "goa-3",
+      "name": "Azulejo tile studio",
+      "area": "Assagao",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 760,
+      "minutes": 120
+    },
+    {
+      "id": "goa-4",
+      "name": "Mandovi waterfront stroll",
+      "area": "Panjim",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "goa-5",
+      "name": "Village garden trail",
+      "area": "Fontainhas",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 130,
+      "minutes": 90
+    },
+    {
+      "id": "goa-6",
+      "name": "Goan heritage museum",
+      "area": "Assagao",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 290,
+      "minutes": 120
+    },
+    {
+      "id": "goa-7",
+      "name": "Design reading room",
+      "area": "Panjim",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "goa-8",
+      "name": "Neighborhood market",
+      "area": "Fontainhas",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 90
+    },
+    {
+      "id": "goa-9",
+      "name": "Colorful lanes photo walk",
+      "area": "Assagao",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "culture"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 80
+    },
+    {
+      "id": "goa-10",
+      "name": "Contemporary art gallery",
+      "area": "Panjim",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "photography"
+      ],
+      "indoor": true,
+      "price": 920,
+      "minutes": 100
+    },
+    {
+      "id": "goa-11",
+      "name": "Local music archive",
+      "area": "Fontainhas",
+      "kind": "activity",
+      "tags": [
+        "culture",
+        "art"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "goa-12",
+      "name": "Coastal nature walk",
+      "area": "Assagao",
+      "kind": "activity",
+      "tags": [
+        "nature",
+        "photography"
+      ],
+      "indoor": false,
+      "price": 0,
+      "minutes": 100
+    },
+    {
+      "id": "goa-13",
+      "name": "Spice tasting room",
+      "area": "Panjim",
+      "kind": "activity",
+      "tags": [
+        "food",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 380,
+      "minutes": 70
+    },
+    {
+      "id": "goa-14",
+      "name": "Photography library",
+      "area": "Fontainhas",
+      "kind": "activity",
+      "tags": [
+        "photography",
+        "art"
+      ],
+      "indoor": true,
+      "price": 170,
+      "minutes": 80
+    },
+    {
+      "id": "goa-15",
+      "name": "Paper art exhibition",
+      "area": "Assagao",
+      "kind": "activity",
+      "tags": [
+        "art",
+        "culture"
+      ],
+      "indoor": true,
+      "price": 250,
+      "minutes": 90
+    },
+    {
+      "id": "goa-16",
+      "name": "Vegetarian Goan kitchen",
+      "area": "Panjim",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 460,
+      "minutes": 60
+    },
+    {
+      "id": "goa-17",
+      "name": "Garden vegetable curry",
+      "area": "Fontainhas",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 420,
+      "minutes": 60
+    },
+    {
+      "id": "goa-18",
+      "name": "Coconut & rice table",
+      "area": "Assagao",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 550,
+      "minutes": 60
+    },
+    {
+      "id": "goa-19",
+      "name": "Everyday vegetable pulao",
+      "area": "Panjim",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": true,
+      "indoor": true,
+      "price": 270,
+      "minutes": 45
+    },
+    {
+      "id": "goa-20",
+      "name": "Neighborhood fish grill",
+      "area": "Fontainhas",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 590,
+      "minutes": 60
+    },
+    {
+      "id": "goa-21",
+      "name": "Local curry counter",
+      "area": "Assagao",
+      "kind": "meal",
+      "tags": [
+        "food"
+      ],
+      "vegetarian": false,
+      "indoor": true,
+      "price": 400,
+      "minutes": 45
+    }
+  ]
+}
