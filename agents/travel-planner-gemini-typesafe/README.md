@@ -142,6 +142,24 @@ One sample per scenario is a smoke evaluation, not a statistical benchmark. Its 
 
 The server binds to loopback by default and allows at most two concurrent comparisons. For deployment, set `HOST=0.0.0.0` and add the public hostname to `ALLOWED_HOSTS`. Live prompts send the brief and web research to the configured providers. Exported reports include trip notes; inspect them before sharing. The session cookie isolates history but is not user authentication. A public deployment spends the owner's provider quota, so add platform-level rate limits or access control before posting the URL broadly. Use persistent storage for `.runs/`; ephemeral hosting will lose history during restarts or redeploys.
 
+## Deploy to Vercel
+
+Use `agents/travel-planner-gemini-typesafe` as the Vercel project root, with framework preset **Other**. `vercel.json` builds the browser assets and routes requests through a Node function with a 300-second limit. The agent comparison retains its 240-second deadline, leaving time to finish saving the trace.
+
+Connect a **private Vercel Blob store** to the project. Local runs continue using `.runs/`; deployed runs use the connected Blob store. Each event is queued for an immutable private write, and completion waits for those writes. History is scoped to the browser session cookie. Clearing cookies loses access to that session's history. Old local runs are not uploaded automatically. If a function is terminated abruptly, queued events may be lost; runs still marked active after six minutes are displayed as interrupted.
+
+Set these server-side environment variables in Vercel:
+
+- `GEMINI_API_KEY`, `TYPESAFE_API_KEY`, and `ENABLE_LIVE=true`.
+- `GEMINI_MODEL` and `TYPESAFE_MODEL` as needed; use the same settings as the evaluated project for comparable runs.
+- The storage connection's `BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`.
+- `LIVE_ACCESS_PASSWORD` for a shared-password deployment. The browser asks for credentials; any username is accepted with the correct password. Alternatively, set `PUBLIC_LIVE=true` to deliberately allow public use of the configured provider keys. Without either setting, the Vercel handler refuses live access.
+- `ALLOWED_HOSTS` for custom domains. Vercel deployment, production, and branch hostnames are allowed automatically from Vercel's environment variables.
+
+The shared password is access control, not individual user authentication. The two-run concurrency limit applies per function instance, not globally. Public access needs platform-level limits appropriate to the owner's quota. Function execution and private Blob operations can incur hosting charges in addition to model charges. Cloud request and storage overhead differs from the local benchmark environment.
+
+From the example directory, deploy with `vercel` for a preview or `vercel --prod` for production after connecting the project and setting its environment variables. Verify the planner, `/api/config`, benchmark results, and session-private history. Check a complete streamed comparison before broadly sharing the deployment. The `.vercelignore` file excludes credentials, local history, and development files from uploads.
+
 ## Code map
 
 - `src/domain.ts`: input validation, offline fixture search and planner, evidence checks.

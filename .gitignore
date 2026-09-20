@@ -37,3 +37,6 @@ coverage/
 # Generated browser bundles for the travel-planner example
 agents/travel-planner-gemini-typesafe/public/app.js
 agents/travel-planner-gemini-typesafe/public/history.js
+
+# Vercel local project settings and build output
+.vercel/

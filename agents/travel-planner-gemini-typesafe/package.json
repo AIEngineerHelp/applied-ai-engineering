@@ -19,7 +19,8 @@
     "benchmark:agent": "node --env-file-if-exists=.env --import=tsx scripts/agent-benchmark.ts"
   },
   "dependencies": {
-    "@langchain/langgraph": "^1.4.16"
+    "@langchain/langgraph": "^1.4.16",
+    "@vercel/blob": "^2.8.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

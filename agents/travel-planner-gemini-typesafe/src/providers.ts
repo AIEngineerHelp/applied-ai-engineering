@@ -17,7 +17,7 @@ export function configuration(env = process.env) {
     jevKey: env.TYPESAFE_API_KEY,
     host: env.HOST || "127.0.0.1",
     allowedHosts: new Set(
-      (env.ALLOWED_HOSTS || "127.0.0.1,localhost")
+      ([env.ALLOWED_HOSTS || "127.0.0.1,localhost", env.VERCEL_URL, env.VERCEL_PROJECT_PRODUCTION_URL, env.VERCEL_BRANCH_URL].filter(Boolean).join(","))
         .split(",")
         .map((host) => host.trim().toLowerCase())
         .filter(Boolean),

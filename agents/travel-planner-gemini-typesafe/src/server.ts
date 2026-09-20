@@ -6,6 +6,13 @@ import { randomUUID } from "node:crypto";
 import { compare } from "./engine.js";
 import { catalogs, parseTask } from "./domain.js";
 import { configuration } from "./providers.js";
+export interface RunStore {
+  create(details: any): any;
+  append(id: string, event: any): void;
+  list(ownerId?: string): any;
+  get(id: string, ownerId?: string): any;
+  finish(id: string, status: string, error?: string): any;
+}
 const assets = {
   "/": ["index.html", "text/html"],
   "/history": ["history.html", "text/html"],
@@ -16,13 +23,13 @@ const assets = {
   "/planner.css": ["planner.css", "text/css"],
   "/favicon.svg": ["favicon.svg", "image/svg+xml"],
 };
-export function createApp({
+export function createRequestHandler({
   config = configuration(),
   runner = compare,
   store = createRunStore(undefined, { recover: true }),
-} = {}) {
+}: { config?: ReturnType<typeof configuration>; runner?: typeof compare; store?: RunStore } = {}) {
   let active = 0;
-  return http.createServer(async (req, res) => {
+  return async (req: http.IncomingMessage, res: http.ServerResponse) => {
     const cookies = Object.fromEntries(
       (req.headers.cookie || "")
         .split(";")
@@ -59,8 +66,7 @@ export function createApp({
     if (req.method === "GET" && path === "/api/runs")
       return reply(
         200,
-        store
-          .list()
+        (await store.list(ownerId))
           .filter(
             (record) =>
               record.ownerId === ownerId || (isLoopback && !record.ownerId),
@@ -76,7 +82,7 @@ export function createApp({
       );
     if (req.method === "GET" && path.startsWith("/api/runs/")) {
       try {
-        const record = store.get(path.slice(10));
+        const record = await store.get(path.slice(10), ownerId);
         if (
           record.ownerId !== ownerId &&
           !(isLoopback && !record.ownerId)
@@ -138,11 +144,19 @@ export function createApp({
         });
       let raw = "";
       try {
-        for await (const chunk of req) {
-          raw += chunk;
-          if (Buffer.byteLength(raw) > 12000)
-            return reply(413, { error: "Request too large." });
+        // Vercel may parse the body before invoking a Node function.
+        if ((req as any).body !== undefined) {
+          raw = typeof (req as any).body === "string"
+            ? (req as any).body : JSON.stringify((req as any).body);
+        } else {
+          for await (const chunk of req) {
+            raw += chunk;
+            if (Buffer.byteLength(raw) > 12000)
+              return reply(413, { error: "Request too large." });
+          }
         }
+        if (Buffer.byteLength(raw) > 12000)
+          return reply(413, { error: "Request too large." });
         const body = JSON.parse(raw);
         const task = parseTask(body.task, body.mode === "live");
         if (!["demo", "live"].includes(body.mode))
@@ -159,7 +173,7 @@ export function createApp({
           });
         const clean = (value) =>
           redact(value, [config.geminiKey, config.jevKey]);
-        const record = store.create(
+        const record = await store.create(
           clean({
             ownerId,
             task,
@@ -197,7 +211,7 @@ export function createApp({
               if (!res.destroyed) res.write(JSON.stringify(saved) + "\n");
             },
           });
-          store.finish(
+          await store.finish(
             record.id,
             controller.signal.aborted
               ? "cancelled"
@@ -208,11 +222,15 @@ export function createApp({
           if (!res.destroyed)
             res.end(JSON.stringify({ type: "done", runId: record.id }) + "\n");
         } catch {
-          store.finish(
-            record.id,
-            controller.signal.aborted ? "cancelled" : "error",
-            "Comparison did not finish.",
-          );
+          try {
+            await store.finish(
+              record.id,
+              controller.signal.aborted ? "cancelled" : "error",
+              "Comparison did not finish.",
+            );
+          } catch {
+            // Preserve the stream error even if storage itself is unavailable.
+          }
           if (!res.destroyed)
             res.end(
               JSON.stringify({ type: "error", message: "Comparison failed." }) +
@@ -245,6 +263,15 @@ export function createApp({
       return;
     }
     reply(404, { error: "Not found." });
+  };
+}
+export function createApp(options: Parameters<typeof createRequestHandler>[0] = {}) {
+  const handler = createRequestHandler(options);
+  return http.createServer((req, res) => {
+    handler(req, res).catch(() => {
+      if (!res.headersSent) res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Request failed. Please try again." }));
+    });
   });
 }
 if (

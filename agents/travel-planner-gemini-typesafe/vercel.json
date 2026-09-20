@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 300,
+      "includeFiles": "{data,benchmarks/results,public}/**"
+    }
+  },
+  "routes": [{ "src": "/(.*)", "dest": "/api/index" }]
+}
