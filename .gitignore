@@ -1,0 +1,32 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local OS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript dependencies and generated builds
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Local logs
+*.log
+
+# Local project tracking, post drafts, design iterations, and temporary notes
+/working/
