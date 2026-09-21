@@ -1,0 +1,18 @@
+{
+  "variant": "hybrid_weighted",
+  "index_signature": {
+    "corpus_sha256": "079b0d1317f289a84b536867d4bc83996f5cadb0f7ba77a1007cb9c3738973ee",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "embedding_backend": "mlx"
+  },
+  "configuration": {
+    "mode": "hybrid",
+    "expand": true,
+    "lexical_weight": 0.65,
+    "rrf_k": 20,
+    "expansion_weight": 0.35
+  },
+  "criterion": "nDCG@10, then Recall@10",
+  "run_id": "20260918T025423Z",
+  "ndcg_at_10": 0.6872034345071254
+}

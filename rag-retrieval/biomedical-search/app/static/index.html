@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Search biomedical research with lexical and neural retrieval. Inspect evidence and trace grounded answers to cited passages."
+    />
+    <meta name="theme-color" content="#0d5c4c" />
+    <title>Helix — Biomedical evidence search</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260918-evaluation-cleanup" />
+    <script src="/static/app.js?v=20260918-evaluation-cleanup" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Helix home"
+        ><span class="brand-mark" aria-hidden="true"
+          ><svg viewBox="0 0 32 32">
+            <path
+              d="M9 5c0 8 14 14 14 22M23 5C23 13 9 19 9 27M10 8h12M12 13h8M12 19h8M10 24h12"
+            /></svg></span
+        ><span>helix<span class="brand-period">.</span></span
+        ><span class="brand-label">RESEARCH WORKSPACE</span></a
+      >
+      <nav aria-label="Main navigation">
+        <button class="nav-item active" data-view="search" aria-current="page">
+          Search</button
+        ><button class="nav-item" data-view="evaluation">Evaluation</button
+        >
+      </nav>
+    </header>
+    <main id="main" tabindex="-1">
+      <section id="search-view" class="view">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">
+              <span class="tiny-line"></span> BIOMEDICAL EVIDENCE ENGINE
+            </p>
+            <h1>Explore the evidence<span class="serif-dot">.</span></h1>
+            <p class="hero-copy">
+              Ask a biomedical question. Trace every answer back to the
+              research.
+            </p>
+          </div>
+          <div class="collection-label">
+            <span class="collection-icon" aria-hidden="true">↗</span>
+            <div>
+              <span class="small-label">THE COLLECTION</span
+              ><strong>BioASQ / Mini</strong
+              ><span id="collection-count">Preparing passage indexes</span>
+            </div>
+          </div>
+        </div>
+        <form id="search-form" class="search-box">
+          <label for="question" class="input-label"
+            >Your research question</label
+          >
+          <div class="question-row">
+            <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m16 16 5 5" /></svg
+            ><textarea
+              id="question"
+              name="question"
+              rows="2"
+              minlength="3"
+              maxlength="500"
+              placeholder="What is the role of BRCA1 in DNA repair?"
+              required
+            ></textarea
+            ><kbd title="Keyboard shortcut">⌘ ↵</kbd>
+          </div>
+          <div class="search-controls">
+            <fieldset class="mode-picker">
+              <legend class="sr-only">Retrieval mode</legend>
+              <label
+                ><input type="radio" name="mode" value="lexical" /><span
+                  >Lexical</span
+                ></label
+              ><label
+                ><input type="radio" name="mode" value="dense" /><span
+                  >Dense</span
+                ></label
+              ><label
+                ><input type="radio" name="mode" value="hybrid" checked /><span
+                  >Hybrid<span class="mode-spark" aria-hidden="true"
+                    >✧</span
+                  ></span
+                ></label
+              ><label
+                ><input type="radio" name="mode" value="best" /><span
+                  >Best run</span
+                ></label
+              >
+            </fieldset>
+            <div class="control-right">
+              <label class="toggle-label"
+                ><input type="checkbox" id="expand" checked /><span
+                  class="switch"
+                  aria-hidden="true"
+                ></span
+                ><span>Query expansion</span></label
+              ><label class="count-label"
+                ><span class="sr-only">Number of results</span
+                ><select id="top-k">
+                  <option value="5">Top 5</option>
+                  <option value="10" selected>Top 10</option>
+                  <option value="20">Top 20</option>
+                </select></label
+              ><button class="primary-button" id="search-button" type="submit">
+                <span>Search evidence</span><span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </div>
+        </form>
+        <div class="suggestions">
+          <span class="small-label">TRY A QUESTION</span>
+          <div id="sample-questions"></div>
+        </div>
+        <p id="form-error" class="error-message" role="alert" hidden></p>
+        <div id="loading-search" class="loading-strip" role="status" hidden>
+          <span class="spinner"></span
+          ><span
+            >Following the evidence — expanding, retrieving, and ranking
+            passages…</span
+          >
+        </div>
+        <section id="welcome" class="welcome-layout">
+          <div class="welcome-card">
+            <div class="section-heading">
+              <span class="eyebrow">FROM QUESTION TO UNDERSTANDING</span
+              ><span class="micro-tag">EVIDENCE FIRST</span>
+            </div>
+            <h2>A clearer path through the literature.</h2>
+            <p>
+              One question, complementary search signals, and sources you can
+              inspect.
+            </p>
+            <div class="steps">
+              <div>
+                <span class="step-number">01 /</span>
+                <h3>Broaden the search</h3>
+                <p>
+                  Keep your original question and explore useful alternate
+                  terms.
+                </p>
+              </div>
+              <div>
+                <span class="step-number">02 /</span>
+                <h3>Bring the evidence together</h3>
+                <p>
+                  Combine exact terms with neural similarity to find relevant
+                  passages.
+                </p>
+              </div>
+              <div>
+                <span class="step-number">03 /</span>
+                <h3>Follow every citation</h3>
+                <p>
+                  Read an answer grounded in selected passages. Inspect each
+                  source.
+                </p>
+              </div>
+            </div>
+            <div class="welcome-foot">
+              <span class="outline-icon" aria-hidden="true">✓</span>When the
+              evidence falls short, the answer says so.
+            </div>
+          </div>
+          <aside class="dataset-card">
+            <div class="dataset-art" aria-hidden="true">
+              <svg viewBox="0 0 300 150">
+                <defs>
+                  <pattern
+                    id="dots"
+                    width="16"
+                    height="16"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <circle cx="8" cy="8" r=".8" fill="#c2d8ce" />
+                  </pattern>
+                </defs>
+                <rect width="300" height="150" fill="url(#dots)" />
+                <g fill="none" stroke="#70a995">
+                  <ellipse
+                    cx="150"
+                    cy="75"
+                    rx="90"
+                    ry="35"
+                    transform="rotate(-30 150 75)"
+                  />
+                  <ellipse
+                    cx="150"
+                    cy="75"
+                    rx="90"
+                    ry="35"
+                    transform="rotate(30 150 75)"
+                  />
+                  <ellipse cx="150" cy="75" rx="35" ry="65" />
+                </g>
+                <g fill="#0d5c4c">
+                  <circle cx="150" cy="75" r="11" />
+                  <circle cx="82" cy="47" r="5" />
+                  <circle cx="209" cy="29" r="5" />
+                  <circle cx="168" cy="131" r="5" />
+                </g>
+                <circle
+                  cx="150"
+                  cy="75"
+                  r="20"
+                  fill="none"
+                  stroke="#0d5c4c"
+                  stroke-dasharray="2 4"
+                /></svg
+              ><span>CONNECTED BY EVIDENCE</span>
+            </div>
+            <div class="dataset-body">
+              <span class="small-label">A FOCUSED RESEARCH CORPUS</span>
+              <h3 id="passage-count">—<span>passages</span></h3>
+              <p>
+                Biomedical abstracts paired with questions, reference answers,
+                and relevance labels.
+              </p>
+              <a
+                href="https://huggingface.co/datasets/rag-datasets/rag-mini-bioasq"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Explore the dataset <span aria-hidden="true">↗</span></a
+              >
+            </div>
+          </aside>
+        </section>
+        <section id="results" hidden>
+          <div class="results-toolbar">
+            <div>
+              <span class="eyebrow">YOUR EVIDENCE TRAIL</span>
+              <h2 id="results-title">Retrieved passages</h2>
+            </div>
+            <div class="result-meta">
+              <span id="retrieval-time"></span><span id="score-type"></span
+              ><button class="text-button" id="export-search">
+                Export JSON <span aria-hidden="true">↓</span>
+              </button>
+            </div>
+          </div>
+          <div id="query-trail" class="query-trail"></div>
+          <div class="result-layout">
+            <aside class="answer-column">
+              <section class="answer-card" aria-labelledby="answer-heading">
+                <div class="answer-header">
+                  <span class="answer-symbol" aria-hidden="true">✧</span>
+                  <h3 id="answer-heading">Grounded answer</h3>
+                  <span class="micro-tag">LLM</span>
+                </div>
+                <div id="answer-content" aria-live="polite"></div>
+                <div id="answer-actions" hidden>
+                  <button id="regenerate-answer" class="secondary-button">
+                    Answer from selection <span aria-hidden="true">↗</span>
+                  </button>
+                  <p class="selection-note">
+                    Select up to 5 passages to control the answer’s evidence.
+                  </p>
+                </div>
+                <div class="answer-footer">
+                  <span class="status-dot"></span
+                  ><span id="answer-model">Local inference</span>
+                </div>
+              </section>
+              <div class="research-note">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M12 3 3 7v6c0 4 9 8 9 8s9-4 9-8V7Z" />
+                  <path d="m8 12 3 3 5-6" />
+                </svg>
+                <p>
+                  For research and learning. Inspect the cited evidence before
+                  drawing conclusions.
+                </p>
+              </div>
+            </aside>
+            <section
+              class="evidence-section"
+              aria-labelledby="evidence-heading"
+            >
+              <div class="evidence-title">
+                <h3 id="evidence-heading">
+                  Ranked evidence <span id="evidence-count"></span>
+                </h3>
+                <span id="selection-count">5 selected for the answer</span>
+              </div>
+              <div id="evidence-list"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+      <section id="evaluation-view" class="view" hidden>
+        <p class="eyebrow">
+          <span class="tiny-line"></span> REPRODUCIBLE EXPERIMENTS
+        </p>
+        <h1>Measure what matters<span class="serif-dot">.</span></h1>
+        <p class="hero-copy">
+          The same 100 questions. Five configurations. An evidence-based choice.
+        </p>
+        <div id="evaluation-content"></div>
+      </section>
+      <section id="system-view" class="view" hidden>
+        <p class="eyebrow"><span class="tiny-line"></span> UNDER THE SURFACE</p>
+        <h1>The evidence pipeline<span class="serif-dot">.</span></h1>
+        <p class="hero-copy">
+          One shared retrieval pipeline powers live searches and offline
+          evaluation.
+        </p>
+        <div class="architecture-card">
+          <div class="architecture-row">
+            <span class="small-label">OFFLINE</span>
+            <div>
+              BioASQ dataset<small>Questions · answers · passage IDs</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Prepare corpus<small>Preserve IDs · exclude missing text</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Build indexes<small>BM25 sparse matrix · Gemini vectors</small>
+            </div>
+          </div>
+          <div class="architecture-row">
+            <span class="small-label">ONLINE</span>
+            <div>Your question<small>Original + bounded expansions</small></div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Retrieve & fuse<small>Lexical · dense · weighted RRF</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>Ranked evidence<small>IDs · scores · PubMed links</small></div>
+          </div>
+          <div class="architecture-row">
+            <span class="small-label">ANSWER</span>
+            <div>
+              Select context<small>Up to 5 passages · exact excerpts</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Grounded LLM call<small>Answer only from selected evidence</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Validate citations<small
+                >Fail closed on invalid passage IDs</small
+              >
+            </div>
+          </div>
+          <div class="architecture-row">
+            <span class="small-label">EVALUATE</span>
+            <div>
+              100 fixed query IDs<small>Seeded · balanced categories</small>
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>
+              Five configurations<small
+                >Retrieval metrics + fixed LLM judge</small
+              >
+            </div>
+            <span aria-hidden="true">→</span>
+            <div>Choose best hybrid<small>nDCG@10 · latency · cost</small></div>
+          </div>
+        </div>
+        <div class="system-notes">
+          <div>
+            <h3>Storage & embeddings</h3>
+            <p>
+              Local JSONL passages, a SciPy BM25 matrix, and memory-mapped
+              Gemini embedding vectors. No separate database service is required.
+            </p>
+          </div>
+          <div>
+            <h3>Citation enforcement</h3>
+            <p>
+              The model returns structured claims and passage IDs. The server
+              validates every ID against the exact selected context before
+              displaying an answer.
+            </p>
+          </div>
+          <div>
+            <h3>Honest evaluation</h3>
+            <p>
+              Recall, MRR, and nDCG use dataset labels. Correctness,
+              groundedness, and context relevance use a fixed judge rubric.
+              Unrun scores remain pending.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="page-footer">
+      <span
+        >helix. <span class="footer-separator">/</span> Biomedical hybrid
+        search</span
+      ><span id="footer-status"
+        >Local workspace <span class="footer-separator">·</span> Evidence you
+        can inspect</span
+      >
+    </footer>
+  </body>
+</html>

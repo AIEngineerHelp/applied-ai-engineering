@@ -10,7 +10,9 @@ Use this category for document processing, search, embeddings, chunking, reranki
 
 ## Projects and resources
 
-No projects yet. Add a project here when it fits the scope above.
+| Project | What it teaches | Status |
+| --- | --- | --- |
+| [Biomedical hybrid search](biomedical-search/README.md) | BM25, dense retrieval, reciprocal rank fusion, cited answers, and retrieval evaluation | Runnable Python example; historical baseline included |
 
 ## Adding a contribution
 

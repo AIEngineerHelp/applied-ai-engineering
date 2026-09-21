@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+.DS_Store
+data/raw/
+data/index/
+data/*.jsonl
+experiments/searches.jsonl
+experiments/answer-cache/
+*.log
+
+dist/
+
+# Keep only the reviewed historical baseline; new runs remain local.
+experiments/runs/*
+!experiments/runs/20260918T025423Z/

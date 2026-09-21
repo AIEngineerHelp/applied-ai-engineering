@@ -1,0 +1,43 @@
+{
+  "variants": {
+    "lexical": {
+      "mode": "lexical",
+      "expand": false
+    },
+    "dense": {
+      "mode": "dense",
+      "expand": false
+    },
+    "hybrid": {
+      "mode": "hybrid",
+      "expand": false,
+      "lexical_weight": 0.5,
+      "rrf_k": 60
+    },
+    "hybrid_expanded": {
+      "mode": "hybrid",
+      "expand": true,
+      "lexical_weight": 0.5,
+      "rrf_k": 60
+    },
+    "hybrid_weighted": {
+      "mode": "hybrid",
+      "expand": true,
+      "lexical_weight": 0.65,
+      "rrf_k": 20,
+      "expansion_weight": 0.35
+    }
+  },
+  "provider": "ollama",
+  "answer_model": "qwen2.5:3b",
+  "judge_model": "qwen2.5:3b",
+  "temperature": 0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "num_predict": 650,
+  "context_passages": 5,
+  "context_characters": 1800,
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "embedding_threads": 4,
+  "embedding_backend": "mlx"
+}
