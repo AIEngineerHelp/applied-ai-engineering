@@ -16,3 +16,5 @@ dist/
 # Keep only the reviewed historical baseline; new runs remain local.
 experiments/runs/*
 !experiments/runs/20260918T025423Z/
+!experiments/runs/20260921T005506Z/
+.vercel

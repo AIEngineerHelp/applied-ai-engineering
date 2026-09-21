@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "lexical": {
+      "mode": "lexical",
+      "expand": false
+    },
+    "dense": {
+      "mode": "dense",
+      "expand": false
+    },
+    "hybrid": {
+      "mode": "hybrid",
+      "expand": false,
+      "lexical_weight": 0.5,
+      "rrf_k": 60
+    },
+    "hybrid_expanded": {
+      "mode": "hybrid",
+      "expand": true,
+      "lexical_weight": 0.5,
+      "rrf_k": 60
+    },
+    "hybrid_weighted": {
+      "mode": "hybrid",
+      "expand": true,
+      "lexical_weight": 0.65,
+      "rrf_k": 20,
+      "expansion_weight": 0.35
+    }
+  },
+  "provider": "gemini",
+  "answer_model": "gemini-2.5-flash",
+  "judge_model": "gemini-2.5-flash",
+  "expansion_model": "gemini-2.5-flash",
+  "expansion_settings": {
+    "temperature": 0,
+    "maxOutputTokens": 2048,
+    "responseMimeType": "application/json",
+    "thinkingConfig": {
+      "thinkingBudget": 0
+    }
+  },
+  "answer_settings": {
+    "temperature": 0,
+    "maxOutputTokens": 2048,
+    "responseMimeType": "application/json",
+    "thinkingConfig": {
+      "thinkingBudget": 0
+    }
+  },
+  "judge_settings": {
+    "temperature": 0,
+    "maxOutputTokens": 2048,
+    "responseMimeType": "application/json",
+    "thinkingConfig": {
+      "thinkingBudget": 0
+    }
+  },
+  "context_passages": 5,
+  "context_characters": 1800,
+  "embedding_model": "gemini-embedding-001",
+  "embedding_threads": 4,
+  "embedding_backend": "gemini"
+}
