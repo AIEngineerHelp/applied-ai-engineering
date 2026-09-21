@@ -4,15 +4,21 @@ version = "0.1.0"
 description = "Evidence-first biomedical hybrid retrieval and reproducible RAG evaluation"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-  "fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1", "fastembed>=0.7,<1",
+  "fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1",
   "scikit-learn>=1.6,<2", "scipy>=1.15,<2", "numpy>=2,<3",
-  "pyarrow>=19,<26", "httpx>=0.28,<1", "python-dotenv>=1,<2",
+  "itsdangerous>=2.2,<3", "httpx>=0.28,<1", "python-dotenv>=1,<2",
+]
+
+[project.optional-dependencies]
+prepare = ["pyarrow>=19,<26"]
+local = [
+  "fastembed>=0.7,<1",
   "mlx-embedding-models==0.0.11; sys_platform == 'darwin' and platform_machine == 'arm64'",
   "transformers>=4.48,<5; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+dev = ["pyarrow>=19,<26", "pytest>=8,<10", "ruff>=0.12,<1"]
 
 [tool.ruff]
 line-length = 110

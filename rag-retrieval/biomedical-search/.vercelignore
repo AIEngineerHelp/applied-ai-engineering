@@ -1,0 +1,14 @@
+.env*
+.venv/
+.vercel/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.log
+data/raw/
+data/index/models/
+data/questions.jsonl
+experiments/searches.jsonl
+experiments/answer-cache/
+experiments/runs/
+tests/

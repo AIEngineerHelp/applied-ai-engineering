@@ -16,7 +16,7 @@ From the repository root:
 ```sh
 cd rag-retrieval/biomedical-search
 cp .env.example .env
-uv sync --locked
+uv sync --locked --extra prepare
 uv run python -m scripts.prepare --rebuild
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
@@ -71,8 +71,7 @@ the evidence and answer UI, citation enforcement, and the experiment path. The d
 
 ## Evaluation
 
-**Included results are a historical baseline, not a Gemini benchmark.** The checked-in report and completed run use BGE embeddings and the earlier local pipeline. Answer/judge coverage in that completed comparison is zero. They do not establish answer quality or performance for the current Gemini defaults. Incomplete experiment runs and live search logs are excluded from this repository. Run a new evaluation after preparing the current index; the app rejects a saved best configuration when its index signature does not match.
-
+**Included results:** the latest completed retrieval evaluation uses `gemini-embedding-001` and covers 100 fixed queries across five configurations. Dense search achieved Recall@10 of 0.810 and nDCG@10 of 0.746; plain hybrid achieved 0.794 and 0.743. Query expansion increased latency without improving nDCG@10 over plain hybrid in this run. Answer generation and judge evaluation were not run, so these scores measure retrieval only. The earlier BGE/local-model baseline is preserved in its own run directory; its measurements should not be mixed with the Gemini results. Incomplete runs and live search logs remain excluded.
 
 Run the complete retrieval benchmark first:
 
@@ -150,7 +149,8 @@ and API rejection of context injection. Interactive API documentation is availab
 - `GET /api/experiments/report`: downloadable evaluation report.
 
 Live searches are retained in memory for the latest 100 searches; older answer requests need a new search.
-This is a local research application, not a production multiuser service. It is not medical advice.
+On Vercel, signed search tokens allow answer requests across instances and expire after one hour.
+This is an educational research demo, not a production medical service. It is not medical advice.
 Citation ID validity alone does not guarantee that a claim follows from its source; inspect evidence
 and judge explanations. The model may abstain, miss nuance, or produce unsupported statements
 despite valid IDs. The final answer never reads dataset reference answers or gold passage labels.
@@ -160,3 +160,20 @@ despite valid IDs. The final answer never reads dataset reference answers or gol
 Downloaded passages, indexes, embedding checkpoints, caches, and live search logs stay local and are Git-ignored. To reclaim disk space, remove `data/raw/`, `data/index/`, generated `data/*.jsonl`, and `.venv/`; rebuilding the index can incur embedding charges again. Keep `.env` private. Never submit patient records or other confidential information through this educational example.
 
 The included evaluation questions and reference answers are a sampled, categorized subset of the source dataset. Attribution: [RAG Datasets — rag-mini-bioasq](https://huggingface.co/datasets/rag-datasets/rag-mini-bioasq), derived from BioASQ/PubMed, under [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/). This dataset license does not assign a license to the application code; the repository has not selected a code license.
+
+## Deploy to Vercel
+
+Prepare the Gemini index locally once using the setup above. Deploy from this example's directory
+with `vercel deploy --prod`. The `.vercelignore` includes the prepared `data/passages.jsonl` and
+`data/index/` in the deployment while excluding credentials, raw downloads, and local logs. These
+artifacts remain Git-ignored; a Git-only deployment needs a separate index preparation step.
+Set `GEMINI_API_KEY` and a random `SEARCH_SIGNING_SECRET` of at least 32 bytes in Vercel's environment
+settings. The defaults use Gemini for embeddings and generation. No embedding rebuild runs at deploy time.
+
+Search tokens preserve the retrieved evidence for one hour without requiring instance-local memory.
+Production events go to Vercel runtime logs rather than a filesystem history; log retention follows
+the hosting plan. This deployment has no persistent user history. The public demo uses the configured
+provider account and its quota. Cold starts include loading the prepared index.
+
+Dataset preparation dependencies are installed with `uv sync --extra prepare`. For optional local
+neural backends, also add `--extra local`. These packages are excluded from the default hosted runtime.

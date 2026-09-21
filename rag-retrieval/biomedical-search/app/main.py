@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import threading
 from collections import OrderedDict
 from contextlib import asynccontextmanager
@@ -11,6 +12,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from pydantic import BaseModel, Field, field_validator
 
 from app import config
@@ -23,9 +25,14 @@ searches = OrderedDict()
 search_lock = threading.Lock()
 engine = None
 startup_error = None
+signing_key = os.getenv("SEARCH_SIGNING_SECRET")
+search_signer = URLSafeTimedSerializer(signing_key, salt="helix-search-v1") if signing_key else None
 
 
 def write_event(event):
+    if os.getenv("VERCEL"):
+        logger.warning("Search event: %s", json.dumps(event))
+        return
     config.EXPERIMENTS.mkdir(exist_ok=True)
     with log_lock, (config.EXPERIMENTS / "searches.jsonl").open("a") as output:
         output.write(json.dumps({"timestamp": datetime.now(UTC).isoformat(), **event}) + "\n")
@@ -47,9 +54,13 @@ async def load_engine():
 
 @asynccontextmanager
 async def lifespan(app):
-    task = asyncio.create_task(load_engine())
+    if os.getenv("VERCEL"):
+        if search_signer is None:
+            raise RuntimeError("SEARCH_SIGNING_SECRET is required on Vercel")
+        await load_engine()
+    task = asyncio.create_task(load_engine()) if engine is None else None
     yield
-    if not task.done():
+    if task and not task.done():
         task.cancel()
 
 
@@ -74,6 +85,7 @@ class SearchRequest(BaseModel):
 
 class AnswerRequest(BaseModel):
     search_id: str
+    search_token: str | None = Field(default=None, max_length=200000)
     passage_ids: list[str] | None = Field(default=None, min_length=1, max_length=5)
 
 
@@ -187,6 +199,10 @@ def search(request: SearchRequest):
             "retrieval_ms": result["retrieval_ms"],
         }
     )
+    if search_signer:
+        result["search_token"] = search_signer.dumps({
+            "search_id": result["search_id"], "query": result["query"], "evidence": result["evidence"]
+        })
     return result
 
 
@@ -194,6 +210,13 @@ def search(request: SearchRequest):
 def answer(request: AnswerRequest):
     with search_lock:
         result = searches.get(request.search_id)
+    if request.search_token and search_signer:
+        try:
+            result = search_signer.loads(request.search_token, max_age=3600)
+            if result["search_id"] != request.search_id:
+                raise BadSignature("Search ID mismatch")
+        except BadSignature as exc:
+            raise HTTPException(404, "This search expired or is invalid. Search again.") from exc
     if result is None:
         raise HTTPException(404, "This search expired. Search again to generate an answer.")
     evidence = result["evidence"]

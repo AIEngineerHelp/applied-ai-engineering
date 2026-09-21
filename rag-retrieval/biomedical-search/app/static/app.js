@@ -237,6 +237,7 @@ async function requestAnswer() {
       method: "POST",
       body: JSON.stringify({
         search_id: state.search.search_id,
+        search_token: state.search.search_token,
         passage_ids: ids,
       }),
     });
