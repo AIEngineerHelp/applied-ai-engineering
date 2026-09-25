@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Response Agent - Operator UI</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AlpineJS for reactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons for clean vector glyphs -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="h-full font-sans flex flex-col antialiased bg-slate-950 overflow-hidden" x-data="dashboardApp()" x-init="init()">
+
+    <!-- Main Outer Container -->
+    <div class="flex h-full w-full">
+
+        <!-- Sidebar -->
+        <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col h-full z-10 shrink-0">
+            <!-- Brand Header -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
+                <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm text-slate-100 tracking-wide uppercase">IRA Operator</h1>
+                    <span class="text-xs text-slate-400">Incident Response Agent</span>
+                </div>
+            </div>
+
+            <!-- List Section -->
+            <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-400 px-2 uppercase tracking-wider">
+                    <span>Incidents</span>
+                    <span class="text-emerald-400 font-mono text-[10px] bg-emerald-500/10 px-1.5 py-0.5 rounded" x-text="incidents.length">0</span>
+                </div>
+
+                <!-- Empty State -->
+                <template x-if="incidents.length === 0">
+                    <div class="text-center py-8 text-slate-500 text-xs">
+                        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                        No active incidents.
+                    </div>
+                </template>
+
+                <!-- Incident Items -->
+                <div class="space-y-2">
+                    <template x-for="item in incidents" :key="item.id">
+                        <button 
+                            @click="selectIncident(item.id)"
+                            class="w-full text-left p-3.5 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col gap-2 group"
+                            :class="selectedId === item.id ? 'bg-slate-800/80 border-slate-700 shadow-md ring-1 ring-slate-700/50' : 'bg-slate-900/50 border-slate-800/60 hover:bg-slate-800/40 hover:border-slate-800'"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider"
+                                    :class="{
+                                        'bg-red-500/10 text-red-400': item.severity === 'sev1',
+                                        'bg-orange-500/10 text-orange-400': item.severity === 'sev2',
+                                        'bg-yellow-500/10 text-yellow-400': item.severity === 'sev3',
+                                        'bg-blue-500/10 text-blue-400': item.severity === 'sev4'
+                                    }"
+                                    x-text="item.severity"
+                                ></span>
+                                <span class="text-[10px] font-mono text-slate-400" x-text="formatTime(item.received_at)"></span>
+                            </div>
+                            <h3 class="text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors line-clamp-1" x-text="item.title"></h3>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400">
+                                <span class="flex items-center gap-1">
+                                    <i data-lucide="server" class="w-3.5 h-3.5 opacity-60"></i>
+                                    <span x-text="item.service || 'unknown'"></span>
+                                </span>
+                                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/50" x-text="item.status"></span>
+                            </div>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Footer Status -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Harness Connected
+                </span>
+                <span class="font-mono text-[10px] text-slate-500">v0.1.0</span>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+
+            <!-- Empty Detail State -->
+            <div x-show="!selectedId" class="flex-1 flex flex-col items-center justify-center p-8 text-slate-500">
+                <div class="p-6 bg-slate-900 border border-slate-800/80 rounded-2xl max-w-sm text-center shadow-xl">
+                    <i data-lucide="monitor" class="w-12 h-12 text-slate-600 mx-auto mb-4 animate-bounce"></i>
+                    <h2 class="font-bold text-slate-300 text-sm mb-1 uppercase tracking-wide">Operator Control Room</h2>
+                    <p class="text-xs text-slate-400 leading-relaxed mb-4">Select an incident from the side pane to view live orchestrator graph execution, evidence, and pending approvals.</p>
+                </div>
+            </div>
+
+            <!-- Detail Workspace -->
+            <div x-show="selectedId" x-cloak class="flex-1 flex flex-col h-full overflow-hidden">
+                <!-- Detail Header -->
+                <header class="h-16 border-b border-slate-800 px-8 flex items-center justify-between shrink-0 bg-slate-900/40">
+                    <div class="flex items-center gap-4">
+                        <h2 class="font-bold text-sm text-slate-100 tracking-wide truncate" x-text="detail.incident ? detail.incident.title : ''"></h2>
+                        <span class="text-[10px] font-mono px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest font-semibold" x-text="detail.incident ? detail.incident.environment : ''"></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                        <span>ID:</span>
+                        <span class="text-slate-300 select-all" x-text="selectedId"></span>
+                    </div>
+                </header>
+
+                <!-- Workspace Columns -->
+                <div class="flex-1 flex overflow-hidden">
+
+                    <!-- Left: Pipeline & Analysis -->
+                    <div class="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+
+                        <!-- Pipeline Progress Graph -->
+                        <section class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <i data-lucide="workflow" class="w-4 h-4 text-emerald-400"></i>
+                                Orchestrator State Graph (LangGraph)
+                            </h3>
+                            <!-- Graph nodes visual list -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <template x-for="(node, index) in detail.state_graph?.nodes || []" :key="node">
+                                    <div class="flex items-center gap-2">
+                                        <div class="px-3 py-1.5 rounded-xl border text-[11px] font-mono transition-all duration-200"
+                                            :class="detail.state_graph?.current_node === node ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-bold shadow-[0_0_12px_rgba(16,185,129,0.1)]' : 'bg-slate-950 border-slate-800 text-slate-400'"
+                                            x-text="node"
+                                        ></div>
+                                        <template x-if="index < (detail.state_graph?.nodes.length - 1)">
+                                            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-700"></i>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </section>
+
+                        <!-- Evidence Section -->
+                        <section class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="package-search" class="w-4 h-4 text-blue-400"></i>
+                                Gathered Evidence
+                            </h3>
+                            <template x-for="ev in detail.evidence || []" :key="ev.step_id">
+                                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-3">
+                                    <div class="flex items-center justify-between text-xs text-slate-400">
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-mono text-blue-400 font-bold" x-text="ev.step_id"></span>
+                                            <span class="text-slate-500">|</span>
+                                            <span class="font-mono bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded text-[10px]" x-text="ev.tool"></span>
+                                        </span>
+                                        <span class="flex items-center gap-1.5 text-emerald-400 font-semibold text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded-full" x-if="ev.pii_redacted">
+                                            <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                            PII Redacted
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 leading-relaxed font-sans" x-text="ev.summary"></p>
+                                    <div class="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+                                        <i data-lucide="link" class="w-3 h-3"></i>
+                                        Artifact: <span class="select-all text-slate-400" x-text="ev.artifact_uri"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </section>
+
+                        <!-- Root Cause Hypotheses -->
+                        <section class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="brain-circuit" class="w-4 h-4 text-yellow-400"></i>
+                                Hypotheses & Ranked Root Cause
+                            </h3>
+                            <template x-for="hyp in detail.hypotheses || []" :key="hyp.root_cause_component">
+                                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-200" x-text="hyp.root_cause_component"></span>
+                                        <span class="text-xs font-mono text-yellow-400 font-bold" x-text="`Score: ${(hyp.confidence * 100).toFixed(0)}%`"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 leading-relaxed" x-text="hyp.description"></p>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400" x-text="`Fault: ${hyp.fault_type}`"></span>
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400" x-text="`Evidence: ${hyp.evidence_ids.join(', ')}`"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </section>
+                    </div>
+
+                    <!-- Right: Pending Approvals (HITL Panel) -->
+                    <div class="w-96 border-l border-slate-800 overflow-y-auto shrink-0 bg-slate-900/10 px-6 py-6 space-y-6">
+                        
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                            Human-in-the-Loop Actions
+                        </h3>
+
+                        <!-- Pending Approvals Container -->
+                        <div class="space-y-4">
+                            <template x-for="act in detail.actions || []" :key="act.id">
+                                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm relative overflow-hidden"
+                                    :class="act.status === 'pending_approval' ? 'border-amber-500/20' : 'border-slate-800'"
+                                >
+                                    <!-- Indicator ribbon -->
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" x-if="act.status === 'pending_approval'"></div>
+
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-mono text-slate-300" x-text="act.kind"></span>
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400" x-text="act.status"></span>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <span class="text-[11px] text-slate-400 font-semibold block uppercase tracking-wide">Rationale</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed font-sans" x-text="act.rationale"></p>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <span class="text-[11px] text-slate-400 font-semibold block uppercase tracking-wide">Arguments</span>
+                                        <pre class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 text-[10px] font-mono text-slate-300 overflow-x-auto" x-text="JSON.stringify(act.args, null, 2)"></pre>
+                                    </div>
+
+                                    <!-- Decision CTAs -->
+                                    <div class="flex items-center gap-3 pt-2" x-if="act.status === 'pending_approval'">
+                                        <button 
+                                            @click="approveAction(act.id)"
+                                            class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-2 text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                        >
+                                            <i data-lucide="check" class="w-4 h-4"></i>
+                                            Approve
+                                        </button>
+                                        <button 
+                                            @click="rejectAction(act.id)"
+                                            class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl py-2 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                        >
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Live JS logic -->
+    <script>
+        function dashboardApp() {
+            return {
+                incidents: [],
+                selectedId: null,
+                detail: {},
+
+                async init() {
+                    await this.loadIncidents();
+                    // Poll for new incidents or updates every 4s
+                    setInterval(() => this.loadIncidents(), 4000);
+                },
+
+                async loadIncidents() {
+                    try {
+                        const r = await fetch('/v1/incidents');
+                        this.incidents = await r.json();
+                        
+                        // Default select the first incident if none selected and elements exist
+                        if (this.incidents.length > 0 && !this.selectedId) {
+                            this.selectIncident(this.incidents[0].id);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load incidents:", e);
+                    }
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                async selectIncident(id) {
+                    this.selectedId = id;
+                    try {
+                        const r = await fetch(`/v1/incidents/${id}`);
+                        this.detail = await r.json();
+                    } catch (e) {
+                        console.error("Failed to load details:", e);
+                    }
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                async approveAction(actionId) {
+                    if (!confirm("Are you sure you want to approve this action? It will execute immediately on the system.")) {
+                        return;
+                    }
+                    try {
+                        const r = await fetch(`/v1/approvals/${actionId}/decision`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ decision: 'approved', comment: 'Approved via SRE operator panel.' })
+                        });
+                        const res = await r.json();
+                        alert("Action Approved and Executed successfully!");
+                        await this.selectIncident(this.selectedId);
+                    } catch (e) {
+                        console.error("Approval failed:", e);
+                    }
+                },
+
+                async rejectAction(actionId) {
+                    const comment = prompt("Please provide a rejection reason:");
+                    if (comment === null) return;
+                    
+                    try {
+                        const r = await fetch(`/v1/approvals/${actionId}/decision`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ decision: 'rejected', comment: comment })
+                        });
+                        const res = await r.json();
+                        alert("Action Rejected.");
+                        await this.selectIncident(this.selectedId);
+                    } catch (e) {
+                        console.error("Rejection failed:", e);
+                    }
+                },
+
+                formatTime(isoStr) {
+                    if (!isoStr) return "";
+                    const d = new Date(isoStr);
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

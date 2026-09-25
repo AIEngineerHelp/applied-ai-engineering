@@ -1,0 +1,54 @@
+{{- if .Values.worker.keda.enabled }}
+{{- $k := .Values.worker.keda }}
+{{- $name := include "ira.componentName" (dict "ctx" $ "component" "worker") }}
+{{- if $k.redis.passwordSecretKey }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ $name }}-redis
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "worker") | nindent 4 }}
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: {{ include "ira.secretName" . }}
+      key: {{ $k.redis.passwordSecretKey }}
+---
+{{- end }}
+# Scales the worker on consumer-group lag of the severity streams (KEDA owns the HPA).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "worker") | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ $name }}
+  minReplicaCount: {{ $k.minReplicaCount }}
+  maxReplicaCount: {{ $k.maxReplicaCount }}
+  pollingInterval: {{ $k.pollingInterval }}
+  cooldownPeriod: {{ $k.cooldownPeriod }}
+  triggers:
+    {{- range $k.streams }}
+    - type: redis-streams
+      metadata:
+        address: {{ required "worker.keda.redis.address (host:port) is required" $k.redis.address | quote }}
+        databaseIndex: {{ $k.redis.databaseIndex | quote }}
+        enableTLS: {{ ternary "true" "false" $k.redis.enableTLS | quote }}
+        stream: {{ . | quote }}
+        consumerGroup: {{ $k.consumerGroup | quote }}
+        lagCount: {{ $k.lagCount | quote }}
+        activationLagCount: {{ $k.activationLagCount | quote }}
+      {{- if $k.redis.passwordSecretKey }}
+      authenticationRef:
+        name: {{ $name }}-redis
+      {{- end }}
+    {{- end }}
+    {{- if $k.cpu.enabled }}
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: {{ $k.cpu.utilization | quote }}
+    {{- end }}
+{{- end }}

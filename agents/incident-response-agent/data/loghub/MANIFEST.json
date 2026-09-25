@@ -1,0 +1,10 @@
+{
+  "datasets": {
+    "loghub_2k": {
+      "version": "2.0",
+      "source": "https://github.com/logpai/loghub-2.0/archive/refs/heads/main.zip",
+      "checksum": "afe67b0784534670676830a1c9de81cd92e44433881702b241ed8c9ce103e701",
+      "tier": "T0"
+    }
+  }
+}

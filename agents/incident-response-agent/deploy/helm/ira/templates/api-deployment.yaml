@@ -1,0 +1,111 @@
+{{- $c := .Values.api }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "api") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "api") | nindent 4 }}
+spec:
+  {{- if not $c.autoscaling.enabled }}
+  replicas: {{ $c.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" "api") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ira.selectorLabels" (dict "ctx" $ "component" "api") | nindent 8 }}
+        {{- with $c.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- include "ira.checksums" . | nindent 8 }}
+        {{- with $c.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "ira.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $c.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- include "ira.podSecurityContext" (dict "ctx" $) | nindent 8 }}
+      terminationGracePeriodSeconds: {{ $c.terminationGracePeriodSeconds }}
+      containers:
+        - name: api
+          image: {{ include "ira.imageRef" (dict "image" .Values.image "ctx" $) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- toYaml $c.command | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $c.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "ira.fullname" . }}-config
+            - secretRef:
+                name: {{ include "ira.secretName" . }}
+          env:
+            {{- include "ira.podEnv" . | nindent 12 }}
+            - name: OTEL_SERVICE_NAME
+              value: ira-api
+            {{- with $c.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: {{ $c.startupProbe.periodSeconds }}
+            failureThreshold: {{ $c.startupProbe.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: {{ $c.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ $c.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ $c.livenessProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: {{ $c.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ $c.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ $c.readinessProbe.failureThreshold }}
+          resources:
+            {{- toYaml $c.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            {{- include "ira.backendVolumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "ira.artifactsVolume" . | nindent 8 }}
+      {{- with (include "ira.topologySpread" (dict "ctx" $ "component" "api" "componentValues" $c)) }}
+      topologySpreadConstraints:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with $c.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $c.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $c.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

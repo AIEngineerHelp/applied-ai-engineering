@@ -1,0 +1,382 @@
+# Default values for the Incident Response Agent chart.
+#
+# This chart deploys only the application (api, worker, frontend, migration Job).
+# Postgres (with pgvector), Redis 7, the LiteLLM proxy and the OIDC IdP are external:
+# use managed services (Cloud SQL / RDS / Azure Database for PostgreSQL + Memorystore /
+# ElastiCache) or their own charts (e.g. bitnami/postgresql with the pgvector image,
+# bitnami/redis, the official LiteLLM chart). See docs/deployment.md.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# -- Shared api/worker/migrate image (root Dockerfile)
+image:
+  repository: ghcr.io/example/incident-response-agent
+  # Defaults to .Chart.AppVersion
+  tag: ""
+  # Optional immutable digest (sha256:...); takes precedence over tag
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# -- Secrets. Recommended: create the Secret outside Helm (External Secrets Operator,
+# Sealed Secrets, Vault) and reference it here. All keys are exposed to the api, worker
+# and migration Job as environment variables (envFrom), so anything in the contract can be
+# put here. Required keys:
+#   POSTGRES_PASSWORD, LITELLM_MASTER_KEY; NEO4J_PASSWORD only when neo4j.enabled
+# Optional keys:
+#   REDIS_URL (use when the URL carries a password, e.g. rediss://:pw@host:6380/0; it
+#   overrides redis.url), INTAKE_TOKENS (JSON list, each >= 32 chars)
+existingSecret: ""
+
+# -- Only for dev/test clusters: let the chart create the Secret from `secrets.data`.
+# Created as a pre-install/pre-upgrade hook so the migration Job can read it.
+secrets:
+  create: false
+  data: {}
+    # POSTGRES_PASSWORD: change-me
+    # LITELLM_MASTER_KEY: sk-change-me
+    # NEO4J_PASSWORD: change-me
+
+# -- Non-secret application settings (rendered into a ConfigMap)
+config:
+  # `prod` enables strict startup validation (docs/production-contract.md)
+  environment: prod
+  logLevel: INFO
+  logFormat: json
+  # Explicit list; defaults to https://<ingress.host> when empty. No "*" in prod.
+  corsOrigins: []
+  # Orchestration limits
+  maxIterations: 3
+  minConfidence: 0.6
+  maxBudgetUsd: 2.0
+  approvalTimeoutS: 3600
+  embeddingModel: text-embedding-3-small
+  embeddingDim: 1536
+  artifactsDir: /var/lib/ira/artifacts
+  # Any other env var from the contract / src/ira/config.py (e.g. MODEL_PLANNER)
+  extraEnv: {}
+
+# -- Authentication (OIDC). The UI is a public PKCE client; the API validates access tokens.
+auth:
+  # `oidc` or `disabled` (`disabled` is refused when config.environment=prod)
+  mode: oidc
+  oidc:
+    issuer: ""            # e.g. https://login.example.com/realms/ira
+    audience: ""          # expected `aud` of API access tokens, e.g. ira-api
+    clientId: ""          # public client used by the UI, e.g. ira-ui
+    scopes: "openid profile email"
+    rolesClaim: groups
+    # IdP group -> role (viewer|responder|approver|admin)
+    roleMapping: {}
+      # sre: responder
+      # sre-leads: approver
+      # ira-admins: admin
+
+# -- External Postgres 16 with the `vector` extension available (password from existingSecret)
+postgres:
+  host: ""
+  port: 5432
+  database: ira_db
+  user: ira
+  # libpq sslmode. Managed Postgres: verify-full (mount the CA and set POSTGRES_SSLROOTCERT
+  # via extraEnv/secret) or at least require.
+  sslmode: require
+
+# -- External Redis 7. With a password or TLS, put the full URL in the Secret as REDIS_URL.
+redis:
+  url: ""                 # e.g. redis://redis-master.redis.svc:6379/0
+
+# -- Optional Neo4j knowledge graph (password from existingSecret NEO4J_PASSWORD)
+neo4j:
+  enabled: false
+  uri: ""                 # e.g. bolt://neo4j.neo4j.svc:7687
+  user: neo4j
+
+# -- LiteLLM proxy (holds the provider keys; the app only has LITELLM_MASTER_KEY)
+litellm:
+  url: ""                 # e.g. http://litellm.litellm.svc:4000
+
+# -- OpenTelemetry traces (OTLP/HTTP)
+otel:
+  endpoint: ""            # e.g. http://otel-collector.observability.svc:4318
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}         # e.g. IRSA / Workload Identity bindings
+
+# Pod-level security context shared by all pods
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  privileged: false
+  capabilities:
+    drop: [ALL]
+
+# -- Writable volume for scrubbed tool outputs (ARTIFACTS_DIR), mounted in api and worker.
+# With emptyDir each pod has its own copy (artifacts written by the worker are not readable
+# by the api). Use a ReadWriteMany PVC (EFS/Filestore/Azure Files) to share them.
+artifacts:
+  persistence:
+    enabled: false
+    existingClaim: ""
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 20Gi
+  emptyDir:
+    sizeLimit: 2Gi
+
+tmp:
+  sizeLimit: 512Mi
+
+# Default spread: across zones and nodes, best effort. Set per component to override.
+topologySpread:
+  enabled: true
+  zone:
+    maxSkew: 1
+    whenUnsatisfiable: ScheduleAnyway
+  node:
+    maxSkew: 1
+    whenUnsatisfiable: ScheduleAnyway
+
+api:
+  replicas: 2
+  port: 8000
+  command: ["python", "-m", "src.ira.api"]
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi         # spaCy en_core_web_lg (Presidio) is loaded in-process
+    limits:
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+  service:
+    type: ClusterIP
+    port: 8000
+  startupProbe:
+    failureThreshold: 30
+    periodSeconds: 5
+  livenessProbe:
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  terminationGracePeriodSeconds: 30
+  runtimeClassName: ""
+  podAnnotations: {}
+  podLabels: {}
+  extraEnv: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+worker:
+  replicas: 2
+  metricsPort: 9100
+  command: ["python", "-m", "src.ira.worker"]
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1536Mi
+    limits:
+      memory: 3Gi
+  # CPU-based HPA. Ignored when worker.keda.enabled (KEDA owns the HPA then).
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  # Scale on Redis stream lag of incidents.sev1..sev4 (requires KEDA >= 2.12, Redis >= 7).
+  keda:
+    enabled: false
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 15
+    cooldownPeriod: 300
+    consumerGroup: orchestrators
+    streams: [incidents.sev1, incidents.sev2, incidents.sev3, incidents.sev4]
+    # Scale out when more than this many entries are waiting (per stream)
+    lagCount: "5"
+    activationLagCount: "0"
+    redis:
+      address: ""         # host:port, e.g. redis-master.redis.svc:6379
+      databaseIndex: "0"
+      enableTLS: false
+      # Key in existingSecret holding the Redis password (empty = no auth)
+      passwordSecretKey: ""
+    # Also keep a CPU trigger alongside the lag triggers
+    cpu:
+      enabled: true
+      utilization: "70"
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+  startupProbe:
+    failureThreshold: 30
+    periodSeconds: 5
+  livenessProbe:
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  # Long enough to finish an in-flight investigation step after SIGTERM
+  terminationGracePeriodSeconds: 120
+  # e.g. "gvisor" once a sandboxed node pool exists (future work, see docs/deployment.md)
+  runtimeClassName: ""
+  podAnnotations: {}
+  podLabels: {}
+  extraEnv: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+frontend:
+  enabled: true
+  image:
+    repository: ghcr.io/example/incident-response-agent-frontend
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 3000
+  # UID of the non-root user in frontend/Dockerfile
+  runAsUser: 1001
+  runAsGroup: 1001
+  # Next.js writes its runtime cache here; mounted as emptyDir under a read-only root fs
+  cacheMountPath: /app/.next/cache
+  probePath: /
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+  service:
+    type: ClusterIP
+    port: 3000
+  podAnnotations: {}
+  podLabels: {}
+  extraEnv: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+# -- `alembic upgrade head` as a pre-install/pre-upgrade hook
+migrations:
+  enabled: true
+  command: ["alembic", "upgrade", "head"]
+  backoffLimit: 1
+  activeDeadlineSeconds: 900
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# -- Single host: /v1 and /health -> api, / -> frontend. /metrics is never routed.
+ingress:
+  enabled: true
+  className: nginx
+  host: ira.example.com
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt
+    # nginx.ingress.kubernetes.io/proxy-body-size: 2m
+  tls:
+    enabled: true
+    secretName: ""        # defaults to <fullname>-tls
+
+metrics:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}            # e.g. release: kube-prometheus-stack
+  # Alert rules from deploy/prometheus/alerts.yml as a PrometheusRule
+  prometheusRule:
+    enabled: false
+    labels: {}
+
+networkPolicy:
+  enabled: true
+  # Who may reach the api/frontend (the ingress controller pods)
+  ingressController:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: ingress-nginx
+    podSelector: {}
+  # Who may scrape /metrics on api:8000 and worker:9100
+  prometheus:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    podSelector: {}
+  # Egress of api, worker and the migration Job. An empty `to` allows any destination on
+  # that port; tighten with ipBlock / namespaceSelector / podSelector peers.
+  egress:
+    dns:
+      enabled: true
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    postgres:
+      ports: [5432]
+      to: []
+    redis:
+      ports: [6379, 6380]
+      to: []
+    litellm:
+      ports: [4000]
+      to: []
+    neo4j:
+      ports: [7687]
+      to: []
+    # OIDC discovery + JWKS (api only). The IdP is usually outside the cluster.
+    idp:
+      ports: [443]
+      to: []
+    otel:
+      ports: [4317, 4318]
+      to: []
+    # Additional egress rules for the worker's tools/integrations (Loki, Prometheus, MCP...)
+    workerExtra: []
+      # - to: [{ipBlock: {cidr: 10.20.0.0/16}}]
+      #   ports: [{port: 3100, protocol: TCP}]

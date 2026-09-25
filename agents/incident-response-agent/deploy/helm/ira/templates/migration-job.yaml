@@ -1,0 +1,65 @@
+{{- if .Values.migrations.enabled }}
+{{- $m := .Values.migrations }}
+# `alembic upgrade head` before api/worker roll out. Runs as a hook, so it cannot rely on
+# chart resources created in the same release (ConfigMap, ServiceAccount): config is
+# rendered inline and the pod uses the namespace default ServiceAccount without a token.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "migrate") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "migrate") | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $m.backoffLimit }}
+  activeDeadlineSeconds: {{ $m.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "ira.selectorLabels" (dict "ctx" $ "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "ira.podSecurityContext" (dict "ctx" $) | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "ira.imageRef" (dict "image" .Values.image "ctx" $) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- toYaml $m.command | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "ira.secretName" . }}
+          env:
+            {{- range $k, $v := (include "ira.configData" . | fromYaml) }}
+            - name: {{ $k }}
+              value: {{ $v | toString | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml $m.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+      {{- with .Values.api.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,16 @@
+name: k8s.rollout_undo
+kind: mcp
+description: Roll back a Kubernetes deployment to its previous revision.
+input_schema:
+  type: object
+  properties:
+    namespace:
+      type: string
+    deployment:
+      type: string
+  required: [namespace, deployment]
+risk: write
+approval: required
+allowed_envs: [staging, prod]
+timeout_s: 60
+enabled: true

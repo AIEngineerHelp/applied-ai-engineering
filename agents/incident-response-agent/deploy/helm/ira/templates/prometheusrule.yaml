@@ -1,0 +1,16 @@
+{{- if .Values.metrics.prometheusRule.enabled }}
+# Generated from files/prometheus-alerts.yml (kept identical to deploy/prometheus/alerts.yml).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "ira.fullname" . }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "app") | nindent 4 }}
+    {{- with .Values.metrics.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- $rules := .Files.Get "files/prometheus-alerts.yml" | fromYaml }}
+  groups:
+    {{- toYaml $rules.groups | nindent 4 }}
+{{- end }}

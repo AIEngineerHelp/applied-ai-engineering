@@ -1,0 +1,884 @@
+{
+  "summary": {
+    "cases": 28,
+    "fault_top1_strict": 0.5,
+    "fault_top1_lenient": 0.857,
+    "fault_top3_lenient": 1.0,
+    "node_top1": 0.679,
+    "no_hypothesis": 0,
+    "errors": 0,
+    "baseline_majority_class": "network-loss",
+    "baseline_strict": 0.429,
+    "baseline_lenient": 0.714,
+    "precision_when_confident": 0.857,
+    "confident_cases": 28,
+    "mean_seconds": 63.7,
+    "total_cost_usd": 1.623,
+    "mean_iterations": 1.07,
+    "per_label": {
+      "APPCHILD": {
+        "n": 1,
+        "lenient": 1,
+        "strict": 0
+      },
+      "APPOUT": {
+        "n": 1,
+        "lenient": 1,
+        "strict": 0
+      },
+      "APPREAD": {
+        "n": 3,
+        "lenient": 2,
+        "strict": 0
+      },
+      "APPRES": {
+        "n": 3,
+        "lenient": 2,
+        "strict": 1
+      },
+      "APPSEV": {
+        "n": 3,
+        "lenient": 3,
+        "strict": 3
+      },
+      "APPTO": {
+        "n": 2,
+        "lenient": 1,
+        "strict": 1
+      },
+      "KERNDTLB": {
+        "n": 1,
+        "lenient": 1,
+        "strict": 0
+      },
+      "KERNMNTF": {
+        "n": 3,
+        "lenient": 3,
+        "strict": 3
+      },
+      "KERNREC": {
+        "n": 3,
+        "lenient": 3,
+        "strict": 1
+      },
+      "KERNRTSP": {
+        "n": 2,
+        "lenient": 2,
+        "strict": 2
+      },
+      "KERNSTOR": {
+        "n": 3,
+        "lenient": 2,
+        "strict": 0
+      },
+      "KERNTERM": {
+        "n": 3,
+        "lenient": 3,
+        "strict": 3
+      }
+    },
+    "target_fault_accuracy": 0.7,
+    "models": {
+      "planner": "gemini/gemini-2.5-pro",
+      "gatherer": "gemini/gemini-2.5-flash",
+      "analyst": "gemini/gemini-2.5-pro",
+      "reporter": "gemini/gemini-2.5-flash",
+      "utility": "gemini/gemini-2.5-flash"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "BGL_R12-M1-NC-I:J18-U11_363",
+      "node": "R12-M1-NC-I:J18-U11",
+      "label": "APPCHILD",
+      "expected": "app",
+      "accepted": [
+        "app",
+        "code-exception",
+        "quota/limit"
+      ],
+      "error": null,
+      "seconds": 58.1,
+      "predicted": "code-exception",
+      "component": "ciod",
+      "confidence": 0.9,
+      "top3": [
+        "code-exception",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0567,
+      "description": "The 'ciod' process is crashing, leading to core dumps. Evidence i1.s1 points to a specific failure on node 'R12-M1-NC-I:J18-U11' where 'ciod' failed to create a node map. Evidence i1.s2 shows that 'generating core' is the most frequent system-wide event, and specifically mentions 'ciod' as a source ",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R63-M1-N0-I:J18-U11_1973",
+      "node": "R63-M1-N0-I:J18-U11",
+      "label": "APPOUT",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "app",
+        "dependency-down"
+      ],
+      "error": null,
+      "seconds": 55.6,
+      "predicted": "disk",
+      "component": "R63-M1-N0-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "disk"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0503,
+      "description": "The failing node R63-M1-N0-I:J18-U11 experienced an 'Input/output error' when a process attempted to change directory. This strongly suggests a local disk or filesystem corruption issue on that specific node.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R27-M1-N4-I:J18-U01_10",
+      "node": "R27-M1-N4-I:J18-U01",
+      "label": "APPREAD",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 72.8,
+      "predicted": "bad-deploy",
+      "component": "R27-M1-N4-I:J18-U01",
+      "confidence": 0.85,
+      "top3": [
+        "bad-deploy",
+        "app"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0649,
+      "description": "The 'ciod' process on node 'R27-M1-N4-I:J18-U01' failed to start correctly because a required directory is missing. The log 'LOGIN chdir(<*>) failed: No such file or directory' is a strong indicator of a configuration or deployment issue where the necessary file system structure was not created.",
+      "fault_strict": false,
+      "fault_lenient": false,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R65-M1-NC-I:J18-U11_1783",
+      "node": "R65-M1-NC-I:J18-U11",
+      "label": "APPRES",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 63.6,
+      "predicted": "hardware",
+      "component": "BGL System",
+      "confidence": 0.85,
+      "top3": [
+        "hardware",
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0584,
+      "description": "Widespread hardware faults are causing kernel instability and application crashes across the BGL system. Evidence (i1.s2) shows a high volume of hardware-related errors like 'data TLB error' and 'alignment exceptions', which are leading to frequent application crashes indicated by 'generating core' ",
+      "fault_strict": false,
+      "fault_lenient": false,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R72-M1-N0-I:J18-U01_1405",
+      "node": "R72-M1-N0-I:J18-U01",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 42.6,
+      "predicted": "network-loss",
+      "component": "R72-M1-N0-I:J18-U01",
+      "confidence": 0.8,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0419,
+      "description": "A network link associated with node R72-M1-N0-I:J18-U01 has failed. This is indicated by a 'ciod' log message reporting 'Link has been severed' while attempting to read from a network socket.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R16-M1-NC-I:J18-U11_1784",
+      "node": "R16-M1-NC-I:J18-U11",
+      "label": "APPTO",
+      "expected": "network-delay",
+      "accepted": [
+        "network-delay",
+        "network-loss",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 65.5,
+      "predicted": "network-delay",
+      "component": "R16-M1-NC-I:J18-U11",
+      "confidence": 0.6,
+      "top3": [
+        "network-delay",
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0653,
+      "description": "Node R16-M1-NC-I:J18-U11 is experiencing a network issue, evidenced by a 'Connection timed out' error from the 'ciod' process while reading from a socket. This suggests a localized network problem affecting this node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R30-M0-N9-C:J16-U01_104",
+      "node": "R30-M0-N9-C:J16-U01",
+      "label": "KERNDTLB",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory"
+      ],
+      "error": null,
+      "seconds": 51.6,
+      "predicted": "hardware",
+      "component": "Affected Node",
+      "confidence": 0.9,
+      "top3": [
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0461,
+      "description": "The affected node is exclusively generating 'data TLB error interrupt' logs. Evidence `i1.s2` shows that this is the only event on the node, occurring 60 times. Comparing this with the baseline in `i1.s1`, all 60 occurrences of this error across the entire system are localized to this single node, s",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R01-M1-N4-I:J18-U11_1392",
+      "node": "R01-M1-N4-I:J18-U11",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 43.5,
+      "predicted": "storage",
+      "component": "R01-M1-N4-I:J18-U11",
+      "confidence": 0.8,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0399,
+      "description": "The node R01-M1-N4-I:J18-U11 failed to mount a Lustre file system. This indicates a storage-related issue, possibly due to a problem with the storage system itself, network connectivity to the storage, or a misconfiguration on the client node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R62-M0-N2-C:J09-U11_1719",
+      "node": "R62-M0-N2-C:J09-U11",
+      "label": "KERNREC",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "hardware",
+        "kernel"
+      ],
+      "error": null,
+      "seconds": 65.4,
+      "predicted": "hardware",
+      "component": "BGL System Hardware",
+      "confidence": 0.9,
+      "top3": [
+        "hardware",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0549,
+      "description": "Widespread hardware instability is affecting the system, as evidenced by a high volume of core dumps, CPU exceptions (floating point, alignment), correctable memory errors (CE sym), and various critical interrupts (data TLB, data storage). The specific network error on node R62-M0-N2-C:J09-U11 is li",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R01-M0-N1-C:J09-U11_823",
+      "node": "R01-M0-N1-C:J09-U11",
+      "label": "KERNRTSP",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "app"
+      ],
+      "error": null,
+      "seconds": 57.2,
+      "predicted": "kernel",
+      "component": "R01-M0-N1-C:J09-U11",
+      "confidence": 0.95,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0527,
+      "description": "Node R01-M0-N1-C:J09-U11 experienced a kernel panic, as indicated by the 'rts panic! - stopping execution' log message. This is a critical, unrecoverable error that would cause the node to halt.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R01-M1-N6-C:J15-U11_190",
+      "node": "R01-M1-N6-C:J15-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 49.2,
+      "predicted": "hardware",
+      "component": "R01-M1-N6-C:J15-U11",
+      "confidence": 0.7,
+      "top3": [
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0483,
+      "description": "The node R01-M1-N6-C:J15-U11 experienced a 'data storage interrupt' (EventId E52). This indicates a potential hardware fault related to the storage subsystem on this specific node.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R71-M0-NA-C:J12-U11_1259",
+      "node": "R71-M0-NA-C:J12-U11",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 51.6,
+      "predicted": "kernel",
+      "component": "R71-M0-NA-C:J12-U11",
+      "confidence": 0.95,
+      "top3": [
+        "kernel",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0511,
+      "description": "The kernel on node R71-M0-NA-C:J12-U11 terminated for an unspecified reason. This is a fatal event for the node and is the most likely root cause of the incident.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R04-M1-N4-I:J18-U11_9",
+      "node": "R04-M1-N4-I:J18-U11",
+      "label": "APPREAD",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 216.9,
+      "predicted": "host-down",
+      "component": "172.16.96.116",
+      "confidence": 0.85,
+      "top3": [
+        "host-down",
+        "network-loss",
+        "app"
+      ],
+      "iterations": 2,
+      "cost_usd": 0.1298,
+      "description": "The destination node 172.16.96.116 is likely down or unreachable. All occurrences of the 'ciod: failed to read message prefix' error (E33) from the source node are associated with attempts to connect to this specific IP address.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R66-M1-N8-I:J18-U01_1785",
+      "node": "R66-M1-N8-I:J18-U01",
+      "label": "APPRES",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 63.2,
+      "predicted": "network-loss",
+      "component": "R66-M1-N8-I:J18-U01",
+      "confidence": 0.8,
+      "top3": [
+        "network-loss",
+        "dependency-down",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0654,
+      "description": "The ciod process on node R66-M1-N8-I:J18-U01 is experiencing a network issue, as indicated by a 'Connection reset by peer' error on a CioStream socket. This suggests an abrupt termination of a network connection, possibly due to a fault in the network path or the peer service.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R53-M1-N0-I:J18-U01_1402",
+      "node": "R53-M1-N0-I:J18-U01",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 61.7,
+      "predicted": "network-loss",
+      "component": "R53-M1-N0-I:J18-U01",
+      "confidence": 0.7,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0602,
+      "description": "The node R53-M1-N0-I:J18-U01 experienced a network connectivity issue. Logs show a 'ciod: Error ... Link has been severed' message, which indicates a network connection was unexpectedly terminated.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R14-M0-NC-I:J18-U11_1778",
+      "node": "R14-M0-NC-I:J18-U11",
+      "label": "APPTO",
+      "expected": "network-delay",
+      "accepted": [
+        "network-delay",
+        "network-loss",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 66.6,
+      "predicted": "hardware",
+      "component": "BGL compute nodes",
+      "confidence": 0.85,
+      "top3": [
+        "hardware",
+        "network-delay",
+        "app"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0661,
+      "description": "There is strong evidence of widespread hardware faults across the system. System-wide logs show a high frequency of low-level errors including 'floating point alignment exceptions', 'double-hummer alignment exceptions', 'data TLB error interrupt', and 'instruction cache parity error'. These hardware",
+      "fault_strict": false,
+      "fault_lenient": false,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R30-M0-N4-I:J18-U01_1404",
+      "node": "R30-M0-N4-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 34.5,
+      "predicted": "storage",
+      "component": "R30-M0-N4-I:J18-U01",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0335,
+      "description": "A Lustre filesystem mount failed on node R30-M0-N4-I:J18-U01. The log event 'Lustre mount FAILED' indicates a problem with the storage system, the client node's configuration, or network connectivity to the storage servers.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R57-M0-N8-C:J12-U01_1758",
+      "node": "R57-M0-N8-C:J12-U01",
+      "label": "KERNREC",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "hardware",
+        "kernel"
+      ],
+      "error": null,
+      "seconds": 69.4,
+      "predicted": "network-loss",
+      "component": "R57-M0-N8-C:J12-U01",
+      "confidence": 0.6,
+      "top3": [
+        "network-loss",
+        "hardware",
+        "code-exception"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0702,
+      "description": "The failing node 'R57-M0-N8-C:J12-U01' logged a specific 'Error receiving packet on tree network' event. This indicates a potential network hardware or connectivity issue isolated to this node, which could be the primary cause of its failure.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R04-M0-N1-C:J02-U01_824",
+      "node": "R04-M0-N1-C:J02-U01",
+      "label": "KERNRTSP",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "app"
+      ],
+      "error": null,
+      "seconds": 43.0,
+      "predicted": "kernel",
+      "component": "R04-M0-N1-C:J02-U01",
+      "confidence": 0.9,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0383,
+      "description": "The node R04-M0-N1-C:J02-U01 experienced a fatal 'rts panic!' error, which halted its execution. This indicates a kernel panic or a critical failure in the runtime system.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R24-M1-N6-C:J13-U01_213",
+      "node": "R24-M1-N6-C:J13-U01",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 47.8,
+      "predicted": "storage",
+      "component": "R24-M1-N6-C:J13-U01",
+      "confidence": 0.7,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0487,
+      "description": "A \"data storage interrupt\" event was observed on node R24-M1-N6-C:J13-U01, indicating a potential storage or hardware-level fault on that specific node.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R20-M1-N8-C:J12-U01_1030",
+      "node": "R20-M1-N8-C:J12-U01",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 53.3,
+      "predicted": "kernel",
+      "component": "R20-M1-N8-C:J12-U01",
+      "confidence": 0.9,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0488,
+      "description": "The kernel on node 'R20-M1-N8-C:J12-U01' terminated due to a 'bad message header: invalid cpu' error. This points to a fatal kernel-level fault, possibly triggered by a hardware issue with the CPU on that specific node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R32-M1-N8-I:J18-U01_346",
+      "node": "R32-M1-N8-I:J18-U01",
+      "label": "APPREAD",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 52.1,
+      "predicted": "network-delay",
+      "component": "R32-M1-N8-I:J18-U01",
+      "confidence": 0.7,
+      "top3": [
+        "network-delay",
+        "app"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0504,
+      "description": "Node 'R32-M1-N8-I:J18-U01' is experiencing a network communication failure. The 'ciod' process logged a 'failed to read message prefix on control stream' error, which points to a problem with a socket connection, likely caused by network delay, packet loss, or an issue with the remote endpoint.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R22-M0-N0-I:J18-U01_1781",
+      "node": "R22-M0-N0-I:J18-U01",
+      "label": "APPRES",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 100.5,
+      "predicted": "dependency-down",
+      "component": "172.16.96.116",
+      "confidence": 0.85,
+      "top3": [
+        "dependency-down",
+        "app"
+      ],
+      "iterations": 2,
+      "cost_usd": 0.1012,
+      "description": "Logs on node R22-M0-N0-I:J18-U01 show 'Connection reset by peer' errors. All logged instances of this error identify the same remote peer IP, 172.16.96.116, as the source of the connection reset. This indicates that the service on the remote peer 172.16.96.116 is unavailable, has crashed, or is acti",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R14-M0-N8-I:J18-U01_1788",
+      "node": "R14-M0-N8-I:J18-U01",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 58.5,
+      "predicted": "network-loss",
+      "component": "R14-M0-N8-I:J18-U01",
+      "confidence": 0.8,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.057,
+      "description": "The log message 'ciod: Error reading message prefix on CioStream socket to <*>:<*>, Link has been severed' on node R14-M0-N8-I:J18-U01 indicates a broken network connection. This suggests a network fault, such as a physical link failure or network partition, is the root cause.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R24-M1-NC-I:J18-U01_1390",
+      "node": "R24-M1-NC-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 52.8,
+      "predicted": "storage",
+      "component": "R24-M1-NC-I:J18-U01",
+      "confidence": 0.8,
+      "top3": [
+        "storage",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0493,
+      "description": "Node R24-M1-NC-I:J18-U01 failed to mount the Lustre filesystem. This is a strong indication of a storage accessibility issue, potentially caused by a client-side misconfiguration, a problem with the storage system, or a network problem between the node and the storage servers.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R63-M1-N5-C:J17-U01_1521",
+      "node": "R63-M1-N5-C:J17-U01",
+      "label": "KERNREC",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "hardware",
+        "kernel"
+      ],
+      "error": null,
+      "seconds": 56.7,
+      "predicted": "hardware",
+      "component": "BGL System",
+      "confidence": 0.8,
+      "top3": [
+        "hardware",
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0533,
+      "description": "Widespread system instability is indicated by a high volume of 'generating core' events (721), memory-related exceptions such as 'data TLB error interrupt' (60) and various alignment exceptions (over 200). This suggests a potential systemic hardware or kernel-level fault.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R16-M0-NB-C:J07-U11_167",
+      "node": "R16-M0-NB-C:J07-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 63.4,
+      "predicted": "code-exception",
+      "component": "Compute Nodes",
+      "confidence": 0.9,
+      "top3": [
+        "code-exception",
+        "memory",
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.061,
+      "description": "The most frequent log event across the system is \"generating core.*\" with 721 occurrences, indicating widespread application or kernel crashes leading to core dumps. This suggests a systemic issue like a bad deployment or a critical software bug is causing instability across multiple nodes.",
+      "fault_strict": false,
+      "fault_lenient": false,
+      "fault_top3_lenient": true,
+      "node_top1": false
+    },
+    {
+      "case_id": "BGL_R63-M0-N6-C:J12-U11_1740",
+      "node": "R63-M0-N6-C:J12-U11",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 66.2,
+      "predicted": "kernel",
+      "component": "R63-M0-N6-C:J12-U11",
+      "confidence": 0.9,
+      "top3": [
+        "kernel",
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0598,
+      "description": "Node R63-M0-N6-C:J12-U11 experienced a kernel termination. Evidence i1.s1 explicitly shows a log message \"rts: kernel terminated for reason <*>\". This is supported by evidence i1.s2 which shows a high number of \"generating core.<*>\" events across the system, indicating process or system crashes.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    }
+  ]
+}

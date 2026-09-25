@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (design-system/MASTER.md v2). Light is the default for
+ * everyone; dark applies only when the user opts in (<html data-theme="dark">,
+ * set before paint by the inline script in app/layout.tsx). The OS setting is
+ * deliberately ignored. Components never use raw hex.
+ */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --subtle: #fafafa;
+  --hover: #f5f5f5;
+  --border: #ebebeb;
+  --border-strong: #d4d4d4;
+  --fg: #171717;
+  --fg-muted: #525252;
+  --fg-subtle: #737373;
+  --primary: #171717;
+  --primary-fg: #ffffff;
+  --link: #2563eb;
+
+  /* Signal colors: `*-fg` for text, bare name for the dot/square. */
+  --danger: #dc2626;
+  --danger-fg: #dc2626;
+  --high: #c2410c;
+  --high-fg: #c2410c;
+  --warning: #ca8a04;
+  --warning-fg: #a16207;
+  --neutral: #737373;
+  --neutral-fg: #737373;
+  --info: #2563eb;
+  --info-fg: #2563eb;
+  --success: #16a34a;
+  --success-fg: #15803d;
+
+  /*
+   * Chart-only severity steps. The signal colors above are too close for
+   * stacked areas under colour-blindness (SEV1/SEV2 ΔE 2.4 protan), so the
+   * chart uses lightness-separated steps of the same hues (dataviz validator:
+   * adjacent ΔE ≥ 14.6 deutan, ≥ 18 normal). Always shown with a legend,
+   * tooltip and a table view.
+   */
+  --chart-sev1: #991b1b;
+  --chart-sev2: #ea580c;
+  --chart-sev3: #eab308;
+  --chart-sev4: #a3a3a3;
+  --chart-bar: #a3a3a3;
+  --chart-grid: #ebebeb;
+
+  /*
+   * Knowledge-graph kinds: three hues only (validated all-pairs with the
+   * dataviz script: CVD ΔE 9.2, normal 24.0), everything else neutral + shape.
+   */
+  --graph-incident: #2a78d6;
+  --graph-actor: #eb6834;
+  --graph-machine: #1baf7a;
+  --graph-n1: #404040;
+  --graph-n2: #737373;
+  --graph-n3: #a3a3a3;
+  --graph-n4: #c7c7c7;
+  --graph-edge: #d4d4d4;
+
+  --overlay: rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.16), 0 0 0 1px rgb(0 0 0 / 0.04);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --subtle: #111111;
+  --hover: #1c1c1c;
+  --border: #262626;
+  --border-strong: #404040;
+  --fg: #ededed;
+  --fg-muted: #a3a3a3;
+  --fg-subtle: #8a8a8a;
+  --primary: #ededed;
+  --primary-fg: #0a0a0a;
+  --link: #60a5fa;
+
+  --danger: #f87171;
+  --danger-fg: #f87171;
+  --high: #fb923c;
+  --high-fg: #fb923c;
+  --warning: #facc15;
+  --warning-fg: #facc15;
+  --neutral: #8a8a8a;
+  --neutral-fg: #8a8a8a;
+  --info: #60a5fa;
+  --info-fg: #60a5fa;
+  --success: #4ade80;
+  --success-fg: #4ade80;
+
+  --chart-sev1: #ef4444;
+  --chart-sev2: #fb923c;
+  --chart-sev3: #fde047;
+  --chart-sev4: #737373;
+  --chart-bar: #525252;
+  --chart-grid: #262626;
+
+  --graph-incident: #3987e5;
+  --graph-actor: #d95926;
+  --graph-machine: #199e70;
+  --graph-n1: #d4d4d4;
+  --graph-n2: #a3a3a3;
+  --graph-n3: #737373;
+  --graph-n4: #525252;
+  --graph-edge: #404040;
+
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-link: var(--link);
+  --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
+  --color-high: var(--high);
+  --color-high-fg: var(--high-fg);
+  --color-warning: var(--warning);
+  --color-warning-fg: var(--warning-fg);
+  --color-neutral: var(--neutral);
+  --color-neutral-fg: var(--neutral-fg);
+  --color-info: var(--info);
+  --color-info-fg: var(--info-fg);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
+  --color-chart-bar: var(--chart-bar);
+  --color-chart-grid: var(--chart-grid);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-pop: var(--shadow-pop);
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--link) 20%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+
+  dialog::backdrop {
+    background: var(--overlay);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@keyframes flash {
+  0% { box-shadow: 0 0 0 2px var(--link); }
+  100% { box-shadow: 0 0 0 2px transparent; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@utility animate-rise {
+  animation: rise 160ms ease-out both;
+}
+
+@utility animate-caret {
+  animation: caret-blink 1s step-end infinite;
+}
+
+/* Text shimmer for an in-progress line: a lighter band sweeps across the ink. */
+@utility text-shimmer {
+  background-image: linear-gradient(90deg, var(--fg) 0%, var(--fg) 40%, var(--fg-subtle) 50%, var(--fg) 60%, var(--fg) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.4s linear infinite;
+}
+
+@utility animate-flash {
+  animation: flash 1.6s ease-out;
+}
+
+@utility animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .text-shimmer {
+    background-image: none;
+    color: var(--fg);
+    animation: none;
+  }
+
+  .animate-caret {
+    animation: none;
+  }
+}

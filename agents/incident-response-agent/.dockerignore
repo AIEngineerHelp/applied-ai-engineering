@@ -1,0 +1,58 @@
+# Build context for the root Dockerfile (api/worker image). Keep it small and secret-free.
+
+# VCS / tooling
+.git
+.gitignore
+.github
+.pre-commit-config.yaml
+.idea
+.vscode
+.DS_Store
+*.swp
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Python environments and caches
+.venv
+venv
+env
+**/__pycache__
+**/*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+.coverage
+htmlcov
+build
+dist
+*.egg-info
+
+# Frontend has its own image (frontend/Dockerfile)
+frontend
+
+# Data: only the read-only Loghub 2k sample is shipped in the image
+data/*
+!data/loghub
+data/loghub/*
+!data/loghub/2k
+data/artifacts
+*.parquet
+
+# Not needed at runtime (except what the Evals tab serves: results + methodology)
+tests
+evals/*
+!evals/results
+scripts
+deploy
+docs/*
+!docs/evals.md
+*.md
+!docs/evals.md
+*.pdf
+Incident-response*.pdf
+docker-compose*.yml
+Dockerfile
+.dockerignore

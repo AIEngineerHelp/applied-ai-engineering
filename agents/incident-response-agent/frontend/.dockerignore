@@ -1,0 +1,20 @@
+# Build context hygiene: only sources, manifests and config go into the image.
+.git
+.gitignore
+.next
+out
+build
+coverage
+node_modules
+npm-debug.log*
+.env*
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.DS_Store
+Dockerfile
+.dockerignore
+README.md
+AGENTS.md
+CLAUDE.md

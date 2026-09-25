@@ -1,0 +1,32 @@
+Incident Response Agent {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+{{- if .Values.ingress.enabled }}
+
+UI:   https://{{ .Values.ingress.host }}/
+API:  https://{{ .Values.ingress.host }}/v1   (health: /health/live, /health/ready)
+OIDC redirect URI to register for client "{{ .Values.auth.oidc.clientId }}": https://{{ .Values.ingress.host }}/auth/callback
+{{- else }}
+
+Ingress is disabled. Port-forward to try it:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ira.componentName" (dict "ctx" $ "component" "api") }} 8000:{{ .Values.api.service.port }}
+{{- end }}
+
+Check the rollout:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "ira.componentName" (dict "ctx" $ "component" "api") }}
+
+Migrations ran as a pre-install/pre-upgrade hook ({{ include "ira.componentName" (dict "ctx" $ "component" "migrate") }}).
+A failed migration Job is kept for inspection:
+  kubectl -n {{ .Release.Namespace }} logs job/{{ include "ira.componentName" (dict "ctx" $ "component" "migrate") }}
+
+/metrics is not exposed through the ingress. Scrape api:{{ .Values.api.port }} and worker:{{ .Values.worker.metricsPort }} in-cluster
+{{- if .Values.metrics.serviceMonitor.enabled }} (ServiceMonitors created){{ else }} (set metrics.serviceMonitor.enabled=true with the Prometheus Operator){{ end }}.
+{{- if not .Values.artifacts.persistence.enabled }}
+
+NOTE: artifacts use emptyDir; tool outputs written by the worker are not visible to the api
+and are lost on restart. Set artifacts.persistence.enabled=true with a ReadWriteMany class.
+{{- end }}
+{{- if eq .Values.auth.mode "disabled" }}
+
+WARNING: auth.mode=disabled. Anyone who can reach the ingress has full access.
+{{- end }}

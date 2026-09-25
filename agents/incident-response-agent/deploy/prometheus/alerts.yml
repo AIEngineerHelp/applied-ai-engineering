@@ -1,0 +1,67 @@
+# Alerts on the agent itself.
+# Plain Prometheus rule file: used by compose, and embedded by the Helm chart as a
+# PrometheusRule when metrics.prometheusRule.enabled=true (keep both in sync).
+
+groups:
+  - name: ira.agent
+    rules:
+      - alert: IraDeadLetterQueueNonEmpty
+        expr: sum(increase(ira_dlq_messages_total[10m])) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Incidents are landing in the dead-letter queue"
+          description: >-
+            {{ $value | humanize }} message(s) were moved to incidents.dlq in the last 10 minutes.
+            Inspect with `XRANGE incidents.dlq - +` and check worker logs.
+
+      - alert: IraIncidentErrorRateHigh
+        expr: |
+          # Denominator = runs that reached a terminal state (entry statuses such as
+          # queued/cached are excluded so incidents are not counted twice).
+          (
+            sum(rate(ira_incidents_total{status="failed"}[15m]))
+            /
+            clamp_min(sum(rate(ira_incidents_total{status=~"failed|reported|resolved|rejected"}[15m])), 1e-9)
+          ) > 0.05
+          and sum(increase(ira_incidents_total{status=~"failed|reported|resolved|rejected"}[15m])) >= 5
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 5% of incidents are failing"
+          description: "Failed incident ratio is {{ $value | humanizePercentage }} over 15m."
+
+      - alert: IraLlmCostSpike
+        # Last hour's spend is more than 3x the hourly average of the previous day,
+        # and at least $5 so a quiet system does not page on noise.
+        expr: |
+          sum(increase(ira_llm_cost_usd_total[1h])) > 5
+          and
+          sum(increase(ira_llm_cost_usd_total[1h]))
+            > 3 * (sum(increase(ira_llm_cost_usd_total[1d] offset 1h)) / 24)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM spend spike"
+          description: "LLM spend in the last hour is ${{ $value | printf \"%.2f\" }}, over 3x the daily hourly average."
+
+      - alert: IraLlmProviderFailover
+        expr: sum by (from_model, to_model) (increase(ira_llm_fallbacks_total[10m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM provider failover in progress"
+          description: "Calls to {{ $labels.from_model }} are failing over to {{ $labels.to_model }}."
+
+      - alert: IraTargetDown
+        expr: up{job=~".*ira-(api|worker)"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "IRA {{ $labels.job }} target is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }}."

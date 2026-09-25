@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ira.fullname" . }}-config
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "app") | nindent 4 }}
+data:
+  {{- include "ira.configData" . | nindent 2 }}

@@ -1,0 +1,18 @@
+name: sandbox.run
+kind: tool
+description: >-
+  Run one allow-listed, read-only diagnostic command (echo, cat, head, tail, grep, wc, ls, date,
+  uname, uptime, df) with no shell. Paths must stay inside the data directory.
+input_schema:
+  type: object
+  properties:
+    argv:
+      type: array
+      items:
+        type: string
+  required: [argv]
+risk: read
+approval: none
+allowed_envs: [dev, staging, prod]
+timeout_s: 10
+enabled: true

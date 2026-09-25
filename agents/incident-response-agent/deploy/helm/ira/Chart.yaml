@@ -1,0 +1,13 @@
+apiVersion: v2
+name: ira
+description: >-
+  Incident Response Agent: FastAPI api, Redis-streams worker, Next.js operator UI and a
+  pre-install/pre-upgrade migration Job. Postgres (pgvector), Redis, LiteLLM and the OIDC
+  IdP are external dependencies (managed services or their own charts).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+keywords: [incident-response, sre, llm, agents]
+annotations:
+  category: Monitoring

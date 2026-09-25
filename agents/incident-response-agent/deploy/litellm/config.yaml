@@ -1,0 +1,94 @@
+# LiteLLM proxy configuration for the Incident Response Agent.
+#
+# The backend calls the proxy with the *same* model names it uses by default
+# (src/ira/config.py: MODEL_PLANNER, MODEL_GATHERER, ..., EMBEDDING_MODEL), so every
+# alias below must match those names exactly. Provider keys are read from the proxy's
+# environment (os.environ/...): they are never given to the api/worker containers.
+#
+# Required env on the proxy container:
+#   LITELLM_MASTER_KEY   bearer key the api/worker use (sk-...)
+#   GEMINI_API_KEY       Google AI Studio key (primary chat models)
+#   OPENAI_API_KEY       embeddings + cross-provider fallback
+#   DATABASE_URL         optional; Postgres for spend tracking / budgets / virtual keys
+
+model_list:
+  # ---- Primary chat models (Gemini) -------------------------------------------------
+  - model_name: gemini/gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+      timeout: 120
+      stream_timeout: 60
+    model_info:
+      mode: chat
+
+  - model_name: gemini/gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      timeout: 90
+    model_info:
+      mode: chat
+
+  # ---- Cross-provider fallback (used only when Gemini fails) -------------------------
+  - model_name: fallback-general
+    litellm_params:
+      model: openai/gpt-4.1-mini
+      api_key: os.environ/OPENAI_API_KEY
+      timeout: 90
+    model_info:
+      mode: chat
+
+  # ---- Embeddings (semantic cache; must return EMBEDDING_DIM=1536 dims) --------------
+  # Default (EMBEDDING_MODEL=gemini/gemini-embedding-001): the backend requests
+  # `dimensions=EMBEDDING_DIM`, which LiteLLM maps to Gemini's outputDimensionality.
+  - model_name: gemini/gemini-embedding-001
+    litellm_params:
+      model: gemini/gemini-embedding-001
+      api_key: os.environ/GEMINI_API_KEY
+      timeout: 15
+    model_info:
+      mode: embedding
+
+  # Alternative when an OpenAI key is configured: EMBEDDING_MODEL=text-embedding-3-small
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      mode: embedding
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+  timeout: 120
+  # Take a deployment out of rotation after repeated failures.
+  allowed_fails: 3
+  cooldown_time: 60
+  # 5xx / timeout / rate-limit fallbacks: pro -> flash -> other provider.
+  fallbacks:
+    - gemini/gemini-2.5-pro: ["gemini/gemini-2.5-flash", "fallback-general"]
+    - gemini/gemini-2.5-flash: ["fallback-general"]
+  # Prompt larger than the context window -> retry on a model with a bigger one.
+  context_window_fallbacks:
+    - gemini/gemini-2.5-flash: ["gemini/gemini-2.5-pro"]
+    - fallback-general: ["gemini/gemini-2.5-pro"]
+
+litellm_settings:
+  drop_params: true
+  request_timeout: 120
+  # Proxy-wide spend ceiling (USD) per budget window. The per-incident cap
+  # (MAX_BUDGET_USD, default $2) is enforced by the agent itself.
+  # Enforced across restarts only when DATABASE_URL is configured.
+  max_budget: 200
+  budget_duration: 30d
+  # Do not log prompt/response bodies (they may contain production data).
+  turn_off_message_logging: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # Spend tracking uses the DATABASE_URL env var when it is set (no entry needed here).
+  # Do not persist models added through the admin API; this file is the source of truth.
+  store_model_in_db: false
+  # Refuse request bodies larger than this (MB) to cap the cost of runaway prompts.
+  max_request_size_mb: 10

@@ -1,0 +1,16 @@
+# Metrics-only Service for the worker (Prometheus / ServiceMonitor). Not exposed via ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "worker") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "worker") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "ira.selectorLabels" (dict "ctx" $ "component" "worker") | nindent 4 }}
+  ports:
+    - name: metrics
+      port: {{ .Values.worker.metricsPort }}
+      targetPort: metrics
+      protocol: TCP

@@ -1,0 +1,17 @@
+{{- $components := list (dict "name" "api" "v" .Values.api "on" true) (dict "name" "worker" "v" .Values.worker "on" true) (dict "name" "frontend" "v" .Values.frontend "on" .Values.frontend.enabled) }}
+{{- range $components }}
+{{- if and .on .v.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" .name) }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" .name) | nindent 4 }}
+spec:
+  maxUnavailable: {{ .v.pdb.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" .name) | nindent 6 }}
+{{- end }}
+{{- end }}

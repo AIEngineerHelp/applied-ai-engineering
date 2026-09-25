@@ -1,0 +1,175 @@
+# Log datasets the agent can investigate (Loghub 2k samples, data/loghub/2k/<name>).
+# Shown on the UI's Logs page. An incident must carry the label `dataset=<name>` for the
+# agent's log_explorer tool to read the matching logs.
+#
+# Source: Loghub, https://github.com/logpai/loghub (research use; see data/loghub/2k/LICENSE.txt)
+# Citation: Zhu et al., "Loghub: A Large Collection of System Log Datasets for AI-driven Log
+# Analytics", ISSRE 2023. https://arxiv.org/abs/2008.06448
+
+citation:
+  text: "Jieming Zhu, Shilin He, Pinjia He, Jinyang Liu, Michael R. Lyu. Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics. ISSRE 2023."
+  url: https://arxiv.org/abs/2008.06448
+  repository: https://github.com/logpai/loghub
+
+datasets:
+  BGL:
+    title: Blue Gene/L supercomputer
+    category: HPC / supercomputer
+    description: >-
+      RAS (reliability, availability, serviceability) events from the IBM Blue Gene/L machine at
+      Lawrence Livermore National Labs. Each line names a hardware location such as
+      R02-M1-N0-C (rack, midplane, node card) and a component (KERNEL, APP, MMCS...). Contains
+      hardware faults like cache parity errors, TLB and storage interrupts.
+    suggested:
+      - title: BGL rack R02-M1 compute nodes throwing TLB and storage interrupts
+        description: Jobs on midplane R02-M1 are aborting. RAS stream shows repeated data TLB error interrupts and data storage interrupts on several compute nodes.
+        service: bgl-compute
+        severity: sev1
+      - title: BGL node R02-M1-N0-C reporting kernel and hardware errors
+        description: RAS KERNEL alerts on node R02-M1-N0-C; jobs failing.
+        service: bgl-compute
+        severity: sev2
+  Hadoop:
+    title: Hadoop MapReduce cluster
+    category: Distributed computing
+    description: >-
+      Logs from MapReduce jobs on a Hadoop/YARN cluster, including application masters, task
+      attempts and the ResourceManager. The original study injected machine-down, network
+      disconnection and disk-full faults.
+    suggested:
+      - title: "Hadoop MapReduce jobs stuck: containers cannot reach ResourceManager"
+        description: Map tasks are retrying repeatedly and jobs are not completing. Node managers report lease renewal failures.
+        service: hadoop-yarn
+        severity: sev2
+  HDFS:
+    title: Hadoop Distributed File System
+    category: Distributed storage
+    description: >-
+      DataNode and NameNode logs from an HDFS cluster: block allocation, replication, receipt
+      and deletion, plus exceptions while serving blocks to clients.
+    suggested:
+      - title: HDFS DataNodes throwing exceptions while serving blocks
+        description: Readers see slow or failed block reads. DataNodes log exceptions while serving blocks to clients.
+        service: hdfs-datanode
+        severity: sev3
+  Zookeeper:
+    title: ZooKeeper coordination service
+    category: Distributed coordination
+    description: >-
+      Logs from a ZooKeeper ensemble: leader election, quorum peer connections, client sessions.
+      Contains broken peer connections and interrupted send workers.
+    suggested:
+      - title: "ZooKeeper quorum unstable: followers dropping connections"
+        description: Clients see session expirations. Quorum peers log broken connections and interrupted send workers.
+        service: zookeeper-quorum
+        severity: sev2
+  Spark:
+    title: Apache Spark jobs
+    category: Distributed computing
+    description: >-
+      Executor logs from Spark jobs: task assignment, stage execution, block storage and
+      shuffle. Mostly healthy task lifecycle events, useful as a baseline.
+    suggested:
+      - title: Spark executors slow to finish tasks in stage
+        description: Batch job running longer than usual; suspect executor memory pressure or block fetch problems.
+        service: spark-batch
+        severity: sev3
+  OpenStack:
+    title: OpenStack cloud (Nova)
+    category: Cloud infrastructure
+    description: >-
+      Nova API and compute logs from an OpenStack deployment: REST API calls, VM lifecycle
+      events, image cache management and power-state synchronisation.
+    suggested:
+      - title: OpenStack Nova reporting unknown base files and VM state mismatches
+        description: Compute nodes log unknown base image files and power-state sync finds instance count mismatches with the hypervisor.
+        service: nova-compute
+        severity: sev3
+  Thunderbird:
+    title: Thunderbird supercomputer
+    category: HPC / supercomputer
+    description: >-
+      System logs from the Thunderbird cluster at Sandia National Labs: InfiniBand subnet
+      manager sweeps, NTP sync, and monitoring daemons failing to reach data sources.
+    suggested:
+      - title: Thunderbird monitoring daemons cannot reach data sources
+        description: Monitoring gaps across many nodes; data_thread reports no answer from any datasource and name resolution warnings.
+        service: tbird-monitoring
+        severity: sev3
+  HPC:
+    title: HPC cluster (Los Alamos)
+    category: HPC / supercomputer
+    description: >-
+      Node and component state events from a high-performance computing cluster at Los Alamos
+      National Laboratory: link errors, environmental readings, node state changes.
+    suggested:
+      - title: HPC cluster reporting repeated link errors and nodes configured out
+        description: Interconnect link error intervals expiring on several nodes; some nodes configured out of the scheduler.
+        service: hpc-interconnect
+        severity: sev2
+  Linux:
+    title: Linux server system logs
+    category: Operating system
+    description: >-
+      /var/log/messages from a Linux server: SSH and FTP connections, PAM authentication,
+      session open/close, cron. Contains many authentication failures from remote hosts.
+    suggested:
+      - title: Linux server flooded with failed logins and unknown users
+        description: Authentication failure rate spiked; PAM reports unknown users and repeated failures from remote hosts.
+        service: linux-host
+        severity: sev2
+  OpenSSH:
+    title: OpenSSH server
+    category: Security / access
+    description: >-
+      sshd logs from a server exposed to the internet: accepted and failed password logins,
+      invalid users, disconnects. Classic brute-force traffic.
+    suggested:
+      - title: Spike in SSH authentication failures on bastion hosts
+        description: Thousands of failed SSH password attempts from external addresses in the last hour. Possible brute-force attempt.
+        service: bastion-ssh
+        severity: sev2
+  Apache:
+    title: Apache HTTP server
+    category: Web server
+    description: >-
+      Apache error log: mod_jk worker (Tomcat connector) state, client errors and directory
+      index denials.
+    suggested:
+      - title: "Apache web tier: mod_jk workers in error state"
+        description: Users get intermittent 503 errors. Apache logs report mod_jk child workers in error state and missing scoreboard entries.
+        service: web-frontend
+        severity: sev3
+  Proxifier:
+    title: Proxifier proxy client
+    category: Networking / desktop
+    description: >-
+      Connection logs from the Proxifier proxy client on a workstation: connections opened and
+      closed through an HTTPS proxy, and proxy connection failures.
+    suggested:
+      - title: Workstations cannot connect through the corporate proxy
+        description: Users report sites failing to load; the proxy client logs connection failures and name resolution errors.
+        service: corp-proxy
+        severity: sev3
+  Mac:
+    title: macOS workstation
+    category: Operating system / desktop
+    description: >-
+      System logs from a Mac laptop: launchd scheduling, Wi-Fi and Thunderbolt events,
+      thermal and memory pressure, sleep/wake.
+    suggested:
+      - title: Developer laptop under thermal and memory pressure
+        description: Laptop is sluggish and hot; system logs mention thermal and memory pressure state changes.
+        service: endpoint-mac
+        severity: sev4
+  HealthApp:
+    title: Android health app
+    category: Mobile application
+    description: >-
+      Application logs from an Android health/fitness app: step counting, calorie and altitude
+      calculations, sensor callbacks.
+    suggested:
+      - title: Health app step counts not updating
+        description: Users report step totals stuck; app logs show repeated step recalculation.
+        service: health-app
+        severity: sev4

@@ -1,0 +1,35 @@
+name: log_explorer
+kind: tool
+description: >-
+  Explore parsed Loghub logs for a dataset. operation "distribution" returns the most frequent
+  event templates (optionally filtered by column substring, e.g. {"Component": "KERNEL"} or
+  {"Node": "R02-M1-N0-C"}); operation "drill_down" expands one EventId into its parameter variance.
+input_schema:
+  type: object
+  properties:
+    dataset:
+      type: string
+      description: >-
+        Loghub dataset name (see registry/datasets.yaml): BGL, Hadoop, HDFS, Zookeeper, Spark,
+        OpenStack, Thunderbird, HPC, Linux, OpenSSH, Apache, Proxifier, Mac, HealthApp.
+        Defaults to the incident's "dataset" label.
+    operation:
+      type: string
+      enum: [distribution, drill_down]
+      default: distribution
+    filters:
+      type: object
+      additionalProperties:
+        type: string
+    event_id:
+      type: string
+      description: Required for drill_down.
+    limit:
+      type: integer
+      default: 15
+  required: []
+risk: read
+approval: none
+allowed_envs: [dev, staging, prod]
+timeout_s: 30
+enabled: true

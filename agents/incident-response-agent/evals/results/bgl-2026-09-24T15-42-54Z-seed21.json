@@ -1,0 +1,860 @@
+{
+  "summary": {
+    "cases": 28,
+    "fault_top1_strict": 0.75,
+    "fault_top1_lenient": 1.0,
+    "fault_top3_lenient": 1.0,
+    "node_top1": 1.0,
+    "no_hypothesis": 0,
+    "errors": 0,
+    "baseline_majority_class": "kernel",
+    "baseline_strict": 0.393,
+    "baseline_lenient": 0.714,
+    "precision_when_confident": 1.0,
+    "confident_cases": 28,
+    "mean_confidence_correct": 0.911,
+    "mean_confidence_wrong": null,
+    "mean_seconds": 51.1,
+    "total_cost_usd": 1.424,
+    "mean_iterations": 1.0,
+    "per_label": {
+      "APPRES": {
+        "n": 1,
+        "lenient": 1,
+        "strict": 1
+      },
+      "APPSEV": {
+        "n": 7,
+        "lenient": 7,
+        "strict": 7
+      },
+      "KERNMNTF": {
+        "n": 7,
+        "lenient": 7,
+        "strict": 7
+      },
+      "KERNREC": {
+        "n": 2,
+        "lenient": 2,
+        "strict": 2
+      },
+      "KERNSTOR": {
+        "n": 7,
+        "lenient": 7,
+        "strict": 0
+      },
+      "KERNTERM": {
+        "n": 4,
+        "lenient": 4,
+        "strict": 4
+      }
+    },
+    "target_fault_accuracy": 0.7,
+    "models": {
+      "planner": "gemini/gemini-2.5-pro",
+      "gatherer": "gemini/gemini-2.5-flash",
+      "analyst": "gemini/gemini-2.5-pro",
+      "reporter": "gemini/gemini-2.5-flash",
+      "utility": "gemini/gemini-2.5-flash"
+    },
+    "meta": {
+      "run_id": "bgl-2026-09-24T15-42-54Z-seed21",
+      "dataset": "BGL",
+      "seed": 21,
+      "n": 28,
+      "exclude_seed": 7,
+      "holdout": true,
+      "started_at": "2026-09-24T15-42-54Z-seed21",
+      "finished_at": "2026-09-24T15:49:18.476578+00:00",
+      "git_commit": "7e6b956"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "BGL_R13-M1-N4-I:J18-U11_1779",
+      "node": "R13-M1-N4-I:J18-U11",
+      "label": "APPRES",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 51.7,
+      "predicted": "network-loss",
+      "component": "ciod on R13-M1-N4-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0517,
+      "description": "The ciod process on node R13-M1-N4-I:J18-U11 reported a 'Connection reset by peer' error on a CioStream socket. This indicates that the remote end of the network connection unexpectedly terminated the session, causing the operation to fail.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R33-M1-N4-I:J18-U11_1795",
+      "node": "R33-M1-N4-I:J18-U11",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 53.2,
+      "predicted": "network-loss",
+      "component": "ciod on R33-M1-N4-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0524,
+      "description": "The alerted node R33-M1-N4-I:J18-U11 reported a single 'ciod: Error reading message prefix on CioStream socket to <*>:<*>, Link has been severed' event. This indicates a network connectivity loss on a specific socket managed by the ciod process.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R02-M1-N8-I:J18-U01_1381",
+      "node": "R02-M1-N8-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 55.7,
+      "predicted": "storage",
+      "component": "R02-M1-N8-I:J18-U01",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0535,
+      "description": "The alerted node R02-M1-N8-I:J18-U01 reported a 'Lustre mount FAILED' error. This indicates a problem with mounting the parallel filesystem, which is a storage-related fault. The issue appears to be localized to this node, as this specific error was not found among the most frequent errors cluster-w",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R46-M1-NF-C:J11-U01_1749",
+      "node": "R46-M1-NF-C:J11-U01",
+      "label": "KERNREC",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "hardware",
+        "kernel"
+      ],
+      "error": null,
+      "seconds": 45.6,
+      "predicted": "network-loss",
+      "component": "R46-M1-NF-C:J11-U01",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0421,
+      "description": "The alerted node R46-M1-NF-C:J11-U01 reported a single 'Error receiving packet on tree network' event (EventId E60). This indicates a network communication failure specific to this node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R05-M0-N7-C:J10-U11_172",
+      "node": "R05-M0-N7-C:J10-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 48.2,
+      "predicted": "hardware",
+      "component": "R05-M0-N7-C:J10-U11",
+      "confidence": 0.9,
+      "top3": [
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.051,
+      "description": "The alerted node R05-M0-N7-C:J10-U11 reported a 'data storage interrupt' (EventId E52). This points to a hardware-level fault, likely within the node's storage subsystem or its controller.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R63-M0-N4-C:J16-U01_1260",
+      "node": "R63-M0-N4-C:J16-U01",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 50.6,
+      "predicted": "kernel",
+      "component": "R63-M0-N4-C:J16-U01",
+      "confidence": 0.95,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0496,
+      "description": "The alerted node R63-M0-N4-C:J16-U01 experienced a critical failure where its kernel terminated. This is directly evidenced by the log message 'rts: kernel terminated for reason <*>'.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R45-M1-N0-I:J18-U01_1790",
+      "node": "R45-M1-N0-I:J18-U01",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 51.2,
+      "predicted": "network-loss",
+      "component": "ciod on R45-M1-N0-I:J18-U01",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0509,
+      "description": "The ciod process on node R45-M1-N0-I:J18-U01 experienced a network failure. A log message explicitly states 'Link has been severed' while trying to read from a CioStream socket, which directly explains the error reported in the alert.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R04-M0-NC-I:J18-U11_1383",
+      "node": "R04-M0-NC-I:J18-U11",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 62.5,
+      "predicted": "storage",
+      "component": "R04-M0-NC-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage",
+        "app"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0643,
+      "description": "Node R04-M0-NC-I:J18-U11 experienced a Lustre filesystem mount failure, as indicated by the 'Lustre mount FAILED' error in its logs. This is a foundational infrastructure issue that would likely cause applications depending on that filesystem to fail, leading to the node error alert.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R46-M1-N1-C:J02-U01_1750",
+      "node": "R46-M1-N1-C:J02-U01",
+      "label": "KERNREC",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "hardware",
+        "kernel"
+      ],
+      "error": null,
+      "seconds": 69.4,
+      "predicted": "network-loss",
+      "component": "R46-M1-N1-C:J02-U01",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0734,
+      "description": "Node R46-M1-N1-C:J02-U01 logged an error (E60) for receiving a packet of an unexpected type on the tree network. This indicates a network communication fault affecting the node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R06-M0-N0-C:J11-U11_193",
+      "node": "R06-M0-N0-C:J11-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 48.1,
+      "predicted": "storage",
+      "component": "R06-M0-N0-C:J11-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0506,
+      "description": "The alerted node R06-M0-N0-C:J11-U11 reported a 'data storage interrupt' event (E52). This indicates a hardware-level fault within the node's storage subsystem, causing the alert.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R57-M0-NA-C:J13-U11_1757",
+      "node": "R57-M0-NA-C:J13-U11",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 46.0,
+      "predicted": "kernel",
+      "component": "R57-M0-NA-C:J13-U11",
+      "confidence": 0.95,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0459,
+      "description": "The kernel on node R57-M0-NA-C:J13-U11 terminated unexpectedly. The only log event from this node is 'rts: kernel terminated for reason <*>', which indicates a fatal, non-recoverable kernel-level failure.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R21-M0-N8-I:J18-U11_1257",
+      "node": "R21-M0-N8-I:J18-U11",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 45.6,
+      "predicted": "network-loss",
+      "component": "ciod on R21-M0-N8-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0469,
+      "description": "The ciod process on node R21-M0-N8-I:J18-U11 reported a 'Link has been severed' error on a CioStream socket. This indicates an abrupt network connection failure, which is the direct cause of the error reported by the node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R55-M1-NC-I:J18-U01_1387",
+      "node": "R55-M1-NC-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 42.8,
+      "predicted": "storage",
+      "component": "R55-M1-NC-I:J18-U01",
+      "confidence": 0.95,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0422,
+      "description": "The alerted node R55-M1-NC-I:J18-U01 reported a 'Lustre mount FAILED' error. This indicates an inability to mount a required distributed file system, which is a storage-related fault. The error appears to be specific to this node as it is not listed among the top 15 most frequent events across the e",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R06-M1-NC-C:J11-U01_223",
+      "node": "R06-M1-NC-C:J11-U01",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 43.9,
+      "predicted": "storage",
+      "component": "R06-M1-NC-C:J11-U01",
+      "confidence": 0.95,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0432,
+      "description": "The node R06-M1-NC-C:J11-U01 reported a 'data storage interrupt' event. This was the only error event found for this specific node, indicating a localized fault in its storage subsystem.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R63-M1-NF-C:J15-U11_1520",
+      "node": "R63-M1-NF-C:J15-U11",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 51.6,
+      "predicted": "kernel",
+      "component": "R63-M1-NF-C:J15-U11",
+      "confidence": 0.95,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0482,
+      "description": "The alerted node R63-M1-NF-C:J15-U11 experienced a fatal kernel-level event. The log message 'rts: kernel terminated for reason <*>' indicates a kernel panic or a controlled shutdown due to an unrecoverable error at the operating system level, which caused the node to fail.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R05-M0-N8-I:J18-U11_1486",
+      "node": "R05-M0-N8-I:J18-U11",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 46.5,
+      "predicted": "network-loss",
+      "component": "ciod on R05-M0-N8-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.044,
+      "description": "The ciod process on node R05-M0-N8-I:J18-U11 reported an error indicating a network link was severed while reading from a CioStream socket. This points to a network connectivity failure affecting the node.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R46-M0-N8-I:J18-U11_1947",
+      "node": "R46-M0-N8-I:J18-U11",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 44.7,
+      "predicted": "storage",
+      "component": "R46-M0-N8-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0436,
+      "description": "The node R46-M0-N8-I:J18-U11 experienced a Lustre file system mount failure. This is directly indicated by the only log event found for the node, 'E80: Lustre mount FAILED'. This error is not listed among the most frequent events cluster-wide, suggesting the issue is localized to this node's storage",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R21-M0-NC-C:J13-U11_228",
+      "node": "R21-M0-NC-C:J13-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 60.4,
+      "predicted": "storage",
+      "component": "R21-M0-NC-C:J13-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0608,
+      "description": "Node R21-M0-NC-C:J13-U11 reported a single 'data storage interrupt' error (EventId E52). This is the only event associated with the alerted node, indicating a likely fault with its local storage hardware or I/O subsystem.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R46-M1-NE-C:J14-U11_1748",
+      "node": "R46-M1-NE-C:J14-U11",
+      "label": "KERNTERM",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "code-exception",
+        "network-loss",
+        "hardware"
+      ],
+      "error": null,
+      "seconds": 45.0,
+      "predicted": "kernel",
+      "component": "R46-M1-NE-C:J14-U11",
+      "confidence": 0.9,
+      "top3": [
+        "kernel"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0451,
+      "description": "The node R46-M1-NE-C:J14-U11 experienced a kernel termination. The single log event from this node, 'rts: kernel terminated for reason <*>', directly indicates a fatal operating system-level failure, which caused the node to stop functioning.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R54-M0-N0-I:J18-U01_1792",
+      "node": "R54-M0-N0-I:J18-U01",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 50.3,
+      "predicted": "network-loss",
+      "component": "ciod on R54-M0-N0-I:J18-U01",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0501,
+      "description": "The ciod process on node R54-M0-N0-I:J18-U01 experienced a network failure, specifically a 'Link has been severed' error while attempting to read from a CioStream socket. This single error event is the direct cause of the alert.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R10-M1-N4-I:J18-U01_1382",
+      "node": "R10-M1-N4-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 45.9,
+      "predicted": "storage",
+      "component": "R10-M1-N4-I:J18-U01",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0464,
+      "description": "The node R10-M1-N4-I:J18-U01 reported a \"Lustre mount FAILED\" error. This indicates a failure in mounting the parallel distributed file system, which is a storage-related fault. The cause could be an issue with the Lustre service, network connectivity to the storage servers, or a client-side configu",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R16-M0-N4-C:J02-U11_218",
+      "node": "R16-M0-N4-C:J02-U11",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 62.1,
+      "predicted": "storage",
+      "component": "R16-M0-N4-C:J02-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0566,
+      "description": "Node R16-M0-N4-C:J02-U11 reported a \"data storage interrupt\" error. This is the only log event found for this node, indicating a likely fault in its local storage subsystem.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R37-M1-N8-I:J18-U11_1981",
+      "node": "R37-M1-N8-I:J18-U11",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 46.5,
+      "predicted": "network-loss",
+      "component": "R37-M1-N8-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0486,
+      "description": "The ciod process on node R37-M1-N8-I:J18-U11 reported a severed network link. The log message 'ciod: Error reading message prefix on CioStream socket to <*>:<*>, Link has been severed' indicates a loss of network connectivity.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R25-M1-N4-I:J18-U01_1378",
+      "node": "R25-M1-N4-I:J18-U01",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 45.6,
+      "predicted": "storage",
+      "component": "R25-M1-N4-I:J18-U01",
+      "confidence": 0.95,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0459,
+      "description": "The node R25-M1-N4-I:J18-U01 reported an error because it failed to mount a Lustre file system. This is the only log event found on the node, making it the most direct cause for the alert.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R14-M0-N2-C:J02-U01_188",
+      "node": "R14-M0-N2-C:J02-U01",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 49.9,
+      "predicted": "storage",
+      "component": "R14-M0-N2-C:J02-U01",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0483,
+      "description": "The alerted node R14-M0-N2-C:J02-U01 experienced a 'data storage interrupt'. This is a low-level error, likely indicating a hardware or kernel issue with storage access, which triggered the node error alert.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R43-M0-N8-I:J18-U11_1399",
+      "node": "R43-M0-N8-I:J18-U11",
+      "label": "APPSEV",
+      "expected": "network-loss",
+      "accepted": [
+        "network-loss",
+        "network-delay",
+        "dependency-down",
+        "app",
+        "host-down"
+      ],
+      "error": null,
+      "seconds": 51.9,
+      "predicted": "network-loss",
+      "component": "ciod on R43-M0-N8-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "network-loss"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0511,
+      "description": "The control I/O daemon (ciod) on node R43-M0-N8-I:J18-U11 logged a 'Link has been severed' error on a CioStream socket. This indicates a loss of network connectivity for this specific process, causing the node to report an error.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R42-M1-NC-I:J18-U11_1377",
+      "node": "R42-M1-NC-I:J18-U11",
+      "label": "KERNMNTF",
+      "expected": "storage",
+      "accepted": [
+        "storage",
+        "disk",
+        "dependency-down",
+        "network-loss",
+        "kernel",
+        "config-change"
+      ],
+      "error": null,
+      "seconds": 49.0,
+      "predicted": "storage",
+      "component": "R42-M1-NC-I:J18-U11",
+      "confidence": 0.9,
+      "top3": [
+        "storage"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0517,
+      "description": "The alerted node R42-M1-NC-I:J18-U11 reported a \"Lustre mount FAILED\" error. This indicates a problem with the node's ability to connect to or mount the Lustre parallel file system, which is a storage fault.",
+      "fault_strict": true,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    },
+    {
+      "case_id": "BGL_R20-M0-NE-C:J02-U01_210",
+      "node": "R20-M0-NE-C:J02-U01",
+      "label": "KERNSTOR",
+      "expected": "kernel",
+      "accepted": [
+        "kernel",
+        "hardware",
+        "memory",
+        "storage",
+        "disk"
+      ],
+      "error": null,
+      "seconds": 66.8,
+      "predicted": "hardware",
+      "component": "R20-M0-NE-C:J02-U01",
+      "confidence": 0.9,
+      "top3": [
+        "hardware"
+      ],
+      "iterations": 1,
+      "cost_usd": 0.0663,
+      "description": "Node R20-M0-NE-C:J02-U01 reported a 'data storage interrupt' (EventId: E52). This is a low-level hardware error indicating a potential fault in the node's storage or memory subsystem.",
+      "fault_strict": false,
+      "fault_lenient": true,
+      "fault_top3_lenient": true,
+      "node_top1": true
+    }
+  ]
+}

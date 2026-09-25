@@ -1,0 +1,34 @@
+{{- $components := list (dict "name" "api" "v" .Values.api "on" .Values.api.autoscaling.enabled) (dict "name" "worker" "v" .Values.worker "on" (and .Values.worker.autoscaling.enabled (not .Values.worker.keda.enabled))) (dict "name" "frontend" "v" .Values.frontend "on" (and .Values.frontend.enabled .Values.frontend.autoscaling.enabled)) }}
+{{- range $components }}
+{{- if .on }}
+{{- $a := .v.autoscaling }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" .name) }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" .name) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "ira.componentName" (dict "ctx" $ "component" .name) }}
+  minReplicas: {{ $a.minReplicas }}
+  maxReplicas: {{ $a.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $a.targetCPUUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+{{- end }}
+{{- end }}

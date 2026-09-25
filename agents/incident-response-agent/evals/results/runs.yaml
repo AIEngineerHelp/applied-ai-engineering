@@ -1,0 +1,31 @@
+# Labels and notes for eval runs, shown in the UI's Evals tab (keys are result file names
+# without .json). See docs/evals.md.
+bgl-2026-09-24T15-04-35Z:
+  label: Baseline
+  notes: >-
+    First valid run after fixing the eval harness (label mapping) and the host-mode artifact
+    crash. Misses came from investigating cluster-wide noise instead of the alerted node; the
+    analyst never saw the alert.
+bgl-2026-09-24T15-36-28Z-seed7:
+  label: Scope fix (same cases)
+  notes: >-
+    After anchoring the planner and analyst on the alerted node. Same 28 cases as Baseline:
+    fault type lenient 86% -> 93%, strict 50% -> 82%, node 68% -> 100%.
+bgl-2026-09-24T15-42-54Z-seed21:
+  label: Scope fix (hold-out)
+  holdout: true
+  notes: >-
+    28 cases never used while changing the prompts (seed 21, seed-7 cases excluded).
+    Weighted towards common labels because the rare ones were all in the seed-7 sample.
+bgl-2026-09-24T16-16-07Z-seed7-graph:
+  label: + Knowledge graph (same cases)
+  notes: >-
+    Same 28 cases as "Scope fix (same cases)", now with knowledge-graph context (location,
+    components, failing neighbours; no past incidents). Lenient 93% -> 96%, strict 82% -> 86%
+    (one case each); cost +36%. Within run-to-run noise.
+bgl-2026-09-24T16-24-46Z-seed21-graph:
+  label: + Knowledge graph (hold-out)
+  holdout: true
+  notes: >-
+    Same hold-out cases as "Scope fix (hold-out)" with knowledge-graph context. Lenient 100%
+    (unchanged), strict 75% -> 82% (two cases); cost +30%.

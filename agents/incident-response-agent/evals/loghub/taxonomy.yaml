@@ -1,0 +1,35 @@
+# Mapping from Loghub dataset-specific labels to our common fault taxonomy
+
+# Allowed taxonomy classes:
+# cpu, memory, disk, network-delay, network-loss, dns, host-down, hardware, kernel,
+# bad-deploy, config-change, dependency-down, db-slow-query, db-connection-exhaustion,
+# cert-expiry, quota/limit, auth-failure, code-exception, app, unknown
+
+Hadoop:
+  disk full: disk
+  network disconnection: network-loss
+  machine down: host-down
+
+BGL:
+  # Ground truth = the BGL alert label of the node's first anomalous line (Oliner & Stearley,
+  # "What Supercomputers Say", DSN 2007). `primary` is the single best fault type from our
+  # taxonomy (strict score); `accepted` lists every defensible type (lenient score).
+  KERNDTLB: {primary: kernel, accepted: [kernel, hardware, memory]}          # data TLB error interrupt
+  KERNSTOR: {primary: kernel, accepted: [kernel, hardware, memory, storage, disk]}  # data storage interrupt
+  KERNMNTF: {primary: storage, accepted: [storage, disk, dependency-down, network-loss, kernel, config-change]}  # Lustre mount FAILED
+  KERNREC: {primary: network-loss, accepted: [network-loss, network-delay, hardware, kernel]}  # error receiving packet on tree network
+  KERNRTSP: {primary: kernel, accepted: [kernel, code-exception, app]}       # rts panic
+  KERNTERM: {primary: kernel, accepted: [kernel, code-exception, network-loss, hardware]}  # rts: kernel terminated, bad message header
+  APPSEV: {primary: network-loss, accepted: [network-loss, network-delay, dependency-down, app, host-down]}  # ciod: link has been severed
+  APPRES: {primary: network-loss, accepted: [network-loss, network-delay, dependency-down, app, host-down]}  # ciod: connection reset by peer
+  APPREAD: {primary: network-loss, accepted: [network-loss, network-delay, dependency-down, app, host-down]}  # ciod: failed to read on control stream
+  APPTO: {primary: network-delay, accepted: [network-delay, network-loss, dependency-down, app, host-down]}  # ciod: connection timed out
+  APPCHILD: {primary: app, accepted: [app, code-exception, quota/limit]}      # ciod: no child processes
+  APPOUT: {primary: storage, accepted: [storage, disk, app, dependency-down]}  # ciod: LOGIN chdir Input/output error
+
+OpenStack:
+  machine down: host-down
+  network disconnection: network-loss
+  
+HDFS:
+  block loss: storage

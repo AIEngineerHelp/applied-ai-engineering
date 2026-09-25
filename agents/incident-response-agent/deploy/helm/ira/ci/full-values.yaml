@@ -1,0 +1,49 @@
+# Everything optional switched on (CI rendering coverage).
+secrets:
+  create: true
+  data:
+    POSTGRES_PASSWORD: ci-postgres
+    LITELLM_MASTER_KEY: sk-ci
+    NEO4J_PASSWORD: ci-neo4j
+    REDIS_PASSWORD: ci-redis
+existingSecret: ""
+neo4j:
+  enabled: true
+  uri: bolt://neo4j.neo4j.svc:7687
+artifacts:
+  persistence:
+    enabled: true
+    storageClass: efs
+worker:
+  keda:
+    enabled: true
+    redis:
+      address: redis-master.redis.svc:6379
+      passwordSecretKey: REDIS_PASSWORD
+frontend:
+  autoscaling:
+    enabled: true
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+networkPolicy:
+  egress:
+    postgres:
+      ports: [5432]
+      to:
+        - ipBlock:
+            cidr: 10.10.0.0/16
+    workerExtra:
+      - to:
+          - ipBlock:
+              cidr: 10.20.0.0/16
+        ports:
+          - port: 3100
+            protocol: TCP
+config:
+  extraEnv:
+    MODEL_PLANNER: gemini/gemini-2.5-pro

@@ -1,0 +1,19 @@
+{{- if and .Values.artifacts.persistence.enabled (not .Values.artifacts.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ira.fullname" . }}-artifacts
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "app") | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.artifacts.persistence.accessMode }}
+  {{- with .Values.artifacts.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.artifacts.persistence.size }}
+{{- end }}

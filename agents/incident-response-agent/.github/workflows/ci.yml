@@ -1,0 +1,228 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+  REGISTRY: ghcr.io
+  TRIVY_IMAGE: aquasec/trivy:0.58.1
+
+jobs:
+  backend:
+    name: Backend (ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            pyproject.toml
+
+      - name: Install dependencies (locked, with dev extras)
+        run: uv sync --frozen --extra dev
+
+      - name: Ruff
+        run: uv run ruff check src tests
+
+      - name: Mypy
+        run: uv run mypy src
+
+      - name: Pytest
+        run: uv run pytest tests
+
+  frontend:
+    name: Frontend (lint, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      # frontend/ may be tracked in a separate repository; skip cleanly when absent.
+      - name: Check for frontend sources
+        id: present
+        working-directory: .
+        run: |
+          if [ -f frontend/package-lock.json ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; echo "::warning::frontend/ not in this checkout; skipping"; fi
+
+      - uses: actions/setup-node@v4
+        if: steps.present.outputs.ok == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        if: steps.present.outputs.ok == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.present.outputs.ok == 'true'
+        run: npm run lint
+
+      - name: Build
+        if: steps.present.outputs.ok == 'true'
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_API_URL: ""
+        run: npm run build
+
+  deploy-config:
+    name: Deploy config (helm, compose, alerts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Helm lint
+        run: |
+          helm lint deploy/helm/ira -f deploy/helm/ira/ci/test-values.yaml
+          helm lint deploy/helm/ira -f deploy/helm/ira/ci/test-values.yaml -f deploy/helm/ira/ci/full-values.yaml
+
+      - name: Helm template
+        run: |
+          mkdir -p rendered
+          helm template ira deploy/helm/ira -f deploy/helm/ira/ci/test-values.yaml > rendered/default.yaml
+          helm template ira deploy/helm/ira -f deploy/helm/ira/ci/test-values.yaml \
+            -f deploy/helm/ira/ci/full-values.yaml > rendered/full.yaml
+
+      - name: Validate manifests (kubeconform)
+        run: |
+          curl -sSfL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+            | tar -xz kubeconform
+          ./kubeconform -strict -summary -kubernetes-version 1.30.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered/default.yaml rendered/full.yaml
+
+      - name: Alert rules in sync (compose vs chart)
+        run: diff -u deploy/prometheus/alerts.yml deploy/helm/ira/files/prometheus-alerts.yml
+
+      - name: docker compose config
+        run: |
+          docker compose --env-file .env.example config -q
+          docker compose --env-file .env.example --profile kg --profile observability config -q
+
+  images:
+    name: Image (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [backend, frontend, deploy-config]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: .
+            dockerfile: Dockerfile
+            image: ${{ github.repository }}
+          - name: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+            image: ${{ github.repository }}-frontend
+    env:
+      PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check build context
+        id: present
+        run: |
+          if [ -f "${{ matrix.dockerfile }}" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; echo "::warning::${{ matrix.dockerfile }} not found; skipping"; fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.present.outputs.ok == 'true'
+
+      - name: Image metadata
+        id: meta
+        if: steps.present.outputs.ok == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+            type=ref,event=pr
+
+      - name: Build (load for scanning)
+        if: steps.present.outputs.ok == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: |
+            local/${{ matrix.name }}:scan
+            ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            VCS_REF=${{ github.sha }}
+            NEXT_PUBLIC_API_URL=
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      - name: Trivy scan (fail on CRITICAL)
+        if: steps.present.outputs.ok == 'true'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            "$TRIVY_IMAGE" image \
+              --severity CRITICAL --exit-code 1 --ignore-unfixed --no-progress \
+              --scanners vuln \
+              "local/${{ matrix.name }}:scan"
+
+      - name: Log in to GHCR
+        if: steps.present.outputs.ok == 'true' && env.PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push (tags v* only)
+        if: steps.present.outputs.ok == 'true' && env.PUSH == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            VCS_REF=${{ github.sha }}
+            NEXT_PUBLIC_API_URL=
+          cache-from: type=gha,scope=${{ matrix.name }}

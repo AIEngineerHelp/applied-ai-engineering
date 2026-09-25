@@ -1,0 +1,28 @@
+# Values used by CI (helm lint / helm template). Not for real deployments.
+existingSecret: ira-secrets
+image:
+  repository: ghcr.io/example/incident-response-agent
+  tag: ci
+frontend:
+  image:
+    repository: ghcr.io/example/incident-response-agent-frontend
+    tag: ci
+auth:
+  oidc:
+    issuer: https://login.example.com/realms/ira
+    audience: ira-api
+    clientId: ira-ui
+    roleMapping:
+      sre: responder
+      sre-leads: approver
+      ira-admins: admin
+postgres:
+  host: ira-pg.example.internal
+redis:
+  url: redis://redis-master.redis.svc:6379/0
+litellm:
+  url: http://litellm.litellm.svc:4000
+otel:
+  endpoint: http://otel-collector.observability.svc:4318
+ingress:
+  host: ira.example.com

@@ -1,0 +1,115 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $np := .Values.networkPolicy }}
+{{- $e := $np.egress }}
+# api: reachable from the ingress controller and Prometheus only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "api") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "api") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" "api") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        {{- include "ira.np.peer" $np.ingressController | nindent 8 }}
+        {{- include "ira.np.peer" $np.prometheus | nindent 8 }}
+      ports:
+        - port: {{ .Values.api.port }}
+          protocol: TCP
+  egress:
+    {{- include "ira.np.dns" $e.dns | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.postgres | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.redis | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.litellm | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.idp | nindent 4 }}
+    {{- if .Values.neo4j.enabled }}
+    {{- include "ira.np.egressRule" $e.neo4j | nindent 4 }}
+    {{- end }}
+    {{- if .Values.otel.endpoint }}
+    {{- include "ira.np.egressRule" $e.otel | nindent 4 }}
+    {{- end }}
+---
+# worker: only Prometheus may connect (metrics/health port).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "worker") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "worker") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" "worker") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        {{- include "ira.np.peer" $np.prometheus | nindent 8 }}
+      ports:
+        - port: {{ .Values.worker.metricsPort }}
+          protocol: TCP
+  egress:
+    {{- include "ira.np.dns" $e.dns | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.postgres | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.redis | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.litellm | nindent 4 }}
+    {{- if .Values.neo4j.enabled }}
+    {{- include "ira.np.egressRule" $e.neo4j | nindent 4 }}
+    {{- end }}
+    {{- if .Values.otel.endpoint }}
+    {{- include "ira.np.egressRule" $e.otel | nindent 4 }}
+    {{- end }}
+    {{- with $e.workerExtra }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+---
+# migration Job: no ingress; egress to DNS and Postgres only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "migrate") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "migrate") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" "migrate") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  egress:
+    {{- include "ira.np.dns" $e.dns | nindent 4 }}
+    {{- include "ira.np.egressRule" $e.postgres | nindent 4 }}
+{{- if .Values.frontend.enabled }}
+---
+# frontend: reachable from the ingress controller; talks to the api (and the IdP) only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ira.componentName" (dict "ctx" $ "component" "frontend") }}
+  labels:
+    {{- include "ira.labels" (dict "ctx" $ "component" "frontend") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ira.selectorLabels" (dict "ctx" $ "component" "frontend") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        {{- include "ira.np.peer" $np.ingressController | nindent 8 }}
+      ports:
+        - port: {{ .Values.frontend.port }}
+          protocol: TCP
+  egress:
+    {{- include "ira.np.dns" $e.dns | nindent 4 }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "ira.selectorLabels" (dict "ctx" $ "component" "api") | nindent 14 }}
+      ports:
+        - port: {{ .Values.api.port }}
+          protocol: TCP
+    {{- include "ira.np.egressRule" $e.idp | nindent 4 }}
+{{- end }}
+{{- end }}

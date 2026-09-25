@@ -1,0 +1,288 @@
+# Incident Response Agent: local / single-host production-like stack.
+#
+#   cp .env.example .env            # then fill in GEMINI_API_KEY, OPENAI_API_KEY, secrets
+#   docker compose up -d --build    # postgres, redis, litellm, migrate, api, worker, frontend
+#   Neo4j (knowledge graph) starts by default; set NEO4J_ENABLED=false to run without it
+#   docker compose --profile observability up -d      # + otel-collector, jaeger, prometheus, grafana
+#
+# App services default to ENVIRONMENT=dev / AUTH_MODE=disabled. For a prod-like run set
+# ENVIRONMENT=prod, AUTH_MODE=oidc, OIDC_* and non-default secrets in .env (docs/deployment.md).
+#
+# Ports (host): api 8000, frontend 3000, litellm 4000, grafana 3001, prometheus 9090,
+# jaeger 16686. Datastores are bound to 127.0.0.1 only.
+
+name: ira
+
+x-app-image: &app-image
+  image: ${IRA_IMAGE:-ira-backend}:${IRA_TAG:-local}
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+# Settings shared by api, worker and migrate. `environment` wins over `env_file`, so
+# host names here override the localhost defaults a developer keeps in .env.
+x-app-env: &app-env
+  ENVIRONMENT: ${ENVIRONMENT:-dev}
+  LOG_FORMAT: ${LOG_FORMAT:-json}
+  AUTH_MODE: ${AUTH_MODE:-disabled}
+  POSTGRES_ENABLED: "true"
+  REDIS_ENABLED: "true"
+  QUEUE_ENABLED: "true"
+  NEO4J_ENABLED: ${NEO4J_ENABLED:-true}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: ${POSTGRES_USER:-ira}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+  POSTGRES_DB: ${POSTGRES_DB:-ira_db}
+  REDIS_URL: redis://redis:6379/0
+  NEO4J_URI: bolt://neo4j:7687
+  LITELLM_API_BASE: http://litellm:4000
+  LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?set LITELLM_MASTER_KEY in .env}
+  # Empty = all model calls go through the LiteLLM proxy (fallbacks, budget, one place for keys).
+  GEMINI_API_KEY: ""
+  ARTIFACTS_DIR: /var/lib/ira/artifacts
+  CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://127.0.0.1:3000"]}
+
+x-app-hardening: &app-hardening
+  read_only: true
+  tmpfs:
+    - /tmp:size=256m,mode=1777
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+
+services:
+  # --------------------------------------------------------------------- datastores
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ira}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ira_db}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Knowledge graph built from the log files (see the dashboard's Knowledge graph page).
+  neo4j:
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}
+      NEO4J_server_memory_heap_max__size: 1G
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- LLM gateway
+  litellm:
+    image: ${LITELLM_IMAGE:-ghcr.io/berriai/litellm:main-stable}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?set LITELLM_MASTER_KEY in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ira}:${POSTGRES_PASSWORD}@postgres:5432/litellm
+      LITELLM_LOG: ERROR
+    volumes:
+      - ./deploy/litellm/config.yaml:/app/config.yaml:ro
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness', timeout=4)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- application
+  migrate:
+    <<: [*app-image, *app-hardening]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    healthcheck:
+      disable: true
+
+  api:
+    <<: [*app-image, *app-hardening]
+    command: ["python", "-m", "src.ira.api"]
+    environment:
+      <<: *app-env
+      HEALTH_PORT: "8000"
+      OTEL_SERVICE_NAME: ira-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - artifacts:/var/lib/ira/artifacts
+      # Evals tab: new local eval runs appear without rebuilding the image.
+      - ./evals/results:/app/evals/results:ro
+      - ./docs/evals.md:/app/docs/evals.md:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      litellm:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
+        required: false  # the knowledge graph is optional
+
+  worker:
+    <<: [*app-image, *app-hardening]
+    command: ["python", "-m", "src.ira.worker"]
+    environment:
+      <<: *app-env
+      HEALTH_PORT: "9100"
+      OTEL_SERVICE_NAME: ira-worker
+    # Metrics/health on 9100 are reachable inside the compose network (Prometheus); not
+    # published so the service can be scaled with `--scale worker=N`.
+    expose:
+      - "9100"
+    volumes:
+      - artifacts:/var/lib/ira/artifacts
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      litellm:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
+        required: false  # the knowledge graph is optional
+    stop_grace_period: 60s
+
+  frontend:
+    image: ${IRA_FRONTEND_IMAGE:-ira-frontend}:${IRA_TAG:-local}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    # Not read-only: Next.js writes its runtime cache under .next/cache.
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- observability
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      DEPLOYMENT_ENVIRONMENT: ${ENVIRONMENT:-dev}
+    volumes:
+      - ./deploy/otel/collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    profiles: ["observability"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:16686:16686"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/ira-overview.json
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  neo4j_data:
+  artifacts:
+  prometheus_data:
+  grafana_data:

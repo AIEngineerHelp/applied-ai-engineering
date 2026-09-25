@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: ira
+    orgId: 1
+    folder: Incident Response Agent
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /etc/grafana/dashboards
