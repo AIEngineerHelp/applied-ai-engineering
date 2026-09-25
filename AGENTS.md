@@ -19,6 +19,8 @@ The workspace contains a root README, nine learning-category directories with RE
 
 A second independent example, `rag-retrieval/biomedical-search/`, provides Python biomedical hybrid search with Gemini defaults and a historical BGE/local-model retrieval baseline. From its directory, use `uv sync --locked`, `uv run pytest`, and `uv run ruff check app scripts tests`. Dataset preparation and full evaluations make remote API calls; do not run them without authorization. Downloaded data, indexes, credentials, and new experiment runs stay local.
 
+A third independent example, `agents/incident-response-agent/`, is a Python (uv) LangGraph agent with a Next.js dashboard. From its directory: `python3 scripts/fetch_loghub.py` downloads the Loghub sample logs (never committed), `docker compose up -d --build` runs the full stack, `uv sync --extra dev` then `uv run pytest`, `uv run ruff check src tests` and `uv run mypy src` check the Python code, and `npm ci`, `npm run lint`, `npm run build` in `frontend/` check the UI. Evaluations (`uv run python -m evals.loghub.evaluate`) and sample incidents make paid Gemini calls; do not run them without authorization. Its CI workflow lives in the project's `.github/` folder for reference and does not run from there.
+
 Update this section as the repository grows. The category directories below exist; their README indexes distinguish planned projects from runnable examples.
 
 ## Category structure

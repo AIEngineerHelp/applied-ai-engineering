@@ -28,6 +28,8 @@ General and Site Feedback remain community discussion spaces rather than code di
 
 Travel Lab compares Gemini-only coordination with Jev agent and tool selection, using the same Gemini workers and limits. The TypeScript website researches live places with Gemini Google Search grounding, shows decision traces and evidence, and saves each run. Synthetic catalogs remain for offline tests and evaluation. Local web-search smoke comparisons completed for both teams; controlled routing and whole-agent benchmark results are included. Public-deployment review remains outstanding.
 
+[Incident response agent](agents/incident-response-agent/README.md) investigates operational incidents from logs: a LangGraph agent plans, queries 14 public Loghub datasets, cites evidence, proposes fixes behind guardrails and human approval, and writes a root-cause report. A Next.js dashboard shows its live activity, the logs, a knowledge graph built from them, and an evaluation against expert labels (27 of 28 BGL incidents right, 28 of 28 on unseen cases). It runs locally with Docker; the README describes how it works and ways to extend it.
+
 [Biomedical hybrid search](rag-retrieval/biomedical-search/README.md) compares BM25, dense search, and hybrid retrieval over biomedical passages, with evidence inspection, Gemini-generated answers, and a fixed 100-question evaluation set. Included benchmark results are explicitly labeled as a historical local-model baseline.
 
 ## Contributing

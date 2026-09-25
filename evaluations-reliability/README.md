@@ -10,7 +10,9 @@ Use this category when the main contribution is an evaluation method, test suite
 
 ## Projects and resources
 
-No projects yet. Add a project here when it fits the scope above.
+| Project | What it teaches | Status |
+| --- | --- | --- |
+| [Incident response agent evals](../agents/incident-response-agent/docs/evals.md) | Scoring an agent's root-cause answers against an answer key with deterministic marking, hold-out cases and a lazy-guess baseline | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents) |
 
 ## Adding a contribution
 

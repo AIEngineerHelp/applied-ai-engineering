@@ -10,7 +10,9 @@ Use this category for serving, deployment, observability, caching, operational r
 
 ## Projects and resources
 
-No projects yet. Add a project here when it fits the scope above.
+| Project | What it teaches | Status |
+| --- | --- | --- |
+| [Incident response agent](../agents/incident-response-agent/README.md#architecture) | Running an agent behind an API and queue workers: persistence, crash recovery, auth, audit log, metrics, Docker Compose and Helm | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents); runs locally, not yet deployed to a cluster |
 
 ## Adding a contribution
 

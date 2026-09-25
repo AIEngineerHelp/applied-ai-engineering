@@ -13,6 +13,7 @@ Use this category for document processing, search, embeddings, chunking, reranki
 | Project | What it teaches | Status |
 | --- | --- | --- |
 | [Biomedical hybrid search](biomedical-search/README.md) | BM25, dense retrieval, reciprocal rank fusion, cited answers, and retrieval evaluation | Runnable Python example; historical baseline included |
+| [Knowledge graph from logs](../agents/incident-response-agent/README.md#memory-and-knowledge) | Extracting entities and relationships from system logs into Neo4j and feeding graph context to an agent | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents) |
 
 ## Adding a contribution
 
