@@ -5,7 +5,7 @@ import net from "node:net";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import { JEV_URL, configuration, createJevPlayer } from "../src/jev.js";
-import { createApp, MAX_IN_FLIGHT } from "../src/server.js";
+import { createApp } from "../src/server.js";
 
 const liveConfig = configuration({ ENABLE_LIVE: "true", TYPESAFE_API_KEY: "test-key", TYPESAFE_MODEL: "jev-1.13.0" });
 const jevResponse = (answer, extra = {}) =>
@@ -141,14 +141,54 @@ test("the server returns provider errors and limits concurrent calls", async () 
     const failed = await post(base, { kind: "low-bird" });
     assert.equal(failed.status, 502);
     assert.equal((await failed.json()).error, "Jev request timed out.");
-    const pending = Array.from({ length: MAX_IN_FLIGHT }, () => post(base, { kind: "small-cactus" }));
+    // One visitor may have limits.clientInFlight calls open at once; another
+    // visitor (a different x-real-ip, as Vercel sets it) is not blocked by them.
+    const limit = liveConfig.limits.clientInFlight;
+    const pending = Array.from({ length: limit }, () => post(base, { kind: "small-cactus" }));
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.equal((await post(base, { kind: "small-cactus" })).status, 429);
+    const other = post(base, { kind: "small-cactus" }, { "x-real-ip": "203.0.113.9" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
     release();
-    for (const response of await Promise.all(pending)) assert.equal(response.status, 200);
+    for (const response of await Promise.all([...pending, other])) assert.equal(response.status, 200);
   } finally {
     server.close();
   }
+});
+
+test("per-visitor, global per-minute and daily limits apply, and the day resets", async () => {
+  let time = Date.parse("2026-09-27T10:00:00Z");
+  const config = {
+    ...liveConfig,
+    limits: { ...liveConfig.limits, perDay: 5, perMinute: 4, clientPerMinute: 2 },
+  };
+  const { server, base } = await serve({ config, now: () => time, decide: async () => ({ action: "jump" }) as any });
+  const call = (ip) => post(base, { kind: "small-cactus" }, { "x-real-ip": ip });
+  try {
+    assert.equal((await call("198.51.100.1")).status, 200);
+    assert.equal((await call("198.51.100.1")).status, 200);
+    assert.equal((await call("198.51.100.1")).status, 429, "visitor per-minute limit");
+    assert.equal((await call("198.51.100.2")).status, 200);
+    assert.equal((await call("198.51.100.3")).status, 200);
+    assert.equal((await call("198.51.100.4")).status, 429, "global per-minute limit");
+    time += 61_000;
+    assert.equal((await call("198.51.100.4")).status, 200);
+    const capped = await call("198.51.100.5");
+    assert.equal(capped.status, 429, "daily limit");
+    assert.match((await capped.json()).error, /daily/);
+    time = Date.parse("2026-09-28T00:00:01Z");
+    assert.equal((await call("198.51.100.5")).status, 200, "a new UTC day resets the budget");
+  } finally {
+    server.close();
+  }
+});
+
+test("Vercel hostnames are allowed automatically", () => {
+  const config = configuration({ VERCEL_URL: "dino-abc.vercel.app", VERCEL_PROJECT_PRODUCTION_URL: "dino.vercel.app" });
+  for (const host of ["dino-abc.vercel.app", "dino.vercel.app", "127.0.0.1", "localhost"]) assert.ok(config.allowedHosts.has(host), host);
+  assert.equal(configuration({}).allowedHosts.has("dino.vercel.app"), false);
+  assert.equal(configuration({ MAX_JEV_CALLS_PER_DAY: "12" }).limits.perDay, 12);
+  assert.equal(configuration({ MAX_JEV_CALLS_PER_DAY: "-1" }).limits.perDay, 5000);
 });
 
 test("a malformed request path gets a 400 and does not crash the server", async () => {
@@ -169,5 +209,35 @@ test("a malformed request path gets a 400 and does not crash the server", async 
     assert.equal((await fetch(`${base}/api/config`)).status, 200, "server still answers");
   } finally {
     server.close();
+  }
+});
+
+test("the Vercel adapter refuses public spending unless opted in, and checks the password", async () => {
+  const { authorized, default: route } = await import("../api/index.js");
+  const basic = (password) => `Basic ${Buffer.from(`anyone:${password}`).toString("base64")}`;
+  assert.equal(authorized(basic("secret"), "secret"), true);
+  assert.equal(authorized(basic("wrong"), "secret"), false);
+  assert.equal(authorized(undefined, "secret"), false);
+  const saved = { ...process.env };
+  const respond = async (headers = {}) => {
+    let status = 0;
+    await route({ headers, url: "/api/config", method: "GET", socket: {} } as any, {
+      writeHead: (code) => ((status = code), undefined),
+      end: () => undefined,
+      setHeader: () => undefined,
+      headersSent: false,
+    } as any);
+    return status;
+  };
+  try {
+    Object.assign(process.env, { ENABLE_LIVE: "true", TYPESAFE_API_KEY: "k" });
+    delete process.env.PUBLIC_LIVE;
+    delete process.env.LIVE_ACCESS_PASSWORD;
+    assert.equal(await respond(), 503, "live without an access decision is refused");
+    process.env.LIVE_ACCESS_PASSWORD = "secret";
+    assert.equal(await respond(), 401);
+  } finally {
+    for (const key of ["ENABLE_LIVE", "TYPESAFE_API_KEY", "PUBLIC_LIVE", "LIVE_ACCESS_PASSWORD"])
+      saved[key] === undefined ? delete process.env[key] : (process.env[key] = saved[key]);
   }
 });

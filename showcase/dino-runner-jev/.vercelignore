@@ -1,0 +1,7 @@
+.env*
+!.env.example
+.runs/
+node_modules/
+.vercel/
+tests/
+docs/

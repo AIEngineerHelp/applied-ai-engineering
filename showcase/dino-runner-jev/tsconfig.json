@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "client/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "client/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "api/**/*.ts"]
 }

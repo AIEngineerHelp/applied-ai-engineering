@@ -10,19 +10,28 @@ const assets = {
   "/styles.css": ["styles.css", "text/css"],
   "/favicon.svg": ["favicon.svg", "image/svg+xml"],
 };
-// Bounds on spending the owner's Jev quota. Jev allows 1,200 requests/minute per
-// account (docs: models); one game makes at most one call per obstacle.
-export const MAX_IN_FLIGHT = 4;
-export const MAX_PER_MINUTE = 300;
 const MAX_BODY_BYTES = 1024;
+const MINUTE = 60_000;
+
+/** The caller's address: Vercel's edge sets x-real-ip; locally, the socket. */
+function clientOf(req: http.IncomingMessage) {
+  const header = req.headers["x-real-ip"];
+  return (typeof header === "string" && header) || req.socket.remoteAddress || "unknown";
+}
 
 export function createRequestHandler({
   config = configuration(),
   decide = createJevPlayer({ config }),
   now = Date.now,
 }: { config?: Config; decide?: DecideFn; now?: () => number } = {}) {
+  // Bounds on spending the owner's Jev quota (config.limits). Jev allows 1,200
+  // requests/minute per account (docs: models); one game makes at most one call
+  // per obstacle. Counters are per server instance.
   let inFlight = 0;
   const recent: number[] = [];
+  const clients = new Map<string, { inFlight: number; recent: number[] }>();
+  let day = "";
+  let today = 0;
   const handle = async (req: http.IncomingMessage, res: http.ServerResponse) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
@@ -64,11 +73,35 @@ export function createRequestHandler({
       // The browser names one of six obstacle kinds; the server builds the Jev
       // request, so visitors cannot send arbitrary prompts with the owner's key.
       if (!KINDS.includes(body?.kind)) return reply(400, { error: "Unknown obstacle kind." });
-      while (recent.length && recent[0] <= now() - 60000) recent.shift();
-      if (inFlight >= MAX_IN_FLIGHT || recent.length >= MAX_PER_MINUTE)
+      const { limits } = config;
+      const time = now();
+      const date = new Date(time).toISOString().slice(0, 10);
+      if (date !== day) {
+        day = date;
+        today = 0;
+      }
+      while (recent.length && recent[0] <= time - MINUTE) recent.shift();
+      for (const [id, entry] of clients) {
+        while (entry.recent.length && entry.recent[0] <= time - MINUTE) entry.recent.shift();
+        if (!entry.inFlight && !entry.recent.length) clients.delete(id);
+      }
+      const id = clientOf(req);
+      const client = clients.get(id) ?? { inFlight: 0, recent: [] };
+      clients.set(id, client);
+      if (today >= limits.perDay)
+        return reply(429, { error: "The daily Jev budget for this demo is used up. Try the rule bot, or come back tomorrow." });
+      if (
+        inFlight >= limits.inFlight ||
+        recent.length >= limits.perMinute ||
+        client.inFlight >= limits.clientInFlight ||
+        client.recent.length >= limits.clientPerMinute
+      )
         return reply(429, { error: "Too many Jev requests. Wait a moment and try again." });
       inFlight++;
-      recent.push(now());
+      client.inFlight++;
+      today++;
+      recent.push(time);
+      client.recent.push(time);
       const abort = new AbortController();
       res.on("close", () => abort.abort());
       try {
@@ -77,6 +110,7 @@ export function createRequestHandler({
         return reply(502, { error: error.message });
       } finally {
         inFlight--;
+        client.inFlight--;
       }
     }
 
