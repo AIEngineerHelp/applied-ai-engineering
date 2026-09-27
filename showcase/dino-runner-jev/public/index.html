@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Light only: "only" and darkreader-lock stop browser auto-dark modes and
+         Dark Reader from recolouring the cartoon page around the game canvas. -->
+    <meta name="color-scheme" content="only light" />
+    <meta name="darkreader-lock" />
+    <title>Dino Runner × Jev</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body data-state="ready" data-player="jev">
+    <header class="appbar">
+      <div class="title">
+        <strong>Dino Runner <span>× Jev</span></strong>
+        <small>Real-time decisions with a System One model</small>
+      </div>
+      <div class="controls">
+        <div class="seg" role="radiogroup" aria-label="Player">
+          <button type="button" role="radio" data-group="player" data-value="jev" aria-checked="true">Jev</button>
+          <button type="button" role="radio" data-group="player" data-value="rule" aria-checked="false">Rule bot</button>
+          <button type="button" role="radio" data-group="player" data-value="human" aria-checked="false">Human</button>
+        </div>
+        <div class="seg mode" role="radiogroup" aria-label="Timing mode">
+          <button type="button" role="radio" data-group="mode" data-value="realtime" aria-checked="true" title="The game keeps running while Jev decides">Real-time</button>
+          <button type="button" role="radio" data-group="mode" data-value="paused" aria-checked="false" title="The game waits for each answer">Paused</button>
+        </div>
+        <label class="field" title="The same course number always produces the same obstacles">
+          <span>Course</span>
+          <input id="seed" type="number" min="1" max="999999" step="1" value="11" inputmode="numeric" />
+        </label>
+      </div>
+      <button id="sound" class="icon-btn" type="button" aria-pressed="true" aria-label="Sound on" title="Music and sound effects (M)">
+        <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" /></svg>
+        <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="wave" d="M16.5 9.5l5 5M21.5 9.5l-5 5" /></svg>
+      </button>
+      <div id="status" class="status" data-live="false">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="status-text">Offline</span>
+        <code id="model">jev-latest</code>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div class="primary">
+        <section class="stage" aria-label="Game">
+          <canvas id="game" aria-label="Dino Runner. Press Space to start; Space or Up jumps, Down ducks."></canvas>
+          <div class="hud" aria-hidden="true">
+            <div><span>Score</span><b id="score">00000</b></div>
+            <div><span>Best</span><b id="best">00000</b></div>
+            <div><span>Speed</span><b id="speed">360 px/s</b></div>
+            <div><span>State</span><b id="run-state">Ready</b></div>
+          </div>
+          <div class="prompt" aria-hidden="true">
+            <p id="prompt-main">Press Space to run Jev</p>
+            <p id="prompt-sub"></p>
+          </div>
+          <div class="holding-chip" aria-hidden="true">Game paused · waiting for Jev</div>
+          <div id="over" class="over" hidden>
+            <div class="over-card" role="dialog" aria-labelledby="over-title">
+              <h2 id="over-title">Game over</h2>
+              <p id="over-reason" class="over-reason"></p>
+              <dl class="over-stats">
+                <div><dt>Score</dt><dd id="over-score">00000</dd></div>
+                <div><dt>Best</dt><dd id="over-best">00000</dd></div>
+                <div><dt>Cleared</dt><dd id="over-cleared">0</dd></div>
+              </dl>
+              <button id="restart" type="button">Restart <kbd>Space</kbd></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="log" aria-labelledby="log-title">
+          <header class="section-head">
+            <h2 id="log-title">Decisions <span id="log-count" class="count"></span></h2>
+            <span class="hint">Budget = time from request to the last moment the move can start · Margin = budget − round trip</span>
+          </header>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="num">#</th><th>Obstacle</th><th>Move</th><th class="num">Conf.</th>
+                  <th class="num">API ms</th><th class="num">Round trip</th><th class="num">Budget</th><th class="num">Margin</th><th>Result</th>
+                </tr>
+              </thead>
+              <tbody id="log-body"></tbody>
+            </table>
+            <p id="log-empty" class="empty">No decisions yet. Start a run to record one per obstacle.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sidebar" aria-label="Jev telemetry">
+        <section class="stats">
+          <div class="stat"><span>Decisions</span><b id="kpi-decisions">—</b></div>
+          <div class="stat"><span title="Median round trip: browser → server → Jev → browser">Median RTT</span><b><span id="kpi-median">—</span><i>ms</i></b></div>
+          <div class="stat"><span title="90th-percentile round trip">p90 RTT</span><b><span id="kpi-p90">—</span><i>ms</i></b></div>
+          <div class="stat"><span title="Median time of the Jev API call itself, measured by the server">Median API</span><b><span id="kpi-api">—</span><i>ms</i></b></div>
+          <div class="stat"><span>Late</span><b id="kpi-late">—</b></div>
+          <div class="stat"><span>Unsafe</span><b id="kpi-unsafe">—</b></div>
+        </section>
+
+        <section class="chart-section" aria-labelledby="chart-title">
+          <header class="section-head">
+            <h2 id="chart-title">Latency vs. budget</h2>
+            <div class="legend">
+              <span><i class="sw bar"></i>Round trip</span>
+              <span><i class="sw budget"></i>Budget</span>
+              <span><i class="sw bad"></i>Late/unsafe</span>
+            </div>
+          </header>
+          <div class="chart-wrap">
+            <svg id="chart" role="img" aria-label="Round-trip latency per decision compared with its time budget"></svg>
+            <p id="chart-empty" class="empty"></p>
+          </div>
+          <p id="mode-note" class="hint"></p>
+        </section>
+
+        <section id="call" class="call" data-empty="true" aria-labelledby="call-title">
+          <header class="section-head">
+            <h2 id="call-title">Last call <span id="call-index" class="count"></span></h2>
+            <code class="hint">POST /v1/systemone</code>
+          </header>
+          <p id="call-empty" class="empty">No calls yet.</p>
+          <dl class="kv">
+            <div><dt>State sent</dt><dd id="call-state"></dd></div>
+            <div><dt>Answer</dt><dd id="call-answer"></dd></div>
+            <div><dt>Timing</dt><dd id="call-timing"></dd></div>
+            <div><dt>Model</dt><dd id="call-model"></dd></div>
+            <div><dt>Tokens this run</dt><dd id="call-tokens"></dd></div>
+          </dl>
+          <div id="call-dist" class="dist" aria-label="Probability of each move"></div>
+        </section>
+      </aside>
+    </main>
+    <p id="announce" class="sr-only" role="status" aria-live="polite"></p>
+  </body>
+</html>

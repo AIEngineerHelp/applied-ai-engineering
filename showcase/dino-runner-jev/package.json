@@ -1,0 +1,25 @@
+{
+  "name": "dino-runner-jev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An endless-runner game where code handles physics and timing and Jev chooses each move.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build:client": "esbuild client/app.ts --bundle --format=esm --outfile=public/app.js",
+    "build": "npm run check && npm run build:client",
+    "start": "npm run build:client && node --env-file-if-exists=.env --import=tsx src/server.ts",
+    "dev": "npm run build:client && node --watch --env-file-if-exists=.env --import=tsx src/server.ts",
+    "test": "node --import=tsx --test tests/*.test.ts",
+    "check": "tsc --noEmit",
+    "benchmark": "node --env-file-if-exists=.env --import=tsx scripts/benchmark.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

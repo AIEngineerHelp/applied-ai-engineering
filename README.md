@@ -30,6 +30,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Incident response agent](agents/incident-response-agent/README.md) investigates operational incidents from logs: a LangGraph agent plans, queries 14 public Loghub datasets, cites evidence, proposes fixes behind guardrails and human approval, and writes a root-cause report. A Next.js dashboard shows its live activity, the logs, a knowledge graph built from them, and an evaluation against expert labels (27 of 28 BGL incidents right, 28 of 28 on unseen cases). It runs locally with Docker; the README describes how it works and ways to extend it.
 
+[Dino Runner × Jev](showcase/dino-runner-jev/README.md) is an original endless-runner game in the style of Chrome's offline dinosaur. Code runs the physics and timing, and Jev chooses one move per obstacle. Real-time and paused modes show how decision latency, not just correctness, decides the outcome, and a live telemetry panel plots every call's round trip against the time the game allowed. Tests and the benchmark dry run need no API key.
+
 [Biomedical hybrid search](rag-retrieval/biomedical-search/README.md) compares BM25, dense search, and hybrid retrieval over biomedical passages, with evidence inspection, Gemini-generated answers, and a fixed 100-question evaluation set. Included benchmark results are explicitly labeled as a historical local-model baseline.
 
 ## Contributing
