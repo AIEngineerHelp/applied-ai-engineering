@@ -4,6 +4,9 @@ import { CRITERIA, INSTRUCTION, obstacleState } from "./players.js";
 
 export const JEV_URL = "https://api.typesafe.ai/v1/systemone";
 
+const whole = (value: string | undefined, fallback: number) =>
+  Number.isInteger(Number(value)) && Number(value) > 0 ? Number(value) : fallback;
+
 export function configuration(env: Record<string, string | undefined> = process.env) {
   const rate = (key: string) =>
     env[key]?.trim() && Number.isFinite(Number(env[key])) && Number(env[key]) >= 0
@@ -17,6 +20,10 @@ export function configuration(env: Record<string, string | undefined> = process.
     // A game decision is useless after a few seconds, so fail fast.
     timeoutMs: Number.isInteger(timeout) && timeout >= 500 && timeout <= 30000 ? timeout : 5000,
     host: env.HOST || "127.0.0.1",
+    // Vercel sets VERCEL=1. There, the platform only routes this project's own
+    // domains to the function and its edge sets x-real-ip, so the host check is
+    // skipped and the header is trusted. Locally, neither is.
+    onVercel: env.VERCEL === "1",
     allowedHosts: new Set(
       (env.ALLOWED_HOSTS || "127.0.0.1,localhost")
         .split(",")
@@ -24,6 +31,14 @@ export function configuration(env: Record<string, string | undefined> = process.
         .filter(Boolean),
     ),
     rates: [rate("TYPESAFE_INPUT_USD_PER_MILLION"), rate("TYPESAFE_OUTPUT_USD_PER_MILLION")],
+    // Spending bounds for the owner's key, per server instance.
+    limits: {
+      inFlight: whole(env.MAX_JEV_IN_FLIGHT, 16),
+      perMinute: whole(env.MAX_JEV_CALLS_PER_MINUTE, 300),
+      perDay: whole(env.MAX_JEV_CALLS_PER_DAY, 5000),
+      clientInFlight: whole(env.MAX_JEV_IN_FLIGHT_PER_CLIENT, 3),
+      clientPerMinute: whole(env.MAX_JEV_CALLS_PER_MINUTE_PER_CLIENT, 150),
+    },
   };
 }
 export type Config = ReturnType<typeof configuration>;

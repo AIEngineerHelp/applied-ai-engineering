@@ -11,6 +11,8 @@ This split follows TypeSafe's own guidance. Jev handles text only, is weak at co
 
 *A live real-time run on 2026-09-27: 14 decisions, 320 ms median and 403 ms p90 round trip, none late or unsafe. One local run, not a benchmark.*
 
+**Live demo:** https://dino-runner-jev.vercel.app (public; Jev calls are rate-limited and capped per day).
+
 **Be clear about what this is.** The rule bot plays perfectly with a lookup table, so the game does not need AI. It is a small, visual test bench for **decision latency**: the same answers that win when the game waits can lose when it keeps running.
 
 ## Run locally
@@ -58,8 +60,28 @@ Set your own `TYPESAFE_API_KEY` and `ENABLE_LIVE=true`, then restart the server.
 | `TYPESAFE_TIMEOUT_MS` | Per-call timeout, default `5000` (500–30000). No automatic retries |
 | `PORT`, `HOST`, `ALLOWED_HOSTS` | Server port (default `4318`), bind address (default loopback) and accepted hostnames |
 | `TYPESAFE_INPUT_USD_PER_MILLION`, `TYPESAFE_OUTPUT_USD_PER_MILLION` | Optional token prices for cost estimates. Leave blank if unknown; the cost then shows as unknown, never zero |
+| `MAX_JEV_IN_FLIGHT`, `MAX_JEV_CALLS_PER_MINUTE`, `MAX_JEV_CALLS_PER_DAY` | Server-wide limits per instance: default 16 open calls, 300 per minute, 5,000 per UTC day |
+| `MAX_JEV_IN_FLIGHT_PER_CLIENT`, `MAX_JEV_CALLS_PER_MINUTE_PER_CLIENT` | Per-visitor limits: default 3 open calls and 150 per minute |
 
-**Cost.** Each obstacle costs one Jev call. On 2026-09-26, TypeSafe's [models page](https://docs.typesafe.ai/models) listed $42 per billion input tokens with free output, and 1,200 requests/minute per account. In a local smoke test on 2026-09-26, `jev-1.13.0` reported about 480 input and 38 output tokens per call. At the listed price, a 100-obstacle game (about 48,000 input tokens) costs roughly $0.002. The actual token counts are in each response's `usage`. Check current pricing and your actual bill before quoting costs. The server allows at most 4 Jev calls in flight and 300 per minute.
+**Cost.** Each obstacle costs one Jev call. On 2026-09-26, TypeSafe's [models page](https://docs.typesafe.ai/models) listed $42 per billion input tokens with free output, and 1,200 requests/minute per account. In a local smoke test on 2026-09-26, `jev-1.13.0` reported about 480 input and 38 output tokens per call. At the listed price, a 100-obstacle game (about 48,000 input tokens) costs roughly $0.002. The actual token counts are in each response's `usage`. Check current pricing and your actual bill before quoting costs. The limits above bound spending. Visitors are identified by Vercel's `x-real-ip` header on Vercel only (its edge sets it); elsewhere by the connection address, so the header cannot be spoofed to dodge the per-visitor limit.
+
+## Deploy to Vercel
+
+The live demo runs as one Vercel Node function (`api/index.ts`) that wraps the same server code. `vercel.json` builds the browser bundle, routes every request to the function, and includes `public/`. On Vercel the host check is skipped, because the platform only routes the project's own domains (including custom domains) to the function; locally, only `ALLOWED_HOSTS` are accepted.
+
+From this directory:
+
+```sh
+vercel link --yes --project <name>
+vercel env add TYPESAFE_API_KEY production   # paste your key
+vercel env add ENABLE_LIVE production        # true
+vercel env add PUBLIC_LIVE production        # true, or set LIVE_ACCESS_PASSWORD instead
+vercel deploy --prod
+```
+
+Access control is deliberate. With `ENABLE_LIVE=true`, the function refuses to serve until you choose either `PUBLIC_LIVE=true` (anyone can play; the rate limits and daily cap above apply) or `LIVE_ACCESS_PASSWORD` (a browser password prompt; any username). The limits are per function instance, so several warm instances multiply them. For stricter control, add Vercel Firewall rate limiting or a shared store. Function time is billed by Vercel, on top of Jev calls.
+
+**Latency when deployed.** Measured on 2026-09-27 against the live demo, the Jev API call from Vercel's servers took a median of about 148 ms. From a browser in India, the full round trip was about 456 ms median and 703 ms p90, over 12 real-time decisions with none late. The distance to the function dominates the round trip, which is exactly the effect the telemetry panel is built to show.
 
 ## How a decision works
 
@@ -111,7 +133,8 @@ Tests make no API calls. They cover:
 - the simulated safe-move table and the rule bot clearing long courses
 - late and missing answers
 - the Jev request shape, and rejection of invalid answers, HTTP errors, and timeouts, with error messages that never echo upstream bodies or keys
-- server host checks, input validation, malformed request paths (a 400, not a crash), the disabled-live response, and the in-flight limit
+- server host checks, input validation, malformed request paths (a 400, not a crash), the disabled-live response, and the per-visitor, per-minute and daily limits
+- the Vercel adapter's access rules (no public spending without an explicit opt-in; password check)
 
 `check` type-checks TypeScript. The browser page was also checked in headless Chrome: ready, playing and game-over states for human, rule bot, and Jev (both modes, with a fake server and live), at 1512×860, 1280×720 and 390×844, and with Chrome's forced dark mode on. It fitted the window (desktop) or the width (phone) with no console errors.
 
@@ -136,7 +159,8 @@ The report includes accuracy against the simulated safe moves, errors, median/p9
 - `src/game.ts`: seeded courses, physics, collisions, the autopilot that times moves, headless simulation, and the safe-move check.
 - `src/players.ts`: the obstacle-to-words mapping, the Choice question text, and the rule bot.
 - `src/jev.ts`: configuration and the Jev API call (plain `fetch`, no SDK, so the request is visible).
-- `src/server.ts`: local HTTP server, static files, and `POST /api/decide`.
+- `src/server.ts`: local HTTP server, static files, `POST /api/decide`, and the spending limits.
+- `api/index.ts`, `vercel.json`, `.vercelignore`: the Vercel function adapter, access control, and deployment settings.
 - `src/benchmark.ts`, `scripts/benchmark.ts`: fixed dataset, live collection, replays, and summary.
 - `client/app.ts`: game states, input, HUD, best scores, Jev requests, and per-decision budget calculation.
 - `client/scene.ts`: canvas renderer for the stage (dino, obstacles, decision tags, request line). It reads positions from the simulation and never changes them.
