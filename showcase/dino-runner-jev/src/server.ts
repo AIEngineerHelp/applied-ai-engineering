@@ -23,7 +23,7 @@ export function createRequestHandler({
 }: { config?: Config; decide?: DecideFn; now?: () => number } = {}) {
   let inFlight = 0;
   const recent: number[] = [];
-  return async (req: http.IncomingMessage, res: http.ServerResponse) => {
+  const handle = async (req: http.IncomingMessage, res: http.ServerResponse) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader(
@@ -36,7 +36,12 @@ export function createRequestHandler({
     };
     const hostname = (req.headers.host || "").split(":")[0].toLowerCase();
     if (!config.allowedHosts.has(hostname)) return reply(403, { error: "This host is not configured." });
-    const path = new URL(req.url, "http://localhost").pathname;
+    let path: string;
+    try {
+      path = new URL(req.url, "http://localhost").pathname;
+    } catch {
+      return reply(400, { error: "Malformed request path." });
+    }
 
     if (req.method === "GET" && path === "/api/config")
       return reply(200, { live: config.live, model: config.model });
@@ -85,6 +90,14 @@ export function createRequestHandler({
       reply(500, { error: "Asset missing. Run npm run build:client." });
     }
   };
+  // http.createServer ignores rejected promises, and on Node 22 an unhandled
+  // rejection ends the process: one bad request must never stop the server.
+  return (req: http.IncomingMessage, res: http.ServerResponse) =>
+    handle(req, res).catch(() => {
+      if (res.headersSent) return res.end();
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Internal error." }));
+    });
 }
 
 export function createApp(options: Parameters<typeof createRequestHandler>[0] = {}) {

@@ -111,7 +111,7 @@ Tests make no API calls. They cover:
 - the simulated safe-move table and the rule bot clearing long courses
 - late and missing answers
 - the Jev request shape, and rejection of invalid answers, HTTP errors, and timeouts, with error messages that never echo upstream bodies or keys
-- server host checks, input validation, the disabled-live response, and the in-flight limit
+- server host checks, input validation, malformed request paths (a 400, not a crash), the disabled-live response, and the in-flight limit
 
 `check` type-checks TypeScript. The browser page was also checked in headless Chrome: ready, playing and game-over states for human, rule bot, and Jev (both modes, with a fake server and live), at 1512×860, 1280×720 and 390×844, and with Chrome's forced dark mode on. It fitted the window (desktop) or the width (phone) with no console errors.
 

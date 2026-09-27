@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import net from "node:net";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import { JEV_URL, configuration, createJevPlayer } from "../src/jev.js";
@@ -145,6 +146,27 @@ test("the server returns provider errors and limits concurrent calls", async () 
     assert.equal((await post(base, { kind: "small-cactus" })).status, 429);
     release();
     for (const response of await Promise.all(pending)) assert.equal(response.status, 200);
+  } finally {
+    server.close();
+  }
+});
+
+test("a malformed request path gets a 400 and does not crash the server", async () => {
+  const { server, base } = await serve({ config: configuration({}), decide: async () => assert.fail("must not call Jev") });
+  try {
+    const { port } = new URL(base);
+    // fetch() normalises paths, so send the raw request line over a socket.
+    const raw = await new Promise<string>((resolve, reject) => {
+      const socket = net.connect(Number(port), "127.0.0.1", () =>
+        socket.end("GET //[ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"),
+      );
+      let data = "";
+      socket.on("data", (chunk) => (data += chunk));
+      socket.on("end", () => resolve(data));
+      socket.on("error", reject);
+    });
+    assert.match(raw, /^HTTP\/1\.1 400/);
+    assert.equal((await fetch(`${base}/api/config`)).status, 200, "server still answers");
   } finally {
     server.close();
   }
