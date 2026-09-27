@@ -130,7 +130,7 @@ test("the server returns provider errors and limits concurrent calls", async () 
   let release;
   const gate = new Promise((resolve) => (release = resolve));
   const { server, base } = await serve({
-    config: liveConfig,
+    config: { ...liveConfig, onVercel: true }, // a second visitor via x-real-ip
     decide: async (kind) => {
       if (kind === "low-bird") throw new Error("Jev request timed out.");
       await gate;
@@ -160,6 +160,7 @@ test("per-visitor, global per-minute and daily limits apply, and the day resets"
   let time = Date.parse("2026-09-27T10:00:00Z");
   const config = {
     ...liveConfig,
+    onVercel: true, // distinct visitors are simulated with Vercel's x-real-ip
     limits: { ...liveConfig.limits, perDay: 5, perMinute: 4, clientPerMinute: 2 },
   };
   const { server, base } = await serve({ config, now: () => time, decide: async () => ({ action: "jump" }) as any });
@@ -183,12 +184,35 @@ test("per-visitor, global per-minute and daily limits apply, and the day resets"
   }
 });
 
-test("Vercel hostnames are allowed automatically", () => {
-  const config = configuration({ VERCEL_URL: "dino-abc.vercel.app", VERCEL_PROJECT_PRODUCTION_URL: "dino.vercel.app" });
-  for (const host of ["dino-abc.vercel.app", "dino.vercel.app", "127.0.0.1", "localhost"]) assert.ok(config.allowedHosts.has(host), host);
-  assert.equal(configuration({}).allowedHosts.has("dino.vercel.app"), false);
+test("on Vercel any routed host is accepted; locally only listed hosts are", async () => {
+  assert.equal(configuration({ VERCEL: "1" }).onVercel, true);
+  assert.equal(configuration({}).onVercel, false);
   assert.equal(configuration({ MAX_JEV_CALLS_PER_DAY: "12" }).limits.perDay, 12);
   assert.equal(configuration({ MAX_JEV_CALLS_PER_DAY: "-1" }).limits.perDay, 5000);
+  const status = async (config, host) => {
+    const { server, base } = await serve({ config, decide: async () => assert.fail("no call") });
+    try {
+      return await new Promise((resolve, reject) =>
+        http.get(`${base}/api/config`, { headers: { Host: host } }, (res) => (res.resume(), resolve(res.statusCode))).on("error", reject),
+      );
+    } finally {
+      server.close();
+    }
+  };
+  assert.equal(await status(configuration({ VERCEL: "1" }), "dino.example.com"), 200, "custom domain on Vercel");
+  assert.equal(await status(configuration({}), "dino.example.com"), 403, "unknown host locally");
+});
+
+test("x-real-ip is trusted only on Vercel, so it cannot dodge per-visitor limits locally", async () => {
+  const config = { ...liveConfig, onVercel: false, limits: { ...liveConfig.limits, clientPerMinute: 2 } };
+  const { server, base } = await serve({ config, decide: async () => ({ action: "jump" }) as any });
+  try {
+    const statuses = [];
+    for (let i = 1; i <= 3; i++) statuses.push((await post(base, { kind: "small-cactus" }, { "x-real-ip": `198.51.100.${i}` })).status);
+    assert.deepEqual(statuses, [200, 200, 429], "spoofed addresses still count as one visitor");
+  } finally {
+    server.close();
+  }
 });
 
 test("a malformed request path gets a 400 and does not crash the server", async () => {

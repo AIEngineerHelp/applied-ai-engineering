@@ -63,11 +63,11 @@ Set your own `TYPESAFE_API_KEY` and `ENABLE_LIVE=true`, then restart the server.
 | `MAX_JEV_IN_FLIGHT`, `MAX_JEV_CALLS_PER_MINUTE`, `MAX_JEV_CALLS_PER_DAY` | Server-wide limits per instance: default 16 open calls, 300 per minute, 5,000 per UTC day |
 | `MAX_JEV_IN_FLIGHT_PER_CLIENT`, `MAX_JEV_CALLS_PER_MINUTE_PER_CLIENT` | Per-visitor limits: default 3 open calls and 150 per minute |
 
-**Cost.** Each obstacle costs one Jev call. On 2026-09-26, TypeSafe's [models page](https://docs.typesafe.ai/models) listed $42 per billion input tokens with free output, and 1,200 requests/minute per account. In a local smoke test on 2026-09-26, `jev-1.13.0` reported about 480 input and 38 output tokens per call. At the listed price, a 100-obstacle game (about 48,000 input tokens) costs roughly $0.002. The actual token counts are in each response's `usage`. Check current pricing and your actual bill before quoting costs. The limits above bound spending. Callers are identified by Vercel's `x-real-ip` header, or by the socket address locally.
+**Cost.** Each obstacle costs one Jev call. On 2026-09-26, TypeSafe's [models page](https://docs.typesafe.ai/models) listed $42 per billion input tokens with free output, and 1,200 requests/minute per account. In a local smoke test on 2026-09-26, `jev-1.13.0` reported about 480 input and 38 output tokens per call. At the listed price, a 100-obstacle game (about 48,000 input tokens) costs roughly $0.002. The actual token counts are in each response's `usage`. Check current pricing and your actual bill before quoting costs. The limits above bound spending. Visitors are identified by Vercel's `x-real-ip` header on Vercel only (its edge sets it); elsewhere by the connection address, so the header cannot be spoofed to dodge the per-visitor limit.
 
 ## Deploy to Vercel
 
-The live demo runs as one Vercel Node function (`api/index.ts`) that wraps the same server code. `vercel.json` builds the browser bundle, routes every request to the function, and includes `public/`. Deployment, production and branch hostnames are accepted automatically.
+The live demo runs as one Vercel Node function (`api/index.ts`) that wraps the same server code. `vercel.json` builds the browser bundle, routes every request to the function, and includes `public/`. On Vercel the host check is skipped, because the platform only routes the project's own domains (including custom domains) to the function; locally, only `ALLOWED_HOSTS` are accepted.
 
 From this directory:
 

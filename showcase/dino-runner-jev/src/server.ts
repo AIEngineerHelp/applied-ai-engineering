@@ -13,10 +13,15 @@ const assets = {
 const MAX_BODY_BYTES = 1024;
 const MINUTE = 60_000;
 
-/** The caller's address: Vercel's edge sets x-real-ip; locally, the socket. */
-function clientOf(req: http.IncomingMessage) {
+/**
+ * The caller's address, for per-visitor limits. Only on Vercel, whose edge
+ * overwrites x-real-ip, is the header trusted; elsewhere any client could set
+ * it and count as a new visitor on every request.
+ */
+function clientOf(req: http.IncomingMessage, trustHeader: boolean) {
   const header = req.headers["x-real-ip"];
-  return (typeof header === "string" && header) || req.socket.remoteAddress || "unknown";
+  if (trustHeader && typeof header === "string" && header) return header;
+  return req.socket.remoteAddress || "unknown";
 }
 
 export function createRequestHandler({
@@ -44,7 +49,7 @@ export function createRequestHandler({
       res.end(JSON.stringify(data));
     };
     const hostname = (req.headers.host || "").split(":")[0].toLowerCase();
-    if (!config.allowedHosts.has(hostname)) return reply(403, { error: "This host is not configured." });
+    if (!config.onVercel && !config.allowedHosts.has(hostname)) return reply(403, { error: "This host is not configured." });
     let path: string;
     try {
       path = new URL(req.url, "http://localhost").pathname;
@@ -85,7 +90,7 @@ export function createRequestHandler({
         while (entry.recent.length && entry.recent[0] <= time - MINUTE) entry.recent.shift();
         if (!entry.inFlight && !entry.recent.length) clients.delete(id);
       }
-      const id = clientOf(req);
+      const id = clientOf(req, config.onVercel);
       const client = clients.get(id) ?? { inFlight: 0, recent: [] };
       clients.set(id, client);
       if (today >= limits.perDay)

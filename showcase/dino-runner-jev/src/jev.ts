@@ -20,12 +20,12 @@ export function configuration(env: Record<string, string | undefined> = process.
     // A game decision is useless after a few seconds, so fail fast.
     timeoutMs: Number.isInteger(timeout) && timeout >= 500 && timeout <= 30000 ? timeout : 5000,
     host: env.HOST || "127.0.0.1",
-    // On Vercel, the deployment, production and branch hostnames are allowed
-    // automatically from the platform's environment variables.
+    // Vercel sets VERCEL=1. There, the platform only routes this project's own
+    // domains to the function and its edge sets x-real-ip, so the host check is
+    // skipped and the header is trusted. Locally, neither is.
+    onVercel: env.VERCEL === "1",
     allowedHosts: new Set(
-      [env.ALLOWED_HOSTS || "127.0.0.1,localhost", env.VERCEL_URL, env.VERCEL_PROJECT_PRODUCTION_URL, env.VERCEL_BRANCH_URL]
-        .filter(Boolean)
-        .join(",")
+      (env.ALLOWED_HOSTS || "127.0.0.1,localhost")
         .split(",")
         .map((host) => host.trim().toLowerCase())
         .filter(Boolean),
