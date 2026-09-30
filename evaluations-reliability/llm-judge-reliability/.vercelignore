@@ -1,0 +1,9 @@
+# Keep local runs, environments, secrets and tests out of the deployment.
+.env
+.venv/
+runs/
+tests/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+data/ragtruth/

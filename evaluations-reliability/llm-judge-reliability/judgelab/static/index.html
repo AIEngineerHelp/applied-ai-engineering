@@ -173,6 +173,9 @@
   .dotv.pass { background: var(--good); } .dotv.fail { background: var(--bad); }
   .detail .ex { margin: 0; }
 
+  .site-foot { border-top: 1px solid var(--border); color: var(--text-3); font-size: 13px; line-height: 1.6; }
+  .site-foot div { max-width: 1160px; margin: 0 auto; padding: 20px 24px 36px; }
+  .site-foot a { color: var(--text-2); }
   @media (max-width: 1100px) { .article-wrap { grid-template-columns: minmax(0, 1fr); } nav.toc { display: none; } article { margin: 0 auto; } .wide { width: 100%; } }
   @media (max-width: 860px) { .ex-grid { grid-template-columns: minmax(0, 1fr); } .list { position: static; max-height: 360px; } }
   @media (max-width: 640px) {
@@ -193,6 +196,12 @@
   <span class="gh">AI Engineer Help · applied-ai-engineering</span>
 </div></header>
 <main id="view"></main>
+<footer class="site-foot"><div>
+  Source texts in the RAGTruth examples come from <a href="https://microsoft.github.io/msmarco/" target="_blank" rel="noopener">MS MARCO</a> (Microsoft) via
+  <a href="https://github.com/particlemedia/RAGTruth" target="_blank" rel="noopener">RAGTruth</a> (MIT license). They are shown here for non-commercial education under the
+  <a href="https://microsoft.github.io/msmarco/Notice.html" target="_blank" rel="noopener">MS MARCO terms</a>.
+  Code: <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/llm-judge-reliability" target="_blank" rel="noopener">AI Engineer Help · applied-ai-engineering</a>.
+</div></footer>
 <div class="tip" id="tip" role="tooltip"></div>
 
 <script>
@@ -403,7 +412,10 @@ async function renderReport(view) {
   const speed = V(syn, "gemini-rubric") && V(syn, "jev-rubric") ? V(syn, "gemini-rubric").usage.median_ms / V(syn, "jev-rubric").usage.median_ms : null;
   const tokPer = V(syn, "gemini-basic") ? Math.round(V(syn, "gemini-basic").usage.output_tokens / V(syn, "gemini-basic").usage.calls) : null;
   const jevCalc = V(syn, "jev-rubric")?.by_error?.wrong_calculation;
-  const gemModel = state.judges.judges["gemini-rubric"].model;
+  // Show the model versions recorded in the runs, not the configured aliases (for example jev-latest).
+  const used = (n) => V(rag, n)?.usage?.models?.[0] || V(syn, n)?.usage?.models?.[0];
+  const gemModel = used("gemini-rubric") || state.judges.judges["gemini-rubric"].model;
+  const jevModel = used("jev-rubric") || state.judges.judges["jev-rubric"].model;
   const ex1 = byId("ragtruth", "rt17264"), ex2 = byId("synthetic", "c17-b"), ex3 = byId("ragtruth", "rt15394"), ex4 = byId("ragtruth", "rt17191"), ex5 = byId("synthetic", "c03-b");
   const worldTrue = (state.items.ragtruth || []).filter((i) => i.world_true).length;
 
@@ -459,7 +471,7 @@ async function renderReport(view) {
       <figcaption><b>Table 2.</b> Mistake types. Synthetic mistakes were written by Claude; the RAGTruth types are the annotators' own categories. In RAGTruth, ${worldTrue} of the “subtle unsupported” answers add a detail that is true in the real world but absent from the text.</figcaption></figure>
 
     <h3>The judges</h3>
-    <p>We used two models as judges. <b>Gemini</b> (${esc(gemModel)}) is a general-purpose model that can explain its verdict. <b>Jev</b> (${esc(state.judges.judges["jev-rubric"].model)}, from TypeSafe) is a fast classification model: it returns a choice with a probability, but no explanation. For each model we tried several prompts, each changing one thing:</p>
+    <p>We used two models as judges. <b>Gemini</b> (${esc(gemModel)}) is a general-purpose model that can explain its verdict. <b>Jev</b> (${esc(jevModel)}, from TypeSafe) is a fast classification model: it returns a choice with a probability, but no explanation. For each model we tried several prompts, each changing one thing:</p>
     <figure><div class="scroll"><table class="t">
       <thead><tr><th>Judge</th><th>What the prompt adds</th><th>Returns</th></tr></thead>
       <tbody>${ORDER.map((n) => `<tr><td class="nowrap"><b>${esc(jLabel(n))}</b><br><span class="faint mono">${n}</span></td><td>${esc(JUDGES[n].adds)}${JUDGES[n].ragOnly ? " <i>RAGTruth only.</i>" : ""}
@@ -551,7 +563,7 @@ async function renderReport(view) {
       <li><b>One task:</b> short answers grounded in a source text. Judges of tone, safety or open-ended quality may behave differently.</li>
       <li><b>The synthetic set was made entirely by AI.</b> Claude wrote the passages, questions and wrong answers; Gemini wrote the correct answers; no human reviewed it. Its mistakes are also cleaner than real ones, so it measures whether judges catch known error types, not real-world error rates.</li>
       <li><b>The label review was done by an AI</b> (Claude), not a second human annotator. It is published so anyone can check it.</li>
-      <li><b>Model versions change.</b> Results are for ${esc(gemModel)} and jev-1.13.0 in September 2026.</li>
+      <li><b>Model versions change.</b> Results are for ${esc(gemModel)} and ${esc(jevModel)} in September 2026.</li>
     </ul>
 
     <h2 id="advice">Practical advice</h2>

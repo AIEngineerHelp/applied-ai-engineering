@@ -1,5 +1,7 @@
 # LLM-as-a-Judge: Measuring agreement, bias, and reliability
 
+**Read the report and browse the data:** [llm-judge-reliability.vercel.app](https://llm-judge-reliability.vercel.app)
+
 An LLM judge grades another model's answers. Teams use one when answers are free text and can't be checked with exact match. This example tests the judge itself, on two datasets:
 
 - **Synthetic mistakes:** 80 short answers about fictional passages. Half are correct; the other half each contain one clear, written mistake.
@@ -109,6 +111,17 @@ Runs resume where they stopped: finished calls are skipped, and failed calls are
 
 - **Report:** the write-up of the experiment. It has key takeaways, what LLM-as-a-judge is and why to test it, the method (datasets, mistake types, judges with their exact prompts, measures), results with numbered figures and tables, five worked examples, discussion, limitations, practical advice and reproduction steps. Every number is computed from the recorded runs.
 - **Dataset explorer:** every answer in both datasets. Each one shows the full source text, the question, the answer with the human-marked mistake highlighted, the correct verdict and why, the correct answer for synthetic mistakes, the review note where one exists, and every judge's verdict with its reasoning or probability. You can filter by verdict, mistake type, judge disagreement or review status, or search, and link to any answer with `#explorer/<dataset>/<id>`.
+
+## Deployment
+
+The report and explorer are deployed to Vercel at [llm-judge-reliability.vercel.app](https://llm-judge-reliability.vercel.app). The deployment is read-only: it serves the committed verdicts and reports, needs no API keys, and makes no model calls.
+
+- `app.py` is the Vercel entry point for the FastAPI app.
+- `[tool.vercel.scripts]` in `pyproject.toml` runs `fetch-ragtruth` at build time. It downloads RAGTruth from the pinned commit, checks the checksums and builds the sample from the committed IDs, so the MS MARCO passages are never stored in this repository. The raw download is deleted after the build.
+- `.vercelignore` keeps `.env`, `runs/`, tests and local data out of the upload.
+- The site footer cites RAGTruth (MIT) and the MS MARCO terms (non-commercial research); the texts are shown for non-commercial education.
+
+To deploy your own copy, run `vercel deploy` from this directory.
 
 ## Configuration and cost
 
