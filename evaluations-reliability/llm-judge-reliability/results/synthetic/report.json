@@ -1,0 +1,968 @@
+{
+  "items": 80,
+  "expected_pass": 40,
+  "expected_fail": 40,
+  "errors": {
+    "wrong_fact": 4,
+    "incomplete": 7,
+    "wrong_calculation": 8,
+    "wrong_entity": 8,
+    "made_up_answer": 8,
+    "unsupported_claim": 4,
+    "contradiction": 1
+  },
+  "variants": {
+    "gemini-basic": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.9875,
+        "accuracy_ci": [
+          0.9325356757603457,
+          0.9977900813816939
+        ],
+        "kappa": 0.9750000000000001,
+        "kappa_ci": [
+          0.9223803363518759,
+          1.0
+        ],
+        "true_pass": 40,
+        "false_pass": 1,
+        "true_fail": 39,
+        "false_fail": 0,
+        "false_pass_rate": 0.025,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0044267174077949195,
+          0.1288165948800778
+        ],
+        "wrong": [
+          "c17-b"
+        ],
+        "false_pass_p": []
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9814814814814815,
+        "accuracy_ci": [
+          0.902283346415128,
+          0.996723596684648
+        ],
+        "kappa": 0.962962962962963,
+        "kappa_ci": [
+          0.8799999999999999,
+          1.0
+        ],
+        "true_pass": 27,
+        "false_pass": 1,
+        "true_fail": 26,
+        "false_fail": 0,
+        "false_pass_rate": 0.037037037037037035,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.006567976533097597,
+          0.1828385393415652
+        ],
+        "wrong": [
+          "c17-b"
+        ],
+        "false_pass_p": []
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 1.0,
+        "accuracy_ci": [
+          0.8712669561953784,
+          1.0
+        ],
+        "kappa": 1.0,
+        "kappa_ci": [
+          1.0,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 0,
+        "true_fail": 13,
+        "false_fail": 0,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0,
+          0.22810184305529166
+        ],
+        "wrong": [],
+        "false_pass_p": []
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 6,
+          "rate": 0.8571428571428571,
+          "missed": [
+            "c17-b"
+          ]
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 1759,
+        "input_tokens": 10864,
+        "output_tokens": 11392,
+        "usd": null,
+        "models": [
+          "gemini-3.8-flash"
+        ]
+      }
+    },
+    "gemini-rubric": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.975,
+        "accuracy_ci": [
+          0.9133539994467789,
+          0.9931172511018748
+        ],
+        "kappa": 0.95,
+        "kappa_ci": [
+          0.8726114649681529,
+          1.0
+        ],
+        "true_pass": 39,
+        "false_pass": 1,
+        "true_fail": 39,
+        "false_fail": 1,
+        "false_pass_rate": 0.025,
+        "false_fail_rate": 0.025,
+        "false_pass_ci": [
+          0.0044267174077949195,
+          0.1288165948800778
+        ],
+        "wrong": [
+          "c17-a",
+          "c17-b"
+        ],
+        "false_pass_p": []
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9629629629629629,
+        "accuracy_ci": [
+          0.8746459065659669,
+          0.9897838464145869
+        ],
+        "kappa": 0.9259259259259258,
+        "kappa_ci": [
+          0.812239221140473,
+          1.0
+        ],
+        "true_pass": 26,
+        "false_pass": 1,
+        "true_fail": 26,
+        "false_fail": 1,
+        "false_pass_rate": 0.037037037037037035,
+        "false_fail_rate": 0.037037037037037035,
+        "false_pass_ci": [
+          0.006567976533097597,
+          0.1828385393415652
+        ],
+        "wrong": [
+          "c17-a",
+          "c17-b"
+        ],
+        "false_pass_p": []
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 1.0,
+        "accuracy_ci": [
+          0.8712669561953784,
+          1.0
+        ],
+        "kappa": 1.0,
+        "kappa_ci": [
+          1.0,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 0,
+        "true_fail": 13,
+        "false_fail": 0,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0,
+          0.22810184305529166
+        ],
+        "wrong": [],
+        "false_pass_p": []
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 6,
+          "rate": 0.8571428571428571,
+          "missed": [
+            "c17-b"
+          ]
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 1842,
+        "input_tokens": 17024,
+        "output_tokens": 12528,
+        "usd": null,
+        "models": [
+          "gemini-3.8-flash"
+        ]
+      },
+      "reliability": {
+        "repeats": 3,
+        "n": 80,
+        "unstable": [
+          "c17-b"
+        ],
+        "unstable_rate": 0.0125,
+        "unstable_ci": [
+          0.002209918618306224,
+          0.06746432423965451
+        ]
+      },
+      "length_bias": {
+        "expected_pass": {
+          "n": 40,
+          "pass_rate_original": 0.975,
+          "pass_rate_padded": 0.975,
+          "flipped_to_pass": [],
+          "flipped_to_fail": []
+        },
+        "expected_fail": {
+          "n": 40,
+          "pass_rate_original": 0.025,
+          "pass_rate_padded": 0.0,
+          "flipped_to_pass": [],
+          "flipped_to_fail": [
+            "c17-b"
+          ]
+        }
+      }
+    },
+    "gemini-reasoning": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.9875,
+        "accuracy_ci": [
+          0.9325356757603457,
+          0.9977900813816939
+        ],
+        "kappa": 0.9750000000000001,
+        "kappa_ci": [
+          0.9230769230769231,
+          1.0
+        ],
+        "true_pass": 39,
+        "false_pass": 0,
+        "true_fail": 40,
+        "false_fail": 1,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.025,
+        "false_pass_ci": [
+          0.0,
+          0.08762453925039232
+        ],
+        "wrong": [
+          "c17-a"
+        ],
+        "false_pass_p": []
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9814814814814815,
+        "accuracy_ci": [
+          0.902283346415128,
+          0.996723596684648
+        ],
+        "kappa": 0.962962962962963,
+        "kappa_ci": [
+          0.884450784593438,
+          1.0
+        ],
+        "true_pass": 26,
+        "false_pass": 0,
+        "true_fail": 27,
+        "false_fail": 1,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.037037037037037035,
+        "false_pass_ci": [
+          6.938893903907228e-18,
+          0.12455903714463581
+        ],
+        "wrong": [
+          "c17-a"
+        ],
+        "false_pass_p": []
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 1.0,
+        "accuracy_ci": [
+          0.8712669561953784,
+          1.0
+        ],
+        "kappa": 1.0,
+        "kappa_ci": [
+          1.0,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 0,
+        "true_fail": 13,
+        "false_fail": 0,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0,
+          0.22810184305529166
+        ],
+        "wrong": [],
+        "false_pass_p": []
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 7,
+          "rate": 1.0,
+          "missed": []
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 1708,
+        "input_tokens": 18144,
+        "output_tokens": 17414,
+        "usd": null,
+        "models": [
+          "gemini-3.8-flash"
+        ]
+      }
+    },
+    "gemini-examples": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.9875,
+        "accuracy_ci": [
+          0.9325356757603457,
+          0.9977900813816939
+        ],
+        "kappa": 0.9750000000000001,
+        "kappa_ci": [
+          0.9230769230769231,
+          1.0
+        ],
+        "true_pass": 39,
+        "false_pass": 0,
+        "true_fail": 40,
+        "false_fail": 1,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.025,
+        "false_pass_ci": [
+          0.0,
+          0.08762453925039232
+        ],
+        "wrong": [
+          "c17-a"
+        ],
+        "false_pass_p": []
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9814814814814815,
+        "accuracy_ci": [
+          0.902283346415128,
+          0.996723596684648
+        ],
+        "kappa": 0.962962962962963,
+        "kappa_ci": [
+          0.884450784593438,
+          1.0
+        ],
+        "true_pass": 26,
+        "false_pass": 0,
+        "true_fail": 27,
+        "false_fail": 1,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.037037037037037035,
+        "false_pass_ci": [
+          6.938893903907228e-18,
+          0.12455903714463581
+        ],
+        "wrong": [
+          "c17-a"
+        ],
+        "false_pass_p": []
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 1.0,
+        "accuracy_ci": [
+          0.8712669561953784,
+          1.0
+        ],
+        "kappa": 1.0,
+        "kappa_ci": [
+          1.0,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 0,
+        "true_fail": 13,
+        "false_fail": 0,
+        "false_pass_rate": 0.0,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0,
+          0.22810184305529166
+        ],
+        "wrong": [],
+        "false_pass_p": []
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 7,
+          "rate": 1.0,
+          "missed": []
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 1807,
+        "input_tokens": 35664,
+        "output_tokens": 16610,
+        "usd": null,
+        "models": [
+          "gemini-3.8-flash"
+        ]
+      }
+    },
+    "jev-basic": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.9125,
+        "accuracy_ci": [
+          0.8302301722291654,
+          0.95696854535256
+        ],
+        "kappa": 0.825,
+        "kappa_ci": [
+          0.6913183279742765,
+          0.949238578680203
+        ],
+        "true_pass": 40,
+        "false_pass": 7,
+        "true_fail": 33,
+        "false_fail": 0,
+        "false_pass_rate": 0.175,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.08745302996883066,
+          0.3195029205439244
+        ],
+        "wrong": [
+          "c03-b",
+          "c17-b",
+          "c18-b",
+          "c23-b",
+          "c26-b",
+          "c28-b",
+          "c38-b"
+        ],
+        "false_pass_p": [
+          1.0,
+          1.0,
+          0.95,
+          0.65,
+          0.64,
+          0.55,
+          0.52
+        ]
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9074074074074074,
+        "accuracy_ci": [
+          0.8008987246934547,
+          0.9597994579294327
+        ],
+        "kappa": 0.8148148148148149,
+        "kappa_ci": [
+          0.6399999999999999,
+          0.9619181946403386
+        ],
+        "true_pass": 27,
+        "false_pass": 5,
+        "true_fail": 22,
+        "false_fail": 0,
+        "false_pass_rate": 0.18518518518518517,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.0818058657428532,
+          0.36699056505191746
+        ],
+        "wrong": [
+          "c17-b",
+          "c23-b",
+          "c26-b",
+          "c28-b",
+          "c38-b"
+        ],
+        "false_pass_p": [
+          0.95,
+          0.65,
+          0.64,
+          0.55,
+          0.52
+        ]
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 0.9230769230769231,
+        "accuracy_ci": [
+          0.7585805251948495,
+          0.9786453608166245
+        ],
+        "kappa": 0.8461538461538463,
+        "kappa_ci": [
+          0.6204379562043795,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 2,
+        "true_fail": 11,
+        "false_fail": 0,
+        "false_pass_rate": 0.15384615384615385,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.04325726318273798,
+          0.4223517050863101
+        ],
+        "wrong": [
+          "c03-b",
+          "c18-b"
+        ],
+        "false_pass_p": [
+          1.0,
+          1.0
+        ]
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 6,
+          "rate": 0.8571428571428571,
+          "missed": [
+            "c17-b"
+          ]
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 3,
+          "rate": 0.75,
+          "missed": [
+            "c26-b"
+          ]
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 3,
+          "rate": 0.375,
+          "missed": [
+            "c03-b",
+            "c18-b",
+            "c23-b",
+            "c28-b",
+            "c38-b"
+          ]
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 301,
+        "input_tokens": 34115,
+        "output_tokens": 2560,
+        "usd": null,
+        "models": [
+          "jev-1.13.0"
+        ]
+      },
+      "mean_p_pass": {
+        "pass": 0.99725,
+        "fail": 0.1785
+      }
+    },
+    "jev-rubric": {
+      "all": {
+        "n": 80,
+        "accuracy": 0.9375,
+        "accuracy_ci": [
+          0.8618967084664824,
+          0.9730110223020145
+        ],
+        "kappa": 0.875,
+        "kappa_ci": [
+          0.7735849056603773,
+          0.9748110831234258
+        ],
+        "true_pass": 40,
+        "false_pass": 5,
+        "true_fail": 35,
+        "false_fail": 0,
+        "false_pass_rate": 0.125,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.05459419773541284,
+          0.26112420670238146
+        ],
+        "wrong": [
+          "c03-b",
+          "c18-b",
+          "c23-b",
+          "c28-b",
+          "c38-b"
+        ],
+        "false_pass_p": [
+          1.0,
+          0.99,
+          0.93,
+          0.59,
+          0.52
+        ]
+      },
+      "dev": {
+        "n": 54,
+        "accuracy": 0.9444444444444444,
+        "accuracy_ci": [
+          0.8489254853651705,
+          0.980927077496161
+        ],
+        "kappa": 0.8888888888888888,
+        "kappa_ci": [
+          0.7428571428571428,
+          1.0
+        ],
+        "true_pass": 27,
+        "false_pass": 3,
+        "true_fail": 24,
+        "false_fail": 0,
+        "false_pass_rate": 0.1111111111111111,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.03851964789498724,
+          0.2805818254397295
+        ],
+        "wrong": [
+          "c23-b",
+          "c28-b",
+          "c38-b"
+        ],
+        "false_pass_p": [
+          0.93,
+          0.59,
+          0.52
+        ]
+      },
+      "holdout": {
+        "n": 26,
+        "accuracy": 0.9230769230769231,
+        "accuracy_ci": [
+          0.7585805251948495,
+          0.9786453608166245
+        ],
+        "kappa": 0.8461538461538463,
+        "kappa_ci": [
+          0.6204379562043795,
+          1.0
+        ],
+        "true_pass": 13,
+        "false_pass": 2,
+        "true_fail": 11,
+        "false_fail": 0,
+        "false_pass_rate": 0.15384615384615385,
+        "false_fail_rate": 0.0,
+        "false_pass_ci": [
+          0.04325726318273798,
+          0.4223517050863101
+        ],
+        "wrong": [
+          "c03-b",
+          "c18-b"
+        ],
+        "false_pass_p": [
+          1.0,
+          0.99
+        ]
+      },
+      "by_error": {
+        "contradiction": {
+          "n": 1,
+          "caught": 1,
+          "rate": 1.0,
+          "missed": []
+        },
+        "incomplete": {
+          "n": 7,
+          "caught": 7,
+          "rate": 1.0,
+          "missed": []
+        },
+        "made_up_answer": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "unsupported_claim": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_calculation": {
+          "n": 8,
+          "caught": 3,
+          "rate": 0.375,
+          "missed": [
+            "c03-b",
+            "c18-b",
+            "c23-b",
+            "c28-b",
+            "c38-b"
+          ]
+        },
+        "wrong_entity": {
+          "n": 8,
+          "caught": 8,
+          "rate": 1.0,
+          "missed": []
+        },
+        "wrong_fact": {
+          "n": 4,
+          "caught": 4,
+          "rate": 1.0,
+          "missed": []
+        }
+      },
+      "usage": {
+        "calls": 80,
+        "median_ms": 301,
+        "input_tokens": 39795,
+        "output_tokens": 2560,
+        "usd": null,
+        "models": [
+          "jev-1.13.0"
+        ]
+      },
+      "reliability": {
+        "repeats": 3,
+        "n": 80,
+        "unstable": [
+          "c38-b"
+        ],
+        "unstable_rate": 0.0125,
+        "unstable_ci": [
+          0.002209918618306224,
+          0.06746432423965451
+        ]
+      },
+      "length_bias": {
+        "expected_pass": {
+          "n": 40,
+          "pass_rate_original": 1.0,
+          "pass_rate_padded": 1.0,
+          "flipped_to_pass": [],
+          "flipped_to_fail": []
+        },
+        "expected_fail": {
+          "n": 40,
+          "pass_rate_original": 0.125,
+          "pass_rate_padded": 0.1,
+          "flipped_to_pass": [],
+          "flipped_to_fail": [
+            "c38-b"
+          ]
+        }
+      },
+      "mean_p_pass": {
+        "pass": 0.9942500000000001,
+        "fail": 0.124
+      }
+    }
+  }
+}
