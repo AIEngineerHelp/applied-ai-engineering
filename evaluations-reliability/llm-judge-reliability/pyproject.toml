@@ -22,3 +22,8 @@ select = ["E4", "E7", "E9", "F", "I"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+# Vercel: download RAGTruth at build time (pinned commit, checksum-verified) instead of committing its
+# MS MARCO passages, build the sample from the committed IDs, then drop the 36 MB raw download.
+[tool.vercel.scripts]
+build = "python -m judgelab fetch-ragtruth && rm -rf data/ragtruth/raw"
