@@ -34,7 +34,7 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Biomedical hybrid search](rag-retrieval/biomedical-search/README.md) compares BM25, dense search, and hybrid retrieval over biomedical passages, with evidence inspection, Gemini-generated answers, and a fixed 100-question evaluation set. Included benchmark results are explicitly labeled as a historical local-model baseline.
 
-[LLM-as-a-Judge: Measuring agreement, bias, and reliability](evaluations-reliability/llm-judge-reliability/README.md) tests Gemini and Jev judges on AI-written synthetic mistakes and on 120 real answers from RAGTruth, whose errors were marked by people. Judges score 98–99% on the easy set but 53–68% on real answers, and a review of the disagreements shows the labels are often the ones at fault. A local dashboard shows every answer next to every verdict.
+[LLM-as-a-Judge: Measuring agreement, bias, and reliability](evaluations-reliability/llm-judge-reliability/README.md) ([read the report](https://llm-judge-reliability.vercel.app)) tests Gemini and Jev judges on AI-written synthetic mistakes and on 120 real answers from RAGTruth, whose errors were marked by people. Judges score 98–99% on the easy set but 53–68% on real answers, and a review of the disagreements shows the labels are often the ones at fault. A local dashboard shows every answer next to every verdict.
 
 ## Contributing
 

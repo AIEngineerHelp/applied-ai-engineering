@@ -12,7 +12,7 @@ Use this category when the main contribution is an evaluation method, test suite
 
 | Project | What it teaches | Status |
 | --- | --- | --- |
-| [LLM-as-a-Judge: agreement, bias, and reliability](llm-judge-reliability/README.md) | Testing Gemini and Jev judges on synthetic mistakes and on 120 real RAGTruth answers labelled by people: agreement, who is right when judge and label disagree, blind spots, confident mistakes, length bias and consistency | Runnable Python example with a local dashboard; live results included |
+| [LLM-as-a-Judge: agreement, bias, and reliability](llm-judge-reliability/README.md) | Testing Gemini and Jev judges on synthetic mistakes and on 120 real RAGTruth answers labelled by people: agreement, who is right when judge and label disagree, blind spots, confident mistakes, length bias and consistency | Runnable Python example; [report and dataset explorer online](https://llm-judge-reliability.vercel.app); live results included |
 | [Incident response agent evals](../agents/incident-response-agent/docs/evals.md) | Scoring an agent's root-cause answers against an answer key with deterministic marking, hold-out cases and a lazy-guess baseline | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents) |
 
 ## Adding a contribution
