@@ -1,0 +1,179 @@
+{
+  "reviewer": "Claude (AI), reading each answer against its passages",
+  "date": "2026-09-30",
+  "scope": "Answers where Gemini's verdict (faithfulness and reasoning variants) disagrees with the RAGTruth label",
+  "reviews": {
+    "rt11957": {
+      "read": "problem",
+      "note": "Gives the baking steps, then says the passages don't explain baking, which passage 2 does."
+    },
+    "rt12025": {
+      "read": "problem",
+      "note": "'Base of the neck' changes the passage's 'base of your skull on your neck'. Subtle."
+    },
+    "rt12122": {
+      "read": "problem",
+      "note": "Quotes the passage's example sentence in a reworded form the passage doesn't contain. Minor."
+    },
+    "rt12188": {
+      "read": "problem",
+      "note": "Presents a step for buying a timeshare as a step for selling one."
+    },
+    "rt12199": {
+      "read": "debatable",
+      "note": "Judge objects that the passages never say 'capsules'; the listed uses are in passage 3."
+    },
+    "rt12368": {
+      "read": "problem",
+      "note": "Adds 'evenly over the top and sides', which the passage doesn't say. Minor."
+    },
+    "rt12805": {
+      "read": "problem",
+      "note": "Turns a rule from the 'Pick 3' example into a general rule, which conflicts with Pick 1 and Pick 2."
+    },
+    "rt12923": {
+      "read": "problem",
+      "note": "Closing sentence about marketing strategies and revenue isn't in the passages. Minor."
+    },
+    "rt12939": {
+      "read": "problem",
+      "note": "Adds lower fees, flexibility and intraday trading, while admitting the passages don't say so."
+    },
+    "rt12942": {
+      "read": "problem",
+      "note": "'Talk about their feelings' changes the passage's 'ask questions'. Subtle."
+    },
+    "rt12972": {
+      "read": "no_problem",
+      "note": "'Larger pieces on the outer edge' says the same as the passage. The label is strict."
+    },
+    "rt12996": {
+      "read": "no_problem",
+      "note": "'Over a week or less' matches 'in a span of a week, sometimes less'. The label is strict."
+    },
+    "rt13004": {
+      "read": "no_problem",
+      "note": "Only the generic closing sentence goes beyond the passages; the judge is strict here."
+    },
+    "rt13066": {
+      "read": "problem",
+      "note": "Says passages 2 and 3 don't mention time between rounds; both do."
+    },
+    "rt13086": {
+      "read": "problem",
+      "note": "Says the onions are cooked; the passage doesn't. Minor."
+    },
+    "rt13407": {
+      "read": "problem",
+      "note": "Says passage 3 lists causes; it lists conditions seen alongside jaw pain. Adds medical advice."
+    },
+    "rt13414": {
+      "read": "problem",
+      "note": "Claims the question mentions an asphalt paver; that detail is from passage 1."
+    },
+    "rt13524": {
+      "read": "problem",
+      "note": "Applies DIY versus professional installation, from the wood-fence passage, to chain link."
+    },
+    "rt13571": {
+      "read": "problem",
+      "note": "Adds '(75°C)' for 250°F, which is wrong (about 121°C) and not in the passage."
+    },
+    "rt13949": {
+      "read": "no_problem",
+      "note": "Only a generic closing line ('more research may be needed') is flagged. The label is strict."
+    },
+    "rt14011": {
+      "read": "problem",
+      "note": "Says 5 to 6 minutes 'on each side'; the passage says 5 to 6 minutes."
+    },
+    "rt14363": {
+      "read": "problem",
+      "note": "Adds 'limiting social activities' and advice about a supportive approach that the passages don't give."
+    },
+    "rt14742": {
+      "read": "no_problem",
+      "note": "Every statement is in the passages; the judge is wrong here."
+    },
+    "rt14772": {
+      "read": "problem",
+      "note": "Uses a reason for serving God as a reason for serving others."
+    },
+    "rt15394": {
+      "read": "problem",
+      "note": "Claims passage 3 lists nausea, dizziness and dry mouth; it mentions no side effects."
+    },
+    "rt15710": {
+      "read": "problem",
+      "note": "Says sirloin and porterhouse may be the same; the passages say that of T-bone and porterhouse."
+    },
+    "rt15965": {
+      "read": "problem",
+      "note": "Adds autonomy, dignity and community, which the passages don't mention. Minor."
+    },
+    "rt16178": {
+      "read": "no_problem",
+      "note": "Every statement is in the passages; the judge is wrong here."
+    },
+    "rt16202": {
+      "read": "debatable",
+      "note": "Adds a greeting and sign-off to the example email. Template text, not a factual claim."
+    },
+    "rt16408": {
+      "read": "problem",
+      "note": "Invents a calculation: 370 miles at 100 mph is 3 h 42 min, not 1 h 59 min."
+    },
+    "rt16414": {
+      "read": "problem",
+      "note": "Invents a formula (angle = actual angle / 2) that the passages don't give."
+    },
+    "rt16522": {
+      "read": "problem",
+      "note": "Lists one of the passage's few positive effects as a negative effect."
+    },
+    "rt16620": {
+      "read": "no_problem",
+      "note": "'Stone' for 'fake stone' is clear from context. The label is strict."
+    },
+    "rt16678": {
+      "read": "problem",
+      "note": "Treats advice on saving a marriage as advice on saving money."
+    },
+    "rt16728": {
+      "read": "problem",
+      "note": "Adds an interpretation of the song that the passages don't give."
+    },
+    "rt16807": {
+      "read": "problem",
+      "note": "Says the passages give no backup steps; one describes the My Documents option."
+    },
+    "rt16876": {
+      "read": "problem",
+      "note": "Attributes 'staying alert' and 'being aware of your surroundings' to passage 2, which doesn't say them."
+    },
+    "rt16884": {
+      "read": "problem",
+      "note": "Gives the forecast for 1am; the passage's figure is for 0am."
+    },
+    "rt16977": {
+      "read": "debatable",
+      "note": "Each step is in a passage, but it mixes sautéing and steaming into one method."
+    },
+    "rt17172": {
+      "read": "no_problem",
+      "note": "'Bulbs, also known as tubers' versus 'tubers (like bulbs)'. The label is strict."
+    },
+    "rt17191": {
+      "read": "no_problem",
+      "note": "'Late 18th to early 20th centuries' means 'late 1700s to early 1900s'. The label is strict."
+    },
+    "rt17264": {
+      "read": "problem",
+      "note": "Says to be careful with heat near plastic; the passage says to skip heating there."
+    },
+    "rt17699": {
+      "read": "debatable",
+      "note": "Presents direct grilling steps under a question about grilling in foil."
+    }
+  }
+}

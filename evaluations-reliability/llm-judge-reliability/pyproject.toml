@@ -1,0 +1,24 @@
+[project]
+name = "llm-judge-reliability"
+version = "0.1.0"
+description = "Measure an LLM judge's agreement with human labels, length bias, and run-to-run reliability"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx>=0.28,<1",
+  "python-dotenv>=1,<2",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

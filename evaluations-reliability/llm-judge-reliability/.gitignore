@@ -1,0 +1,4 @@
+# Raw judge responses stay local until reviewed.
+runs/
+# RAGTruth download and sample text (MS MARCO passages): not redistributed. Only sample IDs are committed.
+data/ragtruth/

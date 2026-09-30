@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM-as-a-Judge Report</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a78d6'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --surface: #ffffff; --surface-2: #f6f6f3; --surface-3: #ebeae5;
+    --border: #e6e5df; --border-strong: #cfcec6;
+    --text: #111110; --text-2: #4f4e4a; --text-3: #7c7b75;
+    --accent: #2a78d6; --accent-soft: #eaf2fc; --accent-text: #1c5cab;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --good: #0ca30c; --good-text: #006300; --good-soft: #ebf6eb;
+    --bad: #d03b3b; --bad-soft: #fcecec;
+    --grid: #e6e5df; --axis: #c3c2b7;
+    --radius: 12px; --radius-sm: 8px;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      --bg: #111110; --surface: #1a1a19; --surface-2: #222220; --surface-3: #2e2e2b;
+      --border: #2e2e2b; --border-strong: #42423e;
+      --text: #f5f5f3; --text-2: #c3c2b7; --text-3: #8f8e87;
+      --accent: #3987e5; --accent-soft: #16243a; --accent-text: #8ab8f0;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --good-text: #3cc43c; --good-soft: #112611; --bad: #e66767; --bad-soft: #2d1616;
+      --grid: #2e2e2b; --axis: #42423e;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.7 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, select, input { font: inherit; color: inherit; }
+  a { color: var(--accent-text); text-underline-offset: 2px; }
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+  :not(pre) > code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  .muted { color: var(--text-2); } .faint { color: var(--text-3); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Header */
+  header.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px);
+               border-bottom: 1px solid var(--border); }
+  .top-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; height: 58px; display: flex; align-items: center; gap: 24px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 15px; text-decoration: none; color: var(--text); }
+  .logo span { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 13px; }
+  .tabs { display: flex; gap: 4px; }
+  .tabs a { padding: 7px 12px; border-radius: 8px; text-decoration: none; color: var(--text-2); font-weight: 500; font-size: 14.5px;
+            transition: background-color 150ms ease, color 150ms ease; }
+  .tabs a[aria-current="page"] { background: var(--surface-2); color: var(--text); }
+  @media (hover: hover) and (pointer: fine) { .tabs a:hover { color: var(--text); } }
+  .top .spacer { flex: 1; }
+  .top .gh { font-size: 13.5px; color: var(--text-3); }
+
+  /* Article */
+  .article-wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 56px; }
+  nav.toc { position: sticky; top: 82px; align-self: start; padding-top: 56px; font-size: 13.5px; max-height: calc(100vh - 90px); overflow: auto; }
+  nav.toc b { display: block; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+  nav.toc a { display: block; color: var(--text-2); text-decoration: none; padding: 4px 0 4px 12px; border-left: 2px solid var(--border); line-height: 1.4; }
+  nav.toc a.on { color: var(--text); border-left-color: var(--accent); font-weight: 500; }
+  article { max-width: 760px; width: 100%; min-width: 0; padding: 56px 0 120px; }
+  .kicker { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
+  article h1 { font-size: 42px; line-height: 1.12; letter-spacing: -.025em; margin: 10px 0 16px; font-weight: 700; }
+  .standfirst { font-size: 20px; line-height: 1.55; color: var(--text-2); margin: 0 0 22px; }
+  .byline { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--text-3); padding-bottom: 28px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+  article h2 { font-size: 28px; line-height: 1.25; letter-spacing: -.02em; margin: 64px 0 14px; scroll-margin-top: 80px; }
+  article h3 { font-size: 20px; letter-spacing: -.01em; margin: 40px 0 10px; scroll-margin-top: 80px; }
+  article p { margin: 0 0 18px; }
+  article ul, article ol { margin: 0 0 18px; padding-left: 24px; }
+  article li { margin: 6px 0; }
+  .takeaways { background: var(--surface-2); border-radius: var(--radius); padding: 24px 28px; margin: 0 0 12px; scroll-margin-top: 80px; }
+  .takeaways h2 { margin: 0 0 10px; font-size: 20px; }
+  .takeaways ul { margin: 0; }
+  .note { border-left: 3px solid var(--accent); padding: 4px 0 4px 18px; margin: 22px 0; color: var(--text-2); }
+
+  /* Figures and tables */
+  figure { margin: 28px 0 34px; }
+  .wide { width: min(1000px, calc(100vw - 48px)); }
+  figcaption { font-size: 14px; color: var(--text-2); margin-top: 12px; line-height: 1.55; }
+  figcaption b { color: var(--text); }
+  .fig-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 22px 16px; background: var(--surface); }
+  table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.5; }
+  .t th { text-align: left; font-weight: 600; font-size: 13px; color: var(--text-2); padding: 10px 12px; border-bottom: 1.5px solid var(--border-strong); vertical-align: bottom; }
+  .t td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .t tr:last-child td { border-bottom: 0; }
+  .t .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .t .nowrap { white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; color: var(--text-2); margin-bottom: 10px; }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+  svg.chart { display: block; width: 100%; overflow: visible; }
+  svg.chart text { font-family: var(--sans); font-size: 13px; fill: var(--text-2); }
+  svg.chart .lbl { fill: var(--text); font-weight: 500; }
+  svg.chart .val { fill: var(--text); font-weight: 600; font-size: 12.5px; }
+  svg.chart .grid { stroke: var(--grid); stroke-width: 1; }
+  .tip { position: fixed; z-index: 50; max-width: 340px; background: var(--text); color: var(--bg); padding: 9px 12px; border-radius: 9px; font-size: 13px; line-height: 1.45;
+         pointer-events: none; opacity: 0; transition: opacity 120ms ease-out; }
+  .tip.on { opacity: 1; }
+
+  /* Pipeline diagram */
+  .pipe { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: stretch; gap: 8px; }
+  .pipe .box { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface); font-size: 14px; line-height: 1.45; }
+  .pipe .box b { display: block; font-size: 13px; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
+  .pipe .box.hl { border-color: var(--accent); background: var(--accent-soft); }
+  .pipe .arr { align-self: center; color: var(--text-3); font-size: 18px; }
+
+  /* Example cards (article + explorer) */
+  .ex { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); margin: 24px 0 30px; }
+  .ex-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 18px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .ex-head b { font-size: 14.5px; }
+  .ex-sec { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 15px; line-height: 1.65; }
+  .ex-sec:last-child { border-bottom: 0; }
+  .ex-lab { font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); margin-bottom: 5px; }
+  .src p { margin: 0 0 8px; } .src p:last-child { margin: 0; }
+  .src .pl { font: 600 11px var(--mono); color: var(--text-3); margin-right: 6px; }
+  .src.clamp { max-height: 190px; overflow: hidden; position: relative; }
+  .src.clamp::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(transparent, var(--surface)); }
+  .more { border: 0; background: none; color: var(--accent-text); font-weight: 500; font-size: 13.5px; padding: 6px 0 0; cursor: pointer; }
+  .ans { white-space: pre-wrap; }
+  mark.err { background: color-mix(in srgb, var(--bad) 18%, transparent); color: inherit; border-bottom: 2px solid var(--bad); padding: 0 1px; border-radius: 2px; }
+  mark.src-hl { background: color-mix(in srgb, var(--s1) 18%, transparent); color: inherit; border-bottom: 2px solid var(--s1); padding: 0 1px; border-radius: 2px; }
+  .verdict { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; letter-spacing: .03em; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+  .badge svg { width: 13px; height: 13px; }
+  .badge.pass { background: var(--good-soft); color: var(--good-text); }
+  .badge.fail { background: var(--bad-soft); color: var(--bad); }
+  .why { font-size: 15px; display: grid; gap: 6px; }
+  .why .correct { padding: 10px 12px; border-radius: 8px; background: var(--good-soft); }
+  .why .correct span { font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--good-text); display: block; }
+  .judges { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .judges td { padding: 9px 10px 9px 0; border-top: 1px solid var(--border); vertical-align: top; }
+  .judges tr:first-child td { border-top: 0; }
+  .judges .jn { white-space: nowrap; font-weight: 600; width: 1%; padding-right: 14px; }
+  .judges .jn small { display: block; font: 11.5px var(--mono); color: var(--text-3); font-weight: 400; }
+  .judges .ok { white-space: nowrap; width: 1%; padding-right: 14px; font-size: 13px; }
+  .judges .ok.right { color: var(--good-text); } .judges .ok.wrong { color: var(--bad); font-weight: 600; }
+  .judges .rs { color: var(--text-2); }
+  .prob { display: inline-flex; align-items: center; gap: 8px; }
+  .prob i { display: inline-block; width: 90px; height: 7px; border-radius: 4px; background: var(--surface-3); overflow: hidden; position: relative; }
+  .prob i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--text-2); }
+  .interp { background: var(--surface-2); }
+  .review { font-size: 14px; color: var(--text-2); }
+
+  /* Explorer */
+  .ex-wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  .ex-intro h1 { font-size: 30px; letter-spacing: -.02em; margin: 0 0 6px; }
+  .ex-intro p { margin: 0 0 20px; color: var(--text-2); max-width: 80ch; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .seg { display: inline-flex; padding: 3px; background: var(--surface-2); border-radius: 9px; gap: 2px; }
+  .seg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .1); }
+  select, input[type=search] { height: 36px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); padding: 0 10px; font-size: 14px; }
+  input[type=search] { min-width: 220px; }
+  .ex-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; position: sticky; top: 76px; max-height: calc(100vh - 96px); display: flex; flex-direction: column; }
+  .list-h { padding: 10px 14px; font-size: 13px; color: var(--text-3); border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .rows { overflow: auto; }
+  .row { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--border); background: var(--surface);
+         padding: 10px 14px; cursor: pointer; font-size: 13.5px; line-height: 1.4; }
+  .row[aria-current="true"] { background: var(--accent-soft); }
+  @media (hover: hover) and (pointer: fine) { .row:hover:not([aria-current="true"]) { background: var(--surface-2); } }
+  .row .q { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .meta { grid-column: 2; color: var(--text-3); font-size: 12.5px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .row .dotv { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+  .dotv.pass { background: var(--good); } .dotv.fail { background: var(--bad); }
+  .detail .ex { margin: 0; }
+
+  @media (max-width: 1100px) { .article-wrap { grid-template-columns: minmax(0, 1fr); } nav.toc { display: none; } article { margin: 0 auto; } .wide { width: 100%; } }
+  @media (max-width: 860px) { .ex-grid { grid-template-columns: minmax(0, 1fr); } .list { position: static; max-height: 360px; } }
+  @media (max-width: 640px) {
+    article h1 { font-size: 30px; } .standfirst { font-size: 17px; } article h2 { font-size: 23px; }
+    .pipe { grid-template-columns: 1fr; } .pipe .arr { transform: rotate(90deg); justify-self: center; }
+    .top-inner { gap: 12px; padding: 0 16px; } .top .gh { display: none; } .article-wrap, .ex-wrap { padding-left: 16px; padding-right: 16px; }
+    .verdict { grid-template-columns: 1fr; }
+    .judges .jn { white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <a class="logo" href="#report"><span>✓</span>LLM-as-a-Judge</a>
+  <nav class="tabs"><a href="#report" data-page="report">Report</a><a href="#explorer" data-page="explorer">Dataset explorer</a></nav>
+  <span class="spacer"></span>
+  <span class="gh">AI Engineer Help · applied-ai-engineering</span>
+</div></header>
+<main id="view"></main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+/* ---------- Shared vocabulary ---------- */
+const JUDGES = {
+  "gemini-basic": { model: "Gemini", name: "Basic", adds: "A one-line instruction: “Is this a good answer? Reply pass or fail.” No definition of good.", out: "Verdict" },
+  "gemini-rubric": { model: "Gemini", name: "Rubric", adds: "A written rubric: pass only if the answer is correct, complete and every fact is supported by the text.", out: "Verdict" },
+  "gemini-reasoning": { model: "Gemini", name: "Rubric + reasoning", adds: "The rubric, plus: check each fact against the text and explain before giving the verdict.", out: "Reasoning, then verdict" },
+  "gemini-examples": { model: "Gemini", name: "Rubric + reasoning + examples", adds: "All of the above, plus three worked examples (written by Claude for this project, not taken from the dataset).", out: "Reasoning, then verdict" },
+  "gemini-faithfulness": { model: "Gemini", name: "Faithfulness only", adds: "One rule: fail if anything is unsupported by or contradicts the text; incomplete answers pass. This matches how RAGTruth was labelled.", out: "Verdict", ragOnly: true },
+  "jev-basic": { model: "Jev", name: "Basic", adds: "A choice between “good” and “not good”, with no definition.", out: "Verdict + probability" },
+  "jev-rubric": { model: "Jev", name: "Rubric", adds: "A choice between pass and fail, each described with the same rubric.", out: "Verdict + probability" },
+  "jev-faithfulness": { model: "Jev", name: "Faithfulness only", adds: "Pass and fail described with the faithfulness-only rule.", out: "Verdict + probability", ragOnly: true },
+};
+const MISTAKES = {
+  wrong_calculation: ["Wrong calculation", "Uses numbers from the text but gets the arithmetic wrong."],
+  wrong_entity: ["Wrong entity", "Gives the fact for a look-alike item in the text (the other ferry, branch or bridge)."],
+  made_up_answer: ["Made-up answer", "The text does not contain the answer, but the answer invents one."],
+  incomplete: ["Incomplete", "Answers only one part of a two-part question."],
+  wrong_fact: ["Wrong fact", "States a fact that contradicts the text."],
+  unsupported_claim: ["Unsupported extra claim", "Correct, plus one extra claim the text never makes."],
+  contradiction: ["Self-contradiction", "Says one thing, then the opposite, in the same answer."],
+  evident_conflict: ["Evident contradiction", "Clearly contradicts the text."],
+  subtle_conflict: ["Subtle contradiction", "Changes a detail so the meaning no longer matches the text."],
+  evident_baseless: ["Evident unsupported info", "Adds information that is clearly not in the text."],
+  subtle_baseless: ["Subtle unsupported info", "Adds a small, plausible detail that is not in the text, often true in the real world."],
+};
+const DS = {
+  synthetic: { name: "Synthetic", long: "Synthetic (80 answers)" },
+  ragtruth: { name: "RAGTruth", long: "RAGTruth (120 answers)" },
+};
+const ORDER = Object.keys(JUDGES);
+// The chatbots whose answers are being graded (not the judges).
+const WRITERS = {
+  "gpt-3.5-turbo-0613": "GPT-3.5 Turbo (OpenAI)", "gpt-4-0613": "GPT-4 (OpenAI)",
+  "llama-2-7b-chat": "Llama 2 7B Chat (Meta)", "llama-2-13b-chat": "Llama 2 13B Chat (Meta)", "llama-2-70b-chat": "Llama 2 70B Chat (Meta)",
+  "mistral-7B-instruct": "Mistral 7B Instruct (Mistral AI)", "gemini-3.5-flash-lite": "Gemini 3.5 Flash-Lite (Google)",
+};
+function writtenBy(it) {
+  if (it.source === "written") return it.expected === "fail" ? "Written by Claude (Anthropic) for this test, with one deliberate mistake" : "Written by Claude (Anthropic) as the correct answer";
+  const name = WRITERS[it.source] || it.source;
+  if (it.ds === "ragtruth") return `Written by ${name}, one of the six chatbots in RAGTruth`;
+  return it.expected === "fail" ? `Written by ${name}. This is its own mistake, kept as a real error` : `Written by ${name} and checked by Claude`;
+}
+
+/* ---------- Helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (v) => (v == null ? "–" : `${Math.round(v * 100)}%`);
+const jLabel = (v) => `${JUDGES[v].model} · ${JUDGES[v].name}`;
+const ICON = {
+  check: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8.5l3 3 7-7"/></svg>',
+  x: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+};
+const badge = (v) => `<span class="badge ${v}">${v === "pass" ? ICON.check : ICON.x}${v.toUpperCase()}</span>`;
+const state = { ready: {}, reports: {}, items: {}, judges: null, ex: { ds: "ragtruth", truth: "all", error: "all", judge: "all", q: "", id: null } };
+async function get(path) { const r = await fetch(path); if (!r.ok) { const e = new Error(`HTTP ${r.status}`); e.status = r.status; throw e; } return r.json(); }
+const report = async (ds) => state.ready[ds] ? (state.reports[ds] ??= (await get(`/api/report?dataset=${ds}`)).report) : null;
+async function items(ds) {
+  if (!state.ready[ds]) return [];
+  return (state.items[ds] ??= (await get(`/api/items?dataset=${ds}`)).items.map((i) => ({ ...i, ds })));
+}
+
+const tip = $("#tip");
+function bindTips(root) {
+  $$("[data-t]", root).forEach((g) => {
+    const show = (x, y) => { tip.innerHTML = g.dataset.t; tip.classList.add("on");
+      const r = tip.getBoundingClientRect(); tip.style.left = `${Math.min(innerWidth - r.width - 12, x + 14)}px`; tip.style.top = `${y + r.height + 24 > innerHeight ? y - r.height - 10 : y + 16}px`; };
+    g.addEventListener("pointermove", (e) => show(e.clientX, e.clientY));
+    g.addEventListener("pointerleave", () => tip.classList.remove("on"));
+  });
+}
+
+/* ---------- Text rendering ---------- */
+function sourceHtml(text, highlight) {
+  return text.split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean).map((p) => {
+    const m = p.match(/^passage (\d+):\s*/i);
+    let body = esc(m ? p.slice(m[0].length) : p);
+    if (highlight) { const h = esc(highlight); if (body.includes(h)) body = body.replace(h, `<mark class="src-hl">${h}</mark>`); }
+    return `<p>${m ? `<span class="pl">Passage ${m[1]}</span>` : ""}${body}</p>`;
+  }).join("");
+}
+function answerHtml(text, spans) {
+  let html = esc(text);
+  for (const sp of [...(spans || [])].sort((a, b) => b.text.length - a.text.length)) {
+    const t = esc(sp.text); if (t && html.includes(t)) html = html.replace(t, `<mark class="err">${t}</mark>`);
+  }
+  return html;
+}
+function annotatorNote(sp) {
+  // RAGTruth notes look like "SUBTLE CONFLICT\nOriginal: … \nGenerated: …"; turn them into a sentence.
+  const note = (sp.note || "").replace(/\r/g, "");
+  const orig = note.match(/Original(?: Passage \d+)?:\s*([\s\S]*?)(?:\n\s*Generat\w*:|\n\s*AIGC:|$)/i);
+  const gen = note.match(/(?:Generat\w*|AIGC):\s*([\s\S]*)$/i);
+  const clean = (s) => s.replace(/\s+/g, " ").trim().replace(/^["“]+|["”]+$/g, "");
+  if (orig && gen) return `The text says “${esc(clean(orig[1]))}”, but the answer says “${esc(clean(gen[1]))}”.`;
+  const rest = clean(note.replace(/^[A-Z][A-Z ]+\n/, ""));
+  return rest ? esc(rest) : "";
+}
+
+/* One answer, fully explained. Used by the report's worked examples and by the explorer. */
+function exampleCard(it, opts = {}) {
+  const pair = it.ds === "synthetic" ? (state.items.synthetic || []).find((x) => x.case_id === it.case_id && x.id !== it.id) : null;
+  const reasons = [];
+  if (it.expected === "pass") {
+    reasons.push(it.ds === "synthetic" ? "The answer is correct and every fact in it is in the text." : "The annotators found nothing in this answer that the text fails to support.");
+  } else if (it.ds === "synthetic") {
+    reasons.push(`<b>${esc(MISTAKES[it.error]?.[0] || it.error)}.</b> ${esc(MISTAKES[it.error]?.[1] || "")}`);
+  } else {
+    reasons.push(`<b>${esc(MISTAKES[it.error]?.[0] || "Hallucination")}.</b> ${esc(MISTAKES[it.error]?.[1] || "")} The annotators marked the highlighted part of the answer.`);
+    it.spans.forEach((sp) => { const n = annotatorNote(sp); if (n) reasons.push(`Annotator's note: ${n}`); });
+    if (it.world_true) reasons.push("The added detail is true in the real world, but the text does not say it, so the answer is not grounded in the source.");
+  }
+  if (opts.why) reasons.push(opts.why);
+  const vs = ORDER.filter((n) => it.verdicts[n]);
+  const clampSrc = !opts.fullSource && it.passage.length > 700;
+  return `<div class="ex">
+    <div class="ex-head"><div>${opts.title ? `<b>${opts.title}</b> · ` : ""}<span class="mono">${esc(it.id)}</span> · ${esc(DS[it.ds].name)}</div>
+      <div class="faint">The judges below grade this answer</div></div>
+    <div class="ex-sec"><div class="ex-lab">Source text given to the model</div><div class="src ${clampSrc ? "clamp" : ""}">${sourceHtml(it.passage, opts.srcHighlight)}</div>
+      ${clampSrc ? `<button class="more" data-more>Show the full text</button>` : ""}</div>
+    <div class="ex-sec"><div class="ex-lab">Question</div>${esc(it.question)}</div>
+    <div class="ex-sec"><div class="ex-lab">Answer being judged</div><div class="faint" style="font-size:13.5px;margin:-2px 0 6px">${esc(writtenBy(it))}. This is the answer being graded, not a judge.</div><div class="ans">${answerHtml(it.answer, it.spans)}</div></div>
+    <div class="ex-sec"><div class="ex-lab">Correct verdict, and why</div>
+      <div class="verdict">${badge(it.expected)}<div class="why">${reasons.map((r) => `<div>${r}</div>`).join("")}
+        ${pair && it.expected === "fail" ? `<div class="correct"><span>The correct answer</span>${esc(pair.answer)}</div>` : ""}
+        ${it.review ? `<div class="review"><b>Second review:</b> ${it.review.read === "problem" ? "the answer does have a problem." : it.review.read === "no_problem" ? "the answer is actually fine, so this label looks wrong." : "debatable."} ${esc(it.review.note)} <span class="faint">(Claude's reading of the text; see section 5.4 of the report.)</span></div>` : ""}</div></div></div>
+    ${vs.length ? `<div class="ex-sec"><div class="ex-lab">What each judge said</div><table class="judges">${vs.map((n) => { const x = it.verdicts[n], right = x.verdict === it.expected; return `
+      <tr><td class="jn">${esc(jLabel(n))}<small>${esc(n)}</small></td><td>${badge(x.verdict)}</td>
+        <td class="ok ${right ? "right" : "wrong"}">${right ? "Agrees with label" : "Disagrees with label"}</td>
+        <td class="rs">${x.reasoning ? esc(x.reasoning) : x.p_pass != null ? `<span class="prob" style="--w:${Math.round(x.p_pass * 100)}%"><i></i>${Math.round(x.p_pass * 100)}% probability of pass</span>` : '<span class="faint">This prompt returns a verdict only, no explanation.</span>'}</td></tr>`; }).join("")}</table></div>` : ""}
+    ${opts.interp ? `<div class="ex-sec interp"><div class="ex-lab">Why the judge likely got this wrong</div>${opts.interp}</div>` : ""}
+  </div>`;
+}
+function bindExamples(root) {
+  $$("[data-more]", root).forEach((b) => b.onclick = () => { b.previousElementSibling?.classList.remove("clamp"); b.remove(); });
+}
+
+/* ---------- Charts ---------- */
+const W = 1000;
+function barsChart({ rows, series, labelW = 250 }) {
+  const bh = 14, gap = 4, group = series.length * (bh + gap) + 16, top = 4, H = top + rows.length * group + 26, L = labelW, R = W - 60;
+  const x = (v) => L + v * (R - L);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  [0, .25, .5, .75, 1].forEach((t) => { s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 22}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${pct(t)}</text>`; });
+  rows.forEach((r, i) => {
+    const y0 = top + i * group + 8, mid = y0 + (series.length * (bh + gap)) / 2 - 2;
+    s += `<text class="lbl" x="${L - 14}" y="${mid + (r.sub ? -4 : 4)}" text-anchor="end">${esc(r.label)}</text>`;
+    if (r.sub) s += `<text x="${L - 14}" y="${mid + 13}" text-anchor="end" style="font-size:12px">${esc(r.sub)}</text>`;
+    series.forEach((se, k) => {
+      const v = r.values[k]; if (v == null) return;
+      const y = y0 + k * (bh + gap), w = Math.max(0, x(v) - L);
+      s += `<g data-t="${esc(r.tips?.[k] || `${se.name}: ${pct(v)}`)}"><rect x="${L}" y="${y - 2}" width="${R - L}" height="${bh + 4}" fill="transparent"/>
+        ${w > 4 ? `<path d="M${L},${y} h${w - 4} a4,4 0 0 1 4,4 v${bh - 8} a4,4 0 0 1 -4,4 h-${w - 4} z" fill="${se.color}"/>` : `<rect x="${L}" y="${y}" width="${Math.max(w, 1)}" height="${bh}" fill="${se.color}"/>`}
+        <text class="val" x="${x(v) + 6}" y="${y + bh - 2}">${pct(v)}</text></g>`;
+    });
+  });
+  return s + "</svg>";
+}
+function stripChart(rows) {
+  const L = 250, R = W - 30, rh = 70, top = 8, H = top + rows.length * rh + 34, x = (p) => L + p * (R - L);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  [0, .25, .5, .75, 1].forEach((t) => { s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 26}"/><text x="${x(t)}" y="${H - 8}" text-anchor="middle">${t.toFixed(2)}</text>`; });
+  s += `<line x1="${x(.5)}" x2="${x(.5)}" y1="${top}" y2="${H - 26}" stroke="var(--text-3)" stroke-dasharray="3 3"/>`;
+  rows.forEach((r, i) => {
+    const cy = top + i * rh + rh / 2;
+    s += `<text class="lbl" x="${L - 14}" y="${cy - 3}" text-anchor="end">${esc(r.label)}</text><text x="${L - 14}" y="${cy + 14}" text-anchor="end" style="font-size:12px">${esc(r.sub)}</text>`;
+    const placed = [];
+    r.points.sort((a, b) => a.p - b.p).forEach((pt) => {
+      const px = x(pt.p); let lane = 0; while (placed.some(([q, l]) => l === lane && Math.abs(q - px) < 9)) lane++;
+      placed.push([px, lane]); const yy = cy + (lane % 2 ? 1 : -1) * Math.ceil(lane / 2) * 8;
+      s += `<g data-t="${esc(pt.tip)}"><circle cx="${px}" cy="${yy}" r="9" fill="transparent"/><circle cx="${px}" cy="${yy}" r="4.5" fill="${r.color}" stroke="var(--surface)" stroke-width="1.5"/></g>`;
+    });
+  });
+  return s + "</svg>";
+}
+function disputesChart(rag) {
+  const rows = ORDER.filter((n) => rag?.variants?.[n]?.disputes);
+  if (!rows.length) return "";
+  const max = Math.max(...rows.map((n) => rag.variants[n].disputes.n)), L = 250, R = W - 20, rh = 34, H = rows.length * rh + 30, x = (c) => L + (c / max) * (R - L);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  [0, Math.round(max / 2), max].forEach((t) => { s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - 22}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${t}</text>`; });
+  rows.forEach((n, i) => {
+    const d = rag.variants[n].disputes, y = i * rh + 6; let cx = L;
+    s += `<text class="lbl" x="${L - 14}" y="${y + 16}" text-anchor="end">${esc(jLabel(n))}</text>`;
+    [["Judge was right", d.judge_right.length, "var(--s1)"], ["Label was right", d.label_right.length, "var(--s2)"], ["Debatable", d.debatable.length, "var(--s3)"], ["Not reviewed", d.n - d.reviewed, "var(--surface-3)"]]
+      .filter(([, c]) => c).forEach(([lab, c, col]) => { const w = x(c) - L;
+        s += `<g data-t="<b>${esc(jLabel(n))}</b><br>${c} of ${d.n} disagreements: ${esc(lab.toLowerCase())}"><rect x="${cx}" y="${y}" width="${Math.max(1, w - 2)}" height="22" fill="${col}"/>
+          ${w > 26 && lab !== "Not reviewed" ? `<text x="${cx + (w - 2) / 2}" y="${y + 15}" text-anchor="middle" style="fill:#fff;font-weight:600;font-size:12px">${c}</text>` : ""}</g>`; cx += w; });
+  });
+  return s + "</svg>";
+}
+
+/* ---------- Report ---------- */
+const SECTIONS = [["takeaways", "Key takeaways"], ["what", "What is LLM-as-a-judge?"], ["why", "Why test the judge?"], ["method", "How we tested it"],
+  ["results", "Results"], ["discussion", "Why this happens"], ["limits", "Limitations"], ["advice", "Practical advice"], ["reproduce", "Reproduce it"]];
+async function renderReport(view) {
+  const [syn, rag] = await Promise.all([report("synthetic"), report("ragtruth")]);
+  await Promise.all([items("synthetic"), items("ragtruth")]);
+  const V = (r, n) => r?.variants?.[n];
+  const byId = (ds, id) => (state.items[ds] || []).find((x) => x.id === id) || null;
+  const gemSyn = ["gemini-basic", "gemini-rubric", "gemini-reasoning", "gemini-examples"].map((n) => V(syn, n)?.all.accuracy).filter((x) => x != null);
+  const jevSyn = ["jev-basic", "jev-rubric"].map((n) => V(syn, n)?.all.accuracy).filter((x) => x != null);
+  const ragAcc = ORDER.map((n) => V(rag, n)?.all.accuracy).filter((x) => x != null);
+  const rng = (a) => a.length ? `${Math.round(Math.min(...a) * 100)}–${Math.round(Math.max(...a) * 100)}%` : "–";
+  const d = V(rag, "gemini-rubric")?.disputes, settled = d ? d.judge_right.length + d.label_right.length : 0;
+  const speed = V(syn, "gemini-rubric") && V(syn, "jev-rubric") ? V(syn, "gemini-rubric").usage.median_ms / V(syn, "jev-rubric").usage.median_ms : null;
+  const tokPer = V(syn, "gemini-basic") ? Math.round(V(syn, "gemini-basic").usage.output_tokens / V(syn, "gemini-basic").usage.calls) : null;
+  const jevCalc = V(syn, "jev-rubric")?.by_error?.wrong_calculation;
+  const gemModel = state.judges.judges["gemini-rubric"].model;
+  const ex1 = byId("ragtruth", "rt17264"), ex2 = byId("synthetic", "c17-b"), ex3 = byId("ragtruth", "rt15394"), ex4 = byId("ragtruth", "rt17191"), ex5 = byId("synthetic", "c03-b");
+  const worldTrue = (state.items.ragtruth || []).filter((i) => i.world_true).length;
+
+  view.innerHTML = `<div class="article-wrap">
+  <nav class="toc" aria-label="Contents"><b>Contents</b>${SECTIONS.map(([id, t]) => `<a href="#report/${id}" data-sec="${id}">${t}</a>`).join("")}</nav>
+  <article>
+    <div class="kicker">Evaluations &amp; Reliability</div>
+    <h1>LLM-as-a-Judge: Measuring agreement, bias, and reliability</h1>
+    <p class="standfirst">Teams increasingly use one language model to grade another. We tested how far you can trust that grader, on clearly written mistakes and on real ones marked by people, and found that the answer depends more on the data than on the judge.</p>
+    <div class="byline"><span>AI Engineer Help community</span><span>Experiment run 29–30 September 2026</span><span>Judges: Gemini (${esc(gemModel)}) and TypeSafe Jev</span><span>About 12 minutes to read</span></div>
+
+    <section class="takeaways" id="takeaways"><h2>Key takeaways</h2><ul>
+      <li><b>Obvious mistakes are easy for a judge.</b> On 80 AI-written test answers with one deliberate mistake each, every Gemini judge gave the correct verdict ${rng(gemSyn)} of the time, even with a one-line prompt.</li>
+      <li><b>Real mistakes are much harder.</b> On 120 real chatbot answers from RAGTruth, labelled by people, the same judges agreed with the labels only ${rng(ragAcc)} of the time.</li>
+      <li><b>A written rubric was the biggest lever.</b> On the real answers, adding a rubric cut the share of wrong answers the Gemini judge passed from ${pct(V(rag, "gemini-basic")?.all.false_pass_rate)} to ${pct(V(rag, "gemini-rubric")?.all.false_pass_rate)}. Asking for reasoning or adding examples changed little on top.</li>
+      <li><b>Disagreement is not always the judge's fault.</b> When we re-read the cases where the Gemini rubric judge disagreed with the human label, the judge was right in ${d ? `${d.judge_right.length} of ${settled}` : "most"} clear-cut cases: the labels had missed errors or flagged harmless rewording.</li>
+      <li><b>Fast and confident is not the same as correct.</b> Jev was about ${speed ? Math.round(speed) : 6}× faster than Gemini but missed most arithmetic errors, passing some with a probability of 1.0.</li>
+    </ul></section>
+
+    <h2 id="what">What is LLM-as-a-judge?</h2>
+    <p>When an AI system answers a question, someone has to decide whether the answer is good. For answers with one exact correct value, code can check it. But most real answers are free text: a summary, an explanation, a list of steps. Reading thousands of them by hand is slow and expensive.</p>
+    <p>An <b>LLM judge</b> is a language model that does this grading. You give it the question, the answer and a description of what counts as good, and it returns a verdict such as <i>pass</i> or <i>fail</i>. Teams use judges to test chatbots before release, to monitor answers in production, and to compare prompts or models.</p>
+    <figure class="wide"><div class="fig-box"><div class="pipe">
+      <div class="box"><b>1 · Source text</b>A passage with the facts, for example a product page or a set of instructions.</div><div class="arr">→</div>
+      <div class="box"><b>2 · Answering model</b>A chatbot answers a question using only that text.</div><div class="arr">→</div>
+      <div class="box hl"><b>3 · LLM judge</b>Reads the text, the question and the answer, and returns <i>pass</i> or <i>fail</i>.</div><div class="arr">→</div>
+      <div class="box"><b>4 · Our check</b>We compare the judge's verdict with the correct verdict, which we already know.</div>
+    </div></div><figcaption><b>Figure 1.</b> The setup used throughout this report. Steps 1 and 2 produced the answers; step 3 is the judge being tested; step 4 is how we score the judge.</figcaption></figure>
+
+    <h2 id="why">Why test the judge?</h2>
+    <p>A judge's verdicts often go unchecked. If it passes a wrong answer, that answer can reach users and nobody notices. If it fails good answers, teams waste time chasing problems that do not exist. Before relying on a judge, you want to know three things:</p>
+    <ol><li><b>Agreement:</b> how often does it give the correct verdict?</li><li><b>Blind spots:</b> which kinds of mistakes does it miss?</li><li><b>Reliability:</b> is it stable, and can wording tricks fool it?</li></ol>
+    <p>To answer these, you need answers whose correct verdict is already known. That is what the two datasets below provide.</p>
+
+    <h2 id="method">How we tested it</h2>
+    <h3>The task</h3>
+    <p>Every item is a <b>grounded question-answering</b> task: a source text, a question, and an answer that should use only the text. The judge decides whether the answer passes this rubric:</p>
+    <div class="note">${esc(state.judges.judges["gemini-rubric"].prompt.split("\n\n").slice(1).join(" "))}</div>
+
+    <h3>The two datasets</h3>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Dataset</th><th>What it contains</th><th>How the correct verdict is known</th><th class="num">Answers</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><b>Synthetic</b></td><td>40 short passages about fictional places and products, each with one question, written by <b>Claude</b> (Anthropic). For each question: one correct answer written by <b>Gemini 3.5 Flash-Lite</b> and checked by Claude, and one wrong answer written by <b>Claude</b> with a single deliberate mistake. No human reviewed this set.</td><td>By construction: each mistake was put in on purpose.</td><td class="num">${syn?.items ?? "–"}<br><span class="faint">${syn?.expected_pass ?? "–"} pass · ${syn?.expected_fail ?? "–"} fail</span></td></tr>
+        <tr><td class="nowrap"><b>RAGTruth</b></td><td>Real answers from six chatbots (GPT-3.5, GPT-4, three Llama-2 sizes, Mistral-7B) to real web-search questions, with MS MARCO passages as the source text. A balanced sample of the public <a href="https://github.com/particlemedia/RAGTruth" target="_blank" rel="noopener">RAGTruth</a> dataset.</td><td>Human annotators marked every part of each answer that the text does not support.</td><td class="num">${rag?.items ?? "–"}<br><span class="faint">${rag?.expected_pass ?? "–"} pass · ${rag?.expected_fail ?? "–"} fail</span></td></tr>
+      </tbody></table></div>
+      <figcaption><b>Table 1.</b> Datasets. Both are balanced between correct and wrong answers, so a judge that always says “pass” would score 50%. <a href="#explorer">Browse every answer in the dataset explorer.</a></figcaption></figure>
+
+    <p>Each wrong answer has one known type of mistake. The two datasets use different types:</p>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Mistake type</th><th>Meaning</th><th>Example from the data</th><th class="num">Count</th></tr></thead>
+      <tbody>${mistakeRows()}</tbody></table></div>
+      <figcaption><b>Table 2.</b> Mistake types. Synthetic mistakes were written by Claude; the RAGTruth types are the annotators' own categories. In RAGTruth, ${worldTrue} of the “subtle unsupported” answers add a detail that is true in the real world but absent from the text.</figcaption></figure>
+
+    <h3>The judges</h3>
+    <p>We used two models as judges. <b>Gemini</b> (${esc(gemModel)}) is a general-purpose model that can explain its verdict. <b>Jev</b> (${esc(state.judges.judges["jev-rubric"].model)}, from TypeSafe) is a fast classification model: it returns a choice with a probability, but no explanation. For each model we tried several prompts, each changing one thing:</p>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Judge</th><th>What the prompt adds</th><th>Returns</th></tr></thead>
+      <tbody>${ORDER.map((n) => `<tr><td class="nowrap"><b>${esc(jLabel(n))}</b><br><span class="faint mono">${n}</span></td><td>${esc(JUDGES[n].adds)}${JUDGES[n].ragOnly ? " <i>RAGTruth only.</i>" : ""}
+        <details style="margin-top:6px"><summary class="faint" style="cursor:pointer;font-size:13px">Show the exact prompt</summary><pre style="white-space:pre-wrap;font:12.5px/1.5 var(--mono);background:var(--surface-2);padding:10px;border-radius:8px;margin:6px 0 0">${esc(state.judges.judges[n].prompt)}</pre></details></td><td class="nowrap">${JUDGES[n].out}</td></tr>`).join("")}</tbody></table></div>
+      <figcaption><b>Table 3.</b> The eight judge variants. Every judge saw the same source text, question and answer, formatted as JSON with an instruction to treat it as data.</figcaption></figure>
+
+    <h3>What we measured</h3>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Measure</th><th>Definition</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><b>Agreement</b></td><td>Share of answers where the judge's verdict equals the correct verdict.</td><td>The headline number. On a balanced set, 50% is what guessing gets.</td></tr>
+        <tr><td class="nowrap"><b>Wrong answers passed</b></td><td>Share of wrong answers the judge marked <i>pass</i> (the false-pass rate).</td><td>The dangerous error: bad answers get through unnoticed.</td></tr>
+        <tr><td class="nowrap"><b>Correct answers failed</b></td><td>Share of correct answers the judge marked <i>fail</i> (the false-fail rate).</td><td>Wasted effort chasing problems that are not there.</td></tr>
+        <tr><td class="nowrap"><b>Consistency</b></td><td>Share of answers that got the same verdict in three identical runs.</td><td>An unstable judge gives a different score every time you run it.</td></tr>
+        <tr><td class="nowrap"><b>Length bias</b></td><td>Change in verdicts when every answer is wrapped in the same confident filler text, which adds no facts.</td><td>Checks whether sounding authoritative can fool the judge.</td></tr>
+      </tbody></table></div>
+      <figcaption><b>Table 4.</b> Measures. The full reports in the repository also include Cohen's kappa and 95% confidence intervals. With 80 and 120 answers, differences of a few points are within noise.</figcaption></figure>
+
+    <h2 id="results">Results</h2>
+    <h3 id="r-agreement">5.1 Clear mistakes versus real ones</h3>
+    <p>Same judges, same rubric, two datasets. On the synthetic set, every Gemini prompt gave the correct verdict ${rng(gemSyn)} of the time and Jev ${rng(jevSyn)}. On RAGTruth, agreement fell to ${rng(ragAcc)}.</p>
+    <figure class="wide"><div class="fig-box"><div class="legend"><span><i style="background:var(--s1)"></i>Synthetic (AI-written mistakes)</span><span><i style="background:var(--s2)"></i>RAGTruth (real answers, human labels)</span></div>
+      <div id="f2"></div></div>
+      <figcaption><b>Figure 2.</b> Agreement with the correct verdict, per judge. 50% is chance level on both datasets. Faithfulness-only judges were run on RAGTruth only.</figcaption></figure>
+    <p>The judges did not get worse; the task got harder. The synthetic mistakes are single, clear errors, such as “8 beds” where the text implies 6. Real chatbot errors are subtler, and some of the human labels are themselves debatable (section 5.4).</p>
+
+    <h3 id="r-types">5.2 Which mistakes get through</h3>
+    <p>Breaking the RAGTruth results down by mistake type shows where the rubric judges struggle. Evident errors are usually caught. <b>Subtle contradictions</b>, where one detail is changed, slip through most often.</p>
+    <figure class="wide"><div class="fig-box"><div class="legend"><span><i style="background:var(--s1)"></i>Gemini · Rubric</span><span><i style="background:var(--s2)"></i>Jev · Rubric</span></div><div id="f3"></div></div>
+      <figcaption><b>Figure 3.</b> Share of RAGTruth wrong answers caught (marked <i>fail</i>), by mistake type. 15 answers per type.</figcaption></figure>
+    <p>Here is one that every judge missed. The text says to <b>skip</b> heating when plastic is nearby; the answer turns that into “be careful”. Read the whole answer and you can see why it is easy to miss: everything else is accurate and closely follows the text.</p>
+    ${ex1 ? exampleCard(ex1, { title: "Example 1", srcHighlight: "If the nut is near plastic components or other things that heat damages, omit this step.",
+      interp: "The answer is long, well organised and almost entirely supported by the text, so it reads as faithful. The error is a change in the strength of an instruction (“omit this step” became “be careful”) rather than a new fact or number. Even the reasoning judges described the answer as accurately synthesising the passages: they checked that each step exists in the text, not what the text says to do when plastic is nearby." }) : ""}
+
+    <h3 id="r-prompts">5.3 What the prompt changes</h3>
+    <p>On the synthetic set, the prompt made almost no difference: even “Is this a good answer?” scored ${pct(V(syn, "gemini-basic")?.all.accuracy)}. On RAGTruth it mattered a lot. Without a rubric, “good” is undefined, and the judge passed most answers that read well.</p>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Gemini prompt</th><th class="num">Agreement<br>synthetic</th><th class="num">Agreement<br>RAGTruth</th><th class="num">Wrong answers passed<br>RAGTruth</th><th class="num">Correct answers failed<br>RAGTruth</th></tr></thead>
+      <tbody>${["gemini-basic", "gemini-rubric", "gemini-reasoning", "gemini-examples", "gemini-faithfulness"].map((n) => `<tr><td><b>${esc(JUDGES[n].name)}</b></td>
+        <td class="num">${pct(V(syn, n)?.all.accuracy)}</td><td class="num">${pct(V(rag, n)?.all.accuracy)}</td>
+        <td class="num">${V(rag, n) ? `${pct(V(rag, n).all.false_pass_rate)} <span class="faint">(${V(rag, n).all.false_pass} of ${V(rag, n).all.false_pass + V(rag, n).all.true_fail})</span>` : "–"}</td>
+        <td class="num">${V(rag, n) ? `${pct(V(rag, n).all.false_fail_rate)} <span class="faint">(${V(rag, n).all.false_fail} of ${V(rag, n).all.false_fail + V(rag, n).all.true_pass})</span>` : "–"}</td></tr>`).join("")}</tbody></table></div>
+      <figcaption><b>Table 5.</b> Gemini prompts compared. The rubric traded missed errors for stricter grading: fewer wrong answers passed, more correct answers failed. Reasoning and examples added little on top.</figcaption></figure>
+    <p>The rubric made the judge stricter, not only sharper: it also failed more answers that the labels call correct. Section 5.4 shows that many of those answers were not actually correct.</p>
+    <p>Asking for reasoning did help in one specific way: checking completeness. In this synthetic example, the answer covers only half of the question. The two Gemini prompts without reasoning passed it; the two Gemini prompts that had to check each part of the question caught it.</p>
+    ${ex2 ? exampleCard(ex2, { title: "Example 2" }) : ""}
+
+    <h3 id="r-labels">5.4 When the judge and the label disagree</h3>
+    <p>On RAGTruth, a disagreement is only a judge error if the human label is right. We re-read ${(state.items.ragtruth || []).filter((i) => i.review).length} answers against their full source text: every answer where Gemini's reasoning or faithfulness judge disagreed with the label. Because the Gemini judges mostly disagree on the same answers, this also covers most disagreements of the other Gemini judges${d ? ` (${d.reviewed} of the rubric judge's ${d.n})` : ""}. For the rubric judge, the judge was right and the label was not in ${d ? `<b>${d.judge_right.length} of ${settled}</b>` : "most"} clear-cut cases; ${d ? d.debatable.length : "–"} were genuinely debatable.</p>
+    <figure class="wide"><div class="fig-box"><div class="legend"><span><i style="background:var(--s1)"></i>Judge was right</span><span><i style="background:var(--s2)"></i>Label was right</span><span><i style="background:var(--s3)"></i>Debatable</span><span><i style="background:var(--surface-3)"></i>Not reviewed</span></div><div id="f4"></div></div>
+      <figcaption><b>Figure 4.</b> Every disagreement between a judge and the RAGTruth label, by who turned out to be right after re-reading. The review was done by Claude (an AI) and is published in <code>data/ragtruth-review.json</code>. It is not a second human annotation; every case can be checked in the <a href="#explorer/ragtruth">explorer</a> with the “Re-reviewed disagreements” filter.</figcaption></figure>
+    <p>Two kinds of label problems came up. Some answers marked as clean contain an error the annotators missed:</p>
+    ${ex3 ? exampleCard(ex3, { title: "Example 3", srcHighlight: "Celexa (citalopram) is an antidepressant in a group of drugs called selective serotonin reuptake inhibitors (SSRIs). Celexa is used to treat depression. Celexa may also be used for purposes not listed in this medication guide.",
+      why: "<b>This label looks wrong.</b> Passage 3 (highlighted) mentions no side effects, yet the answer says passage 3 lists nausea, dizziness and dry mouth. All eight judges caught it." }) : ""}
+    <p>Others were marked as wrong for rewording that does not change the meaning:</p>
+    ${ex4 ? exampleCard(ex4, { title: "Example 4", why: "<b>This label looks too strict.</b> “Late 18th and early 20th centuries” means the same as “late 1700s and early 1900s”. All eight judges passed it." }) : ""}
+    <p>The practical lesson: <b>a judge's score against a benchmark is only as good as the benchmark's labels.</b> Read the disagreements before concluding that the judge is wrong.</p>
+
+    <h3 id="r-confidence">5.5 Confidence is not correctness</h3>
+    <p>Jev returns a probability with every verdict. It is tempting to use it as a trust signal: accept confident verdicts and re-check uncertain ones. Figure 5 shows why that does not work well here: the probabilities Jev gave to correct and to wrong answers overlap heavily.</p>
+    <figure class="wide"><div class="fig-box"><div class="legend"><span><i style="background:var(--s3)"></i>Correct answers</span><span><i style="background:var(--s2)"></i>Wrong answers</span><span class="faint">Dashed line: 0.5, the pass/fail cut-off</span></div><div id="f5"></div></div>
+      <figcaption><b>Figure 5.</b> Jev · Rubric's probability that each RAGTruth answer should pass. Hover a dot to see the question. Wrong answers to the right of the dashed line were passed.</figcaption></figure>
+    <p>The same happened on the synthetic set with arithmetic. Jev · Rubric caught ${jevCalc ? `only ${jevCalc.caught} of ${jevCalc.n}` : "few"} wrong calculations, and passed this one with a probability of 1.0:</p>
+    ${ex5 ? exampleCard(ex5, { title: "Example 5", interp: "Jev is a classification model: it judges whether the answer matches the text, and does not work through calculations. The wrong number sits in a sentence that otherwise matches the text closely. The Gemini judges worked out 24 − 18 = 6 and caught it." }) : ""}
+
+    <h3 id="r-robust">5.6 Consistency, length bias and cost</h3>
+    <figure><div class="scroll"><table class="t">
+      <thead><tr><th>Judge</th><th>Dataset</th><th class="num">Same verdict<br>in 3 runs</th><th class="num">Wrong answers passed:<br>plain → with filler</th><th class="num">Median<br>time</th><th class="num">Tokens per verdict<br>(in / out)</th></tr></thead>
+      <tbody>${[["gemini-rubric", "synthetic", syn], ["gemini-rubric", "ragtruth", rag], ["jev-rubric", "synthetic", syn], ["jev-rubric", "ragtruth", rag]].filter(([n, , r]) => V(r, n)).map(([n, ds, r]) => {
+        const v = V(r, n), lb = v.length_bias, u = v.usage;
+        return `<tr><td class="nowrap"><b>${esc(jLabel(n))}</b></td><td>${DS[ds].name}</td><td class="num">${v.reliability ? pct(1 - v.reliability.unstable_rate) : "–"}</td>
+          <td class="num">${lb ? `${pct(lb.expected_fail.pass_rate_original)} → ${pct(lb.expected_fail.pass_rate_padded)}` : "–"}</td>
+          <td class="num">${(u.median_ms / 1000).toFixed(1)} s</td><td class="num">${Math.round(u.input_tokens / u.calls)} / ${Math.round(u.output_tokens / u.calls)}</td></tr>`; }).join("")}</tbody></table></div>
+      <figcaption><b>Table 6.</b> Robustness and cost. The filler (“Based on a careful reading of the passage, here is the answer. … I have checked it against the passage to make sure it is accurate and complete.”) did not make wrong answers more likely to pass. Gemini's output tokens include its internal reasoning.</figcaption></figure>
+
+    <h2 id="discussion">Why this happens</h2>
+    <p>These are our interpretations of the results, not measured causes.</p>
+    <ul>
+      <li><b>Gemini reasons even when not asked.</b> It is a thinking model: even the one-line prompt used about ${tokPer ?? "–"} output tokens per verdict on the synthetic set. That is a likely reason why asking for reasoning added little.</li>
+      <li><b>“Good” is undefined without a rubric.</b> A fluent, well-structured answer looks good. Only when the prompt says every fact must be supported by the text does the judge look for unsupported details.</li>
+      <li><b>Subtle contradictions resemble the source.</b> Most of the words match the text; the error is in one qualifier or number. A judge checking whether something appears in the text finds the surrounding words and moves on.</li>
+      <li><b>Label definitions differ.</b> RAGTruth marks unsupported content, not incompleteness. A rubric that also requires completeness fails some answers the labels call clean. The faithfulness-only variants test that effect.</li>
+      <li><b>Jev classifies rather than calculates.</b> It is fast and stable, but it does not work through arithmetic, and its probability reflects how well the answer matches the text.</li>
+    </ul>
+
+    <h2 id="limits">Limitations</h2>
+    <ul>
+      <li><b>Small samples:</b> 80 and 120 answers. Differences of a few percentage points are within noise; the full reports include 95% confidence intervals.</li>
+      <li><b>One task:</b> short answers grounded in a source text. Judges of tone, safety or open-ended quality may behave differently.</li>
+      <li><b>The synthetic set was made entirely by AI.</b> Claude wrote the passages, questions and wrong answers; Gemini wrote the correct answers; no human reviewed it. Its mistakes are also cleaner than real ones, so it measures whether judges catch known error types, not real-world error rates.</li>
+      <li><b>The label review was done by an AI</b> (Claude), not a second human annotator. It is published so anyone can check it.</li>
+      <li><b>Model versions change.</b> Results are for ${esc(gemModel)} and jev-1.13.0 in September 2026.</li>
+    </ul>
+
+    <h2 id="advice">Practical advice</h2>
+    <ol>
+      <li><b>Test your judge on realistic, hard examples</b> before trusting it. Easy test sets make every judge look perfect.</li>
+      <li><b>Write a rubric</b> that states exactly what passes and what fails. It was the single biggest improvement here.</li>
+      <li><b>Break results down by mistake type.</b> An overall score hides blind spots such as subtle contradictions or arithmetic.</li>
+      <li><b>Read the disagreements.</b> When the judge and your labels disagree, check who is right; your labels may need fixing.</li>
+      <li><b>Do not treat confidence as correctness.</b> Spot-check high-confidence verdicts too.</li>
+      <li><b>Match the judge to the error.</b> Use a reasoning model where numbers or logic matter; a fast classifier can suit high-volume checks with human spot-checks.</li>
+    </ol>
+
+    <h2 id="reproduce">Reproduce it</h2>
+    <p>The code, synthetic dataset, RAGTruth sample IDs, label review and aggregate results are in the repository under <code>evaluations-reliability/llm-judge-reliability/</code>. RAGTruth is downloaded by a script rather than redistributed, because its passages come from MS MARCO, whose terms limit use to non-commercial research.</p>
+    <pre style="white-space:pre-wrap;font:13.5px/1.6 var(--mono);background:var(--surface-2);padding:16px;border-radius:10px">uv sync --locked
+uv run python -m judgelab fetch-ragtruth                       # download RAGTruth (about 36 MB)
+uv run python -m judgelab run-all --dataset ragtruth --live    # paid API calls
+uv run python -m judgelab analyze --dataset ragtruth
+uv run python -m judgelab serve                                # this report and the explorer</pre>
+    <p class="faint" style="font-size:14px">Sources: Niu et al., <i>RAGTruth</i> (ACL 2024, MIT license); Nguyen et al., <i>MS MARCO</i> (2016); Zheng et al., <i>Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</i> (2023).</p>
+  </article></div>`;
+
+  $("#f2", view).innerHTML = barsChart({ series: [{ name: "Synthetic", color: "var(--s1)" }, { name: "RAGTruth", color: "var(--s2)" }],
+    rows: ORDER.filter((n) => V(syn, n) || V(rag, n)).map((n) => ({ label: jLabel(n), values: [V(syn, n)?.all.accuracy ?? null, V(rag, n)?.all.accuracy ?? null],
+      tips: [`<b>${esc(jLabel(n))}</b><br>Synthetic: ${pct(V(syn, n)?.all.accuracy)} agreement`, `<b>${esc(jLabel(n))}</b><br>RAGTruth: ${pct(V(rag, n)?.all.accuracy)} agreement`] })) });
+  const types = ["evident_baseless", "evident_conflict", "subtle_baseless", "subtle_conflict"];
+  $("#f3", view).innerHTML = barsChart({ labelW: 330, series: [{ name: "Gemini · Rubric", color: "var(--s1)" }, { name: "Jev · Rubric", color: "var(--s2)" }],
+    rows: types.map((t) => ({ label: MISTAKES[t][0], sub: MISTAKES[t][1].length > 46 ? MISTAKES[t][1].slice(0, 44).trim() + "…" : MISTAKES[t][1],
+      values: ["gemini-rubric", "jev-rubric"].map((n) => V(rag, n)?.by_error?.[t]?.rate ?? null),
+      tips: ["gemini-rubric", "jev-rubric"].map((n) => { const g = V(rag, n)?.by_error?.[t]; return g ? `<b>${esc(jLabel(n))}</b><br>${esc(MISTAKES[t][0])}: caught ${g.caught} of ${g.n}` : ""; }) })) });
+  $("#f4", view).innerHTML = disputesChart(rag);
+  const jr = (state.items.ragtruth || []).filter((i) => i.verdicts["jev-rubric"]?.p_pass != null);
+  $("#f5", view).innerHTML = stripChart([
+    { label: "Correct answers", sub: `${jr.filter((i) => i.expected === "pass").length} answers`, color: "var(--s3)", points: jr.filter((i) => i.expected === "pass").map((i) => ({ p: i.verdicts["jev-rubric"].p_pass, tip: `<b>${i.verdicts["jev-rubric"].p_pass.toFixed(2)}</b> · correct answer<br>${esc(i.question)}` })) },
+    { label: "Wrong answers", sub: `${jr.filter((i) => i.expected === "fail").length} answers`, color: "var(--s2)", points: jr.filter((i) => i.expected === "fail").map((i) => ({ p: i.verdicts["jev-rubric"].p_pass, tip: `<b>${i.verdicts["jev-rubric"].p_pass.toFixed(2)}</b> · wrong answer (${esc(MISTAKES[i.error]?.[0] || "")})<br>${esc(i.question)}` })) },
+  ]);
+  bindTips(view); bindExamples(view);
+}
+function mistakeRows() {
+  const out = [];
+  for (const ds of ["synthetic", "ragtruth"]) {
+    const list = state.items[ds] || []; if (!list.length) continue;
+    const counts = {}; list.forEach((i) => { if (i.error) counts[i.error] = (counts[i.error] || 0) + 1; });
+    out.push(`<tr><td colspan="4" style="background:var(--surface-2);font-weight:600">${DS[ds].name}</td></tr>`);
+    Object.keys(counts).sort((a, b) => counts[b] - counts[a]).forEach((e) => {
+      const ex = list.find((i) => i.error === e && (ds === "synthetic" ? i.answer.length < 110 : i.spans.length && annotatorNote(i.spans[0]).includes("but the answer says")))
+        || list.find((i) => i.error === e && (ds === "synthetic" || i.spans.length));
+      let example = "";
+      if (ex && ds === "synthetic") {
+        const right = list.find((x) => x.case_id === ex.case_id && x.id !== ex.id);
+        example = `<i>${esc(ex.question)}</i><br>Wrong: “${esc(ex.answer)}”${right ? `<br><span class="faint">Correct: “${esc(right.answer)}”</span>` : ""}`;
+      } else if (ex) {
+        const n = annotatorNote(ex.spans[0]);
+        example = `<i>${esc(ex.question)}</i><br>${n || `The answer adds “${esc(ex.spans[0].text.slice(0, 100))}${ex.spans[0].text.length > 100 ? "…" : ""}”, which the text does not contain.`}`;
+      }
+      out.push(`<tr><td class="nowrap"><b>${esc(MISTAKES[e]?.[0] || e)}</b></td><td>${esc(MISTAKES[e]?.[1] || "")}</td><td style="font-size:13.5px">${example} ${ex ? `<a href="#explorer/${ds}/${esc(ex.id)}">Open</a>` : ""}</td><td class="num">${counts[e]}</td></tr>`);
+    });
+  }
+  return out.join("");
+}
+
+/* ---------- Dataset explorer ---------- */
+async function renderExplorer(view, params) {
+  const f = state.ex;
+  if (params[0] && DS[params[0]]) f.ds = params[0];
+  if (params[1]) f.id = decodeURIComponent(params[1]);
+  if (!state.ready[f.ds]) f.ds = "synthetic";
+  const list = await items(f.ds);
+  await items("synthetic");
+  const errors = [...new Set(list.filter((i) => i.error).map((i) => i.error))];
+  const judges = ORDER.filter((n) => list.some((i) => i.verdicts[n]));
+  view.innerHTML = `<div class="ex-wrap">
+    <div class="ex-intro"><h1>Dataset explorer</h1>
+      <p>Every answer the judges graded: the full source text, the question, the answer, the correct verdict and why, and what each judge said. Use it to check any number or example in the report.</p></div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Dataset">${Object.keys(DS).map((k) => `<button data-ds="${k}" aria-pressed="${k === f.ds}" ${state.ready[k] ? "" : "disabled"}>${DS[k].long}</button>`).join("")}</div>
+      <select id="f-truth" aria-label="Correct verdict"><option value="all">All answers</option><option value="pass">Correct answers (pass)</option><option value="fail">Wrong answers (fail)</option>${list.some((i) => i.review) ? '<option value="reviewed">Re-reviewed disagreements</option>' : ""}</select>
+      <select id="f-error" aria-label="Mistake type"><option value="all">Any mistake type</option>${errors.map((e) => `<option value="${e}">${esc(MISTAKES[e]?.[0] || e)}</option>`).join("")}</select>
+      <select id="f-judge" aria-label="Judge"><option value="all">Any judge result</option>${judges.map((n) => `<option value="${n}">${esc(jLabel(n))} disagrees with label</option>`).join("")}</select>
+      <input type="search" id="f-q" placeholder="Search questions and answers" value="${esc(f.q)}">
+    </div>
+    <div class="ex-grid"><div class="list"><div class="list-h" data-count></div><div class="rows" data-rows></div></div><div class="detail" data-detail></div></div></div>`;
+  $("#f-truth", view).value = f.truth; $("#f-error", view).value = errors.includes(f.error) ? f.error : "all"; $("#f-judge", view).value = judges.includes(f.judge) ? f.judge : "all";
+  f.error = $("#f-error", view).value; f.judge = $("#f-judge", view).value;
+  const filtered = () => list.filter((i) =>
+    (f.truth === "all" || (f.truth === "reviewed" ? !!i.review : i.expected === f.truth)) && (f.error === "all" || i.error === f.error) &&
+    (f.judge === "all" || (i.verdicts[f.judge] && i.verdicts[f.judge].verdict !== i.expected)) &&
+    (!f.q || (i.question + " " + i.answer).toLowerCase().includes(f.q.toLowerCase())));
+  function draw() {
+    const rows = filtered();
+    if (!rows.find((i) => i.id === f.id)) f.id = rows[0]?.id || null;
+    $("[data-count]", view).textContent = `${rows.length} of ${list.length} answers`;
+    $("[data-rows]", view).innerHTML = rows.map((i) => { const vs = ORDER.filter((n) => i.verdicts[n]), agree = vs.filter((n) => i.verdicts[n].verdict === i.expected).length;
+      return `<button class="row" data-id="${esc(i.id)}" aria-current="${i.id === f.id}"><span class="dotv ${i.expected}" title="Correct verdict: ${i.expected}"></span><span class="q">${esc(i.question)}</span>
+        <span class="meta"><span class="mono">${esc(i.id)}</span><span>${i.expected === "pass" ? "Correct answer" : esc(MISTAKES[i.error]?.[0] || "Wrong answer")}</span><span>${vs.length ? `${agree} of ${vs.length} judges agree` : ""}</span></span></button>`; }).join("")
+      || '<p class="faint" style="padding:14px;margin:0">No answers match these filters.</p>';
+    $$(".row", view).forEach((r) => r.onclick = () => { f.id = r.dataset.id; history.replaceState(null, "", `#explorer/${f.ds}/${encodeURIComponent(f.id)}`); draw(); });
+    const it = list.find((i) => i.id === f.id);
+    $("[data-detail]", view).innerHTML = it ? exampleCard(it, { fullSource: true }) : "";
+    bindExamples(view);
+  }
+  $$(".seg button", view).forEach((b) => b.onclick = () => { if (b.dataset.ds !== f.ds) { f.id = null; location.hash = `#explorer/${b.dataset.ds}`; } });
+  $("#f-truth", view).onchange = (e) => { f.truth = e.target.value; draw(); };
+  $("#f-error", view).onchange = (e) => { f.error = e.target.value; draw(); };
+  $("#f-judge", view).onchange = (e) => { f.judge = e.target.value; draw(); };
+  $("#f-q", view).oninput = (e) => { f.q = e.target.value; draw(); };
+  draw();
+}
+
+/* ---------- Routing ---------- */
+let seq = 0, tocObserver = null;
+async function route() {
+  const my = ++seq;
+  const [page, ...params] = location.hash.slice(1).split("/");
+  const name = page === "explorer" ? "explorer" : "report";
+  $$(".tabs a").forEach((a) => a.dataset.page === name ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  tip.classList.remove("on");
+  // Render into a container that is swapped in whole, so a slower older render never overwrites a newer page.
+  const box = document.createElement("div");
+  try { if (name === "explorer") await renderExplorer(box, params); else await renderReport(box); }
+  catch (e) { box.innerHTML = `<div class="ex-wrap"><h1>Could not load</h1><p>${esc(e.message)}</p></div>`; }
+  if (my !== seq) return;
+  $("#view").replaceChildren(box);
+  tocObserver?.disconnect();
+  if (name === "report") {
+    const links = $$("nav.toc a", box);
+    tocObserver = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) links.forEach((a) => a.classList.toggle("on", a.dataset.sec === e.target.id)); }), { rootMargin: "-80px 0px -70% 0px" });
+    SECTIONS.forEach(([id]) => { const el = document.getElementById(id); if (el) tocObserver.observe(el); });
+    const target = params[0] && document.getElementById(params[0]);
+    if (target) target.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0);
+  } else window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+
+(async () => {
+  try {
+    const [list, judges] = await Promise.all([get("/api/datasets"), get("/api/judges")]);
+    list.datasets.forEach((d) => (state.ready[d.id] = d.ready));
+    state.judges = judges;
+    await route();
+  } catch (e) { $("#view").innerHTML = `<div class="ex-wrap"><h1>Could not reach the server</h1><p>${esc(e.message)}</p></div>`; }
+})();
+</script>
+</body>
+</html>
