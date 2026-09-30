@@ -128,7 +128,7 @@ Use `chore: initialize repository structure` for the initial scaffold, rather th
 
 For changes inside an example, use its project name as the scope, such as `travel-planner`, rather than a broad category or technical area such as `agents` or `deployment`. State the concrete change in the subject: `feat(travel-planner): deploy to Vercel with persistent run history` or `fix(travel-planner): preserve event counts during streaming`. Reserve repository-wide scopes for changes that actually span the repository.
 
-Rewrite published history only when explicitly authorized. When authorized, verify the remote head and use an explicit `--force-with-lease` so concurrent remote changes are not overwritten.
+`main` is protected by the “Protect main” repository ruleset: changes land only through pull requests merged by squash or rebase, and force pushes and branch deletion are blocked, with no bypass. Rewrite published history only when explicitly authorized. When authorized, verify the remote head and use an explicit `--force-with-lease` so concurrent remote changes are not overwritten.
 
 ## Agent entry points
 
