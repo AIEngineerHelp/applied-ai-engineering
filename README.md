@@ -36,6 +36,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [LLM-as-a-Judge: Measuring agreement, bias, and reliability](evaluations-reliability/llm-judge-reliability/README.md) ([read the report](https://llm-judge-reliability.vercel.app)) tests Gemini and Jev judges on AI-written synthetic mistakes and on 120 real answers from RAGTruth, whose errors were marked by people. Judges score 98–99% on the easy set but 53–68% on real answers, and a review of the disagreements shows the labels are often the ones at fault. A local dashboard shows every answer next to every verdict.
 
+[Guardrails for AI agents: what each layer actually stops](evaluations-reliability/agent-guardrails/README.md) builds the seven guardrail types from OpenAI's agent-building guide around a refund-support agent, then measures them on 115 labeled messages and 26 attack and benign scenarios. Gemini and Jev classifiers caught 39 of 40 attacks where regex caught 8, but with a hijacked model, detection still let 5 of 17 harmful actions through; authorization and business rules in code stopped all 17. Tests and the hijacked-model runs need no API key.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

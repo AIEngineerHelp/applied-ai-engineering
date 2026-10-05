@@ -1,0 +1,3 @@
+# Raw model responses stay local until reviewed; `analyze` exports what the report needs.
+runs/
+.env
