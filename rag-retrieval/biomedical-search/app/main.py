@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from app import config
 from app.llm import generate_answer, selected_context
+from app.rerank import RerankError, rerank
+from app.rerank import available as rerankers_available
 from app.retrieval import SearchEngine, read_jsonl
 
 logger = logging.getLogger("helix")
@@ -73,6 +75,7 @@ class SearchRequest(BaseModel):
     mode: str = Field(default="hybrid", pattern="^(lexical|dense|hybrid|best)$")
     expand: bool = True
     top_k: int = Field(default=10, ge=5, le=20)
+    rerank: str = Field(default="off", pattern="^(off|gemini|jev)$")
 
     @field_validator("query")
     @classmethod
@@ -141,6 +144,12 @@ async def status():
             "model": config.ANSWER_MODEL,
             "models": models,
         },
+        "rerankers": {
+            "available": rerankers_available(),
+            "gemini_model": config.RERANK_GEMINI_MODEL,
+            "jev_model": config.RERANK_JEV_MODEL,
+            "depth": config.RERANK_DEPTH,
+        },
     }
 
 
@@ -171,6 +180,10 @@ def search(request: SearchRequest):
             raise HTTPException(409, "The index changed since evaluation. Run the benchmark again.")
         variant = selected["variant"]
         settings = {**selected["configuration"], "top_k": request.top_k}
+    reranking = request.rerank != "off"
+    if reranking:
+        # Retrieve a deeper shortlist so the reranker can promote passages from below top_k.
+        settings["top_k"] = max(config.RERANK_DEPTH, request.top_k)
     try:
         result = engine.search(request.query, **settings)
     except (RuntimeError, httpx.HTTPError, ValueError, KeyError) as exc:
@@ -178,6 +191,15 @@ def search(request: SearchRequest):
             503,
             "Search is unavailable. Check the Gemini connection and embedding index. Try disabling query expansion to search without the expansion call.",
         ) from exc
+    result["rerank"] = None
+    if reranking:
+        try:
+            result["evidence"], result["rerank"] = rerank(
+                request.query, result["evidence"], request.rerank, request.top_k
+            )
+        except RerankError as exc:
+            raise HTTPException(503, str(exc)) from exc
+        result["configuration"]["top_k"] = request.top_k
     result["search_id"] = str(uuid4())
     result["variant"] = variant
     context_ids = {p["id"] for p in selected_context(result["evidence"])}
@@ -197,11 +219,14 @@ def search(request: SearchRequest):
             "configuration": result["configuration"],
             "retrieved": [{"id": p["id"], "score": p["score"]} for p in result["evidence"]],
             "retrieval_ms": result["retrieval_ms"],
+            "rerank": result["rerank"],
         }
     )
     if search_signer:
+        # Rerank traces are for display only; keep them out of the signed answer token.
+        evidence = [{k: v for k, v in p.items() if k != "rerank_trace"} for p in result["evidence"]]
         result["search_token"] = search_signer.dumps({
-            "search_id": result["search_id"], "query": result["query"], "evidence": result["evidence"]
+            "search_id": result["search_id"], "query": result["query"], "evidence": evidence
         })
     return result
 
