@@ -87,3 +87,39 @@ def test_dataset_labels_are_consistent(messages, scenarios):
         assert m["harmful"] == (m["group"] == "harmful")
     for s in scenarios.values():
         assert (s["expect"] != []) == (s["kind"] == "benign") and (s["forbid"] != []) == (s["kind"] != "benign")
+
+
+def test_explorer_bundle_has_everything_the_page_reads():
+    from guardlab.web import GROUPS, bundle
+
+    b = bundle()
+    assert len(b["messages"]) == 115 and set(b["groups"]) == set(GROUPS)
+    assert {"rules", "jev", "gemini"} <= set(b["classifiers"]["metrics"])
+    for run, configs in b["agent"].items():
+        for name in configs:
+            assert set(b["traces"][run][name]) == set(configs[name]["scenarios"])
+
+
+def test_story_chapters_reference_existing_scenes():
+    import re
+
+    from guardlab.web import STATIC
+
+    story = (STATIC / "story.html").read_text()
+    scenes = set(re.findall(r'src="/scenes/([\w-]+\.svg)"', story))
+    assert len(re.findall(r'<section class="chapter[^"]*" id="ch\d+"', story)) == 10
+    assert scenes and all((STATIC / "scenes" / s).is_file() for s in scenes)
+
+
+def test_static_export_has_every_page_the_site_links_to(tmp_path):
+    import json
+    import re
+
+    from guardlab.web import export
+
+    files = {str(p) for p in export(tmp_path / "site")}
+    assert {"index.html", "explore.html", "data.json", "vercel.json"} <= files
+    story = (tmp_path / "site" / "index.html").read_text()
+    for scene in set(re.findall(r'src="/scenes/([\w-]+\.svg)"', story)):
+        assert f"scenes/{scene}" in files
+    assert json.loads((tmp_path / "site" / "data.json").read_text())["messages"]

@@ -1,3 +1,7 @@
 # Raw model responses stay local until reviewed; `analyze` exports what the report needs.
 runs/
 .env
+
+# Static export for deployment; rebuild with `uv run python -m guardlab export`.
+site/
+.vercel

@@ -173,6 +173,11 @@ def main(argv=None):
     agt.add_argument("--only", nargs="*", help="Scenario IDs to run")
     agt.add_argument("--live", action="store_true", help="Make paid API calls")
     sub.add_parser("analyze", help="Write results/report.md and the JSON summaries")
+    sub.add_parser("art", help="Redraw the story's illustrations into guardlab/static/scenes/")
+    exp = sub.add_parser("export", help="Write a static copy of the story and explorer (for Vercel or any static host)")
+    exp.add_argument("out", nargs="?", default="site")
+    srv = sub.add_parser("serve", help="Serve the illustrated story and the data explorer (reads results/)")
+    srv.add_argument("--port", type=int, default=8766)
     shw = sub.add_parser("show", help="Print one scenario's trace")
     shw.add_argument("id")
     shw.add_argument("--model", default="scripted", choices=["scripted", "gemini"])
@@ -201,6 +206,22 @@ def main(argv=None):
         return cmd_agent(args, settings)
     if args.command == "show":
         return cmd_show(args)
+    if args.command == "art":
+        from guardlab.art import write_all
+
+        print(f"Wrote {len(write_all())} illustrations")
+        return 0
+    if args.command == "export":
+        from guardlab.web import export
+
+        files = export(args.out)
+        print(f"Wrote {len(files)} files to {args.out}/")
+        return 0
+    if args.command == "serve":
+        from guardlab.web import serve
+
+        serve(args.port)
+        return 0
     if args.command == "analyze":
         messages = read_jsonl(config.MESSAGES)
         rule_verdicts = {m["id"]: rules.check(m["text"]) for m in messages}

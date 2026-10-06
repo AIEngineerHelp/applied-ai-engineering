@@ -18,7 +18,7 @@ from guardlab import output, policy, rules
 from guardlab.tools import DECLARATIONS, UNTRUSTED_FIELDS, Store
 
 MAX_STEPS = 8          # bounded agent loop
-MAX_DENIALS = 3        # the guide's "failure threshold": after this many refused calls, hand over to a person
+MAX_DENIALS = 3        # failure threshold: after this many refused calls, hand over to a person
 
 LAYERS = ("input_rules", "input_model", "doc_scan", "tool_policy", "output_filter")
 CONFIGS = {

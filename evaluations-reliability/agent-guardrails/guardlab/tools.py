@@ -1,6 +1,6 @@
 """The support agent's tools, their risk ratings, and an in-memory store they act on.
 
-Risk follows the guide's factors: read-only vs write, reversibility, and financial impact.
+Risk is rated on three factors: read-only vs write, reversibility, and financial impact.
 Each run gets a fresh copy of the store, so scenarios never affect each other.
 """
 
