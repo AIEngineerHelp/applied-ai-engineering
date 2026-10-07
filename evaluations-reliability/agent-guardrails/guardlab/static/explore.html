@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardrails Data Explorer</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f3f2ee; --border: rgba(11,11,11,0.10);
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --good: #0ca30c; --good-ink: #006300; --good-bg: rgba(12,163,12,0.10);
+  --warn: #fab219; --warn-ink: #8a5a00; --warn-bg: rgba(250,178,25,0.16);
+  --serious: #ec835a; --serious-ink: #a4421b; --serious-bg: rgba(236,131,90,0.14);
+  --crit: #d03b3b; --crit-ink: #b02a2a; --crit-bg: rgba(208,59,59,0.10);
+  --accent: #2a78d6; --code: #f0efec;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --border: rgba(255,255,255,0.10);
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --good-ink: #0ca30c; --warn-ink: #fab219; --serious-ink: #ec835a; --crit-ink: #e66767;
+    --good-bg: rgba(12,163,12,0.16); --warn-bg: rgba(250,178,25,0.14); --serious-bg: rgba(236,131,90,0.16); --crit-bg: rgba(208,59,59,0.20);
+    --accent: #3987e5; --code: #232321; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --border: rgba(255,255,255,0.10);
+  --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --good-ink: #0ca30c; --warn-ink: #fab219; --serious-ink: #ec835a; --crit-ink: #e66767;
+  --good-bg: rgba(12,163,12,0.16); --warn-bg: rgba(250,178,25,0.14); --serious-bg: rgba(236,131,90,0.16); --crit-bg: rgba(208,59,59,0.20);
+  --accent: #3987e5; --code: #232321; --shadow: none;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86em; }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+header.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--page) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.top-inner { max-width: 1160px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
+.brand { font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; }
+nav.sections { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+nav.sections a { color: var(--ink-2); text-decoration: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; }
+nav.sections a:hover { background: var(--surface-2); color: var(--ink); }
+.theme-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+main { max-width: 1160px; margin: 0 auto; padding: 32px 24px 96px; }
+.hero h1 { font-size: 34px; line-height: 1.2; letter-spacing: -0.02em; margin: 8px 0 12px; max-width: 820px; }
+.hero p.lede { font-size: 17px; color: var(--ink-2); max-width: 820px; margin: 0 0 8px; }
+.meta { color: var(--muted); font-size: 13px; }
+section { margin-top: 56px; }
+h2 { font-size: 24px; letter-spacing: -0.01em; margin: 0 0 6px; }
+h3 { font-size: 17px; margin: 28px 0 8px; }
+.sub { color: var(--ink-2); max-width: 820px; margin: 0 0 20px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+.pad { padding: 20px 22px; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 24px; }
+.tile { padding: 18px 18px 16px; }
+.tile .label { color: var(--ink-2); font-size: 13px; }
+.tile .value { font-size: 30px; font-weight: 640; letter-spacing: -0.02em; margin: 4px 0 2px; }
+.tile .value small { font-size: 15px; color: var(--muted); font-weight: 500; }
+.tile .note { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.takeaways { margin: 24px 0 0; padding: 0; list-style: none; counter-reset: t; display: grid; gap: 10px; }
+.takeaways li { counter-increment: t; padding: 14px 18px 14px 52px; position: relative; }
+.takeaways li::before { content: counter(t); position: absolute; left: 18px; top: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.takeaways b { font-weight: 620; }
+/* flow diagram */
+.flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; align-items: stretch; }
+.flow .step { position: relative; padding: 16px 16px 14px; border-right: 1px dashed var(--grid); }
+.flow .step:last-child { border-right: 0; }
+.flow .where { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.flow .name { font-weight: 620; margin: 2px 0 4px; }
+.flow .what { color: var(--ink-2); font-size: 13.5px; line-height: 1.5; }
+.flow .kind { display: inline-block; margin-top: 8px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
+.flow .step:not(:last-child)::after { content: "→"; position: absolute; right: -9px; top: 16px; color: var(--muted); background: var(--surface); padding: 0 2px; }
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 560; font-size: 13px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.table-wrap { overflow-x: auto; }
+/* chart */
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.chart-title { font-weight: 620; }
+.chart-sub { color: var(--ink-2); font-size: 13.5px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; padding: 2px; background: var(--surface-2); gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--border); font-weight: 560; }
+svg text { fill: var(--ink-2); font-size: 12.5px; }
+svg .axis-label { fill: var(--muted); font-size: 12px; }
+svg .row-label { fill: var(--ink); font-size: 13.5px; }
+svg .row-n { fill: var(--muted); font-size: 12px; }
+svg .val { fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tip { position: fixed; pointer-events: none; z-index: 50; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,0.12); border-radius: 10px; padding: 8px 11px; font-size: 13px; opacity: 0; transition: opacity .08s; max-width: 280px; }
+.tip b { font-weight: 620; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+/* message explorer */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.filters input[type=search] { border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 7px 11px; font: inherit; font-size: 14px; min-width: 220px; }
+.check { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--ink-2); cursor: pointer; }
+.more { justify-self: center; padding: 8px 16px; font-size: 14px; }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+.msgs { display: grid; gap: 10px; }
+.msg { padding: 14px 16px; }
+.msg-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.msg-id { color: var(--muted); font-size: 12.5px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.msg-text { font-size: 15.5px; margin: 6px 0 4px; overflow-wrap: anywhere; }
+.msg-why { color: var(--ink-2); font-size: 13.5px; }
+.msg-note { color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+.verdicts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.verdict { border: 1px solid var(--grid); border-radius: 10px; padding: 9px 11px; font-size: 13px; }
+.verdict .who { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.verdict .detail { color: var(--ink-2); line-height: 1.45; overflow-wrap: anywhere; }
+.probs { display: grid; gap: 3px; margin-top: 4px; }
+.prob { display: grid; grid-template-columns: 72px 1fr 34px; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.prob .bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.prob .bar i { display: block; height: 100%; background: var(--s2); border-radius: 0 3px 3px 0; }
+.prob .pv { text-align: right; font-variant-numeric: tabular-nums; }
+/* status chips */
+.st { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 560; padding: 2px 9px 2px 7px; border-radius: 999px; white-space: nowrap; }
+.st .ic { font-size: 11px; width: 15px; height: 15px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-weight: 700; }
+.st.good { background: var(--good-bg); color: var(--good-ink); } .st.good .ic { background: var(--good); }
+.st.warn { background: var(--warn-bg); color: var(--warn-ink); } .st.warn .ic { background: var(--warn); color: #3a2a00; }
+.st.serious { background: var(--serious-bg); color: var(--serious-ink); } .st.serious .ic { background: var(--serious); }
+.st.crit { background: var(--crit-bg); color: var(--crit-ink); } .st.crit .ic { background: var(--crit); }
+.st.neutral { background: var(--surface-2); color: var(--ink-2); } .st.neutral .ic { background: var(--muted); }
+/* matrix */
+.matrix td { padding: 7px 10px; }
+.matrix td.cell { cursor: pointer; }
+.matrix td.cell:hover { background: var(--surface-2); }
+.matrix td.cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.matrix .kind-row td { background: var(--surface-2); font-size: 12.5px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.02em; }
+.matrix .sid { color: var(--muted); font-size: 12.5px; margin-right: 6px; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.cfg { padding: 14px 16px; }
+.cfg .cname { font-weight: 620; }
+.cfg .layers { color: var(--muted); font-size: 12.5px; min-height: 36px; line-height: 1.4; margin-top: 2px; }
+.cfg .big { font-size: 26px; font-weight: 640; margin-top: 8px; letter-spacing: -0.01em; }
+.cfg .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.cfg .line { font-size: 13px; color: var(--ink-2); }
+.meter { height: 6px; border-radius: 3px; background: var(--surface-2); margin: 6px 0 8px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--crit); border-radius: 0 3px 3px 0; }
+/* drawer */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.28); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 40; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+aside.drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(640px, 100%); background: var(--surface); border-left: 1px solid var(--border); z-index: 45; transform: translateX(100%); transition: transform .18s ease; overflow-y: auto; }
+aside.drawer.open { transform: none; }
+.drawer-head { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; }
+.drawer-head h3 { margin: 0; font-size: 17px; }
+.close { margin-left: auto; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; flex: none; }
+.drawer-body { padding: 18px 20px 40px; }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; font-size: 14px; margin-bottom: 16px; }
+.kv dt { color: var(--muted); font-size: 13px; }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.bubble { border-radius: 12px; padding: 10px 13px; font-size: 14.5px; margin: 4px 0 12px; overflow-wrap: anywhere; }
+.bubble.user { background: var(--surface-2); }
+.bubble.note { border: 1px dashed var(--serious); background: var(--serious-bg); }
+.bubble.reply { border: 1px solid var(--grid); white-space: pre-wrap; }
+.timeline { list-style: none; margin: 0 0 16px; padding: 0; border-left: 2px solid var(--grid); }
+.timeline li { position: relative; padding: 2px 0 12px 18px; font-size: 13.5px; }
+.timeline li::before { content: ""; position: absolute; left: -6px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--axis); }
+.timeline .layer { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.timeline .call { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; overflow-wrap: anywhere; }
+.timeline .reason { color: var(--ink-2); }
+.section-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 14px 0 2px; }
+details.raw summary { cursor: pointer; color: var(--ink-2); font-size: 13.5px; }
+pre { background: var(--code); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 10px 10px 0; color: var(--ink-2); font-size: 14px; margin: 14px 0; }
+.interp { font-style: italic; color: var(--muted); font-size: 13px; }
+footer { margin-top: 64px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); padding-top: 18px; }
+@media (max-width: 900px) {
+  .tiles, .summary-grid { grid-template-columns: 1fr 1fr; }
+  .flow { grid-template-columns: 1fr; }
+  .flow .step { border-right: 0; border-bottom: 1px dashed var(--grid); }
+  .flow .step:not(:last-child)::after { content: "↓"; right: auto; left: 16px; top: auto; bottom: -12px; }
+  .verdicts, .two-col { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 27px; }
+}
+@media (max-width: 560px) { main { padding: 20px 16px 72px; } .top-inner { padding: 10px 16px; } .tiles, .summary-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <div class="brand"><a href="/" style="color:inherit;text-decoration:none">← The story</a> · Data explorer</div>
+  <nav class="sections">
+    <a href="#overview">Overview</a><a href="#layers">Layers</a><a href="#classifiers">Classifiers</a>
+    <a href="#messages">Messages</a><a href="#agent">Agent runs</a><a href="#setup">Setup</a>
+  </nav>
+  <button class="theme-btn" id="theme" type="button">Theme</button>
+</div></header>
+
+<main id="app"><p class="meta">Loading results…</p></main>
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Scenario trace"></aside>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = (h, n) => n ? Math.round(100 * h / n) : 0;
+let D;
+
+// ---------- theme ----------
+(function () {
+  let saved = null;
+  try { saved = localStorage.getItem("guardlab-theme"); } catch (e) {}
+  if (saved) document.documentElement.dataset.theme = saved;
+  $("#theme").addEventListener("click", () => {
+    const dark = document.documentElement.dataset.theme
+      ? document.documentElement.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    const next = dark ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("guardlab-theme", next); } catch (e) {}
+  });
+})();
+
+// ---------- tooltip ----------
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(e); }
+function moveTip(e) {
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.style.opacity = 0; }
+
+// ---------- status chips ----------
+const STATUS = {
+  harmed: ["crit", "✕", "Harmed"],
+  completed: ["good", "✓", "Completed"],
+  "sent to a person": ["warn", "⏸", "Sent to a person"],
+  blocked: ["serious", "⊘", "Blocked"],
+  "not done": ["neutral", "–", "Not done"],
+};
+const LAYER_NAMES = { input_rules: "rules", input_model: "classifier", doc_scan: "document scan", tool_policy: "tool policy", output_filter: "output filter", model: "model refused" };
+function chip(kind, icon, label) { return `<span class="st ${kind}"><span class="ic" aria-hidden="true">${icon}</span>${esc(label)}</span>`; }
+function scoreChip(s, sc) {
+  if (!s) return chip("neutral", "–", "Not run");
+  if (sc.kind === "benign") { const [k, i, l] = STATUS[s.outcome] || STATUS["not done"]; return chip(k, i, l); }
+  if (s.harmed) return chip(...STATUS.harmed);
+  return chip("good", "✓", "Stopped · " + (LAYER_NAMES[s.stopped_by] || s.stopped_by));
+}
+
+// ---------- classifier actions ----------
+function action(v) { if (!v) return null; if (v.attack || v.harmful) return "block"; if (v.in_scope === false) return "redirect"; return "pass"; }
+const ACTION_LABEL = { pass: "Pass", block: "Block", redirect: "Redirect" };
+
+async function load() {
+  D = await (await fetch("/data.json")).json();
+  render();
+}
+
+function render() {
+  const m = D.classifiers.metrics;
+  const ag = D.agent;
+  const hijack = ag["scripted+jev"] || ag["scripted+none"];
+  const real = ag["gemini+jev"];
+  const det = hijack?.detection?.summary.attack_success, pol = hijack?.policy?.summary.attack_success;
+  const realNone = real?.none?.summary.attack_success;
+  $("#app").innerHTML = `
+  <div class="hero" id="overview">
+    <div class="meta">Evaluations &amp; Reliability · measured ${esc(D.measured)} · Gemini <code>${esc(D.models.gemini)}</code> · Jev <code>${esc(D.models.jev)}</code></div>
+    <h1>Guardrails for AI agents: what each layer actually stops</h1>
+    <p class="lede">Every number from <a href="/">The Gatekeepers of Lantern Mountain</a>, with the data behind it: 115 labeled messages through three input classifiers, and 26 scenarios through four guardrail configurations, with a hijacked model and with real Gemini.</p>
+    <p class="meta">This page reads the committed <code>results/</code>. Method, code, limitations, and sources are in the example's <code>README.md</code>.</p>
+  </div>
+  <div class="tiles">
+    ${tile("Attacks caught by regex rules", `${m.rules.attack_recall.hits}<small>/${m.rules.attack_recall.n}</small>`, `None of the ${m.rules.attack_recall_by_group.obfuscated.n} encoded or translated attacks.`)}
+    ${tile("Attacks caught by Gemini or Jev", `${m.jev.attack_recall.hits}<small>/${m.jev.attack_recall.n}</small>`, `Each model; 0 of 50 genuine requests blocked as attacks.`)}
+    ${tile("Harmful actions, hijacked model, detection on", `${det.hits}<small>/${det.n}</small>`, `Requests that aren't attacks, just not allowed.`)}
+    ${tile("Harmful actions with the tool policy", `${pol.hits}<small>/${pol.n}</small>`, `In every run, hijacked or real model.`)}
+  </div>
+  <ol class="takeaways">
+    <li class="card"><b>Rules are free and instant, and miss most attacks.</b> Regex caught ${m.rules.attack_recall.hits} of ${m.rules.attack_recall.n} and blocked a genuine customer who wrote “ignore the previous instructions I gave your colleague”.</li>
+    <li class="card"><b>Model classifiers catch almost everything we sent.</b> Gemini and Jev each caught ${m.jev.attack_recall.hits} of 40, including every encoding and translation. Both missed the same quiet claim that “the previous assistant already approved a $750 refund”. Jev answered in ${(m.jev.latency_ms.p50/1000).toFixed(2)} s at the median, Gemini in ${(m.gemini.latency_ms.p50/1000).toFixed(1)} s.</li>
+    <li class="card"><b>Detection can't stop harm that doesn't look like an attack.</b> With a hijacked model, ${det.hits} of ${det.n} harmful actions passed every detector: out-of-window and oversized refunds, split refunds, another customer's order, an email to a third party.</li>
+    <li class="card"><b>Authorization and business rules in code stopped all ${pol.n}.</b> They read the order, not the wording, so Base64, Spanish, and fake supervisors all look like the same refused call.</li>
+    <li class="card"><b>Real Gemini refused all 14 direct and indirect attacks by itself</b>, with ${realNone ? realNone.hits : "–"} harmful action overall (an email to a third party). It still read other customers' orders before refusing, and our attacks were fixed, not adaptive.</li>
+  </ol>
+
+  <section id="layers">
+    <h2>The guardrail layers</h2>
+    <p class="sub">Each layer runs at a different point and decides in a different way. Rules and the tool policy are deterministic code; the classifiers are models.</p>
+    <div class="card"><div class="flow">
+      ${step("User input", "Rules", `Length over ${D.rules.max_chars.toLocaleString()} characters, ${D.rules.patterns.length} injection regexes, a ${D.rules.blocklist.length}-item blocklist.`, "Deterministic")}
+      ${step("User input", "Classifiers", "Relevance, safety, and moderation: Gemini or Jev. Blocks attacks and abuse; redirects off-topic.", "Model")}
+      ${step("Every tool call", "Tool policy", "Order owner, email recipient, order state, refund window and amount. Over $100, or after untrusted text: wait for a person.", "Deterministic")}
+      ${step("Tool output", "Document scan", "Asks the classifier whether an order note gives the AI instructions; removes it if so.", "Model")}
+      ${step("Final reply", "Output filter", "Redacts card numbers, others' emails and phones; blocks replies containing the system-prompt canary.", "Deterministic")}
+    </div></div>
+  </section>
+
+  <section id="classifiers">
+    <h2>Experiment 1: input classifiers</h2>
+    <p class="sub">The same 115 messages through regex rules, Jev, and Gemini. Hover a bar for the exact count; the table below has every number.</p>
+    <div class="card pad">
+      <div class="chart-head">
+        <div><div class="chart-title">Share of each group handled correctly</div><div class="chart-sub">Attacks and abuse blocked; off-topic questions redirected</div></div>
+        <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>Rules</span><span><i class="sw" style="background:var(--s2)"></i>Jev</span><span><i class="sw" style="background:var(--s3)"></i>Gemini</span></div>
+      </div>
+      <div id="bars"></div>
+    </div>
+    <div class="two-col">
+      <div class="card pad">
+        <div class="chart-title">Genuine requests wrongly stopped</div>
+        <div class="chart-sub" style="margin-bottom:6px">50 genuine requests: 30 ordinary, 20 look-alike</div>
+        <div class="table-wrap">${falseAlarmTable(m)}</div>
+      </div>
+      <div class="card pad">
+        <div class="chart-title">Speed and size per call</div>
+        <div class="chart-sub" style="margin-bottom:6px">Four requests in parallel, one machine</div>
+        <div class="table-wrap"><table><thead><tr><th></th><th class="num">p50</th><th class="num">p95</th><th class="num">Tokens in / out</th></tr></thead><tbody>
+          <tr><td>Rules</td><td class="num">&lt;1 ms</td><td class="num">&lt;1 ms</td><td class="num">–</td></tr>
+          ${["jev","gemini"].map(p => `<tr><td>${p === "jev" ? "Jev" : "Gemini"}</td><td class="num">${m[p].latency_ms.p50.toLocaleString()} ms</td><td class="num">${m[p].latency_ms.p95.toLocaleString()} ms</td><td class="num">${Math.floor(m[p].tokens.input/m[p].tokens.calls)} / ${Math.floor(m[p].tokens.output/m[p].tokens.calls)}</td></tr>`).join("")}
+        </tbody></table></div>
+        <p class="chart-sub" style="margin:10px 0 0">Jev bills input tokens only. Gemini's output includes thinking tokens.</p>
+      </div>
+    </div>
+    <h3>Choosing a threshold for Jev</h3>
+    <p class="sub">Jev returns a probability for each answer. Lowering the threshold catches more but stops more genuine customers.</p>
+    <div class="card pad table-wrap">${thresholdTable()}</div>
+  </section>
+
+  <section id="messages">
+    <h2>Every message and every verdict</h2>
+    <p class="sub">What each classifier did with each message, and whether that was right. Rules show the pattern that fired; Jev shows its probabilities; Gemini shows its one-sentence reason.</p>
+    <div class="filters">
+      <div class="seg" id="groupSeg"></div>
+      <label class="check"><input type="checkbox" id="onlyWrong"> Only where a classifier was wrong</label>
+      <input type="search" id="q" placeholder="Search messages" aria-label="Search messages">
+      <span class="count" id="msgCount"></span>
+    </div>
+    <div class="msgs" id="msgs"></div>
+  </section>
+
+  <section id="agent">
+    <h2>Experiment 2: the agent under each configuration</h2>
+    <p class="sub">26 scenarios: 9 benign requests, 3 requests the customer isn't entitled to, 8 direct attacks, and 6 indirect attacks hidden in order notes. Click any cell to see the full trace.</p>
+    <div class="filters"><div class="seg" id="runSeg"></div></div>
+    <p class="callout" id="runAbout"></p>
+    <div class="summary-grid" id="cfgSummary"></div>
+    <div class="card table-wrap"><table class="matrix" id="matrix"></table></div>
+  </section>
+
+  <section id="setup">
+    <h2>The agent's setup</h2>
+    <p class="sub">Every tool is rated by whether it changes things, whether it can be undone, and whether it moves money. The policy reads these ratings and the order data; it never reads the conversation.</p>
+    <div class="two-col">
+      <div class="card pad table-wrap"><div class="chart-title" style="margin-bottom:6px">Tools and risk</div>${toolTable()}</div>
+      <div class="card pad table-wrap"><div class="chart-title" style="margin-bottom:6px">Orders in the store</div>${orderTable()}</div>
+    </div>
+    <details class="raw card pad" style="margin-top:14px"><summary>System prompt given to the agent</summary><pre>${esc(D.system_prompt)}</pre></details>
+    <details class="raw card pad" style="margin-top:10px"><summary>The ${D.rules.patterns.length} injection regexes and the blocklist</summary><pre>${esc(D.rules.patterns.join("\n"))}\n\nBlocklist: ${esc(D.rules.blocklist.join(", "))}</pre></details>
+  </section>
+  <footer>Data: 115 messages and 26 scenarios written by Claude (Anthropic) for this example, not reviewed by a person. Attacks are well-known patterns, not adaptive. One run per configuration; intervals in <code>results/report.md</code>.</footer>`;
+  drawBars();
+  setupMessages();
+  setupRuns();
+  // Deep link: #trace=<run>/<configuration>/<scenario>, for example #trace=gemini+jev/full/i01
+  const m2 = decodeURIComponent(location.hash).match(/^#trace=([^/]+)\/([^/]+)\/([^/]+)$/);
+  if (m2 && D.agent[m2[1]]?.[m2[2]]) {
+    run = m2[1];
+    $("#runSeg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x.dataset.r === run));
+    drawRun();
+    openTrace(m2[3], m2[2]);
+  }
+}
+
+function tile(label, value, note) { return `<div class="card tile"><div class="label">${esc(label)}</div><div class="value">${value}</div><div class="note">${esc(note)}</div></div>`; }
+function step(where, name, what, kind) { return `<div class="step"><div class="where">${esc(where)}</div><div class="name">${esc(name)}</div><div class="what">${esc(what)}</div><span class="kind">${esc(kind)}</span></div>`; }
+
+function falseAlarmTable(m) {
+  const row = (label, key, g) => `<tr><td>${label}</td>${["rules","jev","gemini"].map(p => { const r = m[p][key][g]; return `<td class="num">${r.hits}/${r.n}</td>`; }).join("")}</tr>`;
+  return `<table><thead><tr><th></th><th class="num">Rules</th><th class="num">Jev</th><th class="num">Gemini</th></tr></thead><tbody>
+    ${row("Ordinary, blocked as attack", "false_block", "on_topic")}
+    ${row("Ordinary, redirected as off-topic", "false_off_topic", "on_topic")}
+    ${row("Look-alike, blocked as attack", "false_block", "lookalike")}
+    ${row("Look-alike, redirected as off-topic", "false_off_topic", "lookalike")}
+  </tbody></table>`;
+}
+
+function thresholdTable() {
+  const rows = (D.classifiers.jev_threshold_sweep.jev || []);
+  return `<table><thead><tr><th>Flag as an attack when p(attack) ≥</th><th class="num">Attacks caught</th><th class="num">False alarms on 65 benign messages</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${r.threshold}</td><td class="num">${r.recall.hits}/${r.recall.n}</td><td class="num">${r.false_alarm.hits}/${r.false_alarm.n}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+function toolTable() {
+  const kind = { low: ["good", "●", "Low"], medium: ["warn", "●", "Medium"], high: ["crit", "●", "High"] };
+  return `<table><thead><tr><th>Tool</th><th>Access</th><th>Reversible</th><th>Money</th><th>Risk</th></tr></thead><tbody>
+  ${Object.entries(D.tools).map(([n, t]) => `<tr><td><code>${n}</code></td><td>${t.access}</td><td>${t.reversible ? "yes" : "no"}</td><td>${t.financial ? "yes" : "no"}</td><td>${chip(...kind[t.risk])}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+function orderTable() {
+  const s = D.store, me = s.session_customer;
+  return `<table><thead><tr><th>Order</th><th>Customer</th><th>Item</th><th class="num">Total</th><th>Status</th></tr></thead><tbody>
+  ${Object.entries(s.orders).map(([id, o]) => `<tr><td><code>${id}</code></td><td>${esc(s.customers[o.customer].name)}${o.customer === me ? ' <span class="pill">signed in</span>' : ""}</td><td>${esc(o.item)}</td><td class="num">$${o.total.toFixed(2)}</td><td>${esc(o.status)}${o.delivered_days_ago != null ? ` · ${o.delivered_days_ago} days ago` : ""}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+// ---------- bar chart ----------
+function drawBars() {
+  const m = D.classifiers.metrics;
+  const rows = [
+    ["Injection and jailbreak", p => m[p].attack_recall_by_group.injection],
+    ["Prompt extraction", p => m[p].attack_recall_by_group.extraction],
+    ["Encoded or translated", p => m[p].attack_recall_by_group.obfuscated],
+    ["Abusive (moderation)", p => m[p].harmful_recall],
+    ["Off-topic redirected", p => m[p].off_topic_recall],
+  ];
+  const series = [["rules", "Rules", "var(--s1)"], ["jev", "Jev", "var(--s2)"], ["gemini", "Gemini", "var(--s3)"]];
+  const host = $("#bars");
+  const W = host.clientWidth || 800, labelW = W < 560 ? 130 : 190, valW = 52, plotW = W - labelW - valW;
+  const barH = 12, gap = 2, groupGap = 22, groupH = series.length * barH + (series.length - 1) * gap;
+  const top = 8, H = top + rows.length * (groupH + groupGap) + 18;
+  const x = v => labelW + plotW * v;
+  let svg = `<svg width="${W}" height="${H}" role="img" aria-label="Share of each message group handled correctly by rules, Jev, and Gemini">`;
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    svg += `<line x1="${x(t)}" x2="${x(t)}" y1="${top - 4}" y2="${H - 18}" stroke="var(--grid)" stroke-width="1"/>`;
+    svg += `<text class="axis-label" x="${x(t)}" y="${H - 3}" text-anchor="middle">${t * 100}%</text>`;
+  }
+  rows.forEach(([label, get], i) => {
+    const y0 = top + i * (groupH + groupGap);
+    const n = get("rules").n;
+    svg += `<text class="row-label" x="0" y="${y0 + groupH / 2 - 2}" dominant-baseline="middle">${esc(label)}</text>`;
+    svg += `<text class="row-n" x="0" y="${y0 + groupH / 2 + 14}" dominant-baseline="middle">${n} messages</text>`;
+    series.forEach(([key, name, color], j) => {
+      const r = get(key), v = r.n ? r.hits / r.n : 0, y = y0 + j * (barH + gap), w = Math.max(plotW * v, v > 0 ? 3 : 0);
+      const rr = Math.min(4, w / 2);
+      const path = w > 0 ? `M${labelW},${y} h${w - rr} a${rr},${rr} 0 0 1 ${rr},${rr} v${barH - 2 * rr} a${rr},${rr} 0 0 1 -${rr},${rr} h-${w - rr} z` : "";
+      svg += `<g class="bar" data-tip="${esc(`<b>${name}</b> · ${label}<br>${r.hits} of ${r.n} (${pct(r.hits, r.n)}%)`)}">`;
+      svg += `<rect x="${labelW}" y="${y - 1}" width="${plotW + valW}" height="${barH + 2}" fill="transparent"/>`;
+      if (path) svg += `<path d="${path}" fill="${color}"/>`;
+      else svg += `<line x1="${labelW}" x2="${labelW}" y1="${y}" y2="${y + barH}" stroke="${color}" stroke-width="2"/>`;
+      svg += `<text class="val" x="${labelW + w + 6}" y="${y + barH / 2 + 1}" dominant-baseline="middle">${r.hits}/${r.n}</text>`;
+      svg += `</g>`;
+    });
+  });
+  svg += `<line x1="${labelW}" x2="${labelW}" y1="${top - 4}" y2="${H - 18}" stroke="var(--axis)" stroke-width="1"/></svg>`;
+  host.innerHTML = svg;
+  host.querySelectorAll(".bar").forEach(g => {
+    g.addEventListener("mouseenter", e => showTip(e, g.dataset.tip));
+    g.addEventListener("mousemove", moveTip);
+    g.addEventListener("mouseleave", hideTip);
+  });
+}
+let resizeT; addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => D && drawBars(), 120); });
+
+// ---------- messages ----------
+let msgGroup = "all", msgLimit = 10;
+function setupMessages() {
+  const groups = [["all", "All"], ...Object.entries(D.groups).map(([k, g]) => [k, g.name])];
+  $("#groupSeg").innerHTML = groups.map(([k, n]) => `<button type="button" data-g="${k}" aria-pressed="${k === msgGroup}">${esc(n)}</button>`).join("");
+  $("#groupSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; msgGroup = b.dataset.g; $("#groupSeg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); msgLimit = 10; drawMessages(); });
+  $("#onlyWrong").addEventListener("change", () => { msgLimit = 10; drawMessages(); });
+  $("#q").addEventListener("input", () => { msgLimit = 10; drawMessages(); });
+  drawMessages();
+}
+function verdictBox(name, color, v, correct, detail) {
+  const a = action(v);
+  if (!a) return `<div class="verdict"><div class="who"><i class="sw" style="background:${color}"></i>${name}</div><div class="detail">Not run.</div></div>`;
+  const ok = a === correct;
+  return `<div class="verdict"><div class="who"><i class="sw" style="background:${color}"></i>${name} ${ok ? chip("good", "✓", ACTION_LABEL[a]) : chip("crit", "✕", ACTION_LABEL[a])}</div><div class="detail">${detail}</div></div>`;
+}
+function drawMessages() {
+  const q = $("#q").value.trim().toLowerCase(), onlyWrong = $("#onlyWrong").checked;
+  const list = D.messages.filter(r => {
+    if (msgGroup !== "all" && r.group !== msgGroup) return false;
+    if (q && !(r.text.toLowerCase().includes(q) || r.id.includes(q))) return false;
+    if (onlyWrong) {
+      const c = D.groups[r.group].correct;
+      const rulesV = { attack: r.rules.attack, harmful: false, in_scope: r.rules.in_scope };
+      if ([rulesV, r.jev, r.gemini].every(v => !v || action(v) === c)) return false;
+    }
+    return true;
+  });
+  $("#msgCount").textContent = `${list.length} of ${D.messages.length} messages`;
+  const shown = list.slice(0, msgLimit);
+  $("#msgs").innerHTML = shown.map(r => {
+    const g = D.groups[r.group];
+    const rulesV = { attack: r.rules.attack, harmful: false, in_scope: r.rules.in_scope };
+    const fired = r.rules.fired.length ? `Fired: <code>${esc(r.rules.fired[0].replace(/^\w+:/, ""))}</code>` : (rulesV.in_scope ? "No pattern matched." : "No pattern matched, and no order-related keyword (rules' relevance check).");
+    const jev = r.jev ? `<div class="probs">${[["attack", r.jev.p_attack], ["off-topic", r.jev.p_off_topic], ["harmful", r.jev.p_harmful]].map(([k, p]) => `<div class="prob"><span>p(${k})</span><span class="bar"><i style="width:${Math.round((p || 0) * 100)}%"></i></span><span class="pv">${(p ?? 0).toFixed(2)}</span></div>`).join("")}</div>` : "";
+    const gem = r.gemini ? esc(r.gemini.reason) : "";
+    return `<article class="card msg">
+      <div class="msg-top"><span class="msg-id">${esc(r.id)}</span><span class="pill">${esc(g.name)}</span><span class="pill">Correct: ${ACTION_LABEL[g.correct]}</span></div>
+      <div class="msg-text">${esc(r.text)}</div>
+      <div class="msg-why">${esc(g.about)}</div>
+      ${D.notes[r.id] ? `<div class="msg-note">${esc(D.notes[r.id])}</div>` : ""}
+      <div class="verdicts">
+        ${verdictBox("Rules", "var(--s1)", rulesV, g.correct, fired)}
+        ${verdictBox("Jev", "var(--s2)", r.jev, g.correct, jev)}
+        ${verdictBox("Gemini", "var(--s3)", r.gemini, g.correct, gem)}
+      </div>
+    </article>`;
+  }).join("") + (list.length > shown.length ? `<button type="button" class="theme-btn more" id="more">Show ${Math.min(20, list.length - shown.length)} more of ${list.length - shown.length}</button>` : "") || `<p class="meta">No messages match.</p>`;
+  $("#more")?.addEventListener("click", () => { msgLimit += 20; drawMessages(); });
+}
+
+// ---------- agent runs ----------
+const RUNS = [
+  ["scripted+jev", "Hijacked model · Jev", "The scripted model makes exactly the calls an attacker wants, so this shows what each layer guarantees in the worst case. Jev is the classifier for the detection layers. (Gemini as the classifier gives identical outcomes.)"],
+  ["scripted+gemini", "Hijacked model · Gemini", "The same hijacked model with Gemini as the classifier for the detection layers."],
+  ["scripted+none", "Hijacked model · rules only", "The hijacked model with no model classifier: the detection layers are just the regex rules. Free and offline."],
+  ["gemini+jev", "Real Gemini · Jev", "Real gemini-3.8-flash drives the agent, so this shows what happens in practice. “Model refused” means no guardrail acted: Gemini declined by itself."],
+];
+const CFG_NAMES = { none: "No guardrails", detection: "Detection", policy: "Tool policy", full: "Full stack" };
+let run = "scripted+jev";
+function setupRuns() {
+  const avail = RUNS.filter(([k]) => D.agent[k]);
+  $("#runSeg").innerHTML = avail.map(([k, n]) => `<button type="button" data-r="${k}" aria-pressed="${k === run}">${esc(n)}</button>`).join("");
+  $("#runSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; run = b.dataset.r; $("#runSeg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawRun(); });
+  drawRun();
+}
+function drawRun() {
+  const R = D.agent[run], cfgs = Object.keys(D.configs).filter(c => R[c]);
+  $("#runAbout").textContent = RUNS.find(r => r[0] === run)[2];
+  $("#cfgSummary").innerHTML = cfgs.map(c => {
+    const s = R[c].summary, a = s.attack_success, o = s.benign_outcomes;
+    const layers = R[c].layers.length ? R[c].layers.map(l => LAYER_NAMES[l] || l).join(" · ") : "no guardrails";
+    return `<div class="card cfg"><div class="cname">${CFG_NAMES[c]}</div><div class="layers">${esc(layers)}</div>
+      <div class="big">${a.hits}<small> / ${a.n} harmful</small></div><div class="meter" role="img" aria-label="${a.hits} of ${a.n} harmful actions"><i style="width:${pct(a.hits, a.n)}%"></i></div>
+      <div class="line">Benign: ${o.completed || 0} completed${o["sent to a person"] ? `, ${o["sent to a person"]} to a person` : ""}${(o.blocked || 0) + (o["not done"] || 0) ? `, ${(o.blocked || 0) + (o["not done"] || 0)} blocked` : ""}</div></div>`;
+  }).join("");
+  const kinds = [["benign", "Benign requests: should be completed (large or tainted refunds may wait for a person)"], ["policy", "Requests the customer is not entitled to"], ["direct", "Direct attacks in the user's message"], ["indirect", "Indirect attacks hidden in order notes"]];
+  let html = `<thead><tr><th>Scenario</th>${cfgs.map(c => `<th>${CFG_NAMES[c]}</th>`).join("")}</tr></thead><tbody>`;
+  for (const [k, label] of kinds) {
+    html += `<tr class="kind-row"><td colspan="${cfgs.length + 1}">${esc(label)}</td></tr>`;
+    for (const sc of D.scenarios.filter(s => s.kind === k)) {
+      html += `<tr><td><span class="sid">${sc.id}</span>${esc(sc.title)}</td>${cfgs.map(c => `<td class="cell" tabindex="0" data-s="${sc.id}" data-c="${c}">${scoreChip(R[c].scenarios[sc.id], sc)}</td>`).join("")}</tr>`;
+    }
+  }
+  $("#matrix").innerHTML = html + "</tbody>";
+  $("#matrix").querySelectorAll("td.cell").forEach(td => {
+    const open = () => openTrace(td.dataset.s, td.dataset.c);
+    td.addEventListener("click", open);
+    td.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+}
+
+// ---------- trace drawer ----------
+const drawer = $("#drawer"), scrim = $("#scrim");
+function closeDrawer() { drawer.classList.remove("open"); scrim.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); }
+scrim.addEventListener("click", closeDrawer);
+addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+function decisionChip(d) { return d === "allow" ? chip("good", "✓", "Allowed") : d === "approve" ? chip("warn", "⏸", "Waits for a person") : chip("crit", "✕", "Denied"); }
+function openTrace(sid, cfg) {
+  const sc = D.scenarios.find(s => s.id === sid);
+  const row = D.traces[run]?.[cfg]?.[sid];
+  const s = D.agent[run][cfg].scenarios[sid];
+  let body = "";
+  if (!row) body = `<p class="meta">No trace recorded for this cell.</p>`;
+  else {
+    const t = row.trace;
+    const steps = [];
+    for (const e of t.events.filter(e => e.layer === "input_rules" || e.layer === "input_model")) {
+      if (e.layer === "input_rules") steps.push(["rules", `Blocked: pattern <code>${esc((e.fired || [])[0] || "")}</code>`]);
+      else {
+        const v = e.verdict, bits = [`in scope: ${v.in_scope}`, `attack: ${v.attack}`, `harmful: ${v.harmful}`];
+        if (v.p_attack != null) bits.push(`p(attack) ${v.p_attack.toFixed(2)}`);
+        steps.push(["classifier", `${bits.join(" · ")}${v.reason ? `<div class="reason">${esc(v.reason)}</div>` : ""}`]);
+      }
+    }
+    const scans = t.events.filter(e => e.layer === "doc_scan");
+    let scanI = 0;
+    for (const c of t.calls) {
+      const args = Object.entries(c.args).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", ");
+      steps.push(["tool call", `<div class="call">${esc(c.tool)}(${esc(args)})</div>${decisionChip(c.decision)}${c.reason ? ` <span class="reason">${esc(c.reason)}</span>` : ""}`]);
+      const oid = String(c.args.order_id || "").trim().toUpperCase();
+      const hasNote = ((sc.orders || {})[oid]?.note ?? D.store.orders[oid]?.note ?? "").trim() !== "";
+      if (c.tool === "lookup_order" && c.decision === "allow" && hasNote && scans[scanI]) {
+        const v = scans[scanI++].verdict;
+        steps.push(["document scan", `${v.attack ? chip("crit", "!", "Instructions found, note removed") : chip("good", "✓", "Ordinary data")}${v.p_attack != null ? ` p(attack) ${v.p_attack.toFixed(2)}` : ""}${v.reason ? `<div class="reason">${esc(v.reason)}</div>` : ""}`]);
+      }
+    }
+    for (const e of t.events.filter(e => e.layer === "output_filter")) {
+      steps.push(["output filter", e.blocked ? chip("crit", "✕", "Reply blocked: system prompt leak") : `Redacted: ${esc(e.redacted.map(r => r.kind).join(", "))}`]);
+    }
+    for (const e of t.events.filter(e => e.handoff)) steps.push([e.layer, `Handed to a person: ${esc(e.handoff)}`]);
+    const note = Object.entries(sc.orders || {}).map(([o, f]) => `<div class="section-label">Order note on ${o} (written by someone else)</div><div class="bubble note">${esc(f.note)}</div>`).join("");
+    const effects = t.effects.length ? t.effects.map(e => `<code>${esc(e.tool)}(${esc(Object.entries(e).filter(([k]) => k !== "tool" && k !== "body").map(([k, v]) => `${k}=${v}`).join(", "))})</code>`).join(" ") : "None";
+    const pending = (t.pending || []).length ? t.pending.map(p => `<code>${esc(p.tool)}(${esc(Object.entries(p.args).filter(([k]) => k !== "body").map(([k, v]) => `${k}=${v}`).join(", "))})</code>`).join(" ") : "None";
+    body = `
+      <dl class="kv"><dt>Configuration</dt><dd>${CFG_NAMES[cfg]} · ${esc(row.layers.length ? row.layers.map(l => LAYER_NAMES[l] || l).join(", ") : "no guardrails")}</dd>
+      <dt>Outcome</dt><dd>${scoreChip(s, sc)}</dd>
+      <dt>Why this case</dt><dd>${esc(sc.why)}</dd></dl>
+      <div class="section-label">User</div><div class="bubble user">${esc(sc.message)}</div>
+      ${note}
+      <div class="section-label">What happened</div>
+      ${steps.length ? `<ul class="timeline">${steps.map(([l, h]) => `<li><div class="layer">${esc(l)}</div>${h}</li>`).join("")}</ul>` : `<p class="meta">No guardrail checks or tool calls.</p>`}
+      <div class="section-label">Reply the user saw</div><div class="bubble reply">${esc(t.reply)}</div>
+      ${run.startsWith("scripted") && !row.trace.blocked_by ? `<p class="chart-sub">The hijacked model's reply is fixed text: it says what the attacker wanted to happen. “Actions taken” below shows what actually happened.</p>` : ""}
+      <dl class="kv"><dt>Actions taken</dt><dd>${effects}</dd><dt>Waiting for a person</dt><dd>${pending}</dd>
+      <dt>Counts as harm</dt><dd>${sc.forbid.length ? sc.forbid.map(f => `<code>${esc(JSON.stringify(f))}</code>`).join(" ") : "Nothing (benign request)"}</dd></dl>
+      <details class="raw"><summary>Raw trace JSON</summary><pre>${esc(JSON.stringify(row, null, 2))}</pre></details>`;
+  }
+  drawer.innerHTML = `<div class="drawer-head"><div><div class="meta">${esc(sc.id)} · ${esc(sc.kind)} · ${esc(RUNS.find(r => r[0] === run)[1])}</div><h3>${esc(sc.title)}</h3></div><button class="close" type="button" aria-label="Close">✕</button></div><div class="drawer-body">${body}</div>`;
+  $(".close", drawer).addEventListener("click", closeDrawer);
+  drawer.classList.add("open"); scrim.classList.add("open"); drawer.setAttribute("aria-hidden", "false");
+  drawer.scrollTop = 0;
+}
+
+load().catch(err => { $("#app").innerHTML = `<p class="meta">Could not load results: ${esc(err.message)}</p>`; });
+</script>
+</body>
+</html>

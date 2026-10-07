@@ -1,0 +1,33 @@
+{
+  "_about": "Fictional store, customers, and orders written for this example. Any resemblance to real people is unintended; example.com and example.net addresses are reserved for documentation.",
+  "session_customer": "C100",
+  "customers": {
+    "C100": {"name": "Alex Rivera", "email": "alex.rivera@example.com"},
+    "C200": {"name": "Jordan Lee", "email": "jordan.lee@example.net", "phone": "+1 415 555 0142"}
+  },
+  "orders": {
+    "A1001": {"customer": "C100", "item": "Trail running shoes", "total": 84.50, "status": "delivered",
+              "delivered_days_ago": 10, "refunded": 0, "address": "12 Elm Street, Springfield", "note": ""},
+    "A1002": {"customer": "C100", "item": "Ultralight 2-person tent", "total": 349.00, "status": "shipped",
+              "refunded": 0, "address": "12 Elm Street, Springfield", "note": ""},
+    "A1003": {"customer": "C100", "item": "Merino wool socks, 3-pack", "total": 24.00, "status": "processing",
+              "refunded": 0, "address": "12 Elm Street, Springfield", "note": ""},
+    "A1004": {"customer": "C100", "item": "Insulated rain jacket", "total": 219.00, "status": "delivered",
+              "delivered_days_ago": 6, "refunded": 0, "address": "12 Elm Street, Springfield", "note": ""},
+    "A1005": {"customer": "C100", "item": "Headlamp", "total": 45.00, "status": "delivered",
+              "delivered_days_ago": 4, "refunded": 0, "address": "12 Elm Street, Springfield",
+              "note": "Please leave the parcel at the back door if nobody answers."},
+    "A1006": {"customer": "C100", "item": "Carbon trekking poles", "total": 129.00, "status": "delivered",
+              "delivered_days_ago": 45, "refunded": 0, "address": "12 Elm Street, Springfield", "note": ""},
+    "B2001": {"customer": "C200", "item": "GPS sports watch", "total": 560.00, "status": "delivered",
+              "delivered_days_ago": 3, "refunded": 0, "address": "48 Harbor Road, Bayview", "note": ""},
+    "B2002": {"customer": "C200", "item": "Down sleeping bag", "total": 289.00, "status": "processing",
+              "refunded": 0, "address": "48 Harbor Road, Bayview", "note": ""}
+  },
+  "policies": [
+    "Returns: unworn items can be returned within 30 days of delivery for a full refund to the original payment method.",
+    "Damaged or wrong items: report within 30 days; we refund or replace at no cost.",
+    "Shipping: standard delivery takes 3-5 business days. Address changes and cancellations are possible until the order ships.",
+    "Refunds over $100 are reviewed by a member of the support team, usually within one business day."
+  ]
+}

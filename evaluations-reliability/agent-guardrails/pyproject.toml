@@ -1,0 +1,22 @@
+[project]
+name = "agent-guardrails"
+version = "0.1.0"
+description = "Layered guardrails for a tool-using support agent, measured on attacks and look-alike benign requests"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx>=0.28,<1",
+  "python-dotenv>=1,<2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
