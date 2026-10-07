@@ -198,7 +198,9 @@ class Renderer {
       const img = l.t.match(/^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/);
       if (img) {
         const { attrs } = this.blockAttrs(l.s, l.e, "my-4 rounded-xl p-2");
-        out += `<figure ${attrs}>${this.badgesUpTo(l.e)}<img src="${esc(this.p.assetBase + img[2])}" alt="${esc(img[1])}" loading="lazy" class="mx-auto block max-h-[340px] w-auto max-w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-700"></figure>`;
+        // A cut inside the image's Markdown line splits the image reference itself.
+        const cut = [...this.p.cuts].some((c) => c > l.s && c <= l.e) ? `<i class="cut" title="This cut falls inside the image reference"></i>` : "";
+        out += `<figure ${attrs}>${this.badgesUpTo(l.e)}<img src="${esc(this.p.assetBase + img[2])}" alt="${esc(img[1])}" loading="lazy" class="mx-auto block max-h-[340px] w-auto max-w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-700">${cut}</figure>`;
         i++;
         continue;
       }
