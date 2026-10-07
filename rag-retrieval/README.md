@@ -13,7 +13,7 @@ Use this category for document processing, search, embeddings, chunking, reranki
 | Project | What it teaches | Status |
 | --- | --- | --- |
 | [Biomedical hybrid search](biomedical-search/README.md) | BM25, dense retrieval, reciprocal rank fusion, optional Gemini or TypeSafe Jev reranking, cited answers, and retrieval evaluation | Runnable Python example; historical baseline included |
-| [Chunking by document type](chunking-strategies/README.md) | A web app that highlights how ten document types (docs, FAQ, report, code, CSV, contract, transcript, a report with charts, a slide deck, a manual with diagrams) are chunked, including how images stay linked to the text that cites them,: where each is cut, what stays together, and the context attached to every chunk, next to a fixed-size split | Runnable TypeScript app |
+| [Chunking by document type](chunking-strategies/README.md) | A web app that highlights how ten document types (docs, FAQ, report, code, CSV, contract, transcript, a report with charts, a slide deck, a manual with diagrams) are chunked, including how images stay linked to the text that cites them,: where each is cut, what stays together, and the context attached to every chunk, next to a fixed-size split | Runnable TypeScript app; [live](https://chunking-strategies-blond.vercel.app) |
 | [Knowledge graph from logs](../agents/incident-response-agent/README.md#memory-and-knowledge) | Extracting entities and relationships from system logs into Neo4j and feeding graph context to an agent | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents) |
 
 ## Adding a contribution

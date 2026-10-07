@@ -8,7 +8,7 @@ Before a RAG system can retrieve anything, it splits documents into chunks. The 
 - **A fixed-size split for comparison,** with red marks wherever a cut lands inside a sentence or line.
 - **A size slider** (100–800 tokens) to see how the limit changes the result.
 
-It runs entirely in the browser, with no API keys.
+It runs entirely in the browser, with no API keys. **Live:** [chunking-strategies-blond.vercel.app](https://chunking-strategies-blond.vercel.app).
 
 ## Run it
 
@@ -60,6 +60,10 @@ The app's "How production systems handle images" panel summarizes the three appr
 3. **Embed whole pages** with ColPali-style late interaction. In the [ColPali paper](https://arxiv.org/abs/2407.01449) this scored nDCG@5 81.3 on ViDoRe, against 67.0 for a parse-and-caption pipeline.
 
 We found no platform that documents resolving "see Figure 3" to a figure elsewhere in the document. The reference matching here is a simple, explicit step you can add after any parser.
+
+## Deployment
+
+The app is a static site on Vercel at [chunking-strategies-blond.vercel.app](https://chunking-strategies-blond.vercel.app), in the project `exclusive1s-projects/chunking-strategies`. It makes no API calls, so serving it costs nothing beyond hosting. To redeploy, run `npm run export`, then `vercel deploy --prod` from `dist/`. The export keeps `dist/.vercel`, the local project link.
 
 ## Layout
 
