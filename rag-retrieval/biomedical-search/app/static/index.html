@@ -10,8 +10,8 @@
     <meta name="theme-color" content="#0d5c4c" />
     <title>Helix — Biomedical evidence search</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260918-evaluation-cleanup" />
-    <script src="/static/app.js?v=20260918-evaluation-cleanup" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=20261002-jev-trace" />
+    <script src="/static/app.js?v=20261002-jev-trace" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -103,6 +103,13 @@
                   aria-hidden="true"
                 ></span
                 ><span>Query expansion</span></label
+              ><label class="count-label rerank-label"
+                ><span class="rerank-caption">Rerank</span
+                ><select id="rerank" aria-describedby="rerank-note">
+                  <option value="off" selected>Off</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="jev">TypeSafe Jev</option>
+                </select></label
               ><label class="count-label"
                 ><span class="sr-only">Number of results</span
                 ><select id="top-k">
@@ -120,6 +127,7 @@
           <span class="small-label">TRY A QUESTION</span>
           <div id="sample-questions"></div>
         </div>
+        <p id="rerank-note" class="rerank-note" hidden></p>
         <p id="form-error" class="error-message" role="alert" hidden></p>
         <div id="loading-search" class="loading-strip" role="status" hidden>
           <span class="spinner"></span
@@ -395,6 +403,42 @@
         </div>
       </section>
     </main>
+    <dialog id="trace-dialog" class="trace-dialog" aria-labelledby="trace-title">
+      <div class="trace-head">
+        <div>
+          <span class="eyebrow">TYPESAFE JEV CALL</span>
+          <h2 id="trace-title">Relevance grade</h2>
+          <p id="trace-subtitle" class="trace-subtitle"></p>
+        </div>
+        <button type="button" class="trace-close" id="trace-close" aria-label="Close">×</button>
+      </div>
+      <div class="trace-body">
+        <div id="trace-stats" class="trace-stats"></div>
+        <section class="trace-section">
+          <h3>How Jev answered</h3>
+          <p class="trace-help">
+            Jev returns a probability for each grade. The score is the
+            probability-weighted average grade; Helix sorts by it.
+          </p>
+          <div id="trace-levels" class="trace-levels"></div>
+        </section>
+        <section class="trace-section">
+          <div class="trace-section-head">
+            <h3>Request we sent</h3>
+            <button type="button" class="text-button" data-copy="request">Copy JSON</button>
+          </div>
+          <p id="trace-endpoint" class="trace-endpoint"></p>
+          <pre id="trace-request" class="trace-json"></pre>
+        </section>
+        <section class="trace-section">
+          <div class="trace-section-head">
+            <h3>Response we received</h3>
+            <button type="button" class="text-button" data-copy="response">Copy JSON</button>
+          </div>
+          <pre id="trace-response" class="trace-json"></pre>
+        </section>
+      </div>
+    </dialog>
     <footer class="page-footer">
       <span
         >helix. <span class="footer-separator">/</span> Biomedical hybrid

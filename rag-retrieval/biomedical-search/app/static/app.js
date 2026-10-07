@@ -18,7 +18,9 @@ const state = {
   answerEpoch: 0,
   generating: false,
   summary: null,
+  rerankers: null,
 };
+const rerankName = { gemini: "Gemini", jev: "TypeSafe Jev" };
 const niceName = {
   lexical: "Lexical / BM25",
   dense: "Dense",
@@ -71,6 +73,21 @@ async function refreshStatus() {
       }
     });
     $("#search-button").disabled = !state.ready || !$("#loading-search").hidden;
+    state.rerankers = result.rerankers;
+    for (const option of $("#rerank").options) {
+      if (option.value === "off") continue;
+      option.disabled = !result.rerankers.available[option.value];
+      // Keep labels short: the longest option sets the select's width.
+      option.title = option.disabled ? "Not configured on this server" : "";
+      if (option.disabled && option.selected) $("#rerank").value = "off";
+    }
+    const missing = Object.entries(result.rerankers.available)
+      .filter(([, ready]) => !ready)
+      .map(([name]) => rerankName[name]);
+    $("#rerank").title = missing.length
+      ? `${missing.join(" and ")} reranking is not configured on this server.`
+      : "";
+    describeReranker();
     $("#answer-model").textContent =
       result.llm.model + " · " + result.llm.provider;
     if (result.manifest) {
@@ -124,16 +141,45 @@ async function loadExamples() {
   }
 }
 
+function describeReranker() {
+  const value = $("#rerank").value;
+  const info = state.rerankers;
+  $("#rerank-note").hidden = value === "off" || !info;
+  if (value === "off" || !info) return;
+  const how =
+    value === "jev"
+      ? `${info.jev_model} answers one Score question per passage, in parallel`
+      : `${info.gemini_model} grades the whole shortlist in one call`;
+  $("#rerank-note").textContent =
+    `Reranking retrieves the top ${info.depth} passages, then ${how}: 0 irrelevant, 1 related only, 2 partial, 3 direct answer. Equal grades keep their retrieval order.`;
+}
+
+function movement(p) {
+  if (p.retrieval_rank == null) return "";
+  const delta = p.retrieval_rank - p.rank;
+  const title = `Rank ${p.retrieval_rank} before reranking`;
+  if (delta === 0)
+    return `<span class="move-tag" title="${title}">= ${p.retrieval_rank}</span>`;
+  return `<span class="move-tag ${delta > 0 ? "up" : "down"}" title="${title}">${delta > 0 ? "↑" : "↓"} from ${p.retrieval_rank}</span>`;
+}
+
 function renderEvidence() {
   const result = state.search;
   if (result.variant) $("#expand").checked = result.configuration.expand;
   $("#results").hidden = false;
   $("#welcome").hidden = true;
+  const rerank = result.rerank;
   $("#results-title").textContent =
-    `${result.evidence.length} passages, ranked by ${niceName[result.variant] || (result.mode === "hybrid" ? "hybrid search" : result.mode + " search")}`;
+    `${result.evidence.length} passages, ranked by ${niceName[result.variant] || (result.mode === "hybrid" ? "hybrid search" : result.mode + " search")}` +
+    (rerank ? `, reranked by ${rerankName[rerank.reranker]}` : "");
   $("#retrieval-time").textContent =
-    `${Math.round(result.retrieval_ms)} ms retrieval`;
-  $("#score-type").textContent = result.score_type;
+    `${Math.round(result.retrieval_ms)} ms retrieval` +
+    (rerank
+      ? ` · ${Math.round(rerank.latency_ms)} ms rerank (${rerank.calls} ${rerank.calls === 1 ? "call" : "calls"}, ${rerank.input_tokens.toLocaleString()} input tokens${rerank.cost_usd == null ? "" : ", $" + Number(rerank.cost_usd).toFixed(5)})`
+      : "");
+  $("#score-type").textContent = rerank
+    ? `relevance grade 0–3 · ${rerank.model}`
+    : result.score_type;
   $("#evidence-count").textContent = `(${result.evidence.length})`;
   $("#query-trail").innerHTML =
     `<span class="small-label">SEARCH QUERIES</span>` +
@@ -154,7 +200,7 @@ function renderEvidence() {
             p.text.length > 600
               ? `<details class="evidence-details"><summary>Read full passage</summary><p class="evidence-text">${escapeHTML(p.text)}</p></details>`
               : "";
-          return `<article class="evidence-card ${state.selected.has(p.id) ? "selected" : ""}" id="passage-${escapeHTML(p.id)}" tabindex="-1"><div class="evidence-header"><span class="rank-tag">${String(p.rank).padStart(2, "0")}</span><span class="passage-id">PMID ${escapeHTML(p.id)}</span><span class="score-tag" title="${escapeHTML(result.score_type)}">${Number(p.score).toFixed(4)}</span></div><p class="evidence-text">${escapeHTML(excerpt)}</p>${detail}<div class="evidence-footer"><a class="source-link" href="${escapeHTML(p.source_url)}" target="_blank" rel="noopener noreferrer">PubMed record ↗</a><label class="select-label"><input type="checkbox" data-passage="${escapeHTML(p.id)}" ${state.selected.has(p.id) ? "checked" : ""}>Use in answer</label></div><div class="component-scores">${p.lexical_score != null ? "Original query BM25 " + Number(p.lexical_score).toFixed(2) : ""}${p.lexical_score != null && p.dense_score != null ? " · " : ""}${p.dense_score != null ? "Original query cosine " + Number(p.dense_score).toFixed(3) : ""}</div></article>`;
+          return `<article class="evidence-card ${state.selected.has(p.id) ? "selected" : ""}" id="passage-${escapeHTML(p.id)}" tabindex="-1"><div class="evidence-header"><span class="rank-tag">${String(p.rank).padStart(2, "0")}</span><span class="passage-id">PMID ${escapeHTML(p.id)}</span>${movement(p)}${p.rerank_score != null ? `<span class="score-tag" title="${escapeHTML(rerankName[rerank.reranker])} relevance grade from 0 (irrelevant) to 3 (direct answer)">${Number(p.rerank_score).toFixed(2)} / 3</span>` : `<span class="score-tag" title="${escapeHTML(result.score_type)}">${Number(p.score).toFixed(4)}</span>`}</div><p class="evidence-text">${escapeHTML(excerpt)}</p>${detail}<div class="evidence-footer"><a class="source-link" href="${escapeHTML(p.source_url)}" target="_blank" rel="noopener noreferrer">PubMed record ↗</a>${p.rerank_trace ? `<button type="button" class="text-button trace-button" data-trace="${escapeHTML(p.id)}">Inspect Jev call</button>` : ""}<label class="select-label"><input type="checkbox" data-passage="${escapeHTML(p.id)}" ${state.selected.has(p.id) ? "checked" : ""}>Use in answer</label></div><div class="component-scores">${p.rerank_score != null ? escapeHTML(result.score_type) + " " + Number(p.score).toFixed(4) + (p.lexical_score != null || p.dense_score != null ? " · " : "") : ""}${p.lexical_score != null ? "Original query BM25 " + Number(p.lexical_score).toFixed(2) : ""}${p.lexical_score != null && p.dense_score != null ? " · " : ""}${p.dense_score != null ? "Original query cosine " + Number(p.dense_score).toFixed(3) : ""}</div></article>`;
         })
         .join("")
     : '<div class="empty-result">No matching passages were found. Try another biomedical term or enable dense retrieval.</div>';
@@ -279,6 +325,7 @@ $("#search-form").addEventListener("submit", async (event) => {
         mode: $('input[name="mode"]:checked').value,
         expand: $("#expand").checked,
         top_k: Number($("#top-k").value),
+        rerank: $("#rerank").value,
       }),
     });
     if (epoch !== state.epoch) return;
@@ -344,6 +391,62 @@ document.addEventListener("keydown", (event) => {
 document.querySelectorAll('input[name="mode"]').forEach((input) =>
   input.addEventListener("change", () => {
     $("#expand").disabled = input.value === "best" && input.checked;
+  }),
+);
+$("#rerank").addEventListener("change", describeReranker);
+
+function openTrace(id) {
+  const passage = state.search?.evidence.find((p) => p.id === id);
+  const trace = passage?.rerank_trace;
+  if (!trace) return;
+  const answer = trace.response?.answers?.relevance || {};
+  const usage = trace.response?.usage || {};
+  const levels = trace.request.body.questions.relevance.criteria;
+  $("#trace-title").textContent = `PMID ${passage.id}`;
+  $("#trace-subtitle").textContent =
+    `Rank ${passage.rank} after reranking · rank ${passage.retrieval_rank} from retrieval`;
+  const stat = (label, value) =>
+    `<div class="trace-stat"><span>${label}</span><strong>${escapeHTML(value)}</strong></div>`;
+  $("#trace-stats").innerHTML =
+    stat("SCORE", `${Number(answer.score).toFixed(2)} / ${levels.length - 1}`) +
+    stat("CONFIDENCE", answer.confidence == null ? "—" : Number(answer.confidence).toFixed(2)) +
+    stat("MODEL", trace.response?.model || trace.request.body.model) +
+    stat("LATENCY", `${Math.round(trace.latency_ms)} ms`) +
+    stat("INPUT TOKENS", usage.input_tokens == null ? "—" : usage.input_tokens.toLocaleString());
+  $("#trace-levels").innerHTML = levels
+    .map((text, level) => {
+      const probability = Number(answer.probabilities?.[String(level)] ?? 0);
+      return `<div class="trace-level"><span class="trace-level-num">${level}</span><span class="trace-level-text">${escapeHTML(text)}</span><span class="trace-level-pct">${(probability * 100).toFixed(1)}%</span><div class="trace-bar" aria-hidden="true"><span style="width:${(probability * 100).toFixed(1)}%"></span></div></div>`;
+    })
+    .join("");
+  $("#trace-endpoint").innerHTML =
+    `<code>${escapeHTML(trace.request.method)} ${escapeHTML(trace.request.url)}</code> · Authorization: Bearer key (not shown)` +
+    (trace.attempts > 1 ? ` · ${trace.attempts} attempts after rate limiting` : "");
+  $("#trace-request").textContent = JSON.stringify(trace.request.body, null, 2);
+  $("#trace-response").textContent = JSON.stringify(trace.response, null, 2);
+  $("#trace-dialog").showModal();
+  $("#trace-dialog .trace-body").scrollTop = 0;
+}
+
+$("#evidence-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-trace]");
+  if (button) openTrace(button.dataset.trace);
+});
+$("#trace-close").addEventListener("click", () => $("#trace-dialog").close());
+$("#trace-dialog").addEventListener("click", (event) => {
+  // A click on the backdrop lands on the dialog element itself.
+  if (event.target === event.currentTarget) event.currentTarget.close();
+});
+document.querySelectorAll("[data-copy]").forEach((button) =>
+  button.addEventListener("click", async () => {
+    const text = $(`#trace-${button.dataset.copy}`).textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copied";
+    } catch {
+      button.textContent = "Copy failed";
+    }
+    setTimeout(() => (button.textContent = "Copy JSON"), 1500);
   }),
 );
 $("#export-search").addEventListener("click", () => {

@@ -2,7 +2,7 @@
 
 A biomedical RAG example for comparing lexical search, dense retrieval, and hybrid fusion, then inspecting the evidence behind generated answers.
 The local UI supports BM25, neural dense retrieval, hybrid fusion, bounded query expansion,
-evidence selection, grounded answers, inline passage citations, and an explicit insufficient-evidence state.
+optional second-stage reranking with Gemini or TypeSafe Jev, evidence selection, grounded answers, inline passage citations, and an explicit insufficient-evidence state.
 The same pipeline powers a reproducible five-configuration benchmark on 100 fixed questions.
 
 ## Run locally
@@ -33,6 +33,45 @@ Click a citation to inspect its passage, or expand “Inspect exact context” t
 Preparation downloads the dataset (~25 MB), batches remote embedding calls, and checkpoints progress.
 Rerunning an interrupted build resumes with the same model/backend. Model and index files stay out of source control.
 Set optional token prices in `.env` to estimate generation costs; unknown API costs are reported as unknown.
+
+## Reranking
+
+The **Rerank** control adds a second stage after retrieval. With reranking on, the search fetches the top
+30 candidates (`RERANK_DEPTH`), grades each one against the question, and keeps the requested top 5/10/20.
+Both rerankers use the same four grades, so their scores are comparable:
+
+| Grade | Meaning |
+|---|---|
+| 0 | Irrelevant: not about the subject of the question |
+| 1 | Related only: same topic, but nothing that helps answer the question |
+| 2 | Partial: some evidence toward the answer, not a direct answer |
+| 3 | Direct: states the fact, finding, or mechanism the question asks for |
+
+| Reranker | How it grades | Configuration |
+|---|---|---|
+| Gemini | One structured call grades the whole shortlist. The response must grade every candidate exactly once, or the search fails rather than showing a partial ranking. | `GEMINI_API_KEY`, `RERANK_GEMINI_MODEL` (defaults to `ANSWER_MODEL`) |
+| TypeSafe Jev | One [Score question](https://docs.typesafe.ai/primitives/score) per (question, passage) pair, sent in parallel, following TypeSafe's [re-ranking cookbook](https://docs.typesafe.ai/cookbooks/rerank_typesafe). Jev returns a probability-weighted grade between 0 and 3. | `TYPESAFE_API_KEY`, `RERANK_JEV_MODEL` (default `jev-1.13.0`), `RERANK_WORKERS` (default 8) |
+
+Sorting and tie-breaking happen in code: equal grades keep their retrieval order. Each passage card
+shows its grade and how far it moved (for example, ↑ from 7). The result header shows the rerank latency,
+number of calls, input tokens, and estimated cost. The search event log records the same usage.
+Both rerankers read the same 1,800-character excerpt that the answer model receives.
+After a Jev rerank, each card has an **Inspect Jev call** button. It opens the exact request body sent to
+TypeSafe for that passage (the API key travels in a header and is never shown) and the full JSON response,
+including the probability Jev assigned to each grade. The same traces are included in **Export JSON**.
+
+Reranking is off by default and is configured only on the server. A reranker without its key appears
+disabled in the menu. If a reranker fails, the search returns an error instead of silently falling back to
+the retrieval order. Turn reranking off to search without it.
+
+Costs: Gemini reranking adds one call of roughly 30 excerpts per search. Jev adds 30 small calls per
+search. TypeSafe charges input tokens only; its [models page](https://docs.typesafe.ai/models) listed
+$0.042 per million input tokens for `jev-1.13.0` on 2026-10-02, about $0.001 per reranked search.
+Set `TYPESAFE_INPUT_USD_PER_MILLION` to show estimated Jev costs. TypeSafe's published rate limits (40
+requests per second) can change; requests that hit them are retried a bounded number of times.
+
+**Not yet measured:** the reranking stages have not been run on the fixed 100-query benchmark, so this
+README makes no claim that either reranker improves Recall or nDCG over the retrieval configurations below.
 
 ## Dataset and identity
 
@@ -137,13 +176,13 @@ uv run pytest
 uv run ruff check app scripts tests
 ```
 
-Tests cover hand-calculated retrieval metrics, tied and zero-hit ranking, weighted fusion,
+Tests cover hand-calculated retrieval metrics, reranker request shapes, grade validation, tie order, bounded retries, tied and zero-hit ranking, weighted fusion,
 safe relevance-ID parsing, bounded expansions/context, citation rejection, abstention structure,
 and API rejection of context injection. Interactive API documentation is available at `/docs`.
 
 - `GET /api/status`: readiness, corpus manifest, configured model availability.
 - `GET /api/questions`: sample questions, with no gold data.
-- `POST /api/search`: query, mode, expansion switch, top-k; returns evidence and a search ID.
+- `POST /api/search`: query, mode, expansion switch, top-k, and `rerank` (`off`, `gemini`, or `jev`); returns evidence and a search ID.
 - `POST /api/answer`: search ID and up to five distinct retrieved passage IDs.
 - `GET /api/experiments`: measured benchmark summary.
 - `GET /api/experiments/report`: downloadable evaluation report.
@@ -169,6 +208,8 @@ with `vercel deploy --prod`. The `.vercelignore` includes the prepared `data/pas
 artifacts remain Git-ignored; a Git-only deployment needs a separate index preparation step.
 Set `GEMINI_API_KEY` and a random `SEARCH_SIGNING_SECRET` of at least 32 bytes in Vercel's environment
 settings. The defaults use Gemini for embeddings and generation. No embedding rebuild runs at deploy time.
+Gemini reranking uses the same key. Jev reranking stays disabled unless `TYPESAFE_API_KEY` is also set,
+and each reranked search then spends that TypeSafe account's quota.
 
 Search tokens preserve the retrieved evidence for one hour without requiring instance-local memory.
 Production events go to Vercel runtime logs rather than a filesystem history; log retention follows

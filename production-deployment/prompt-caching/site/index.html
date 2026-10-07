@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Caching, Measured</title>
+<meta name="description" content="How prompt caching works on Claude, Gemini and OpenAI, the layout mistakes that silently break it, and what 96 live Gemini requests showed about implicit and explicit caching. With an interactive playground.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/article.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317171a'/%3E%3Crect x='7' y='9' width='18' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='15' width='12' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='21' width='8' height='4' rx='2' fill='%23e5484d'/%3E%3C/svg%3E">
+<script>
+  try { const t = localStorage.getItem("pcp-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="2.4" rx="1.2"/><rect x="2" y="6.8" width="8" height="2.4" rx="1.2"/><rect x="2" y="10.6" width="5" height="2.4" rx="1.2" opacity=".5"/></svg></span>
+    Prompt Caching
+  </a>
+  <nav class="topnav" aria-label="Main">
+    <a href="./" aria-current="page">Article</a>
+    <a href="playground">Playground</a>
+    <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/production-deployment/prompt-caching" class="hide-sm">Code</a>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch color theme" title="Switch color theme">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11" /><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<article class="article">
+  <header class="hero">
+    <p class="kicker">Production &amp; Deployment · AI Engineer Help</p>
+    <h1>Prompt caching: what breaks it, what it saves, and what we measured</h1>
+    <p class="dek">Most production prompts repeat thousands of tokens on every call: instructions, tool definitions, policies, examples. Prompt caching lets the provider skip re-reading that repeated part, at up to a tenth of the price. But it only works if the repeated part comes first and stays byte-for-byte identical. A single timestamp in the wrong place switches it off without any error.</p>
+    <div class="byline"><span>7 October 2026</span><span class="sep">·</span><span>Measured on Gemini 3.8 Flash; docs checked for Claude, Gemini and OpenAI</span></div>
+    <div class="cta-row">
+      <a class="btn primary" href="playground">Open the playground</a>
+      <a class="btn" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/production-deployment/prompt-caching">Code and data</a>
+    </div>
+  </header>
+
+  <section class="takeaways" aria-labelledby="tk">
+    <h2 id="tk">Key takeaways</h2>
+    <ol>
+      <li><strong>A prompt cache is a prefix match.</strong> The provider reuses work only for the leading part of your prompt that is identical to an earlier request. The first changed character ends the reusable part, and everything after it is processed at full price.</li>
+      <li><strong>Where the changing parts sit decides what can be cached.</strong> In our test prompt, a timestamp on the first line of the system instruction cut the reusable prefix from 5,382 tokens (99.7%) to 783 (14.4%). The same timestamp at the end of the user message left 5,403 tokens (99.5%) reusable.</li>
+      <li><strong>Small, invisible differences break it too.</strong> Sending the same seven tools in a different order left 11 reusable tokens. Putting the question before the handbook left 1,086. Both are below Gemini's 4,096-token minimum, so nothing at all could be cached.</li>
+      <li><strong>Gemini's implicit caching gave us nothing.</strong> In 97 eligible requests with byte-identical 5,400 to 13,000-token prefixes, sent seconds apart, we got <strong>zero</strong> implicit cache hits. Google documents implicit caching as having "no cost saving guarantee".</li>
+      <li><strong>Explicit caching delivered every time.</strong> With a cache created through Gemini's <code>cachedContents</code> API, 12 of 12 requests read 5,384 of about 5,400 prompt tokens from cache. That cut the cost per request, including output, by 84%, from $0.00439 to $0.00072.</li>
+      <li><strong>We saw no latency gain at this size.</strong> Median time to first token was 2.3 s with the explicit cache and 2.1 s without one. Providers say the speed-up shows on long prompts; at 5,400 tokens, network and generation time dominate.</li>
+    </ol>
+  </section>
+
+  <nav class="toc" aria-label="Contents">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#what">What prompt caching is</a></li>
+      <li><a href="#rule">The one rule: prefix match</a></li>
+      <li><a href="#providers">How each provider does it</a></li>
+      <li><a href="#mistakes">Eight ways to break the cache</a></li>
+      <li><a href="#experiment">The experiment</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#why">Why it happens</a></li>
+      <li><a href="#advice">Practical advice</a></li>
+      <li><a href="#limits">Limitations</a></li>
+      <li><a href="#reproduce">Reproduce it</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="what">What prompt caching is</h2>
+  <p>A model handles a request in two phases. First it reads the whole prompt (the <em>prefill</em>) and builds an internal representation of every token, called the key-value (KV) cache. Then it generates the answer one token at a time (the <em>decode</em>). Prefill is the part you pay input prices for, and for long prompts it is a large share of the time before the first token appears.</p>
+  <p>If two requests start with the same tokens, the representation of those tokens is identical too, because each token's representation depends only on the tokens before it. Prompt caching keeps that work for a few minutes and reuses it when another request starts the same way. The model still sees the full prompt, so answers don't change. Only the price and the prefill time do.</p>
+  <p>It's easy to confuse with two other kinds of caching:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Kind</th><th>What is reused</th><th>When it applies</th><th>Does the model run?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Prompt caching</strong></td><td>The provider's processed prompt prefix</td><td>A new request starts with exactly the same tokens</td><td>Yes, on the full prompt, so answers are as fresh as without a cache</td></tr>
+        <tr><td>Response caching</td><td>A stored answer, on your side</td><td>The whole request is identical</td><td>No. The stored answer is returned</td></tr>
+        <tr><td>Semantic caching</td><td>A stored answer, on your side</td><td>A new question means roughly the same as an old one</td><td>No. A similar but different question can get a wrong stored answer</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 1.</b> Prompt caching is the only one of the three that never changes what the model says. That makes it safe to turn on everywhere.</p>
+
+  <h2 id="rule">The one rule: prefix match</h2>
+  <p>Everything in this article follows from one rule: <strong>the cache matches from the first token forward, and stops at the first difference</strong>. It doesn't look for the longest matching chunk somewhere in the middle. If request 2 differs from request 1 at token 50, only the first 49 tokens can be reused, even if the next 5,000 are identical.</p>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 1. Two requests, one timestamp</p>
+      <p class="fig-sub">Each box is a chunk of the prompt, in the order the model reads it.</p>
+      <div class="tokens" role="img" aria-label="Two requests share only the tool definitions before the timestamp; the 4,000 tokens after it are recomputed. With the timestamp moved to the end, everything before it is reused.">
+        <div class="tok-row"><span class="who">Request 1</span><div class="tok-line"><span class="c">tools ×7</span><span class="c">You are…</span><span class="x">Time: 14:32:09</span><span class="x">instructions</span><span class="x">handbook (4,000 tokens)</span><span class="x">examples</span><span class="x">question</span></div></div>
+        <div class="tok-row"><span class="who">Request 2</span><div class="tok-line"><span class="c">tools ×7</span><span class="c">You are…</span><span class="x">Time: 14:32:16</span><span class="x">instructions</span><span class="x">handbook (4,000 tokens)</span><span class="x">examples</span><span class="x">question</span></div></div>
+        <div class="tok-row"><span class="who">Fixed</span><div class="tok-line"><span class="c">tools ×7</span><span class="c">You are…</span><span class="c">instructions</span><span class="c">handbook (4,000 tokens)</span><span class="c">examples</span><span class="x">question</span><span class="x">Time: 14:32:16</span></div></div>
+      </div>
+      <div class="diagram-legend"><span><i class="dot swatch-shared"></i>Read from cache</span><span><i class="dot swatch-uncached"></i>Processed at full price</span></div>
+    </div>
+    <figcaption>Request 2 changes two digits, but from that point on nothing matches, so the handbook after it is processed again. Moving the time to the end makes the handbook reusable. The model still sees the time.</figcaption>
+  </figure>
+
+  <p>Two consequences matter in practice:</p>
+  <ul>
+    <li><strong>Order your prompt from most stable to least stable.</strong> Content that never changes goes first, then content that is fixed for one user or conversation, then content that changes on every request.</li>
+    <li><strong>Know the order the provider uses.</strong> Your API call has separate fields, but the provider joins them into one sequence. Claude's documented order is tools, then system, then messages, so a change in the tool list invalidates everything. OpenAI says the cached prefix includes "tool definitions" and Structured Outputs schemas. Gemini doesn't document its order. Treat tools and system instructions as the front of the prompt.</li>
+  </ul>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 2. The same content in two orders</p>
+      <p class="fig-sub">Retrieval apps often put the question first. Moving it last turns the documents into a reusable prefix.</p>
+      <div class="layout-pair">
+        <div class="layout-col">
+          <h4><i class="dot swatch-uncached"></i>Question first</h4>
+          <div class="stack">
+            <div class="c">Instructions <small>300</small></div>
+            <div class="x">User question <small>20</small></div>
+            <div class="x">Handbook and examples <small>4,400</small></div>
+          </div>
+        </div>
+        <div class="layout-col">
+          <h4><i class="dot swatch-shared"></i>Question last</h4>
+          <div class="stack">
+            <div class="c">Instructions <small>300</small></div>
+            <div class="c">Handbook and examples <small>4,400</small></div>
+            <div class="x">User question <small>20</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Token counts are approximate. The left layout has a 300-token reusable prefix, below every provider's minimum, so nothing is cached at all.</figcaption>
+  </figure>
+
+  <h2 id="providers">How each provider does it</h2>
+  <p>All three providers cache prefixes, but they differ in whether you have to ask, what a write costs, and how long an entry lives. Prices below are list prices per million input tokens, checked on 7 October 2026.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>Anthropic Claude</th><th>Google Gemini</th><th>OpenAI</th></tr></thead>
+      <tbody>
+        <tr><td><strong>How to turn it on</strong></td><td>Mark up to 4 breakpoints with <code>cache_control</code>, or set it once at the top level for automatic placement</td><td>Implicit: on by default, best effort. Explicit: create a <code>cachedContents</code> resource and reference it</td><td>Automatic on supported models. GPT-5.6 and later also accept explicit breakpoints</td></tr>
+        <tr><td><strong>Cache read price</strong></td><td>0.1× input (Sonnet 5.5: $0.20 vs $2). Opus 5.5: 0.05×</td><td>0.1× input (3.8 Flash: $0.075 vs $0.75)</td><td>0.1× input on most models, 0.05× on GPT-6.1 Sol</td></tr>
+        <tr><td><strong>Cache write price</strong></td><td>1.25× input (5-minute entry) or 2× (1-hour entry)</td><td>Implicit: none. Explicit: storage at $0.50 per million tokens per hour (3.8 Flash)</td><td>GPT-5.6 and later: 1.25× input. Earlier models: none</td></tr>
+        <tr><td><strong>Minimum prompt</strong></td><td>512 tokens (Opus 5.5, Sonnet 5.5), 4,096 (Haiku 4.5)</td><td>4,096 tokens (3.x Flash and Pro), 2,048 (2.5)</td><td>1,024 tokens (GPT-5.6 and later)</td></tr>
+        <tr><td><strong>Lifetime</strong></td><td>5 minutes, reset on every hit; 1 hour optional</td><td>Implicit: not documented. Explicit: you set it (default 1 hour)</td><td>30 minutes (GPT-5.6 and later)</td></tr>
+        <tr><td><strong>How to check hits</strong></td><td><code>usage.cache_read_input_tokens</code>, <code>cache_creation_input_tokens</code></td><td><code>usageMetadata.cachedContentTokenCount</code>, or <code>usage.total_cached_tokens</code> in the Interactions API</td><td><code>usage.input_tokens_details.cached_tokens</code> and <code>cache_write_tokens</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 2.</b> Sources: <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Claude prompt caching</a> and <a href="https://platform.claude.com/docs/en/about-claude/pricing">pricing</a>; <a href="https://ai.google.dev/gemini-api/docs/caching">Gemini caching</a>, <a href="https://ai.google.dev/gemini-api/docs/generate-content/caching">explicit caching</a> and <a href="https://ai.google.dev/gemini-api/docs/pricing">pricing</a> (3.8 Flash prices are promotional through 31 December 2026); <a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI prompt caching</a> and <a href="https://developers.openai.com/api/docs/pricing">pricing</a>. Prices and minimums change, so check them before you rely on them.</p>
+  <p>Where a write costs extra, caching pays off only if the entry is read again before it expires. On Claude, the docs work out that a 5-minute entry breaks even after one read, since 1.25× + 0.1× is less than 2×, and a 1-hour entry after two reads. For Gemini's explicit cache, here is our own calculation from the prices above. Each cached read of our 5,384-token prefix saves $0.0036, and storing it costs $0.0027 an hour. So it pays off from about one request per hour.</p>
+
+  <h2 id="mistakes">Eight ways to break the cache</h2>
+  <p>None of these produce an error. The request succeeds, the answer is fine, and the bill is higher. Each one has a matching example in the <a href="playground">playground</a>.</p>
+
+  <div class="mistake">
+    <h3><span class="n">01</span>The current time at the top</h3>
+    <p>The most common case. A template starts with <code>Current time: {now}</code> so the model knows the date. If the time includes seconds, no two requests share more than the text before it.</p>
+    <div class="ba">
+      <div class="bad"><p class="lbl">Breaks the cache</p><pre><span class="hl-bad">Current time: 2026-10-07T14:32:09Z</span>
+You are the support assistant…
+[4,000-token handbook]</pre></div>
+      <div class="good"><p class="lbl">Cacheable</p><pre>You are the support assistant…
+[4,000-token handbook]
+…
+User: <span class="hl-good">Today's date: 7 October 2026</span>
+Where is my order?</pre></div>
+    </div>
+    <p class="try">Measured: the reusable prefix fell from 5,382 to 783 tokens. Also ask whether the model needs seconds at all. A date changes once a day, so it splits the cache once a day instead of on every request. <a href="playground?preset=timestamp">Try it →</a></p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">02</span>User details in the system prompt</h3>
+    <p><code>You are helping {name} ({email}), a Gold member.</code> Every user gets a different prefix, so the instructions after it are cached once per user instead of once for everyone. Within one user's conversation the cache still works, which hides the problem in testing.</p>
+    <p class="try">Measured: the reusable prefix across users fell from 5,389 tokens (details at the end) to 774 (details at the top). <a href="playground?preset=personalized">Try it →</a></p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">03</span>Request IDs, counters and budgets</h3>
+    <p>Agent loops often write state into the system prompt: <code>request_id</code>, <code>Turn 4 of 20</code>, <code>Tokens remaining: 18,240</code>. Each one is unique per call. Send IDs as request metadata, and put state the model needs in the latest message. <a href="playground?preset=agent-state">Try it →</a></p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">04</span>Tools in a different order</h3>
+    <p>Building the tool list from a dictionary, a set or a plugin registry can change its order between processes or deployments. The tools are the same, but the bytes aren't, and tools sit at the very front of the prompt.</p>
+    <p class="try">Measured: the same seven tools, shuffled per request, left a reusable prefix of 11 tokens. Sort tools by name, and serialize JSON with sorted keys.</p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">05</span>Different tools for different users</h3>
+    <p>Hiding tools a user isn't allowed to use is tempting, but it gives each permission level its own prefix, starting from the first token. Keep one tool set for everyone and check permissions when a tool is called. That is also the safer design. <a href="playground?preset=dynamic-tools">Try it →</a></p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">06</span>The question before the documents</h3>
+    <p>Retrieval prompts often read "Question: … Context: …". If the documents are the same across requests, as with a policy handbook or a product manual, they should come first. Documents retrieved per query can't be shared across users anyway, but they can still be cached within a conversation if earlier turns don't change.</p>
+    <p class="try">Measured: 1,086 reusable tokens, below Gemini's 4,096 minimum, so none were cacheable. <a href="playground?preset=question-first">Try it →</a></p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">07</span>Changing model or settings mid-conversation</h3>
+    <p>Caches belong to one model, so routing a follow-up to a cheaper model starts from zero. On Claude, changing <code>tool_choice</code>, images or thinking settings also invalidates part of the cache (see the "invalidation" section of Anthropic's docs). Pick the model and settings per route, not per request.</p>
+  </div>
+
+  <div class="mistake">
+    <h3><span class="n">08</span>Parallel requests and long gaps</h3>
+    <p>A cache entry can only be read after the request that writes it has started responding. If you send 20 requests with the same prefix at once, all 20 pay full price. Send one first, then the rest. At the other end, traffic slower than the cache lifetime never hits. On Claude, an entry lives 5 minutes after its last use, so a chatbot that gets one message every 10 minutes caches nothing unless it uses the 1-hour option.</p>
+  </div>
+
+  <h2 id="experiment">The experiment</h2>
+  <p>Docs describe the rules. We wanted to see them in real requests: how much of a realistic prompt each layout leaves reusable, whether the provider actually caches it, and what that does to cost and latency. We had Gemini API access, so we ran on <strong>Gemini 3.8 Flash</strong> (<code>gemini-3.8-flash</code>), on 7 October 2026.</p>
+
+  <h3>The prompt</h3>
+  <p>A customer-support assistant for Northwind Outfitters, a fictional outdoor-gear store. Every layout sends the same parts:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Part</th><th>What it contains</th><th class="num">Characters</th></tr></thead>
+      <tbody>
+        <tr><td>Instructions</td><td>Role, tone, how to cite policy sections, what never to do</td><td class="num">1,211</td></tr>
+        <tr><td>Policy handbook</td><td>12 sections: orders, shipping, returns, refunds, warranty, trade-in, loyalty, care and sizing, privacy, escalation, a 27-product reference table and common questions</td><td class="num">15,940</td></tr>
+        <tr><td>Tools</td><td>Seven function declarations: <code>cancel_order</code>, <code>create_return</code>, <code>escalate_to_human</code>, <code>lookup_order</code>, <code>open_warranty_claim</code>, <code>search_products</code>, <code>track_parcel</code></td><td class="num">3,054</td></tr>
+        <tr><td>Examples</td><td>Four example exchanges showing tone and length</td><td class="num">1,499</td></tr>
+        <tr><td>Question</td><td>One of 12 customer questions, such as "Can I return a tent I set up once in my garden?"</td><td class="num">32–73</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 3.</b> Gemini counted about 5,400 prompt tokens per request, comfortably above the 4,096-token minimum. The full text is in <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/blob/main/production-deployment/prompt-caching/src/fixture.js"><code>src/fixture.js</code></a>.</p>
+
+  <h3>Eight layouts</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layout</th><th>What changes between requests, and where</th></tr></thead>
+      <tbody id="layout-table"></tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 4.</b> Each layout starts its system instruction with a tag that is fixed within the layout, such as <code>deployment r202610079c02-stable</code>. It stops layouts from reading each other's cache, the way two separate applications wouldn't share one.</p>
+
+  <h3>Procedure and measures</h3>
+  <ul>
+    <li>12 requests per layout, one at a time, 1.5 seconds apart, layout after layout: 96 requests in about 7 minutes. Streaming, temperature 0, thinking level <code>LOW</code>, up to 300 output tokens.</li>
+    <li><strong>Cached tokens:</strong> <code>cachedContentTokenCount</code>, as reported by Gemini for each request.</li>
+    <li><strong>Reusable prefix:</strong> the number of leading characters each request shares with the one before it, rendered as tools, then system instruction, then user message, and converted to tokens using Gemini's count. This depends only on the prompt, not on the provider. It's the most any prefix cache could reuse.</li>
+    <li><strong>Time to first token:</strong> from sending the request to the first streamed text or tool call.</li>
+    <li><strong>Cost:</strong> from Gemini's token counts and list prices: $0.75 per million uncached input tokens, $0.075 cached, $3.75 output (thinking counts as output), and $0.50 per million tokens per hour of explicit cache storage.</li>
+  </ul>
+  <p>We also sent a 2-request smoke test before the run. When implicit caching produced no hits, we sent 12 follow-up requests. They varied one thing at a time: no streaming; no tools and no thinking setting; a prompt three times larger (13,100 tokens); and Google's newer Interactions API.</p>
+
+  <h2 id="results">Results</h2>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 3. How much of each prompt could be reused</p>
+      <p class="fig-sub">Median reusable prefix: the share of the prompt identical to the previous request, from the first character.</p>
+      <div class="legend"><span><i class="dot swatch-shared"></i>Above Gemini's 4,096-token minimum</span><span><i class="dot swatch-uncached"></i>Below the minimum: nothing cacheable</span></div>
+      <div class="chart" id="chart-prefix"></div>
+    </div>
+    <figcaption>Every layout sent the same content. Only the position of the changing parts differed. For the explicit cache, the bar shows the stored part. Source: <a href="data/summary.json"><code>results/summary.json</code></a>.</figcaption>
+  </figure>
+
+  <p>The layout result is exactly what the prefix rule predicts. Moving the changing value to the end kept 99.4–99.7% of the prompt reusable. Putting it at the top cut that to 14%. The shuffled tools cut it to almost nothing, because the tools are the first thing in the prompt.</p>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 4. Cached tokens on each request</p>
+      <p class="fig-sub">Stable prefix (implicit caching) vs explicit cache, 12 requests each, in order.</p>
+      <div class="legend"><span><i class="dot swatch-session"></i>Explicit cache</span><span><i class="dot swatch-uncached"></i>Stable prefix, implicit caching</span></div>
+      <div class="chart" id="chart-hits"></div>
+    </div>
+    <figcaption>All 12 explicit requests read 5,384 tokens from cache. All 12 implicit requests read none, and neither did the other 72 requests in the run, or any of the 13 smoke-test and follow-up requests that succeeded.</figcaption>
+  </figure>
+
+  <div class="note measured">
+    <span class="tag">Measured</span>
+    <p><strong>Implicit caching: 0 hits in 97 eligible requests.</strong> These were 84 requests in the main run, 2 in the smoke test and 11 successful follow-ups (one Interactions API request failed with an unrelated error). They used streaming and non-streaming, with and without tools, prompts from 4,500 to 13,100 tokens, and both the <code>generateContent</code> and Interactions APIs. Prefixes were byte-identical, and requests were seconds apart. <strong>Explicit caching: 12 hits in 12 requests,</strong> each reading 5,384 tokens (99.7% of the prompt) from cache.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 5. Cost per request</p>
+      <p class="fig-sub">Measured cost, input plus output, at Gemini 3.8 Flash list prices. Explicit includes storage.</p>
+      <div class="chart" id="chart-cost"></div>
+    </div>
+    <figcaption>Because implicit caching never hit, every implicit layout cost the same, about $0.0044 per request. The explicit cache cost $0.00072, 84% less. Its input alone fell 90%. Storing the 5,384-token cache for its 1.1 minutes cost $0.00005.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame">
+      <p class="fig-title">Figure 6. Time to first token</p>
+      <p class="fig-sub">Each dot is one request. The line marks the median. Two slow outliers (23.0 s and 14.8 s) are drawn at the edge.</p>
+      <div class="chart" id="chart-latency"></div>
+    </div>
+    <figcaption>Cached and uncached requests had overlapping ranges. The explicit cache's median (2.3 s) was not faster than the stable prefix without hits (2.1 s).</figcaption>
+  </figure>
+
+  <div class="table-wrap wide">
+    <table>
+      <thead><tr><th>Layout</th><th class="num">Prompt tokens</th><th class="num">Reusable prefix</th><th class="num">Cache hits</th><th class="num">Cached share</th><th class="num">First token (median)</th><th class="num">Cost / request</th></tr></thead>
+      <tbody id="results-table"></tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 5.</b> All 96 requests, by layout (medians, 12 requests each). Every request and every answer is in <a href="data/requests.jsonl"><code>results/requests.jsonl</code></a>. 16 of the 96 responses were tool calls, all to <code>lookup_order</code>, for questions that named an order.</p>
+
+  <h3>What it would have saved</h3>
+  <p>The reusable prefix tells you what a working cache could save. If every request's reusable prefix had been read from cache at the cached price, here is the input cost of 1,000 requests. This is a projection from the measured prefixes, not a measurement:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layout</th><th class="num">Without cache</th><th class="num">Reusable prefix cached</th><th class="num">Saving</th></tr></thead>
+      <tbody id="projection-table"></tbody>
+    </table>
+  </div>
+  <p class="caption"><b>Table 6.</b> Layouts with a reusable prefix below 4,096 tokens save nothing. That isn't because 783 tokens wouldn't help, but because Gemini won't cache a prefix that short.</p>
+
+  <h2 id="why">Why it happens</h2>
+  <div class="note interpret">
+    <span class="tag">Interpretation</span>
+    <p><strong>Why implicit caching missed.</strong> We can only guess, because Google doesn't publish how implicit caching decides. Caches like this usually live on individual serving machines. A hit needs the next request to reach a machine that still holds the prefix. OpenAI's docs say this for their own cache: routing uses a hash of the first tokens, and "traffic above 15 requests per minute can lead to overflow routing" to other machines. Our traffic was light: about 14 requests a minute in total, and each layout's prefix was used for under two minutes. With so little traffic, a provider may not keep a prefix warm at all, or the next request may land on a different machine. It could also depend on load, region or account. Whatever the reason, implicit caching is best effort, and you can't plan costs around it until you've measured it on your own traffic.</p>
+  </div>
+  <div class="note interpret">
+    <span class="tag">Interpretation</span>
+    <p><strong>Why the cache didn't make responses faster.</strong> Reading 5,400 tokens is quick on current hardware. Time to first token also includes network time, queueing, a short thinking step and, for tool calls, generating the call. So the prefill saving was smaller than the normal variation between requests (1.5 to 4.7 s, plus two outliers). Anthropic's docs say you will "generally see improved time-to-first-token for long documents", so expect latency gains at tens of thousands of tokens, not at five thousand.</p>
+  </div>
+
+  <h2 id="advice">Practical advice</h2>
+  <ol>
+    <li><strong>Design the prompt as layers:</strong> tools and instructions, then shared documents and examples, then per-user context, then conversation history, then the new message. Put anything with a clock, an ID or a counter in the last layer.</li>
+    <li><strong>Make serialization deterministic.</strong> Sort tools by name and JSON keys alphabetically. Never build prompt text by iterating a set. Strip trailing whitespace consistently.</li>
+    <li><strong>Pass dynamic context late.</strong> On Claude models that support it, a mid-conversation system message is designed for this: it adds instructions after the cached history instead of editing the top. Elsewhere, put it in the user message.</li>
+    <li><strong>Choose explicit caching when the saving matters.</strong> On Gemini, create a cache for any large prefix you reuse more than about once an hour. On Claude, add <code>cache_control</code> at the end of the stable part.</li>
+    <li><strong>Measure hits on every request.</strong> Log cached tokens next to total input tokens and alert when the ratio drops. Caching regressions don't fail; a deploy that adds a timestamp only shows up on the bill.</li>
+    <li><strong>Warm up before fan-out.</strong> Send one request, wait for its first token, then send the parallel requests.</li>
+    <li><strong>Check the minimum.</strong> A 3,000-token prompt caches on Claude Sonnet 5.5 (512 minimum) and never on Gemini 3.8 Flash (4,096) or Claude Haiku 4.5 (4,096).</li>
+  </ol>
+
+  <h3>What it looks like in code</h3>
+  <p>Claude, with an explicit breakpoint at the end of the stable system prompt (Python SDK):</p>
+<pre><code>response = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=1024,
+    tools=sorted(TOOLS, key=lambda t: t["name"]),   <span class="cm"># same order every time</span>
+    system=[{
+        "type": "text",
+        "text": INSTRUCTIONS + HANDBOOK,             <span class="cm"># no dates, IDs or names in here</span>
+        "cache_control": {"type": "ephemeral"},      <span class="cm"># cache everything up to this point</span>
+    }],
+    messages=[{"role": "user", "content": f"Today's date: {today}\n\n{question}"}],
+)
+print(response.usage.cache_read_input_tokens, response.usage.cache_creation_input_tokens)</code></pre>
+  <p>Gemini, with an explicit cache (REST, as used in our experiment):</p>
+<pre><code><span class="cm"># 1. Store the stable part once (default lifetime: 1 hour)</span>
+POST /v1beta/cachedContents
+{ "model": "models/gemini-3.8-flash",
+  "systemInstruction": { "parts": [{ "text": "&lt;instructions + handbook + examples&gt;" }] },
+  "tools": [{ "functionDeclarations": [ ... ] }],
+  "ttl": "600s" }
+
+<span class="cm"># 2. Each request sends only the new part and the cache name</span>
+POST /v1beta/models/gemini-3.8-flash:generateContent
+{ "cachedContent": "cachedContents/abc123",
+  "contents": [{ "role": "user", "parts": [{ "text": "Can I return a tent?" }] }] }
+<span class="cm"># → usageMetadata.cachedContentTokenCount: 5384</span></code></pre>
+  <p>OpenAI caches automatically. Check <code>usage.input_tokens_details.cached_tokens</code>, and on GPT-5.6 and later also <code>cache_write_tokens</code>. The ordering rules are the same.</p>
+
+  <h2 id="limits">Limitations</h2>
+  <ul>
+    <li><strong>One provider, one day, one model.</strong> We measured Gemini 3.8 Flash on 7 October 2026. We didn't measure Claude or OpenAI; their sections come from documentation. Implicit caching may behave differently at other times, in other regions, or at higher traffic.</li>
+    <li><strong>Low volume.</strong> Requests went one at a time, about 4 seconds apart. Production traffic of many requests per second could get implicit hits that we didn't.</li>
+    <li><strong>Small samples.</strong> 12 requests per layout is enough to show 0 vs 12 hits, but not enough to estimate latency differences of a few hundred milliseconds.</li>
+    <li><strong>Reusable prefix is computed on our rendering order</strong> (tools, system, user). Gemini doesn't document its internal order. The before-and-after contrast holds either way, because the changed value was at the start or the end of a block.</li>
+    <li><strong>The playground estimates tokens</strong> at about four characters per token, and its cost model assumes steady traffic. Use it to compare layouts, not to forecast a bill.</li>
+    <li><strong>Prices change.</strong> Gemini 3.8 Flash prices are promotional and double on 1 January 2027.</li>
+  </ul>
+
+  <h2 id="reproduce">Reproduce it</h2>
+  <p>Everything runs with Node.js 20 or later and no dependencies. From <code>production-deployment/prompt-caching/</code>:</p>
+<pre><code>npm test                          <span class="cm"># 17 tests for the analyzer and cost model</span>
+npm start                         <span class="cm"># this article and the playground at http://127.0.0.1:4321</span>
+npm run experiment                <span class="cm"># dry run: prints the plan and the worst-case cost</span>
+cp .env.example .env              <span class="cm"># add GEMINI_API_KEY</span>
+npm run experiment -- --live      <span class="cm"># 96 paid requests, about $0.40</span>
+npm run analyze                   <span class="cm"># writes results/summary.json, requests.jsonl, report.md</span></code></pre>
+  <p>The main run cost $0.38. With the smoke test and follow-ups, the total was about $0.46.</p>
+
+  <h2>Sources</h2>
+  <ol class="sources">
+    <li>Anthropic, <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Prompt caching</a> and <a href="https://platform.claude.com/docs/en/about-claude/pricing">Pricing</a>, accessed 7 October 2026.</li>
+    <li>Google, <a href="https://ai.google.dev/gemini-api/docs/caching">Context caching (Interactions API)</a>, last updated 2 September 2026; <a href="https://ai.google.dev/gemini-api/docs/generate-content/caching">Context caching (generateContent)</a>, 11 September 2026; <a href="https://ai.google.dev/gemini-api/docs/pricing">Pricing</a>, 6 October 2026.</li>
+    <li>OpenAI, <a href="https://developers.openai.com/api/docs/guides/prompt-caching">Prompt caching</a> and <a href="https://developers.openai.com/api/docs/pricing">Pricing</a>, accessed 7 October 2026.</li>
+  </ol>
+
+  <footer class="end">
+    Part of the <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">applied-ai-engineering</a> library by <a href="https://aiengineer.help/">AI Engineer Help</a>. The prompt, the store and the customers are fictional. Questions and corrections are welcome in the <a href="https://aiengineer.help/c/production-deployment/9">Production &amp; Deployment</a> community category.
+  </footer>
+</article>
+
+<script type="module" src="assets/article.js"></script>
+</body>
+</html>

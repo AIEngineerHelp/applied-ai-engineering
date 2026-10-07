@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Cache Playground</title>
+<meta name="description" content="Paste a prompt and see which part an AI provider can reuse from cache, what stops it, and how to fix it. Covers Claude, Gemini and OpenAI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/playground.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317171a'/%3E%3Crect x='7' y='9' width='18' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='15' width='12' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='21' width='8' height='4' rx='2' fill='%23e5484d'/%3E%3C/svg%3E">
+<script>
+  try { const t = localStorage.getItem("pcp-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="2.4" rx="1.2"/><rect x="2" y="6.8" width="8" height="2.4" rx="1.2"/><rect x="2" y="10.6" width="5" height="2.4" rx="1.2" opacity=".5"/></svg></span>
+    Prompt Caching
+  </a>
+  <nav class="topnav" aria-label="Main">
+    <a href="./">Article</a>
+    <a href="playground" aria-current="page">Playground</a>
+    <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/production-deployment/prompt-caching" class="hide-sm">Code</a>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch color theme" title="Switch color theme">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11" /><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main class="pg">
+  <section class="hero">
+    <h1>Will your prompt be cached?</h1>
+    <p class="lede">AI providers can reuse the start of a prompt they have seen before, at about a tenth of the price. They only reuse it <b>up to the first character that changes</b>. Paste a prompt below to see which part gets reused, what stops it, and how to fix it.</p>
+    <ol class="steps" aria-label="How to use the playground">
+      <li><span class="step-n">1</span><div><b>Pick an example</b> or paste your own prompt</div></li>
+      <li><span class="step-n">2</span><div><b>See the colors:</b> <span class="key shared">green</span> is reused, <span class="key paid">red</span> is paid every time</div></li>
+      <li><span class="step-n">3</span><div><b>Apply the fixes</b> and watch the green grow</div></li>
+    </ol>
+  </section>
+
+  <section class="examples" aria-labelledby="ex-title">
+    <div class="section-head">
+      <h2 id="ex-title"><span class="step-n sm">1</span>Pick an example</h2>
+      <button class="btn" id="blank" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        Paste my own prompt
+      </button>
+    </div>
+    <div class="example-grid" id="presets" role="list"></div>
+  </section>
+
+  <div class="work">
+    <section class="editor" aria-labelledby="prompt-title">
+      <div class="section-head">
+        <h2 id="prompt-title"><span class="step-n sm">2</span>Your prompt, in the order the AI reads it</h2>
+      </div>
+      <div class="legend-row" aria-hidden="true">
+        <span><i class="sw shared"></i>Reused for everyone</span>
+        <span><i class="sw session"></i>Reused within one user's conversation</span>
+        <span><i class="sw paid"></i>Paid in full on every request</span>
+        <span><i class="sw stop"></i>Cache stops here</span>
+      </div>
+      <div class="blocks" id="blocks"></div>
+      <div class="add-row">
+        <span class="muted small">Add a part:</span>
+        <div class="add-buttons" id="add-buttons"></div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Result">
+      <section class="card verdict" id="verdict" aria-live="polite">
+        <p class="verdict-label">How much can be reused</p>
+        <div class="verdict-top">
+          <span class="big" id="big">0%</span>
+          <span class="verdict-text" id="verdict-text"></span>
+        </div>
+        <div class="meter" id="meter" aria-hidden="true"></div>
+        <p class="why" id="why"></p>
+      </section>
+
+      <section class="card fixes">
+        <div class="card-head">
+          <h2><span class="step-n sm">3</span>How to fix it</h2>
+          <button class="btn primary" id="fix" type="button">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg>
+            Apply all fixes
+          </button>
+        </div>
+        <ol class="fix-list" id="findings"></ol>
+        <p class="restore" id="restore" hidden></p>
+      </section>
+
+      <section class="card compare">
+        <h2>Why: two requests side by side</h2>
+        <p class="muted small" id="next-caption"></p>
+        <div class="next-lines" id="next-lines"></div>
+      </section>
+
+      <section class="card cost">
+        <h2>What it costs</h2>
+        <label class="field inline"><span>Model</span><select id="model"></select></label>
+        <div class="cost-out">
+          <div><span class="muted small">1,000 requests, no caching</span><b id="c-none">$0</b></div>
+          <div><span class="muted small">1,000 requests, this prompt</span><b id="c-with">$0</b></div>
+        </div>
+        <p class="save-line" id="c-save"></p>
+        <details class="how">
+          <summary>Assumptions</summary>
+          <div class="cost-controls">
+            <label class="field"><span>Requests per hour</span><input id="rph" type="number" min="1" max="100000" value="600" inputmode="numeric"></label>
+            <label class="field"><span>Messages per conversation</span><input id="turns" type="number" min="1" max="200" value="5" inputmode="numeric"></label>
+          </div>
+          <p id="cost-note"></p>
+          <p>Input tokens only; output costs the same either way. Token counts are estimates (about 4 characters per token).</p>
+        </details>
+      </section>
+
+      <p class="learn">New to prompt caching? <a href="./">Read the article</a> for how it works and what we measured.</p>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="assets/playground.js"></script>
+</body>
+</html>
