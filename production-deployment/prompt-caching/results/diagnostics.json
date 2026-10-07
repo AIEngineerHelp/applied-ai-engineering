@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-07",
+  "model": "gemini-3.8-flash",
+  "note": "Follow-up checks after the main run, sent with ad-hoc versions of experiment/diagnose.js (same requests). Values are copied from the console output: prompt tokens and cached tokens as reported by the API. Each condition used its own prefix; requests were 1.5 s apart. The first Interactions API request failed with a malformed_tool_call error unrelated to caching.",
+  "conditions": [
+    {
+      "id": "smoke-test",
+      "description": "Two requests of the stable layout (streaming, tools, thinking LOW), before the main run",
+      "requests": [
+        { "i": 1, "promptTokens": 5406, "cachedTokens": 0 },
+        { "i": 2, "promptTokens": 5398, "cachedTokens": 0 }
+      ]
+    },
+    {
+      "id": "non-streaming",
+      "description": "generateContent without streaming, with tools and thinking LOW",
+      "requests": [
+        { "i": 1, "promptTokens": 5404, "cachedTokens": 0 },
+        { "i": 2, "promptTokens": 5396, "cachedTokens": 0 },
+        { "i": 3, "promptTokens": 5396, "cachedTokens": 0 }
+      ]
+    },
+    {
+      "id": "no-tools-no-thinking",
+      "description": "generateContent without streaming, no tools, default thinking",
+      "requests": [
+        { "i": 1, "promptTokens": 4542, "cachedTokens": 0 },
+        { "i": 2, "promptTokens": 4534, "cachedTokens": 0 },
+        { "i": 3, "promptTokens": 4534, "cachedTokens": 0 }
+      ]
+    },
+    {
+      "id": "large-prompt",
+      "description": "Streaming, with the handbook repeated three times (about 3.2× the minimum)",
+      "requests": [
+        { "i": 1, "promptTokens": 13143, "cachedTokens": 0 },
+        { "i": 2, "promptTokens": 13135, "cachedTokens": 0 },
+        { "i": 3, "promptTokens": 13135, "cachedTokens": 0 }
+      ]
+    },
+    {
+      "id": "interactions-api",
+      "description": "Interactions API (v1beta/interactions, Api-Revision 2026-05-20), store=false, no tools",
+      "requests": [
+        { "i": 1, "error": "malformed_tool_call (400)" },
+        { "i": 2, "promptTokens": 4535, "cachedTokens": 0 },
+        { "i": 3, "promptTokens": 4535, "cachedTokens": 0 }
+      ]
+    }
+  ],
+  "totals": { "requests": 14, "succeeded": 13, "implicitHits": 0 }
+}

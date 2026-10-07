@@ -1,0 +1,15 @@
+{
+  "name": "prompt-caching",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prompt caching playground and Gemini caching experiment",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test",
+    "experiment": "node experiment/run.js",
+    "analyze": "node experiment/analyze.js",
+    "export": "node scripts/export.js"
+  }
+}
