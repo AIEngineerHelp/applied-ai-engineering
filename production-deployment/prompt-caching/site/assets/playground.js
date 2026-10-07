@@ -4,11 +4,17 @@ import { estimateCost } from "../engine/cost.js";
 import { MODELS, PROVIDERS, getModel } from "../engine/providers.js";
 import { PRESETS } from "../engine/presets.js";
 
-const STORE_KEY = "pcp-state-v1";
+const STORE_KEY = "pcp-state-v2";
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
+// Round down, so "100%" only appears when all of it is reused.
+const pct = (x) => `${Math.floor(x * 100)}%`;
 const money = (n) => (n >= 100 ? `$${n.toFixed(0)}` : n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`);
-const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const short = (s, n = 60) => {
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+};
 
 const ICONS = {
   tools: '<path d="M10.5 2.5a3 3 0 0 0-2.9 3.8L2.5 11.4V13.5h2.1l5.1-5.1a3 3 0 0 0 3.8-2.9l-1.7 1.7-1.6-.4-.4-1.6z"/>',
@@ -20,6 +26,45 @@ const ICONS = {
 };
 const icon = (kind) =>
   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${ICONS[kind] ?? ICONS.documents}</svg>`;
+
+// One line per example, for the example cards.
+const TEASERS = {
+  timestamp: "The current time on line 1",
+  personalized: "The customer's name in the system prompt",
+  "question-first": "Retrieval: question before the documents",
+  "agent-state": "A request ID and turn counter",
+  "dynamic-tools": "A different tool list per user",
+  optimized: "Stable first, changing parts last",
+};
+
+// Why a detected value ends the cache, in a few words.
+const BECAUSE = {
+  timestamp: "This time changes on every request",
+  date: "Today's date changes every day",
+  identifier: "This ID is unique to each request",
+  sessionId: "This ID is different for each conversation",
+  personal: "This is different for each user",
+  counter: "This number changes on every request",
+  template: "This slot gets a new value on each request",
+};
+
+const IMPACT = { high: "Big impact", medium: "Medium impact", low: "Small impact", info: "Note" };
+
+const BLANK = {
+  id: "blank",
+  blocks: [
+    { id: "system", kind: "system", text: "", change: "auto" },
+    { id: "user", kind: "user", text: "", change: "auto" },
+  ],
+};
+const PLACEHOLDERS = {
+  tools: "Paste your tool or function definitions (JSON) here.",
+  system: "Paste your system prompt or instructions here.",
+  examples: "Paste example conversations here.",
+  documents: "Paste documents or context here.",
+  history: "Paste earlier messages of the conversation here.",
+  user: "Paste the user's message here.",
+};
 
 // ---------- State ----------
 
@@ -35,7 +80,7 @@ function load() {
       const saved = JSON.parse(localStorage.getItem(STORE_KEY) ?? "null");
       if (saved?.blocks?.length) return saved;
     } catch {
-      // Storage unavailable: start from the first preset.
+      // Storage unavailable: start from the first example.
     }
   }
   const preset = fromUrl ?? PRESETS[0];
@@ -43,40 +88,56 @@ function load() {
 }
 
 let state = load();
-let undoStack = null;
+let undoState = null;
 let nextId = 1;
 
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
   } catch {
-    // Private mode or blocked storage: the playground still works, it just won't remember.
+    // Private mode or blocked storage: works, but won't be remembered.
   }
 }
 
-function uid(kind) {
-  return `${kind}-${Date.now().toString(36)}-${nextId++}`;
+const uid = (kind) => `${kind}-${Date.now().toString(36)}-${nextId++}`;
+const labelOf = (b) => b.label || BLOCK_KINDS[b.kind]?.label || b.kind;
+const effectiveChange = (b) => (b.change && b.change !== "auto" ? b.change : BLOCK_KINDS[b.kind]?.defaultChange ?? "static");
+
+function markCustom() {
+  if (state.presetId && state.presetId !== "blank") {
+    state.presetId = null;
+    history.replaceState(null, "", location.pathname);
+  }
 }
 
-// ---------- Presets and add buttons ----------
+// ---------- Examples ----------
 
 function renderPresets() {
-  $("presets").innerHTML = PRESETS.map(
-    (p) =>
-      `<button type="button" class="preset" role="listitem" data-id="${p.id}" aria-pressed="${p.id === state.presetId}">
-        <span class="dot ${p.id === "optimized" ? "swatch-shared" : "swatch-uncached"}"></span>${esc(p.title)}</button>`,
-  ).join("");
-  const p = PRESETS.find((x) => x.id === state.presetId);
-  $("preset-summary").textContent = p ? p.summary : "Your own prompt.";
+  $("presets").innerHTML = PRESETS.map((p) => {
+    const good = p.id === "optimized";
+    return `<button type="button" class="example" role="listitem" data-id="${p.id}" aria-pressed="${p.id === state.presetId}">
+      <span class="badge ${good ? "good" : "bad"}">${good ? "Good layout" : "Breaks the cache"}</span>
+      <span class="ex-title">${esc(p.title)}</span>
+      <span class="ex-sub">${esc(TEASERS[p.id] ?? p.summary)}</span>
+    </button>`;
+  }).join("");
 }
 
 $("presets").addEventListener("click", (e) => {
-  const btn = e.target.closest(".preset");
+  const btn = e.target.closest(".example");
   if (!btn) return;
   const preset = PRESETS.find((p) => p.id === btn.dataset.id);
   state = { ...state, presetId: preset.id, blocks: freshBlocks(preset), dismissed: [] };
   history.replaceState(null, "", `?preset=${preset.id}`);
   renderAll();
+});
+
+$("blank").addEventListener("click", () => {
+  snapshot("Started an empty prompt.");
+  state = { ...state, presetId: "blank", blocks: freshBlocks(BLANK), dismissed: [] };
+  history.replaceState(null, "", location.pathname);
+  renderAll();
+  document.querySelector("#blocks textarea")?.focus();
 });
 
 $("add-buttons").innerHTML = Object.entries(BLOCK_KINDS)
@@ -87,59 +148,44 @@ $("add-buttons").addEventListener("click", (e) => {
   if (!btn) return;
   const kind = btn.dataset.kind;
   const block = { id: uid(kind), kind, text: "", change: "auto" };
-  // New blocks go before the user's message, which usually stays last.
+  // Tools go first, the user's message stays last, everything else goes before it.
   const lastUser = state.blocks.findLastIndex((b) => b.kind === "user");
-  if (kind !== "user" && lastUser >= 0) state.blocks.splice(lastUser, 0, block);
+  if (kind === "tools") state.blocks.unshift(block);
+  else if (kind !== "user" && lastUser >= 0) state.blocks.splice(lastUser, 0, block);
   else state.blocks.push(block);
   markCustom();
   renderAll();
   document.querySelector(`[data-block="${block.id}"] textarea`)?.focus();
 });
 
-function markCustom() {
-  if (state.presetId) {
-    state.presetId = null;
-    history.replaceState(null, "", location.pathname);
-  }
-}
-
 // ---------- Blocks ----------
 
-function effectiveChange(b) {
-  return b.change && b.change !== "auto" ? b.change : BLOCK_KINDS[b.kind]?.defaultChange ?? "static";
-}
-
 function renderBlocks() {
-  const root = $("blocks");
-  root.innerHTML = state.blocks
+  const n = state.blocks.length;
+  $("blocks").innerHTML = state.blocks
     .map((b, i) => {
       const change = effectiveChange(b);
-      const seg = Object.entries(CHANGE_LABELS)
-        .map(([v, label]) => `<button type="button" role="radio" data-change="${v}" aria-checked="${v === change}">${label}</button>`)
+      const options = Object.entries(CHANGE_LABELS)
+        .map(([v, label]) => `<option value="${v}" ${v === change ? "selected" : ""}>${label}</option>`)
         .join("");
-      return `<article class="block" data-block="${b.id}">
-        <div class="block-strip" aria-hidden="true"></div>
+      return `${i ? '<div class="connector" aria-hidden="true"></div>' : ""}<article class="block" data-block="${b.id}">
         <div class="block-head">
-          <span class="block-index">${i + 1}</span>
-          <span class="block-kind">${icon(b.kind)}<input aria-label="Block name" size="${Math.max(8, (b.label || BLOCK_KINDS[b.kind]?.label || b.kind).length + 1)}" value="${esc(b.label || BLOCK_KINDS[b.kind]?.label || b.kind)}"></span>
-          <span class="seg" role="radiogroup" aria-label="How often this block changes">${seg}</span>
-          <span class="block-tokens"></span>
+          <span class="block-name">${icon(b.kind)}<input aria-label="Part name" size="${Math.max(8, labelOf(b).length + 1)}" value="${esc(labelOf(b))}"></span>
+          <label class="change">Changes? <select aria-label="How often ${esc(labelOf(b))} changes">${options}</select></label>
           <span class="block-actions">
-            <button type="button" data-act="up" aria-label="Move up" ${i === 0 ? "disabled" : ""}><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M4 7l4-4 4 4"/></svg></button>
-            <button type="button" data-act="down" aria-label="Move down" ${i === state.blocks.length - 1 ? "disabled" : ""}><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M4 9l4 4 4-4"/></svg></button>
-            <button type="button" data-act="delete" aria-label="Delete block"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M5 4.5l.6 8.5h4.8l.6-8.5"/></svg></button>
+            <button type="button" data-act="up" aria-label="Move up" title="Move up" ${i === 0 ? "disabled" : ""}><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M4 7l4-4 4 4"/></svg></button>
+            <button type="button" data-act="down" aria-label="Move down" title="Move down" ${i === n - 1 ? "disabled" : ""}><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M4 9l4 4 4-4"/></svg></button>
+            <button type="button" data-act="delete" aria-label="Remove" title="Remove"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M5 4.5l.6 8.5h4.8l.6-8.5"/></svg></button>
           </span>
         </div>
-        <div class="code"><div class="hl" aria-hidden="true"></div><textarea spellcheck="false" aria-label="${esc(b.label || BLOCK_KINDS[b.kind]?.label || b.kind)} text" placeholder="Paste text here">${esc(b.text)}</textarea></div>
+        <div class="code"><div class="hl" aria-hidden="true"></div><textarea spellcheck="false" aria-label="${esc(labelOf(b))} text" placeholder="${esc(PLACEHOLDERS[b.kind] ?? "Paste text here.")}">${esc(b.text)}</textarea></div>
         <div class="block-foot"></div>
       </article>`;
     })
     .join("");
 }
 
-function blockById(id) {
-  return state.blocks.find((b) => b.id === id);
-}
+const blockById = (id) => state.blocks.find((b) => b.id === id);
 
 $("blocks").addEventListener("input", (e) => {
   const el = e.target.closest("[data-block]");
@@ -151,26 +197,29 @@ $("blocks").addEventListener("input", (e) => {
   scheduleUpdate();
 });
 
-$("blocks").addEventListener("scroll", (e) => {
-  if (e.target.tagName === "TEXTAREA") e.target.previousElementSibling.scrollTop = e.target.scrollTop;
-}, true);
+$("blocks").addEventListener("change", (e) => {
+  if (e.target.tagName !== "SELECT") return;
+  const el = e.target.closest("[data-block]");
+  blockById(el.dataset.block).change = e.target.value;
+  markCustom();
+  update();
+});
+
+$("blocks").addEventListener(
+  "scroll",
+  (e) => {
+    if (e.target.tagName === "TEXTAREA") e.target.previousElementSibling.scrollTop = e.target.scrollTop;
+  },
+  true,
+);
 
 $("blocks").addEventListener("click", (e) => {
-  const el = e.target.closest("[data-block]");
-  if (!el) return;
-  const i = state.blocks.findIndex((b) => b.id === el.dataset.block);
-  const changeBtn = e.target.closest("[data-change]");
-  if (changeBtn) {
-    state.blocks[i].change = changeBtn.dataset.change;
-    markCustom();
-    el.querySelectorAll("[data-change]").forEach((b) => b.setAttribute("aria-checked", String(b === changeBtn)));
-    update();
-    return;
-  }
   const act = e.target.closest("[data-act]")?.dataset.act;
   if (!act) return;
+  const el = e.target.closest("[data-block]");
+  const i = state.blocks.findIndex((b) => b.id === el.dataset.block);
   if (act === "delete") {
-    snapshot("Block deleted.");
+    snapshot(`Removed ${labelOf(state.blocks[i])}.`);
     state.blocks.splice(i, 1);
   } else {
     const j = act === "up" ? i - 1 : i + 1;
@@ -188,204 +237,190 @@ function scheduleUpdate() {
   timer = setTimeout(update, 120);
 }
 
-function currentModel() {
-  return getModel(state.modelId);
+const currentModel = () => getModel(state.modelId);
+const run = (blocks = state.blocks) => analyze(blocks, { minTokens: currentModel().minTokens, dismissed: state.dismissed });
+
+// Character position (block id + offset) where a prefix ends.
+function breakPoint(brk) {
+  if (!brk) return null;
+  return { blockId: brk.blockId, at: brk.reason === "match" ? brk.match.start : 0 };
 }
 
-function run(blocks = state.blocks) {
-  return analyze(blocks, { minTokens: currentModel().minTokens, dismissed: state.dismissed });
+// Per block: [start, end, status] character ranges, status = shared | session | paid.
+function statusRanges(a) {
+  const cuts = [
+    [breakPoint(a.sharedBreak), "session"],
+    [breakPoint(a.sessionBreak), "paid"],
+  ];
+  let status = "shared";
+  const out = new Map();
+  for (const b of a.blocks) {
+    const ranges = [];
+    let from = 0;
+    for (const [cut, next] of cuts) {
+      if (cut?.blockId !== b.id) continue;
+      if (cut.at > from) ranges.push([from, cut.at, status]);
+      from = Math.max(from, cut.at);
+      status = next;
+    }
+    if (b.text.length > from || !ranges.length) ranges.push([from, b.text.length, status]);
+    out.set(b.id, ranges);
+  }
+  return out;
 }
 
-// Status ranges for one block, in tokens relative to the block start.
-function blockRanges(b, a) {
-  const start = b.startToken;
-  const end = start + b.tokens;
-  const parts = [];
-  const cut = (from, to, status) => {
-    const s = Math.max(from, start);
-    const t = Math.min(to, end);
-    if (t > s) parts.push({ status, size: t - s });
-  };
-  cut(0, a.sharedPrefixTokens, "shared");
-  cut(a.sharedPrefixTokens, Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens), "session");
-  cut(Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens), Infinity, "uncached");
-  return parts;
-}
-
-function barHtml(a, { interactive = true } = {}) {
-  return a.blocks
-    .map((b) => {
-      const inner = blockRanges(b, a)
-        .map((r) => `<span class="swatch-${r.status}" style="flex-grow:${r.size}"></span>`)
-        .join("");
-      const title = `${b.label}: ≈${fmt(b.tokens)} tokens`;
-      return `<div class="seg-block" style="flex-grow:${Math.max(b.tokens, 1)}" title="${esc(title)}" ${interactive ? `data-goto="${b.id}"` : ""}>${inner}</div>`;
-    })
-    .join("");
-}
-
-function highlight(b) {
+function highlight(b, ranges, brkAt) {
   const dismissed = new Set(state.dismissed);
+  const marks = detect(b.text).filter((m) => m.scope !== "static" && !dismissed.has(matchKey(b.id, m)));
+  const points = new Set([0, b.text.length, ...ranges.flatMap(([s, e]) => [s, e]), ...marks.flatMap((m) => [m.start, m.end])]);
+  if (brkAt !== null) points.add(brkAt);
+  const sorted = [...points].sort((x, y) => x - y);
   let html = "";
-  let at = 0;
-  for (const m of detect(b.text)) {
-    if (m.scope === "static" || dismissed.has(matchKey(b.id, m))) continue;
-    const scope = m.scope === "session" ? "user" : m.scope;
-    html += esc(b.text.slice(at, m.start)) + `<mark class="${scope}" data-key="${matchKey(b.id, m)}">${esc(m.text)}</mark>`;
-    at = m.end;
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const [s, e] = [sorted[i], sorted[i + 1]];
+    if (e <= s) continue;
+    const st = ranges.find(([rs, re]) => s >= rs && s < re)?.[2] ?? "paid";
+    const m = marks.find((x) => s >= x.start && s < x.end);
+    const cls = [`st-${st}`];
+    if (m) cls.push("v", m.scope === "session" ? "user" : m.scope);
+    if (s === brkAt) cls.push("brk");
+    html += `<span class="${cls.join(" ")}">${esc(b.text.slice(s, e))}</span>`;
   }
   // A trailing newline needs a character after it to keep the layers aligned.
-  return html + esc(b.text.slice(at)) + "\n";
+  return `${html}\n`;
 }
 
-const STATUS_TEXT = {
-  shared: "Cached once, shared by every user",
-  session: "Reused within one user's conversation",
-  uncached: "Paid in full on every request",
-};
+const lineOf = (text, at) => text.slice(0, at).split("\n").length;
+
+function footFor(b, ranges, a) {
+  if (!b.text.trim()) return `<span class="muted">Empty. Paste some text above.</span>`;
+  const statuses = ranges.filter(([s, e]) => e > s).map((r) => r[2]);
+  const first = statuses[0];
+  const brk = [a.sharedBreak, a.sessionBreak].find((x) => x?.blockId === b.id);
+  const reason = (x) => {
+    if (!x) return "";
+    if (x.reason === "match") {
+      return ` <code>${esc(short(x.match.text, 40))}</code> on line ${lineOf(b.text, x.match.start)}: ${(BECAUSE[x.match.rule] ?? "this changes between requests").toLowerCase()}.`;
+    }
+    return x.scope === "request" ? " This part is different on every request." : " This part is different for each user.";
+  };
+  if (statuses.length === 1 && !brk) {
+    if (first === "shared") return `<span class="ico ok">✓</span><span><b>Reused for everyone.</b> Identical on every request.</span>`;
+    if (first === "session") return `<span class="ico mid">✓</span><span><b>Reused within one user's conversation.</b> Something above is different for each user.</span>`;
+    return `<span class="ico bad">✕</span><span><b>Paid in full every time.</b> Something above it changes on every request, so the cache already stopped.</span>`;
+  }
+  if (statuses.length === 1 && brk) {
+    const own = effectiveChange(b);
+    if (first === "paid" && own === "request") return `<span class="ico mid">i</span><span><b>Paid every time, as expected.</b> This part is new on every request, and it comes after everything that stays the same.</span>`;
+    if (first === "session" && own === "session") return `<span class="ico mid">✓</span><span><b>Reused within one user's conversation, as expected.</b> It's different for each user, and it comes after the shared parts.</span>`;
+    return `<span class="ico ${first === "paid" ? "bad" : "mid"}">✕</span><span><b>Cache stops at the start of this part.</b>${reason(brk)}</span>`;
+  }
+  return `<span class="ico bad">✕</span><span><b>Cache stops here.</b>${reason(brk)} Everything after it is paid again.</span>`;
+}
 
 function update() {
   const a = run();
-  const model = currentModel();
-
-  // Blocks
+  const ranges = statusRanges(a);
+  const brkFor = (id) => {
+    const p = breakPoint(a.sharedBreak);
+    if (p?.blockId === id) return p.at;
+    const q = breakPoint(a.sessionBreak);
+    return q?.blockId === id ? q.at : null;
+  };
   for (const b of a.blocks) {
     const el = document.querySelector(`[data-block="${b.id}"]`);
     if (!el) continue;
-    el.querySelector(".block-tokens").textContent = `≈${fmt(b.tokens)} tokens`;
-    const ranges = blockRanges(b, a);
-    el.querySelector(".block-strip").innerHTML = ranges
-      .map((r) => `<span class="swatch-${r.status}" style="flex-grow:${r.size}"></span>`)
-      .join("");
-    el.querySelector(".hl").innerHTML = highlight(b);
-    const foot = el.querySelector(".block-foot");
-    if (!b.tokens) {
-      foot.innerHTML = `<span class="muted">Empty</span>`;
-    } else if (ranges.length === 1) {
-      foot.innerHTML = `<span class="dot swatch-${ranges[0].status}"></span>${STATUS_TEXT[ranges[0].status]}`;
-    } else {
-      foot.innerHTML = ranges
-        .map((r) => `<span class="dot swatch-${r.status}"></span>${STATUS_TEXT[r.status]} (≈${fmt(r.size)})`)
-        .join('<span class="muted"> · </span>');
-    }
+    const r = ranges.get(b.id);
+    el.querySelector(".hl").innerHTML = highlight(b, r, brkFor(b.id));
+    el.querySelector(".block-foot").innerHTML = footFor(b, r, a);
+    el.querySelector("select").value = effectiveChange(b);
   }
-
-  // Summary
-  const score = a.score;
-  $("score").textContent = score;
-  $("ring-fg").style.strokeDasharray = `${score} 100`;
-  $("ring-fg").style.stroke = score >= 80 ? "var(--shared)" : score >= 50 ? "var(--warn)" : "var(--uncached)";
-  $("ring").setAttribute("aria-label", `Cache score ${score} out of 100`);
-  const high = a.findings.filter((f) => f.severity === "high").length;
-  $("headline").textContent =
-    score >= 90 ? "Cache-friendly" : score >= 60 ? "Partly cacheable" : a.totalTokens ? "Mostly uncacheable" : "Empty prompt";
-  const reusable = Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens);
-  $("subline").textContent = a.totalTokens
-    ? `≈${fmt(reusable)} of ${fmt(a.totalTokens)} tokens can come from cache.${high ? ` ${high} issue${high > 1 ? "s" : ""} to fix.` : ""}`
-    : "Add some text to a block to start.";
-  $("bar").innerHTML = barHtml(a);
-  const minPct = a.totalTokens ? Math.min(100, (model.minTokens / a.totalTokens) * 100) : 0;
-  const minEl = $("bar-min");
-  minEl.hidden = minPct >= 100 || !a.totalTokens;
-  minEl.style.left = `${minPct}%`;
-  minEl.classList.toggle("flip", minPct > 70);
-  minEl.querySelector("span").textContent = `Minimum to cache: ${fmt(model.minTokens)}`;
-  $("bar-total").textContent = `≈${fmt(a.totalTokens)} tokens`;
-  $("s-shared").textContent = fmt(a.sharedPrefixTokens);
-  $("s-session").textContent = fmt(Math.max(0, a.sessionPrefixTokens - a.sharedPrefixTokens));
-  $("s-full").textContent = fmt(a.totalTokens - Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens));
-
-  renderNext(a);
-  renderFindings(a);
-  renderCost(a, model);
+  renderVerdict(a);
+  renderFixes(a);
+  renderCompare(a);
+  renderCost(a, currentModel());
   save();
 }
 
-// ---------- Request 1 vs request 2 ----------
+// ---------- Verdict ----------
 
-const OTHER_NAMES = [["Alex Rivera", "Jordan Lee"], ["alex.rivera@example.com", "jordan.lee@example.com"]];
+function renderVerdict(a) {
+  const total = a.totalTokens;
+  const shared = total ? a.sharedPrefixTokens / total : 0;
+  const session = total ? Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens) / total : 0;
+  const big = $("big");
+  big.textContent = total ? pct(shared) : "–";
+  big.className = `big ${shared >= 0.8 ? "good" : shared >= 0.5 ? "mid" : "bad"}`;
+  $("verdict-text").textContent = total
+    ? `reused for every user${session - shared > 0.05 ? `, ${pct(session)} within one user's conversation` : ""}`
+    : "";
+  $("meter").innerHTML = total
+    ? `<span class="shared" style="flex-grow:${a.sharedPrefixTokens}"></span><span class="session" style="flex-grow:${Math.max(0, a.sessionPrefixTokens - a.sharedPrefixTokens)}"></span><span class="paid" style="flex-grow:${total - Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens)}"></span>`
+    : "";
 
-function nextValue(m) {
-  const t = m.text;
-  if (m.rule === "timestamp") {
-    const d = t.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-    if (d) {
-      const sec = d[3] !== undefined ? String((Number(d[3]) + 7) % 60).padStart(2, "0") : null;
-      const min = sec === null ? String((Number(d[2]) + 1) % 60).padStart(2, "0") : d[2];
-      return t.replace(d[0], `${d[1]}:${min}${sec !== null ? `:${sec}` : ""}`);
-    }
-    return t.replace(/\d(?=\D*$)/, (x) => String((Number(x) + 3) % 10));
-  }
-  if (m.rule === "date") return t.replace(/\d+/, (x) => String(Number(x) + 1).padStart(x.length, "0"));
-  if (m.rule === "identifier" || m.rule === "sessionId") {
-    return t.replace(/[0-9a-f]{4,}/gi, (x) => [...x].map(() => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
-  }
-  if (m.rule === "counter") return t.replace(/\d[\d,]*/, (x) => fmt(Number(x.replace(/,/g, "")) + 1));
-  if (m.rule === "personal") {
-    let out = t;
-    for (const [a, b] of OTHER_NAMES) out = out.replace(a, b);
-    if (out === t) out = t.replace(/[A-Z][a-z]+/, "Jordan");
-    return out === t ? "(another user's details)" : out;
-  }
-  if (m.rule === "template") return `(next value of ${m.variable})`;
-  return "(different)";
-}
-
-function renderNext(a) {
-  const brk = a.sessionBreak && a.sharedBreak ? (a.sharedBreak.token <= a.sessionBreak.token ? a.sharedBreak : a.sessionBreak) : a.sharedBreak ?? a.sessionBreak;
-  const card = $("next-card");
-  if (!brk || !a.totalTokens) {
-    $("next-caption").textContent = "Nothing in this prompt changes between requests, so the whole prompt is a reusable prefix.";
-    $("next-lines").innerHTML = "";
+  if (!total) {
+    $("why").innerHTML = "Pick an example above, or paste your prompt into the parts of step 2.";
     return;
   }
-  const b = a.blocks.find((x) => x.id === brk.blockId);
-  const who = brk.scope === "request" ? "the next request" : "the next user's request";
-  if (brk.reason === "match") {
-    const m = brk.match;
-    const oneLine = (t) => t.replace(/\s*\n\s*/g, " ↵ ");
-    const before = oneLine(b.text.slice(Math.max(0, m.start - 60), m.start).replace(/^\S*\s/, ""));
-    const after = oneLine(b.text.slice(m.end, m.end + 30));
-    const line = (n, value, cls) =>
-      `<div class="next-line"><span class="n">#${n}</span><code><span class="same">…${esc(before)}</span><span class="diff ${cls}">${esc(value)}</span>${esc(after)}…</code></div>`;
-    $("next-caption").innerHTML = `Both requests match up to here, ≈${fmt(brk.token)} tokens into the prompt (${esc(b.label)}). From this character on, ${who} misses the cache and is processed in full.`;
-    $("next-lines").innerHTML = line(1, m.text, "") + line(2, nextValue(m), "");
+  const brk = a.sharedBreak;
+  const b = brk && a.blocks.find((x) => x.id === brk.blockId);
+  const serious = a.findings.some((f) => f.severity === "high" || f.severity === "medium");
+  const after = total - (brk?.token ?? total);
+  const who = brk?.scope === "request" ? "on every request" : "for every new user";
+  let html;
+  if (!brk) {
+    html = "Nothing in this prompt changes between requests, so all of it can be reused.";
+  } else if (!serious) {
+    html = `The cache stops at the <b>${esc(b.label)}</b>, which ${brk.scope === "request" ? "is new on every request" : "is different for each user"}. That's expected: only the parts that really change are paid in full.`;
+  } else if (brk.reason === "match") {
+    html = `The cache stops at <code>${esc(short(brk.match.text, 48))}</code> on line ${lineOf(b.text, brk.match.start)} of the <b>${esc(b.label)}</b>. ${BECAUSE[brk.match.rule] ?? "This changes between requests"}, so the <b>${fmt(after)} tokens</b> after it are paid in full ${who}.`;
   } else {
-    $("next-caption").innerHTML = `Both requests match up to the start of <b>${esc(b.label)}</b>, ≈${fmt(brk.token)} tokens in. That block ${brk.scope === "request" ? "changes on every request" : "differs per user"}, so it and everything after it is processed in full for ${who}.`;
-    const first = b.text.split("\n").find((l) => l.trim()) ?? "";
-    $("next-lines").innerHTML = `<div class="next-line"><span class="n">#1</span><code><span class="diff">${esc(first.slice(0, 90))}</span>…</code></div><div class="next-line"><span class="n">#2</span><code><span class="diff">(different ${esc(b.label.toLowerCase())})</span></code></div>`;
+    const stableAfter = a.blocks.filter((x) => x.startToken > brk.token && effectiveChange(x) === "static").map((x) => x.label);
+    html = `The cache stops at the start of the <b>${esc(b.label)}</b>, because it is ${brk.scope === "request" ? "different on every request" : "different for each user"}. The <b>${fmt(after)} tokens</b> after it are paid in full ${who}${stableAfter.length ? `, including the ${esc(stableAfter.join(" and "))}, which ${stableAfter.length > 1 ? "never change" : "never changes"}` : ""}.`;
   }
-  card.hidden = false;
+  const model = currentModel();
+  const reusable = Math.max(a.sharedPrefixTokens, a.sessionPrefixTokens);
+  if (reusable > 0 && reusable < model.minTokens) {
+    html += `<span class="warnline">${esc(model.label)} only caches prompts that start with at least ${fmt(model.minTokens)} identical tokens. This one reuses ≈${fmt(reusable)}, so in practice nothing is cached.</span>`;
+  }
+  $("why").innerHTML = html;
 }
 
-// ---------- Findings ----------
+// ---------- Fixes ----------
 
-function renderFindings(a) {
+function renderFixes(a) {
   const list = $("findings");
-  $("count").textContent = a.findings.length;
-  $("fix").disabled = !optimize(state.blocks, { dismissed: state.dismissed }).changes.length;
+  const proposal = optimize(state.blocks, { dismissed: state.dismissed });
+  const fixBtn = $("fix");
+  fixBtn.disabled = !proposal.changes.length;
   if (!a.findings.length) {
-    list.innerHTML = `<li class="empty"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg><span>No problems found. Stable content comes first and nothing in it changes between requests.</span></li>`;
+    list.innerHTML = `<li class="empty"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg><span><b>Nothing to fix.</b> The parts that stay the same come first, and nothing in them changes between requests.</span></li>`;
   } else {
     list.innerHTML = a.findings
       .map((f) => {
-        const lost = f.lostTokens ? `<span class="lost">≈${fmt(f.lostTokens)} tokens affected</span>` : "";
-        return `<li class="finding" data-finding="${esc(f.id)}">
-          <div class="finding-top"><span class="sev ${f.severity}">${f.severity}</span><span class="finding-title">${esc(f.title)}</span></div>
-          <p>${esc(f.detail)}</p>
-          <p class="fix"><b>Fix:</b> ${esc(f.fix)}</p>
-          <div class="finding-actions">
-            ${f.blockId ? `<button type="button" data-show="${esc(f.blockId)}" data-range="${f.ranges ? f.ranges[0].join(",") : ""}">Show</button>` : ""}
-            ${f.dismissible ? `<button type="button" data-dismiss="${esc(f.id)}">Not a problem</button>` : ""}
-            ${lost}
+        const affected = f.lostTokens ? ` · affects ≈${fmt(f.lostTokens)} tokens` : "";
+        const range = f.ranges ? f.ranges[0].join(",") : "";
+        return `<li class="fix">
+          <div class="fix-top"><span class="fix-n ${f.severity}" aria-hidden="true"></span><div><span class="fix-title">${esc(f.title)}</span><span class="impact">${IMPACT[f.severity]}${affected}</span></div></div>
+          <p class="todo"><b>Do this:</b> ${esc(f.fix)}</p>
+          <div class="fix-actions">
+            ${f.blockId ? `<button type="button" data-show="${esc(f.blockId)}" data-range="${range}">Show me</button>` : ""}
+            ${f.dismissible ? `<button type="button" data-dismiss="${esc(f.id)}" title="Use this when the value is really fixed, such as a policy date">It never changes</button>` : ""}
           </div>
         </li>`;
       })
       .join("");
   }
+  const manual = a.findings.some((f) => f.rule === "tools-dynamic" || f.rule === "below-minimum");
+  list.insertAdjacentHTML(
+    "beforeend",
+    !proposal.changes.length && a.findings.length
+      ? `<li class="manual">“Apply all fixes” has nothing left to move. ${manual ? "The remaining items need a change in your code or a longer prompt." : ""}</li>`
+      : "",
+  );
   const restore = $("restore");
   restore.hidden = !state.dismissed.length;
-  restore.innerHTML = `${state.dismissed.length} marked as not a problem. <button type="button" id="restore-btn">Restore</button>`;
+  restore.innerHTML = `${state.dismissed.length} marked as never changing. <button type="button" id="restore-btn">Undo that</button>`;
 }
 
 $("findings").addEventListener("click", (e) => {
@@ -405,9 +440,19 @@ $("restore").addEventListener("click", (e) => {
   update();
 });
 
-$("bar").addEventListener("click", (e) => {
-  const seg = e.target.closest("[data-goto]");
-  if (seg) reveal(seg.dataset.goto);
+$("fix").addEventListener("click", () => {
+  const before = run();
+  const proposal = optimize(state.blocks, { dismissed: state.dismissed });
+  if (!proposal.changes.length) return;
+  const share = (x) => (x.totalTokens ? x.sharedPrefixTokens / x.totalTokens : 0);
+  const prev = structuredClone(state);
+  state.blocks = proposal.blocks.map((b) => ({ ...b }));
+  markCustom();
+  renderAll();
+  const after = run();
+  snapshot(`Reused for every user: ${pct(share(before))} → ${pct(share(after))}.`, prev);
+  // Bring the result into view on small screens.
+  if (matchMedia("(max-width: 900px)").matches) $("verdict").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 function reveal(blockId, range) {
@@ -421,10 +466,62 @@ function reveal(blockId, range) {
     const ta = el.querySelector("textarea");
     ta.focus({ preventScroll: true });
     ta.setSelectionRange(start, end);
-    // Scroll the textarea so the selection is visible.
-    const before = ta.value.slice(0, start).split("\n").length;
-    ta.scrollTop = Math.max(0, (before - 3) * 20);
+    ta.scrollTop = Math.max(0, (lineOf(ta.value, start) - 3) * 20);
     el.querySelector(".hl").scrollTop = ta.scrollTop;
+  }
+}
+
+// ---------- Request 1 vs request 2 ----------
+
+const OTHER = [["Alex Rivera", "Jordan Lee"], ["alex.rivera@example.com", "jordan.lee@example.com"]];
+
+function nextValue(m) {
+  const t = m.text;
+  if (m.rule === "timestamp") {
+    const d = t.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (d) {
+      const sec = d[3] !== undefined ? String((Number(d[3]) + 7) % 60).padStart(2, "0") : null;
+      const min = sec === null ? String((Number(d[2]) + 1) % 60).padStart(2, "0") : d[2];
+      return t.replace(d[0], `${d[1]}:${min}${sec !== null ? `:${sec}` : ""}`);
+    }
+    return t.replace(/\d(?=\D*$)/, (x) => String((Number(x) + 3) % 10));
+  }
+  if (m.rule === "date") return t.replace(/\d+/, (x) => String(Number(x) + 1).padStart(x.length, "0"));
+  if (m.rule === "identifier" || m.rule === "sessionId") {
+    return t.replace(/[0-9a-f]{4,}/gi, (x) => [...x].map(() => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""));
+  }
+  if (m.rule === "counter") return t.replace(/\d[\d,]*/, (x) => fmt(Number(x.replace(/,/g, "")) + 1));
+  if (m.rule === "personal") {
+    let out = t;
+    for (const [x, y] of OTHER) out = out.replace(x, y);
+    return out === t ? t.replace(/[A-Z][a-z]+/, "Jordan") : out;
+  }
+  if (m.rule === "template") return `(new value of ${m.variable})`;
+  return "(different)";
+}
+
+function renderCompare(a) {
+  const brk = a.sharedBreak;
+  if (!brk || !a.totalTokens) {
+    $("next-caption").textContent = "Every request sends exactly the same prompt, so the provider can reuse all of it.";
+    $("next-lines").innerHTML = "";
+    return;
+  }
+  const b = a.blocks.find((x) => x.id === brk.blockId);
+  const second = brk.scope === "request" ? "Request 2" : "Next user";
+  const oneLine = (t) => t.replace(/\s*\n\s*/g, " ↵ ");
+  if (brk.reason === "match") {
+    const m = brk.match;
+    const before = oneLine(b.text.slice(Math.max(0, m.start - 50), m.start).replace(/^\S*\s/, ""));
+    const after = oneLine(b.text.slice(m.end, m.end + 40));
+    const line = (label, value) =>
+      `<div class="next-line"><span class="n">${label}</span><code>…<span class="same">${esc(before)}</span><span class="diff">${esc(value)}</span><span class="rest">${esc(after)}…</span></code></div>`;
+    $("next-caption").innerHTML = `The provider compares each new request with the ones it has seen, character by character from the start. The two requests below are identical up to the <span class="key shared">green</span> part, then differ at the <span class="key paid">red</span> part. Only the identical start can be reused.`;
+    $("next-lines").innerHTML = line("Request 1", m.text) + line(second, nextValue(m));
+  } else {
+    const first = oneLine(b.text.split("\n").find((l) => l.trim()) ?? "");
+    $("next-caption").innerHTML = `Both requests are identical until the <b>${esc(b.label)}</b>, which ${brk.scope === "request" ? "is different on every request" : "is different for each user"}. Only the identical start can be reused.`;
+    $("next-lines").innerHTML = `<div class="next-line"><span class="n">Request 1</span><code><span class="diff">${esc(short(first, 80))}</span></code></div><div class="next-line"><span class="n">${second}</span><code><span class="diff">(a different ${esc(b.label.toLowerCase())})</span></code></div>`;
   }
 }
 
@@ -447,19 +544,20 @@ function renderCost(a, model) {
   const c = estimateCost(a, model, { requestsPerHour: state.rph, turnsPerConversation: state.turns });
   $("c-none").textContent = money(c.noCache);
   $("c-with").textContent = money(c.withCache);
-  const save = $("c-save");
-  const pct = Math.round(c.savedPct);
-  save.className = `save ${pct > 0 ? "" : pct < 0 ? "worse" : "none"}`;
-  save.textContent = pct > 0 ? `${pct}% less` : pct < 0 ? `${-pct}% more` : "No saving";
-  const p = PROVIDERS[model.provider];
+  const p = Math.round(c.savedPct);
+  const line = $("c-save");
+  line.className = `save-line ${p > 0 ? "good" : p < 0 ? "worse" : "none"}`;
+  line.textContent =
+    p > 0 ? `Caching saves ${p}% of the input cost.` : p < 0 ? `Caching costs ${-p}% more here: cache writes are never read back.` : "No saving: nothing in this prompt is cached.";
+  const prov = PROVIDERS[model.provider];
   const notes = [
-    `${p.how}`,
-    `Cached input: $${model.read}/M tokens vs $${model.input}/M${model.write > model.input ? `; cache writes: $${model.write}/M` : ""}. Minimum: ${fmt(model.minTokens)} tokens. Lifetime: ${model.ttlNote}.`,
+    prov.how,
+    `Prices per million input tokens: $${model.input} normal, $${model.read} from cache${model.write > model.input ? `, $${model.write} to write to the cache` : ""}. Caches only prompts of at least ${fmt(model.minTokens)} tokens. Cache lifetime: ${model.ttlNote}.`,
   ];
-  if (!c.warm) notes.push(`At ${fmt(state.rph)} requests per hour, requests are ${c.gapMinutes.toFixed(0)} minutes apart, longer than the cache lifetime, so the shared prefix expires between requests.`);
-  if (model.provider === "gemini") notes.push("Implicit caching on Gemini is best effort: this estimate assumes hits, which our live test didn't always get.");
+  if (!c.warm) notes.push(`At ${fmt(state.rph)} requests per hour, requests are ${c.gapMinutes.toFixed(0)} minutes apart, longer than the cache lasts.`);
+  if (model.provider === "gemini") notes.push("Gemini's automatic caching is best effort: this assumes it hits, which it didn't in our live test.");
   if (model.priceNote) notes.push(model.priceNote);
-  $("cost-note").innerHTML = `${notes.map(esc).join(" ")} <a href="${p.pricing}" target="_blank" rel="noopener">Pricing</a> · <a href="${p.docs}" target="_blank" rel="noopener">Docs</a>`;
+  $("cost-note").innerHTML = `${notes.map(esc).join(" ")} <a href="${prov.pricing}" target="_blank" rel="noopener">Pricing</a> · <a href="${prov.docs}" target="_blank" rel="noopener">Docs</a>`;
 }
 
 $("model").addEventListener("change", (e) => {
@@ -476,60 +574,21 @@ for (const id of ["rph", "turns"]) {
   });
 }
 
-// ---------- Fix layout ----------
-
-let proposal = null;
-
-function openSheet() {
-  proposal = optimize(state.blocks, { dismissed: state.dismissed });
-  if (!proposal.changes.length) return;
-  const before = run();
-  const after = run(proposal.blocks);
-  const row = (label, a) =>
-    `<div class="compare-row"><span class="muted">${label}</span><div class="bar">${barHtml(a, { interactive: false })}</div><b>${a.score}</b></div>`;
-  $("compare").innerHTML = row("Now", before) + row("Suggested", after);
-  $("changes").innerHTML = proposal.changes.map((c) => `<li>${esc(c)}</li>`).join("");
-  $("sheet").hidden = false;
-  $("sheet-backdrop").hidden = false;
-  $("sheet-apply").focus();
-}
-
-function closeSheet() {
-  $("sheet").hidden = true;
-  $("sheet-backdrop").hidden = true;
-  $("fix").focus();
-}
-
-$("fix").addEventListener("click", openSheet);
-$("sheet-close").addEventListener("click", closeSheet);
-$("sheet-cancel").addEventListener("click", closeSheet);
-$("sheet-backdrop").addEventListener("click", closeSheet);
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
-});
-$("sheet-apply").addEventListener("click", () => {
-  snapshot("Layout updated.");
-  state.blocks = proposal.blocks.map((b) => ({ ...b }));
-  markCustom();
-  closeSheet();
-  renderAll();
-});
-
 // ---------- Undo toast ----------
 
 let toastTimer = null;
-function snapshot(message) {
-  undoStack = structuredClone(state);
+function snapshot(message, prev = structuredClone(state)) {
+  undoState = prev;
   const t = $("toast");
   t.innerHTML = `<span>${esc(message)}</span><button type="button" id="undo">Undo</button>`;
   t.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (t.hidden = true), 6000);
+  toastTimer = setTimeout(() => (t.hidden = true), 7000);
 }
 $("toast").addEventListener("click", (e) => {
-  if (e.target.id !== "undo" || !undoStack) return;
-  state = undoStack;
-  undoStack = null;
+  if (e.target.id !== "undo" || !undoState) return;
+  state = undoState;
+  undoState = null;
   $("toast").hidden = true;
   renderAll();
 });

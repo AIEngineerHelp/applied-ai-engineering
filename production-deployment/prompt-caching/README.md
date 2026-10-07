@@ -111,15 +111,15 @@ Every request, with the model's answer, is in [`results/requests.jsonl`](results
 
 ## The playground
 
-The playground models a prompt as ordered blocks, each marked *never changes*, *per user or conversation* or *every request*. Within blocks marked stable, it detects values that change anyway. It finds where the shared prefix (reused by every user) and the session prefix (reused within one conversation) end, and shows:
+The playground answers one question: *which part of my prompt gets cached, and what stops it?* It works in three steps:
 
-- a bar of the prompt, colored by cache status, with the model's minimum marked;
-- the exact text where request 1 and request 2 diverge;
-- findings with severity, the tokens affected, a fix, and "Not a problem" for false positives (a fixed policy date, for example);
-- input cost per 1,000 requests with and without caching, for Claude Opus 5.5, Sonnet 5.5 and Haiku 4.5, Gemini 3.8 Flash and 3.1 Pro, and GPT-6.1 Sol and GPT-6 Luna, given requests per hour and turns per conversation;
-- **Fix layout**: pulls volatile lines out of stable blocks, sorts tools by name, and orders blocks from most to least stable, with a before-and-after preview and undo.
+1. **Pick an example** (six common mistakes and one good layout) or paste your own prompt as parts: tool definitions, system prompt, examples, documents, conversation history, user message. Each part says whether it is the same for everyone, different per user, or different every request.
+2. **Read the colors.** The prompt text itself is tinted green where it is reused for everyone, blue where it is reused within one user's conversation, and red where it is paid in full on every request. A red line marks where the cache stops, and the values that change anyway (dates, times, IDs, names, emails, counters, template slots) are highlighted. A plain-language verdict gives the reused share and explains what ended it, for example: "The cache stops at `2026-10-07T14:32:09Z` on line 1 of the System prompt. This time changes on every request, so the 4,681 tokens after it are paid in full on every request."
+3. **Apply the fixes.** Each problem comes with what to do and a "Show me" link. "It never changes" dismisses a false positive, such as a fixed policy date. **Apply all fixes** moves the changing lines to the end, sorts the tools and reorders the parts, then shows the change (for example "20% → 99%") with an undo.
 
-Its token counts are estimates, at about four characters per token. The cost model assumes steady traffic: the shared prefix is written once and read by every later request if requests arrive within the cache lifetime, and the session prefix is written on each conversation's first turn. Use it to compare layouts, not to forecast a bill.
+Below that, two requests are shown side by side to make the prefix rule visible. The input cost per 1,000 requests is estimated for Claude Opus 5.5, Sonnet 5.5 and Haiku 4.5, Gemini 3.8 Flash and 3.1 Pro, and GPT-6.1 Sol and GPT-6 Luna. Traffic assumptions are adjustable.
+
+Token counts are estimates, at about four characters per token. The cost model assumes steady traffic: the shared part is written once and read by every later request if requests arrive within the cache lifetime, and the per-user part is written on each conversation's first message. Use it to compare layouts, not to forecast a bill.
 
 ## Limitations
 

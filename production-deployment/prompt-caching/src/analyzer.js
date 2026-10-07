@@ -23,9 +23,9 @@ export const BLOCK_KINDS = {
 };
 
 export const CHANGE_LABELS = {
-  static: "Never changes",
-  session: "Per user or conversation",
-  request: "Every request",
+  static: "Same for everyone",
+  session: "Different per user",
+  request: "Different every request",
 };
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2, info: 3 };
