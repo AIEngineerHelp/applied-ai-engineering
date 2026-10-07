@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Cache Playground</title>
+<meta name="description" content="Paste a prompt and see how much of it a provider can cache, what breaks the cache, and how to fix it. Covers Claude, Gemini and OpenAI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/playground.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317171a'/%3E%3Crect x='7' y='9' width='18' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='15' width='12' height='4' rx='2' fill='%2310a37f'/%3E%3Crect x='7' y='21' width='8' height='4' rx='2' fill='%23e5484d'/%3E%3C/svg%3E">
+<script>
+  try { const t = localStorage.getItem("pcp-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="2.4" rx="1.2"/><rect x="2" y="6.8" width="8" height="2.4" rx="1.2"/><rect x="2" y="10.6" width="5" height="2.4" rx="1.2" opacity=".5"/></svg></span>
+    Prompt Caching
+  </a>
+  <nav class="topnav" aria-label="Main">
+    <a href="./">Article</a>
+    <a href="playground" aria-current="page">Playground</a>
+    <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/production-deployment/prompt-caching" class="hide-sm">Code</a>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch color theme" title="Switch color theme">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11" /><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main class="pg">
+  <section class="editor" aria-labelledby="pg-title">
+    <div class="intro">
+      <h1 id="pg-title">Prompt cache playground</h1>
+      <p>Build a prompt the way the provider receives it, top to bottom. The playground shows how much of it can be served from cache, what breaks the cache, and how to reorder it. Everything runs in your browser; nothing is sent anywhere.</p>
+    </div>
+
+    <div class="presets-head">
+      <span class="label">Start from an example</span>
+    </div>
+    <div class="presets" id="presets" role="list"></div>
+    <p class="preset-summary" id="preset-summary" aria-live="polite"></p>
+
+    <div class="blocks" id="blocks"></div>
+
+    <div class="add-row">
+      <span class="label">Add a block</span>
+      <div class="add-buttons" id="add-buttons"></div>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Analysis">
+    <section class="card summary">
+      <div class="summary-top">
+        <div class="ring" id="ring" role="img" aria-label="Cache score">
+          <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="27"/><circle class="ring-fg" id="ring-fg" cx="32" cy="32" r="27" pathLength="100"/></svg>
+          <span id="score">0</span>
+        </div>
+        <div>
+          <h2 id="headline">Cache score</h2>
+          <p id="subline" class="muted"></p>
+        </div>
+      </div>
+
+      <div class="bar-wrap">
+        <div class="bar" id="bar" aria-hidden="true"></div>
+        <div class="bar-min" id="bar-min" aria-hidden="true"><span></span></div>
+        <div class="bar-axis"><span>Start of prompt</span><span id="bar-total"></span></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="dot swatch-shared"></span><div><b id="s-shared">0</b><span>Shared by every user</span></div></div>
+        <div class="stat"><span class="dot swatch-session"></span><div><b id="s-session">0</b><span>Reused within a conversation</span></div></div>
+        <div class="stat"><span class="dot swatch-uncached"></span><div><b id="s-full">0</b><span>Paid in full on every request</span></div></div>
+      </div>
+    </section>
+
+    <section class="card next" id="next-card">
+      <h3>Request 1 vs. request 2</h3>
+      <p class="muted small" id="next-caption"></p>
+      <div class="next-lines" id="next-lines"></div>
+    </section>
+
+    <section class="card findings">
+      <div class="card-head">
+        <h3>Suggestions <span class="count" id="count">0</span></h3>
+        <button class="btn primary" id="fix" type="button">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5l4 4-7 7h-4v-4z"/><path d="M8 4l4 4"/></svg>
+          Fix layout
+        </button>
+      </div>
+      <ol class="finding-list" id="findings"></ol>
+      <p class="restore" id="restore" hidden></p>
+    </section>
+
+    <section class="card cost">
+      <div class="card-head">
+        <h3>Input cost per 1,000 requests</h3>
+      </div>
+      <div class="cost-controls">
+        <label class="field"><span>Model</span><select id="model"></select></label>
+        <label class="field"><span>Requests per hour</span><input id="rph" type="number" min="1" max="100000" value="600" inputmode="numeric"></label>
+        <label class="field"><span>Turns per conversation</span><input id="turns" type="number" min="1" max="200" value="5" inputmode="numeric"></label>
+      </div>
+      <div class="cost-out">
+        <div><span class="muted small">Without caching</span><b id="c-none">$0</b></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div><span class="muted small">With this layout</span><b id="c-with">$0</b></div>
+        <div class="save" id="c-save"></div>
+      </div>
+      <p class="muted small" id="cost-note"></p>
+      <details class="how">
+        <summary>How this is calculated</summary>
+        <p>Token counts are estimates (about 4 characters per token); real tokenizers differ. The shared prefix is written to the cache once, then read by every later request, as long as requests arrive closer together than the cache lifetime. The per-conversation prefix is written on each conversation's first turn and read on the others. Everything else is billed at the normal input price. Prefixes shorter than the model's minimum aren't cached. Output tokens cost the same either way, so they're left out.</p>
+      </details>
+    </section>
+  </aside>
+</main>
+
+<div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet-head">
+    <h3 id="sheet-title">Suggested layout</h3>
+    <button class="icon-btn" id="sheet-close" type="button" aria-label="Close"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+  </div>
+  <div class="compare" id="compare"></div>
+  <ul class="changes" id="changes"></ul>
+  <div class="sheet-actions">
+    <button class="btn ghost" id="sheet-cancel" type="button">Cancel</button>
+    <button class="btn primary" id="sheet-apply" type="button">Apply changes</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="assets/playground.js"></script>
+</body>
+</html>
