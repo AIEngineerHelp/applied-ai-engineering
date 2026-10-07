@@ -8,7 +8,7 @@ This example has three parts:
 - **A playground** where you paste a prompt as blocks (tools, system prompt, documents, history, user message). It shows how much can be cached and highlights the values that break the cache (dates, IDs, names, counters, template slots). It explains each problem, estimates the cost per 1,000 requests for seven models, and reorders the prompt in one click. It runs entirely in the browser.
 - **An experiment** that sent the same 5,400-token support-agent prompt to Gemini 3.8 Flash in eight layouts, 12 requests each, and recorded cached tokens, latency and cost.
 
-Run `npm start` from this directory and open [http://127.0.0.1:4321](http://127.0.0.1:4321) for the article and [http://127.0.0.1:4321/playground](http://127.0.0.1:4321/playground) for the playground. No API key is needed.
+**Live:** [the article](https://prompt-caching-steel.vercel.app) and [the playground](https://prompt-caching-steel.vercel.app/playground). To run them locally, run `npm start` from this directory and open [http://127.0.0.1:4321](http://127.0.0.1:4321) (the playground is at `/playground`). No API key is needed.
 
 ## Key takeaways
 
@@ -60,7 +60,7 @@ npm run experiment -- --live    # 96 paid requests to gemini-3.8-flash (about $0
 npm run experiment -- --live --only stable,explicit
 npm run analyze                 # newest run → results/summary.json, requests.jsonl, report.md
 node experiment/diagnose.js     # dry run of the implicit-caching follow-up (--live: 12 paid requests, about $0.08)
-npm run export                  # static copy for deployment in dist/
+npm run export                  # static copy for deployment in dist/ (keeps dist/.vercel)
 ```
 
 Raw runs, which include full request metadata, go to the Git-ignored `runs/`. `npm run analyze` writes the committed `results/`.
@@ -120,6 +120,10 @@ The playground answers one question: *which part of my prompt gets cached, and w
 Below that, two requests are shown side by side to make the prefix rule visible. The input cost per 1,000 requests is estimated for Claude Opus 5.5, Sonnet 5.5 and Haiku 4.5, Gemini 3.8 Flash and 3.1 Pro, and GPT-6.1 Sol and GPT-6 Luna. Traffic assumptions are adjustable.
 
 Token counts are estimates, at about four characters per token. The cost model assumes steady traffic: the shared part is written once and read by every later request if requests arrive within the cache lifetime, and the per-user part is written on each conversation's first message. Use it to compare layouts, not to forecast a bill.
+
+## Deployment
+
+The article and playground are a static site on Vercel at [prompt-caching-steel.vercel.app](https://prompt-caching-steel.vercel.app), in the project `exclusive1s-projects/prompt-caching`. They make no API calls, so serving them costs nothing beyond hosting. To redeploy, run `npm run export`, then `vercel deploy --prod` from `dist/`. The export keeps `dist/.vercel`, the local project link.
 
 ## Limitations
 

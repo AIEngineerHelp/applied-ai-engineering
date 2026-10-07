@@ -12,7 +12,7 @@ Use this category for serving, deployment, observability, caching, operational r
 
 | Project | What it teaches | Status |
 | --- | --- | --- |
-| [Prompt caching: what breaks it, what it saves](prompt-caching/README.md) | How prefix caching works on Claude, Gemini and OpenAI, eight layout mistakes that silently disable it, an in-browser playground that finds them and reorders the prompt, and a live Gemini experiment: implicit caching 0 hits in 97 requests, explicit caching 12 of 12 and 84% cheaper per request | Runnable Node.js example; article and playground run locally with no API key; live results included |
+| [Prompt caching: what breaks it, what it saves](prompt-caching/README.md) | How prefix caching works on Claude, Gemini and OpenAI, eight layout mistakes that silently disable it, an in-browser playground that finds them and reorders the prompt, and a live Gemini experiment: implicit caching 0 hits in 97 requests, explicit caching 12 of 12 and 84% cheaper per request | Runnable Node.js example; [article](https://prompt-caching-steel.vercel.app) and [playground](https://prompt-caching-steel.vercel.app/playground) online; live results included |
 | [Incident response agent](../agents/incident-response-agent/README.md#architecture) | Running an agent behind an API and queue workers: persistence, crash recovery, auth, audit log, metrics, Docker Compose and Helm | Part of the [incident response agent](../agents/incident-response-agent/README.md) (primary category: Agents); runs locally, not yet deployed to a cluster |
 
 ## Adding a contribution
