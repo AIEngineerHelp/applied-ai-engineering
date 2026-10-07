@@ -1,0 +1,22 @@
+[
+  {
+    "file": "figures/net-ontime.svg",
+    "number": 1,
+    "description": "Vertical bar chart titled \"On-time delivery by region, Q3 2026\". The x-axis lists six regions; the y-axis shows on-time delivery from 80% to 100%. Values: US East 97.1%, US Central 96.4%, US West 95.0%, EU West 93.9%, Canada West 90.8%, Mexico North 86.2%. A dashed red line marks the 94% target. The three US regions are blue bars above target; EU West, Canada West and Mexico North are orange bars below target, with Mexico North the lowest, about 8 points under target."
+  },
+  {
+    "file": "figures/net-latency.svg",
+    "number": 2,
+    "description": "Line chart titled \"Weekly p95 webhook delivery latency\" for weeks W1 to W13 of Q3 2026. The y-axis is p95 latency in milliseconds from 0 to 5,000; a dashed red line marks the 2,000 ms objective. Weekly values: 920, 880, 950, 1,010, 860, 780, 940, 1,150, 4,850, 2,310, 1,090, 970 and 900 ms. Latency is flat below 1,200 ms except for a sharp spike to 4,850 ms in week 9 and 2,310 ms in week 10, the only two weeks above the objective, before returning to normal in week 11."
+  },
+  {
+    "file": "figures/net-pipeline.svg",
+    "number": 3,
+    "description": "Architecture diagram titled \"Tracking pipeline architecture\". Boxes connected by arrows show the flow: Carrier feeds (SFTP, EDI, partner APIs) to Ingest (validate, deduplicate) to Normalizer (214 mapping rules) to Event store (canonical history). From the event store, an arrow labelled \"events\" goes down to a Queue (buffers deliveries), then to the Webhook dispatcher (signs, retries), then to Customer endpoints (3,870 active). A note says the queue decouples writes to the event store from delivery, so a slow customer endpoint cannot hold up ingest."
+  },
+  {
+    "file": "figures/net-causes.svg",
+    "number": 4,
+    "description": "Horizontal 100% stacked bar chart titled \"Late deliveries by primary cause, Q3 2026\", showing each cause's share of tagged late shipments. Segments: customs clearance 41%, carrier capacity 23%, weather 18%, address errors 11%, other 7%. Customs clearance is the largest cause, accounting for about two-fifths of late deliveries; customs and carrier capacity together make up 64%. A footnote gives the base: 152,600 late shipments with a primary cause tag, July to September 2026."
+  }
+]

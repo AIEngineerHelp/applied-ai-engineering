@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 405" font-family="Inter, system-ui, sans-serif">
+  <rect width="720" height="405" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#64748b"/></marker>
+  </defs>
+  <text x="360" y="40" font-size="16" font-weight="700" fill="#111827" text-anchor="middle">Live ETA pipeline</text>
+  <!-- Inputs -->
+  <g font-size="12">
+    <rect x="30" y="80" width="150" height="54" rx="8" fill="#eef2f7" stroke="#cbd5e1"/>
+    <text x="105" y="104" text-anchor="middle" font-weight="600" fill="#1f2937">Truck telematics</text>
+    <text x="105" y="122" text-anchor="middle" font-size="10" fill="#64748b">position every 5 min</text>
+    <rect x="30" y="176" width="150" height="54" rx="8" fill="#eef2f7" stroke="#cbd5e1"/>
+    <text x="105" y="200" text-anchor="middle" font-weight="600" fill="#1f2937">Customs filings</text>
+    <text x="105" y="218" text-anchor="middle" font-size="10" fill="#64748b">paperwork status</text>
+    <rect x="30" y="272" width="150" height="54" rx="8" fill="#eef2f7" stroke="#cbd5e1"/>
+    <text x="105" y="296" text-anchor="middle" font-weight="600" fill="#1f2937">Booked window</text>
+    <text x="105" y="314" text-anchor="middle" font-size="10" fill="#64748b">fallback only</text>
+  </g>
+  <!-- Model -->
+  <rect x="250" y="150" width="190" height="106" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="345" y="180" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">Delay model</text>
+  <text x="345" y="200" text-anchor="middle" font-size="10" fill="#1e40af">border + dwell prediction</text>
+  <text x="345" y="222" text-anchor="middle" font-size="10" fill="#1e40af">output: eta, eta_low, eta_high</text>
+  <text x="345" y="242" text-anchor="middle" font-size="10" fill="#1e40af">recomputed ≤ 90 s after a ping</text>
+  <!-- Outputs -->
+  <g font-size="12">
+    <rect x="530" y="80" width="160" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+    <text x="610" y="110" text-anchor="middle" font-weight="600" fill="#065f46">Tracking map</text>
+    <rect x="530" y="178" width="160" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+    <text x="610" y="200" text-anchor="middle" font-weight="600" fill="#065f46">Shipments API</text>
+    <text x="610" y="218" text-anchor="middle" font-size="10" fill="#047857">GET /shipments/{id}</text>
+    <rect x="530" y="276" width="160" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+    <text x="610" y="298" text-anchor="middle" font-weight="600" fill="#065f46">Webhooks</text>
+    <text x="610" y="316" text-anchor="middle" font-size="10" fill="#047857">shipment.eta_changed</text>
+  </g>
+  <g stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#a)">
+    <path d="M180 107 C 215 107, 220 175, 248 180"/>
+    <path d="M180 203 L 248 203"/>
+    <path d="M180 299 C 215 299, 220 235, 248 228" stroke-dasharray="4 4"/>
+    <path d="M440 185 C 480 180, 490 105, 528 105"/>
+    <path d="M440 203 L 528 203"/>
+    <path d="M440 222 C 480 228, 490 300, 528 300"/>
+  </g>
+  <text x="360" y="380" text-anchor="middle" font-size="10" fill="#94a3b8">Dashed: used only before a truck reports two positions</text>
+</svg>

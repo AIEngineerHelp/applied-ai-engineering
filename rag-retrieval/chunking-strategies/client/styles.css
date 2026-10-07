@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@source "../site/index.html";
+@source "./app.ts";
+@source "./preview.ts";
+
+/* Dark mode follows data-theme on <html>, which the page sets from the saved
+   choice or the system preference before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Chunk tints; the values switch with the theme below. */
+  --color-chunk-1: var(--chunk-1);
+  --color-chunk-2: var(--chunk-2);
+  --color-chunk-3: var(--chunk-3);
+  --color-chunk-4: var(--chunk-4);
+  --color-chunk-5: var(--chunk-5);
+  --color-chunk-6: var(--chunk-6);
+}
+
+:root {
+  --chunk-1: #dbe8fd;
+  --chunk-2: #fbe6cc;
+  --chunk-3: #d6f0e0;
+  --chunk-4: #ecdcfa;
+  --chunk-5: #fbdbe4;
+  --chunk-6: #d5eef1;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --chunk-1: #1f3a66;
+  --chunk-2: #4a3412;
+  --chunk-3: #17402a;
+  --chunk-4: #3b2752;
+  --chunk-5: #4c1f2d;
+  --chunk-6: #153e44;
+}
+
+@layer base {
+  /* Code fonts render ->, <= and != literally. */
+  .font-mono { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+}
+
+@layer components {
+  /* One chunk inside the document view. Generated hundreds of times, so it
+     gets a component class instead of a long utility list. */
+  .ck {
+    @apply cursor-pointer rounded-[3px] py-px box-decoration-clone transition-opacity duration-150 ease-out;
+  }
+  .ck::before {
+    content: attr(data-n);
+    @apply mr-1.5 inline-block rounded bg-zinc-500 px-1.5 py-0.5 align-[1px] font-sans text-[10px] leading-none font-semibold text-white;
+  }
+  .ck.dim { @apply opacity-60 hover:opacity-100; }
+  .ck.sel::before { @apply bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900; }
+  .cut { @apply mx-0.5 inline-block h-[1.25em] w-[3px] rounded-sm bg-red-500 align-[-0.25em]; }
+  .seg {
+    @apply rounded-lg px-3.5 py-1.5 text-[13.5px] font-medium text-zinc-600 transition-[background-color,color,transform] duration-150 ease-out hover:text-zinc-900 active:scale-[0.97] dark:text-zinc-400 dark:hover:text-zinc-100;
+  }
+  .seg[aria-selected="true"] { @apply bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100; }
+  .navbtn {
+    @apply rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent dark:hover:bg-zinc-800 dark:hover:text-zinc-100;
+  }
+  /* Preview: chunk tints on rendered blocks and inline pieces. */
+  .pv { @apply cursor-pointer rounded-[4px] box-decoration-clone transition-opacity duration-150 ease-out; }
+  :where(p, li, h2, h3, h4, h5, h6, pre).pv { @apply -mx-1.5 px-1.5; }
+  .pv.dim { @apply opacity-60 hover:opacity-100; }
+  .pv.linked { @apply opacity-100 outline-2 outline-offset-2 outline-teal-500; }
+  .pv-badge {
+    @apply mr-1.5 inline-block cursor-pointer rounded bg-zinc-500 px-1.5 py-0.5 align-[2px] font-sans text-[10px] leading-none font-semibold text-white not-italic;
+  }
+  .pv-badge.sel { @apply bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900; }
+  .md-code { @apply rounded bg-zinc-900/[0.06] px-1 py-px font-mono text-[0.86em] dark:bg-white/10; }
+  .md-link { @apply text-teal-700 underline underline-offset-2 dark:text-teal-300; }
+  .tok-kw { @apply text-violet-700 dark:text-violet-300; }
+  .tok-str { @apply text-emerald-700 dark:text-emerald-300; }
+  .tok-com { @apply text-zinc-500 italic dark:text-zinc-400; }
+  .tok-num { @apply text-amber-700 dark:text-amber-300; }
+  .tok-dec { @apply text-sky-700 dark:text-sky-300; }
+  .tok-fn { @apply font-semibold text-blue-700 dark:text-blue-300; }
+  .tok-const { @apply text-rose-700 dark:text-rose-300; }
+  .ctx { @apply rounded-[3px] bg-transparent text-inherit outline-[1.5px] outline-offset-1 outline-teal-500 outline-dashed; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; }
+}

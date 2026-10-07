@@ -1,0 +1,135 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement (the "Agreement") is entered into as of March 3, 2026 (the "Effective Date") by and between Tidewater Freight, Inc., a Delaware corporation with its principal office at 410 Harbor Point Drive, Baltimore, Maryland 21230 ("Tidewater"), and Bramble & Pike Home Goods, LLC, an Oregon limited liability company with its principal office at 88 Alder Street, Portland, Oregon 97204 ("Customer"). Tidewater and Customer are each a "Party" and together the "Parties".
+
+1. DEFINITIONS
+
+1.1 "Services" means the Tidewater shipment tracking API, the freight rate engine, the carrier booking console, and any related support described in an Order Form.
+
+1.2 "Order Form" means a written ordering document signed by both Parties that references this Agreement and states the Services, quantities, Fees and Subscription Term.
+
+1.3 "Fees" means the amounts payable by Customer under an Order Form, excluding taxes, carrier pass-through charges and any Service Credits applied under Article 5.
+
+1.4 "Customer Data" means all shipment records, consignee names, delivery addresses, contact details and other information that Customer or its end customers submit to the Services. Customer Data does not include Usage Data.
+
+1.5 "Usage Data" means aggregated, de-identified statistics about the operation of the Services, such as request volumes, latency and error rates, that do not identify Customer or any individual.
+
+1.6 "Monthly Uptime Percentage" means the total number of minutes in a calendar month, minus the number of minutes of Downtime, divided by the total number of minutes in that month, expressed as a percentage.
+
+1.7 "Downtime" means a period of at least five consecutive minutes during which more than ten percent of valid API requests to the production endpoints return server errors, measured by Tidewater's external monitoring. Downtime excludes Scheduled Maintenance and the exclusions in Section 5.5.
+
+1.8 "Scheduled Maintenance" means maintenance announced on the Tidewater status page at least seventy-two hours in advance and performed between 01:00 and 05:00 Eastern Time on a Sunday, not exceeding four hours in any calendar month.
+
+1.9 "Confidential Information" has the meaning given in Section 8.1.
+
+1.10 "Security Incident" means any confirmed unauthorized access to, or acquisition, disclosure or loss of, Customer Data in Tidewater's possession or control.
+
+2. SERVICES AND ORDER FORMS
+
+2.1 Provision of Services. Tidewater will make the Services available to Customer during each Subscription Term in accordance with this Agreement, the applicable Order Form and the documentation published at docs.tidewaterfreight.example.
+
+2.2 Order of Precedence. If an Order Form conflicts with this Agreement, the Order Form controls only for the specific Services listed in it, and only if the Order Form expressly identifies the section of this Agreement it overrides. In all other cases this Agreement controls.
+
+2.3 Usage Limits. The Services are subject to the request limits stated in the Order Form. If Customer exceeds its monthly request limit by more than twenty percent for two consecutive months, Tidewater may invoice the excess at the overage rate in the Order Form. Tidewater will not throttle production traffic for exceeding a usage limit without first giving Customer ten days' written notice.
+
+3. CUSTOMER RESPONSIBILITIES
+
+3.1 Customer is responsible for the accuracy of Customer Data, for obtaining any consents required to submit consignee information, and for keeping its API keys confidential.
+
+3.2 Customer will not resell the Services, use them to build a competing freight rating product, or attempt to probe or circumvent their security controls.
+
+4. FEES AND PAYMENT
+
+4.1 Invoicing. Tidewater will invoice Fees annually in advance unless the Order Form states otherwise. Carrier pass-through charges are invoiced monthly in arrears.
+
+4.2 Payment Terms. Customer will pay each undisputed invoice within thirty days after the invoice date. Late amounts accrue interest at one percent per month or the maximum rate allowed by law, whichever is lower.
+
+4.3 Disputes. Customer may withhold a disputed amount if it notifies Tidewater in writing, with a reasonable explanation, before the invoice due date.
+
+4.4 Suspension for Non-Payment. Tidewater may suspend the Services if an undisputed invoice remains unpaid more than thirty days after its due date, but only after giving Customer at least fifteen days' written notice of the intended suspension. Tidewater will not suspend the Services while Customer is disputing the relevant invoice in good faith under Section 4.3.
+
+4.5 Price Changes. Tidewater may increase Fees at renewal by giving notice at least sixty days before the end of the then-current Subscription Term. Any increase is capped at seven percent over the Fees for the prior term.
+
+5. SERVICE LEVELS AND SERVICE CREDITS
+
+5.1 Availability Commitment. Tidewater will make the production shipment tracking API and freight rate engine available with a Monthly Uptime Percentage of at least 99.9 percent.
+
+5.2 Service Credits. If the Monthly Uptime Percentage falls below the commitment in Section 5.1, Customer is eligible for a credit against the monthly Fees for the affected Services as follows: below 99.9 percent but at least 99.5 percent, a credit of 10 percent; below 99.5 percent but at least 99.0 percent, a credit of 25 percent; below 99.0 percent, a credit of 50 percent.
+
+5.3 Claiming Credits. To receive a Service Credit, Customer must submit a claim through the support portal within thirty days after the end of the month in which the Downtime occurred. Claims submitted after that period are waived.
+
+5.4 Credit Limits. Service Credits for any calendar month will not exceed 50 percent of the monthly Fees for the affected Services. Service Credits are applied to future invoices and are not refundable as cash, except that Tidewater will pay any unused Service Credits in cash if this Agreement terminates without renewal.
+
+5.5 Exclusions. The availability commitment does not apply to unavailability caused by Scheduled Maintenance, by Customer's equipment or integrations, by a failure of a third-party carrier system that the Services query on Customer's behalf, or by a Force Majeure Event under Section 13.2.
+
+5.6 Sole Remedy. Service Credits are Customer's sole and exclusive remedy for failure to meet the availability commitment, except as provided in Section 11.2(c).
+
+6. DATA PROTECTION
+
+6.1 Use of Customer Data. Tidewater will process Customer Data only to provide and support the Services and as Customer instructs in writing. Tidewater may use Usage Data to operate and improve the Services.
+
+6.2 Data Location. Tidewater will store Customer Data in data centers located in the United States. Tidewater will not move Customer Data outside the United States without Customer's prior written consent.
+
+6.3 Subprocessors. Tidewater may use subprocessors to provide the Services, and will give Customer at least thirty days' notice before adding a new subprocessor that will have access to Customer Data. Customer may object on reasonable data protection grounds within that notice period.
+
+6.4 Security Incidents. Tidewater will notify Customer of a Security Incident without undue delay and in any event within seventy-two hours after confirming it. The notice will describe the nature of the incident, the categories of Customer Data affected and the steps Tidewater is taking in response.
+
+6.5 Return and Deletion. Within thirty days after termination of this Agreement, Tidewater will make Customer Data available for export in CSV format. Tidewater will delete Customer Data within ninety days after termination, except for copies retained in encrypted backups, which will be deleted in the ordinary course of backup rotation and in no event later than one hundred eighty days after termination.
+
+7. INTELLECTUAL PROPERTY
+
+7.1 Tidewater owns all rights in the Services, the documentation and Usage Data. Customer owns all rights in Customer Data.
+
+8. CONFIDENTIALITY
+
+8.1 Definition. "Confidential Information" means any non-public information disclosed by one Party to the other that is marked as confidential or that a reasonable person would understand to be confidential, including the terms of each Order Form. Confidential Information does not include information that becomes public through no fault of the receiving Party or that the receiving Party develops independently.
+
+8.2 Obligations. The receiving Party will use Confidential Information only to perform under this Agreement and will protect it with at least reasonable care. These obligations last for three years after termination, except that obligations regarding trade secrets last for as long as the information remains a trade secret.
+
+9. LIMITATION OF LIABILITY
+
+9.1 Exclusion of Indirect Damages. Except as provided in Section 9.3, neither Party will be liable for any lost profits, lost revenue, loss of goodwill, or any indirect, incidental, special or consequential damages.
+
+9.2 Liability Cap. Except as provided in Section 9.3, each Party's total liability arising out of or relating to this Agreement will not exceed the Fees paid or payable by Customer in the twelve months before the event giving rise to the liability.
+
+9.3 Exceptions. The exclusion in Section 9.1 and the cap in Section 9.2 do not apply to (a) a Party's indemnification obligations under Article 10, (b) Customer's obligation to pay Fees, or (c) a Party's gross negligence, fraud or willful misconduct. For a breach of Article 6 (Data Protection) or Article 8 (Confidentiality), the cap in Section 9.2 is replaced by a separate cap equal to three times the Fees paid or payable in the twelve months before the event giving rise to the liability.
+
+10. INDEMNIFICATION
+
+10.1 By Tidewater. Tidewater will defend Customer against any third-party claim alleging that the Services infringe a United States patent, copyright or trademark, and will pay the damages and costs finally awarded against Customer. Tidewater has no obligation under this section for claims arising from Customer Data or from modifications not made by Tidewater.
+
+10.2 By Customer. Customer will defend Tidewater against any third-party claim arising from Customer Data or from Customer's use of the Services in breach of Section 3.2.
+
+10.3 Procedure. The indemnified Party must notify the indemnifying Party promptly of the claim, give it sole control of the defense and settlement, and provide reasonable cooperation. The indemnifying Party may not settle a claim in a way that imposes an obligation on the indemnified Party without its written consent.
+
+11. TERM AND TERMINATION
+
+11.1 Term. This Agreement starts on the Effective Date and continues until all Order Forms have expired or been terminated. Each Order Form has an initial Subscription Term of twelve months and renews automatically for successive twelve-month terms unless either Party gives notice of non-renewal at least forty-five days before the end of the current term.
+
+11.2 Termination for Cause. Either Party may terminate this Agreement or an affected Order Form: (a) if the other Party materially breaches this Agreement and does not cure the breach within thirty days after written notice; (b) if the other Party becomes the subject of a bankruptcy or insolvency proceeding that is not dismissed within sixty days; or (c) in the case of Customer, if the Monthly Uptime Percentage falls below 99.0 percent in any three months within a rolling six-month period.
+
+11.3 Effect of Termination. If Customer terminates under Section 11.2, Tidewater will refund any prepaid Fees covering the remainder of the Subscription Term after the termination date. If Tidewater terminates under Section 11.2(a), Customer will pay any unpaid Fees covering the remainder of the Subscription Term.
+
+11.4 Survival. Articles 7, 8, 9 and 10, Sections 4.2 and 6.5, and any other provision that by its nature should survive, will survive termination.
+
+12. NOTICES
+
+12.1 Notices under this Agreement must be in writing and delivered by courier, by certified mail, or by email with confirmation of receipt. Notices to Tidewater must be sent to the Legal Department at the address above, with a copy to legal@tidewaterfreight.example. Notices to Customer must be sent to the address in the applicable Order Form, to the attention of the General Counsel.
+
+12.2 Operational notices, including Scheduled Maintenance announcements and subprocessor updates under Section 6.3, may be given through the status page or by email to Customer's designated administrator.
+
+13. GENERAL
+
+13.1 Governing Law. This Agreement is governed by the laws of the State of Delaware, without regard to its conflict of laws rules. The state and federal courts in Wilmington, Delaware have exclusive jurisdiction.
+
+13.2 Force Majeure. Neither Party is liable for a delay or failure caused by events beyond its reasonable control, such as natural disasters, war, labor actions not involving the affected Party's own employees, or widespread internet outages (each, a "Force Majeure Event"). This section does not excuse Customer's obligation to pay Fees.
+
+13.3 Assignment. Neither Party may assign this Agreement without the other Party's written consent, except to a successor in a merger or sale of substantially all of its assets, provided the successor is not a direct competitor of the other Party.
+
+13.4 Entire Agreement. This Agreement, together with all Order Forms, is the entire agreement between the Parties about its subject matter and supersedes all prior proposals and agreements.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the Effective Date.
+
+Tidewater Freight, Inc.            Bramble & Pike Home Goods, LLC
+By: Dana Whitcombe                 By: Marcus Oyelaran
+Title: Chief Revenue Officer       Title: Chief Operating Officer

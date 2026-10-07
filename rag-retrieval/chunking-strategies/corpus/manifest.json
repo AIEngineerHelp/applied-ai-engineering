@@ -1,0 +1,12 @@
+[
+  {"id": "api-docs", "file": "api-docs.md", "format": "markdown", "kind": "Developer docs", "title": "Tidewater Shipments API v3 reference"},
+  {"id": "help-center", "file": "help-center.md", "format": "markdown", "kind": "FAQ", "title": "Tidewater Freight Help Center"},
+  {"id": "research-report", "file": "research-report.md", "format": "markdown", "kind": "Research report", "title": "Predicting late deliveries on cross-border lanes"},
+  {"id": "rate-engine", "file": "rate-engine.py", "format": "code", "kind": "Source code", "title": "rate_engine.py, the Tidewater freight rate engine"},
+  {"id": "service-catalog", "file": "service-catalog.csv", "format": "table", "kind": "Table (CSV)", "title": "Tidewater service catalog"},
+  {"id": "master-services-agreement", "file": "master-services-agreement.txt", "format": "contract", "kind": "Contract", "title": "Master Services Agreement, Tidewater Freight and Bramble & Pike"},
+  {"id": "incident-review", "file": "incident-review.txt", "format": "transcript", "kind": "Meeting transcript", "title": "Post-incident review INC-2291, webhook delivery outage"},
+  {"id": "network-report", "file": "network-report.md", "format": "figures", "kind": "Report with charts", "title": "Q3 2026 network performance report", "images": "figures/network-report.json"},
+  {"id": "launch-deck", "file": "launch-deck.md", "format": "slides", "kind": "Slide deck", "title": "Live Tracking 2.0 customer launch briefing", "images": "figures/launch-deck.json"},
+  {"id": "scanner-manual", "file": "scanner-manual.md", "format": "figures", "kind": "Manual with diagrams", "title": "TW-200 handheld scanner service manual", "images": "figures/scanner-manual.json"}
+]

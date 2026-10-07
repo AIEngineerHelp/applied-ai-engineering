@@ -1,0 +1,142 @@
+Tidewater Freight — Post-incident review: INC-2291, webhook delivery outage
+Recorded Thursday, September 17, 2026. Duration 50 minutes.
+
+Attendees: Priya Raman (SRE lead, facilitator), Tomasz Wierzbicki (platform engineer), Aisha Mensah (customer support manager), Daniel Okafor (engineering manager, integrations), Lena Hartmann (product manager, tracking API), Rob Castillo (database engineer)
+
+[00:00:40] Priya Raman (SRE lead): This is the blameless review for INC-2291, the webhook outage on Tuesday. Goal for today is a shared timeline, the contributing factors, and a short list of action items with owners. Tomasz, you were on call, so can you walk us through how it started?
+
+[00:02:17] Tomasz Wierzbicki (platform engineer): Sure. At 14:20 we got the first page, "webhook dispatcher queue depth above threshold". The dispatcher is the service that sends shipment status events, like picked up, in transit, delivered, to customer endpoints. Queue depth was climbing at roughly forty thousand events a minute and the workers were basically idle.
+
+[00:04:11] Priya Raman (SRE lead): Idle meaning not pulling from the queue?
+
+[00:04:24] Tomasz Wierzbicki (platform engineer): Right. They were up, health checks were green, but every delivery attempt was failing before it left our network. The error was a TLS handshake failure on outbound connections.
+
+[00:05:41] Rob Castillo (database engineer): Can I add one thing to the timeline? The database side looked completely normal. I checked replication lag and connection counts during the incident because the first guess in the channel was the events table, and it was fine. So we can rule that out.
+
+[00:06:52] Priya Raman (SRE lead): Thanks Rob, noted. Tomasz, what did you find on the TLS side?
+
+[00:07:15] Tomasz Wierzbicki (platform engineer): That morning at 11:30 we rolled out a new base image for the dispatcher workers. It upgraded the system certificate bundle and, as part of the same change, it turned on a stricter outbound proxy configuration. The proxy started rejecting any destination that presented an intermediate certificate it couldn't chain. Most customer endpoints were fine. About a third of them, mostly ones behind an older load balancer vendor, failed.
+
+[00:09:32] Lena Hartmann (product manager, tracking API): A third of endpoints, but what share of events?
+
+[00:09:49] Tomasz Wierzbicki (platform engineer): Higher, about sixty percent of events, because some of the big shippers were in that group. Bramble & Pike was one of them.
+
+[00:10:36] Aisha Mensah (customer support manager): Yeah, Bramble & Pike opened the first ticket. Their warehouse team noticed delivered orders weren't updating in their system.
+
+[00:11:16] Priya Raman (SRE lead): Before we go further, I want the timeline exact. Tomasz, you said the first page was 14:20?
+
+[00:11:40] Tomasz Wierzbicki (platform engineer): Let me check the pager log. Actually it was 14:05, not 14:20. The 14:20 one was the second page, the escalation to the secondary on-call. The first alert fired at 14:05.
+
+[00:12:30] Priya Raman (SRE lead): Good, so first alert at 14:05, escalation at 14:20. And the image rollout was at 11:30. So why did it take two and a half hours to alert?
+
+[00:13:17] Tomasz Wierzbicki (platform engineer): Because the dispatcher retries. Each failed event goes back on the queue with exponential backoff, up to six attempts over about two hours. Queue depth only crossed the alert threshold once the retries piled up on top of new traffic.
+
+[00:14:31] Daniel Okafor (engineering manager, integrations): That's the part that worries me most. We had a real failure for over two hours and nothing told us.
+
+[00:14:57] Priya Raman (SRE lead): Let's hold that thought for contributing factors. What happened after 14:05?
+
+[00:15:21] Tomasz Wierzbicki (platform engineer): I declared the incident at 14:12. I suspected the morning rollout because it was the only change that day, so I started a rollback of the base image at 14:31. The rollback finished at 14:48, and new deliveries started succeeding right away.
+
+[00:16:51] Lena Hartmann (product manager, tracking API): So customers were back by 14:48?
+
+[00:17:05] Tomasz Wierzbicki (platform engineer): New events, yes. The backlog took much longer. We had about four million queued events, and when the workers recovered they hit the rate limits on several customer endpoints. We drained the backlog at a controlled rate, and the queue was back to normal at 17:40.
+
+[00:18:25] Aisha Mensah (customer support manager): And from the support side, that's the part customers felt the most. Between three and five we had thirty-one tickets. Several customers got events out of order.
+
+[00:19:29] Tomasz Wierzbicki (platform engineer): That's expected with the retry design. Retried events and new events were mixed in the same queue, and we don't guarantee ordering across retries.
+
+[00:20:19] Daniel Okafor (engineering manager, integrations): We document that. Every event has a sequence number and an occurred_at timestamp, and customers are supposed to use those. Most don't.
+
+[00:21:06] Priya Raman (SRE lead): Okay. Let me summarize the timeline. Base image rollout at 11:30. Failures start immediately but are hidden by retries. First alert at 14:05, incident declared 14:12, escalation 14:20, rollback started 14:31, finished 14:48, backlog drained by 17:40. Anyone disagree?
+
+[00:22:23] Rob Castillo (database engineer): One small thing, unrelated to the timeline. While I was looking at the events table, I noticed the retention job hasn't run since August. It's not connected to this incident, but the table is at ninety percent of its storage allocation.
+
+[00:23:20] Priya Raman (SRE lead): Let's park that, it's important but separate. Rob, can you open a ticket for it?
+
+[00:23:40] Rob Castillo (database engineer): Yes, I'll file it today.
+
+[00:23:57] Priya Raman (SRE lead): Thanks. Now contributing factors. I have three on my list. One, the base image change bundled the certificate update with the proxy change. Two, the canary didn't catch it. Three, alerting was based on queue depth instead of delivery success. Tomasz, the second one: why didn't the canary catch it?
+
+[00:25:24] Tomasz Wierzbicki (platform engineer): The canary for the dispatcher sends to our own test endpoints, and those all have modern certificate chains. So the canary was green. It never talks to a real customer endpoint.
+
+[00:26:11] Lena Hartmann (product manager, tracking API): Could the canary send to a sample of real endpoints? Like a synthetic ping event that customers can ignore?
+
+[00:26:41] Daniel Okafor (engineering manager, integrations): We'd need to be careful. Some customers bill on webhook volume on their side, and a few have very strict allowlists. Sending them unexpected traffic would cause tickets of its own.
+
+[00:27:28] Tomasz Wierzbicki (platform engineer): We could do a TLS handshake only, without sending a payload. That tells us whether the chain validates, and it doesn't hit their application at all.
+
+[00:28:01] Priya Raman (SRE lead): I like that. Daniel, are you okay with a handshake-only check?
+
+[00:28:18] Daniel Okafor (engineering manager, integrations): Handshake only, against the top two hundred endpoints by volume, yes. Not a full payload.
+
+[00:28:45] Priya Raman (SRE lead): Okay, so the decision is a handshake-only canary against the top two hundred endpoints by event volume, run before every dispatcher rollout. Who owns that?
+
+[00:29:15] Tomasz Wierzbicki (platform engineer): I'll take it. Two weeks is realistic.
+
+[00:29:35] Lena Hartmann (product manager, tracking API): Small digression, but since we're talking about canaries, the tracking API had a similar near miss last quarter with the rate engine. Is there a shared canary framework we should be using?
+
+[00:30:19] Priya Raman (SRE lead): There's a draft proposal from the platform team, but it's not funded yet. Let's not solve that today. Back to the first factor, the bundled change. Tomasz?
+
+[00:30:59] Tomasz Wierzbicki (platform engineer): The certificate bundle update was routine. The proxy change was a security hardening item from the quarterly review. They ended up in the same image because the image is built weekly and both merged the same week.
+
+[00:31:52] Daniel Okafor (engineering manager, integrations): So the fix is process, not tooling. Changes that affect outbound network behavior shouldn't ride along in a weekly image.
+
+[00:32:23] Priya Raman (SRE lead): What would that look like concretely?
+
+[00:32:36] Daniel Okafor (engineering manager, integrations): Any change to proxy, firewall or TLS settings for the dispatcher gets its own rollout, with its own change ticket, separate from the weekly base image.
+
+[00:33:13] Tomasz Wierzbicki (platform engineer): Agreed, and we can enforce part of it in CI. If the proxy config file changes, the image build fails unless the commit links a change ticket.
+
+[00:33:50] Priya Raman (SRE lead): Good. Daniel, can you own the policy and Tomasz the CI check, or should one person take both?
+
+[00:34:13] Daniel Okafor (engineering manager, integrations): I'll own both. Tomasz already has the canary. I'll write the policy by end of next week and get someone on my team to add the CI check.
+
+[00:34:53] Priya Raman (SRE lead): Great. Third factor, alerting. Rob, you had a view on this in the channel?
+
+[00:35:13] Rob Castillo (database engineer): Not really mine, but I said we should alert on the delivery success rate, not on the queue. The queue only grows when things are already bad for a while.
+
+[00:35:50] Tomasz Wierzbicki (platform engineer): The second one, the success-rate idea, is what I'd push for too. We already emit a delivery outcome metric per attempt. An alert on first-attempt success rate dropping below ninety-five percent over ten minutes would have fired around 11:40.
+
+[00:36:44] Priya Raman (SRE lead): So instead of two and a half hours, ten minutes. That's the single biggest improvement on the list. I'll own that one, since alert routing sits with SRE. Target is this sprint.
+
+[00:37:24] Aisha Mensah (customer support manager): Can I raise the customer communication side? We didn't post on the status page until 15:10. That's an hour after the first alert. Customers found out from their own warehouses.
+
+[00:38:11] Priya Raman (SRE lead): Fair. Why the delay?
+
+[00:38:21] Aisha Mensah (customer support manager): Nobody was sure who should post. Engineering thought support would, support thought the incident commander would.
+
+[00:38:51] Daniel Okafor (engineering manager, integrations): In the runbook it's the incident commander, which was Tomasz, but he was doing the rollback at the same time.
+
+[00:39:18] Priya Raman (SRE lead): That's the real problem: one person was both fixing and communicating. Proposal: for any incident affecting customer data delivery, the incident commander assigns a communications lead within fifteen minutes of declaring, and that person posts the first status update within thirty minutes. Objections?
+
+[00:40:22] Aisha Mensah (customer support manager): No objection. Support can provide the communications lead during business hours.
+
+[00:40:42] Lena Hartmann (product manager, tracking API): And outside business hours?
+
+[00:40:55] Priya Raman (SRE lead): Secondary on-call takes it. I'll update the runbook with that rule.
+
+[00:41:19] Aisha Mensah (customer support manager): One more customer item. Several customers asked for a way to replay events after an outage instead of waiting for retries. Bramble & Pike asked twice.
+
+[00:41:55] Lena Hartmann (product manager, tracking API): We have a replay endpoint in the roadmap for Q1. After this, I think it should move up. I'll write the proposal for moving it into Q4 and bring it to planning on October 1.
+
+[00:42:39] Daniel Okafor (engineering manager, integrations): If we build replay, we should make customers use the sequence number. Otherwise replay makes the ordering problem worse.
+
+[00:43:06] Lena Hartmann (product manager, tracking API): Agreed, the replay API will return events sorted by sequence number, and the docs will say that clearly at the top, not in a footnote.
+
+[00:43:43] Priya Raman (SRE lead): Okay, let me read back the action items so the notes are right. One: handshake-only canary against the top two hundred endpoints before every dispatcher rollout, owner Tomasz, two weeks. Two: separate rollouts and change tickets for network-affecting changes, plus the CI check, owner Daniel, end of next week for the policy. Three: alert on first-attempt delivery success rate, owner me, this sprint. Four: communications lead rule in the runbook, owner me. Five: replay endpoint proposal for Q4, owner Lena, for planning on October 1. Six: the events table retention ticket, owner Rob.
+
+[00:46:13] Rob Castillo (database engineer): Correction on six: I'll file it, but the retention job belongs to the data platform team, so they'll own the fix. I'm just the reporter.
+
+[00:46:43] Priya Raman (SRE lead): Thanks, I'll note Rob files it and data platform owns it. Anything else?
+
+[00:47:04] Aisha Mensah (customer support manager): Should we give Bramble & Pike a service credit? Their account manager is asking.
+
+[00:47:24] Daniel Okafor (engineering manager, integrations): The webhook dispatcher isn't covered by the uptime commitment in their contract, it covers the tracking API and the rate engine. So strictly, no credit is owed.
+
+[00:48:01] Lena Hartmann (product manager, tracking API): Strictly no, but they were the most affected customer. I'd suggest a goodwill credit, and let the account team decide the amount.
+
+[00:48:31] Priya Raman (SRE lead): That's a commercial decision, so it goes to the account team, not this meeting. Aisha, can you pass that recommendation on?
+
+[00:48:54] Aisha Mensah (customer support manager): Will do.
+
+[00:49:08] Priya Raman (SRE lead): Then we're done. I'll publish the written review by Monday. Thanks, everyone.

@@ -1,0 +1,27 @@
+[
+  {
+    "file": "figures/deck-tracking-map.svg",
+    "slide": 2,
+    "description": "Screenshot of the Tidewater Console Live Tracking screen with five numbered red callouts. 1: a search bar reading 'Search shipment, PO or consignee'. 2: a red exception banner reading '3 exceptions · TW-88213 held at Laredo customs'. 3: a map showing a truck icon on a route from Monterrey to Chicago DC, past a dashed line labeled 'US–MX border'. 4: a side panel for shipment TW-88214 (Monterrey → Chicago DC, Road) showing predicted arrival Thu 14:30 with a confidence band of 13:10 – 15:40 and last position Nuevo Laredo, 6 min ago. 5: a 'Share tracking link' button."
+  },
+  {
+    "file": "figures/deck-eta-pipeline.svg",
+    "slide": 3,
+    "description": "Flow diagram titled 'Live ETA pipeline'. Three inputs on the left: Truck telematics (position every 5 min), Customs filings (paperwork status) and Booked window (fallback only, drawn with a dashed arrow). They feed a central 'Delay model' box: border + dwell prediction, output eta, eta_low, eta_high, recomputed within 90 s after a ping. Three outputs on the right: Tracking map, Shipments API (GET /shipments/{id}) and Webhooks (shipment.eta_changed). A footnote reads 'Dashed: used only before a truck reports two positions'."
+  },
+  {
+    "file": "figures/deck-eta-error.svg",
+    "slide": 5,
+    "description": "Bar chart titled 'Median ETA error, cross-border lanes', subtitle 'Hours between predicted and actual delivery · June 2026 · 18,400 shipments'. A grey bar for 'Fixed border allowance' (previous estimator) reaches 3.1 h. A blue bar for 'Live Tracking 2.0' (delay model) reaches 1.4 h. A callout reads '−55% median error'. Below it: 'Within ±2 h: 48% → 79%'. The y-axis runs from 0 h to 4 h."
+  },
+  {
+    "file": "figures/deck-rollout.svg",
+    "slide": 6,
+    "description": "Timeline titled 'Live Tracking 2.0 rollout' with four dates. Jul 14: Phase 1 · Pilot, 12 pilot customers, Laredo and Detroit corridors only. Aug 4: Phase 2 · Cross-border, all cross-border lanes, Growth and Enterprise accounts. Sep 1: Phase 3 · Everyone, all lanes, all plans including Starter. Oct 31: Legacy page retired, the old tracking URL redirects to the new map. A yellow note at the bottom reads 'SLA addendum required before Phase 2 migration'."
+  },
+  {
+    "file": "figures/deck-plans.svg",
+    "slide": 7,
+    "description": "Feature table titled 'Live Tracking 2.0 by plan' with columns Starter, Growth and Enterprise. Tracking map and share links: all three plans. Exception banner: all three plans. Confidence band (eta_low / eta_high): Growth and Enterprise only. shipment.eta_changed webhook: Growth and Enterprise only. Position history retained: 30 days on Starter, 180 days on Growth, 2 years on Enterprise. Tracking success manager: Enterprise only, for the first 90 days."
+  }
+]

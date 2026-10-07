@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" font-family="Inter, system-ui, sans-serif">
+  <title>Exploded view of the TW-200 handheld scanner with callouts 1 to 8</title>
+  <rect width="720" height="440" fill="#ffffff"/>
+  <g fill="none" stroke="#3f3f46" stroke-width="1.6" stroke-linejoin="round">
+    <!-- Explosion guide lines -->
+    <g stroke="#a1a1aa" stroke-width="1" stroke-dasharray="4 4">
+      <line x1="300" y1="78" x2="300" y2="112"/>
+      <line x1="420" y1="78" x2="420" y2="112"/>
+      <line x1="300" y1="160" x2="300" y2="214"/>
+      <line x1="420" y1="160" x2="420" y2="214"/>
+      <line x1="196" y1="262" x2="158" y2="262"/>
+      <line x1="118" y1="262" x2="88" y2="262"/>
+    </g>
+
+    <!-- 1 Housing (rear shell) with grip -->
+    <path d="M196 214 H560 Q600 214 600 252 V300 Q600 330 570 330 H470 L452 392 Q448 404 434 404 H392 Q378 404 380 390 L392 330 H220 Q196 330 196 306 Z" fill="#f4f4f5"/>
+    <rect x="236" y="226" width="248" height="72" rx="8" fill="#e4e4e7"/>
+    <!-- Trigger -->
+    <path d="M404 330 Q410 352 400 370" />
+
+    <!-- 5 Battery connector and latch on the main board -->
+    <rect x="452" y="238" width="22" height="14" rx="2" fill="#d4d4d8"/>
+    <line x1="456" y1="234" x2="470" y2="234"/>
+
+    <!-- 2 Battery pack (lifted out) -->
+    <rect x="252" y="112" width="216" height="48" rx="6" fill="#fafafa"/>
+    <line x1="268" y1="124" x2="372" y2="124" stroke="#a1a1aa"/>
+    <line x1="268" y1="134" x2="340" y2="134" stroke="#a1a1aa"/>
+    <path d="M468 130 C488 130 492 160 470 176 C462 182 462 200 464 236" stroke="#dc2626" stroke-width="1.4"/>
+    <path d="M468 140 C482 142 486 168 474 182 C470 190 470 208 470 236" stroke="#27272a" stroke-width="1.4"/>
+    <rect x="236" y="128" width="16" height="16" rx="2" fill="#fafafa"/>
+
+    <!-- 3 Battery door (furthest out) -->
+    <rect x="236" y="34" width="248" height="44" rx="8" fill="#fafafa"/>
+    <rect x="244" y="42" width="232" height="28" rx="5" stroke="#a1a1aa" stroke-dasharray="2 3"/>
+    <!-- 4 Battery door screws -->
+    <g fill="#ffffff">
+      <circle cx="248" cy="46" r="5"/><circle cx="472" cy="46" r="5"/>
+      <circle cx="248" cy="66" r="5"/><circle cx="472" cy="66" r="5"/>
+    </g>
+    <g stroke-width="1.2">
+      <path d="M245 46 h6 M248 43 v6"/><path d="M469 46 h6 M472 43 v6"/>
+      <path d="M245 66 h6 M248 63 v6"/><path d="M469 66 h6 M472 63 v6"/>
+    </g>
+
+    <!-- 6 Front bezel (pulled off the nose) -->
+    <path d="M118 222 H158 V302 H118 Q104 302 104 288 V236 Q104 222 118 222 Z" fill="#f4f4f5"/>
+    <!-- 8 Bezel screws -->
+    <g fill="#ffffff">
+      <circle cx="146" cy="232" r="4"/><circle cx="146" cy="292" r="4"/>
+    </g>
+    <!-- 7 Scan window -->
+    <rect x="70" y="236" width="18" height="52" rx="3" fill="#e0f2fe" stroke="#0369a1"/>
+    <line x1="76" y1="244" x2="76" y2="280" stroke="#7dd3fc"/>
+  </g>
+
+  <!-- Callouts: leader line, then numbered circle -->
+  <g stroke="#27272a" stroke-width="1" fill="none">
+    <line x1="560" y1="290" x2="640" y2="330"/>
+    <line x1="468" y1="146" x2="560" y2="146"/>
+    <line x1="484" y1="56" x2="560" y2="56"/>
+    <line x1="472" y1="66" x2="520" y2="100"/>
+    <line x1="474" y1="245" x2="640" y2="200"/>
+    <line x1="120" y1="222" x2="96" y2="150"/>
+    <line x1="79" y1="288" x2="60" y2="350"/>
+    <line x1="146" y1="296" x2="168" y2="370"/>
+  </g>
+  <g font-size="13" font-weight="700" text-anchor="middle" fill="#18181b">
+    <g fill="#ffffff" stroke="#18181b" stroke-width="1.5">
+      <circle cx="652" cy="336" r="13"/>
+      <circle cx="572" cy="146" r="13"/>
+      <circle cx="572" cy="56" r="13"/>
+      <circle cx="530" cy="108" r="13"/>
+      <circle cx="652" cy="196" r="13"/>
+      <circle cx="92" cy="138" r="13"/>
+      <circle cx="56" cy="362" r="13"/>
+      <circle cx="172" cy="382" r="13"/>
+    </g>
+    <text x="652" y="341">1</text>
+    <text x="572" y="151">2</text>
+    <text x="572" y="61">3</text>
+    <text x="530" y="113">4</text>
+    <text x="652" y="201">5</text>
+    <text x="92" y="143">6</text>
+    <text x="56" y="367">7</text>
+    <text x="172" y="387">8</text>
+  </g>
+  <text x="360" y="428" font-size="12" fill="#71717a" text-anchor="middle">TW-200, rear view, battery door and front bezel removed</text>
+</svg>
