@@ -1,0 +1,12 @@
+[
+  {
+    "file": "figures/scanner-exploded.svg",
+    "number": 1,
+    "description": "Line drawing of the TW-200 handheld scanner seen from the back, with parts pulled apart along dashed guide lines. Callout 1: the rear housing with pistol grip and trigger. Callout 2: the rectangular battery pack lifted above the housing, with a red and a black wire. Callout 3: the battery door at the top. Callout 4: the four screws at the corners of the battery door. Callout 5: the small battery connector and latch on the main board. Callout 6: the front bezel pulled off the nose. Callout 7: the clear scan window in front of the bezel. Callout 8: the two small bezel screws."
+  },
+  {
+    "file": "figures/scanner-connector.svg",
+    "number": 2,
+    "description": "Close-up line drawing of the battery connector, callout 5, on the edge of the main board, viewed from the battery bay. The battery plug hangs above the socket with three wires: red on the left, black in the middle, gray on the right. A latch sits on top of the socket. A green arrow points straight down with the text \"Press straight in until the latch clicks\". A label reads \"Red wire on the left\", showing the only correct orientation of the plug."
+  }
+]

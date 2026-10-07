@@ -1,0 +1,73 @@
+service_code,service_name,origin_region,destination_region,mode,transit_days_min,transit_days_max,max_weight_kg,base_rate_usd_per_kg,liquid_allowed,hazmat_allowed,notes
+TW-ECO-USWEUSEA,Economy US-WEST to US-EAST,US-WEST,US-EAST,road,7,9,1360,1.13,yes,limited,No service on public holidays
+TW-STD-USWEUSEA,Standard US-WEST to US-EAST,US-WEST,US-EAST,road,3,4,1360,1.76,yes,yes,Temperature-controlled trailers available
+TW-EXP-USWEUSEA,Expedited US-WEST to US-EAST,US-WEST,US-EAST,air,2,3,450,3.76,yes,limited,Lithium batteries prohibited
+TW-PON-USWEUSEA,Priority Overnight US-WEST to US-EAST,US-WEST,US-EAST,air,1,1,68,6.47,no,no,
+TW-ECO-USEAUSWE,Economy US-EAST to US-WEST,US-EAST,US-WEST,road,5,6,680,0.96,yes,no,Cutoff 14:00 local time
+TW-STD-USEAUSWE,Standard US-EAST to US-WEST,US-EAST,US-WEST,road,5,6,1150,1.90,yes,limited,
+TW-EXP-USEAUSWE,Expedited US-EAST to US-WEST,US-EAST,US-WEST,air,2,4,300,3.31,yes,yes,Signature required on delivery
+TW-PON-USEAUSWE,Priority Overnight US-EAST to US-WEST,US-EAST,US-WEST,air,1,1,45,5.70,no,no,
+TW-ECO-USWEUSCE,Economy US-WEST to US-CENTRAL,US-WEST,US-CENTRAL,road,6,7,680,1.31,yes,yes,Weekend pickup available on request
+TW-STD-USWEUSCE,Standard US-WEST to US-CENTRAL,US-WEST,US-CENTRAL,road,4,6,1360,1.94,yes,limited,Seasonal capacity limits from November to January
+TW-EXP-USWEUSCE,Expedited US-WEST to US-CENTRAL,US-WEST,US-CENTRAL,air,3,5,68,2.97,yes,no,
+TW-PON-USWEUSCE,Priority Overnight US-WEST to US-CENTRAL,US-WEST,US-CENTRAL,air,1,1,32,7.29,no,no,Lithium batteries prohibited
+TW-ECO-USCEUSWE,Economy US-CENTRAL to US-WEST,US-CENTRAL,US-WEST,road,5,7,1360,0.98,no,limited,
+TW-STD-USCEUSWE,Standard US-CENTRAL to US-WEST,US-CENTRAL,US-WEST,road,3,6,900,1.65,no,no,
+TW-EXP-USCEUSWE,Expedited US-CENTRAL to US-WEST,US-CENTRAL,US-WEST,air,1,2,300,3.23,yes,yes,
+TW-PON-USCEUSWE,Priority Overnight US-CENTRAL to US-WEST,US-CENTRAL,US-WEST,air,1,1,32,5.95,no,no,
+TW-ECO-USCEUSEA,Economy US-CENTRAL to US-EAST,US-CENTRAL,US-EAST,road,7,9,1150,0.94,yes,yes,
+TW-STD-USCEUSEA,Standard US-CENTRAL to US-EAST,US-CENTRAL,US-EAST,road,5,6,680,1.49,yes,limited,No service on public holidays
+TW-EXP-USCEUSEA,Expedited US-CENTRAL to US-EAST,US-CENTRAL,US-EAST,air,3,5,450,2.88,yes,limited,
+TW-PON-USCEUSEA,Priority Overnight US-CENTRAL to US-EAST,US-CENTRAL,US-EAST,air,1,1,68,5.75,no,no,
+TW-ECO-USEAUSCE,Economy US-EAST to US-CENTRAL,US-EAST,US-CENTRAL,road,7,10,900,1.00,yes,limited,
+TW-STD-USEAUSCE,Standard US-EAST to US-CENTRAL,US-EAST,US-CENTRAL,road,3,4,680,1.63,yes,limited,Lithium batteries prohibited
+TW-EXP-USEAUSCE,Expedited US-EAST to US-CENTRAL,US-EAST,US-CENTRAL,air,2,5,300,3.22,no,yes,Cutoff 14:00 local time
+TW-PON-USEAUSCE,Priority Overnight US-EAST to US-CENTRAL,US-EAST,US-CENTRAL,air,1,1,32,6.72,no,no,No service on public holidays
+TW-ECO-USEACAEA,Economy US-EAST to CA-EAST,US-EAST,CA-EAST,road,7,10,680,1.18,yes,yes,Lithium batteries prohibited
+TW-STD-USEACAEA,Standard US-EAST to CA-EAST,US-EAST,CA-EAST,road,4,6,1360,1.37,yes,yes,
+TW-EXP-USEACAEA,Expedited US-EAST to CA-EAST,US-EAST,CA-EAST,air,3,6,68,3.08,yes,yes,Customs broker fee billed separately
+TW-PON-USEACAEA,Priority Overnight US-EAST to CA-EAST,US-EAST,CA-EAST,air,1,1,68,6.08,no,no,
+TW-ECO-USWECAWE,Economy US-WEST to CA-WEST,US-WEST,CA-WEST,road,6,8,1150,1.34,yes,limited,Seasonal capacity limits from November to January
+TW-STD-USWECAWE,Standard US-WEST to CA-WEST,US-WEST,CA-WEST,road,3,6,1150,1.41,yes,yes,
+TW-EXP-USWECAWE,Expedited US-WEST to CA-WEST,US-WEST,CA-WEST,air,2,5,150,3.30,yes,no,
+TW-PON-USWECAWE,Priority Overnight US-WEST to CA-WEST,US-WEST,CA-WEST,air,1,1,32,6.63,no,no,Consolidated weekly departures on Tuesdays
+TW-ECO-CAEAUSEA,Economy CA-EAST to US-EAST,CA-EAST,US-EAST,road,5,8,1360,1.15,no,yes,Cutoff 14:00 local time
+TW-STD-CAEAUSEA,Standard CA-EAST to US-EAST,CA-EAST,US-EAST,road,3,5,1360,1.42,yes,limited,Lithium batteries prohibited
+TW-EXP-CAEAUSEA,Expedited CA-EAST to US-EAST,CA-EAST,US-EAST,air,2,4,68,3.46,yes,limited,
+TW-PON-CAEAUSEA,Priority Overnight CA-EAST to US-EAST,CA-EAST,US-EAST,air,1,1,45,6.15,no,no,Signature required on delivery
+TW-ECO-USCEMXNO,Economy US-CENTRAL to MX-NORTH,US-CENTRAL,MX-NORTH,road,6,8,680,1.21,yes,yes,Seasonal capacity limits from November to January
+TW-STD-USCEMXNO,Standard US-CENTRAL to MX-NORTH,US-CENTRAL,MX-NORTH,road,5,6,1150,1.75,yes,yes,Customs broker fee billed separately
+TW-EXP-USCEMXNO,Expedited US-CENTRAL to MX-NORTH,US-CENTRAL,MX-NORTH,air,2,3,150,3.24,yes,no,
+TW-PON-USCEMXNO,Priority Overnight US-CENTRAL to MX-NORTH,US-CENTRAL,MX-NORTH,air,1,1,32,6.39,no,no,
+TW-ECO-MXNOUSCE,Economy MX-NORTH to US-CENTRAL,MX-NORTH,US-CENTRAL,road,5,8,680,1.30,yes,yes,No service on public holidays
+TW-STD-MXNOUSCE,Standard MX-NORTH to US-CENTRAL,MX-NORTH,US-CENTRAL,road,3,5,1360,1.66,no,no,Lithium batteries prohibited
+TW-EXP-MXNOUSCE,Expedited MX-NORTH to US-CENTRAL,MX-NORTH,US-CENTRAL,air,3,5,68,3.79,yes,no,Consolidated weekly departures on Tuesdays
+TW-ECO-USEAEUWE,Economy US-EAST to EU-WEST,US-EAST,EU-WEST,sea,26,32,1360,2.28,no,yes,Weekend pickup available on request
+TW-STD-USEAEUWE,Standard US-EAST to EU-WEST,US-EAST,EU-WEST,sea,22,26,1360,3.14,no,yes,No service on public holidays
+TW-EXP-USEAEUWE,Expedited US-EAST to EU-WEST,US-EAST,EU-WEST,air,5,8,68,5.43,no,yes,
+TW-PON-USEAEUWE,Priority Overnight US-EAST to EU-WEST,US-EAST,EU-WEST,air,1,1,68,13.22,no,no,
+TW-ECO-EUWEUSEA,Economy EU-WEST to US-EAST,EU-WEST,US-EAST,sea,19,22,1360,2.41,yes,limited,Lithium batteries prohibited
+TW-STD-EUWEUSEA,Standard EU-WEST to US-EAST,EU-WEST,US-EAST,sea,19,26,1360,3.74,yes,limited,Weekend pickup available on request
+TW-EXP-EUWEUSEA,Expedited EU-WEST to US-EAST,EU-WEST,US-EAST,air,4,5,450,5.48,no,limited,Seasonal capacity limits from November to January
+TW-PON-EUWEUSEA,Priority Overnight EU-WEST to US-EAST,EU-WEST,US-EAST,air,1,1,45,13.47,no,no,Seasonal capacity limits from November to January
+TW-ECO-USWEAPAC,Economy US-WEST to APAC-JP,US-WEST,APAC-JP,sea,21,25,1360,2.60,yes,no,Port congestion surcharge may apply
+TW-STD-USWEAPAC,Standard US-WEST to APAC-JP,US-WEST,APAC-JP,sea,22,23,1360,3.77,yes,no,Customs broker fee billed separately
+TW-EXP-USWEAPAC,Expedited US-WEST to APAC-JP,US-WEST,APAC-JP,air,4,6,150,6.51,yes,no,Signature required on delivery
+TW-ECO-EUWEEUCE,Economy EU-WEST to EU-CENTRAL,EU-WEST,EU-CENTRAL,road,7,9,900,0.95,yes,limited,No service on public holidays
+TW-STD-EUWEEUCE,Standard EU-WEST to EU-CENTRAL,EU-WEST,EU-CENTRAL,road,5,8,1360,1.82,no,limited,
+TW-EXP-EUWEEUCE,Expedited EU-WEST to EU-CENTRAL,EU-WEST,EU-CENTRAL,air,2,5,150,3.69,no,limited,Consolidated weekly departures on Tuesdays
+TW-PON-EUWEEUCE,Priority Overnight EU-WEST to EU-CENTRAL,EU-WEST,EU-CENTRAL,air,1,1,68,7.16,no,no,Weekend pickup available on request
+TW-ECO-EUWEUK,Economy EU-WEST to UK,EU-WEST,UK,road,7,8,1150,1.36,no,limited,Liftgate required for residential addresses
+TW-STD-EUWEUK,Standard EU-WEST to UK,EU-WEST,UK,road,3,5,680,1.73,no,no,
+TW-EXP-EUWEUK,Expedited EU-WEST to UK,EU-WEST,UK,air,1,4,68,3.41,yes,yes,Lithium batteries prohibited
+TW-PON-EUWEUK,Priority Overnight EU-WEST to UK,EU-WEST,UK,air,1,1,45,5.41,no,no,Liftgate required for residential addresses
+TW-ECO-APACAPAC,Economy APAC-SG to APAC-AU,APAC-SG,APAC-AU,sea,22,28,1360,1.98,no,no,
+TW-STD-APACAPAC,Standard APAC-SG to APAC-AU,APAC-SG,APAC-AU,sea,14,19,1360,2.82,yes,yes,
+TW-EXP-APACAPAC,Expedited APAC-SG to APAC-AU,APAC-SG,APAC-AU,air,5,7,300,5.72,yes,limited,No service on public holidays
+TW-ECO-USEASABR,Economy US-EAST to SA-BR,US-EAST,SA-BR,sea,21,30,1360,1.86,no,limited,Port congestion surcharge may apply
+TW-STD-USEASABR,Standard US-EAST to SA-BR,US-EAST,SA-BR,sea,17,24,1360,3.12,no,limited,Seasonal capacity limits from November to January
+TW-EXP-USEASABR,Expedited US-EAST to SA-BR,US-EAST,SA-BR,air,5,8,150,5.69,no,limited,Signature required on delivery
+TW-ECO-UKEUWE,Economy UK to EU-WEST,UK,EU-WEST,road,5,7,1150,1.09,yes,yes,Customs broker fee billed separately
+TW-STD-UKEUWE,Standard UK to EU-WEST,UK,EU-WEST,road,3,6,680,1.93,yes,yes,Weekend pickup available on request
+TW-EXP-UKEUWE,Expedited UK to EU-WEST,UK,EU-WEST,air,3,4,450,3.26,no,limited,Signature required on delivery
+TW-PON-UKEUWE,Priority Overnight UK to EU-WEST,UK,EU-WEST,air,1,1,45,5.06,no,no,

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="Inter, system-ui, sans-serif" role="img" aria-label="Weekly p95 webhook delivery latency">
+  <rect width="720" height="400" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="700" fill="#1f2933">Weekly p95 webhook delivery latency</text>
+  <text x="32" y="60" font-size="12.5" fill="#6b7280">Event written to event store until customer endpoint acknowledges. Red points exceed the objective.</text>
+  <line x1="80" x2="690" y1="330.0" y2="330.0" stroke="#e5e7eb"/>
+  <text x="72" y="334.0" font-size="11" fill="#6b7280" text-anchor="end">0</text>
+  <line x1="80" x2="690" y1="282.0" y2="282.0" stroke="#e5e7eb"/>
+  <text x="72" y="286.0" font-size="11" fill="#6b7280" text-anchor="end">1,000</text>
+  <line x1="80" x2="690" y1="234.0" y2="234.0" stroke="#e5e7eb"/>
+  <text x="72" y="238.0" font-size="11" fill="#6b7280" text-anchor="end">2,000</text>
+  <line x1="80" x2="690" y1="186.0" y2="186.0" stroke="#e5e7eb"/>
+  <text x="72" y="190.0" font-size="11" fill="#6b7280" text-anchor="end">3,000</text>
+  <line x1="80" x2="690" y1="138.0" y2="138.0" stroke="#e5e7eb"/>
+  <text x="72" y="142.0" font-size="11" fill="#6b7280" text-anchor="end">4,000</text>
+  <line x1="80" x2="690" y1="90.0" y2="90.0" stroke="#e5e7eb"/>
+  <text x="72" y="94.0" font-size="11" fill="#6b7280" text-anchor="end">5,000</text>
+  <line x1="80" x2="690" y1="234.0" y2="234.0" stroke="#b42318" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="690" y="228.0" font-size="11" font-weight="600" fill="#b42318" text-anchor="end">Objective 2,000 ms</text>
+  <polyline points="80.0,285.8 130.8,287.8 181.7,284.4 232.5,281.5 283.3,288.7 334.2,292.6 385.0,284.9 435.8,274.8 486.7,97.2 537.5,219.1 588.3,277.7 639.2,283.4 690.0,286.8" fill="none" stroke="#3b6fb6" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="80.0" cy="285.8" r="4" fill="#3b6fb6"/>
+  <text x="80.0" y="276.8" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">920</text>
+  <text x="80.0" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W1</text>
+  <circle cx="130.8" cy="287.8" r="4" fill="#3b6fb6"/>
+  <text x="130.8" y="278.8" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">880</text>
+  <text x="130.8" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W2</text>
+  <circle cx="181.7" cy="284.4" r="4" fill="#3b6fb6"/>
+  <text x="181.7" y="275.4" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">950</text>
+  <text x="181.7" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W3</text>
+  <circle cx="232.5" cy="281.5" r="4" fill="#3b6fb6"/>
+  <text x="232.5" y="272.5" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">1,010</text>
+  <text x="232.5" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W4</text>
+  <circle cx="283.3" cy="288.7" r="4" fill="#3b6fb6"/>
+  <text x="283.3" y="279.7" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">860</text>
+  <text x="283.3" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W5</text>
+  <circle cx="334.2" cy="292.6" r="4" fill="#3b6fb6"/>
+  <text x="334.2" y="283.6" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">780</text>
+  <text x="334.2" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W6</text>
+  <circle cx="385.0" cy="284.9" r="4" fill="#3b6fb6"/>
+  <text x="385.0" y="275.9" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">940</text>
+  <text x="385.0" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W7</text>
+  <circle cx="435.8" cy="274.8" r="4" fill="#3b6fb6"/>
+  <text x="435.8" y="265.8" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">1,150</text>
+  <text x="435.8" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W8</text>
+  <circle cx="486.7" cy="97.2" r="4" fill="#b42318"/>
+  <text x="486.7" y="88.2" font-size="10.5" fill="#1f2933" font-weight="600" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">4,850</text>
+  <text x="486.7" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W9</text>
+  <circle cx="537.5" cy="219.1" r="4" fill="#b42318"/>
+  <text x="537.5" y="210.1" font-size="10.5" fill="#1f2933" font-weight="600" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">2,310</text>
+  <text x="537.5" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W10</text>
+  <circle cx="588.3" cy="277.7" r="4" fill="#3b6fb6"/>
+  <text x="588.3" y="268.7" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">1,090</text>
+  <text x="588.3" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W11</text>
+  <circle cx="639.2" cy="283.4" r="4" fill="#3b6fb6"/>
+  <text x="639.2" y="274.4" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">970</text>
+  <text x="639.2" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W12</text>
+  <circle cx="690.0" cy="286.8" r="4" fill="#3b6fb6"/>
+  <text x="690.0" y="277.8" font-size="10.5" fill="#6b7280" font-weight="400" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke">900</text>
+  <text x="690.0" y="348" font-size="11" fill="#1f2933" text-anchor="middle">W13</text>
+  <text x="385.0" y="372" font-size="11.5" fill="#6b7280" text-anchor="middle">Week of Q3 2026</text>
+  <text x="22" y="210.0" font-size="11.5" fill="#6b7280" text-anchor="middle" transform="rotate(-90 22 210.0)">p95 latency (ms)</text>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 405" font-family="Inter, system-ui, sans-serif">
+  <rect width="720" height="405" fill="#ffffff"/>
+  <text x="40" y="44" font-size="16" font-weight="700" fill="#111827">Live Tracking 2.0 by plan</text>
+  <!-- header -->
+  <rect x="40" y="66" width="640" height="38" rx="6" fill="#1f2a37"/>
+  <g font-size="12" font-weight="700" fill="#ffffff">
+    <text x="56" y="90">Feature</text>
+    <text x="380" y="90" text-anchor="middle">Starter</text>
+    <text x="500" y="90" text-anchor="middle">Growth</text>
+    <text x="620" y="90" text-anchor="middle">Enterprise</text>
+  </g>
+  <g font-size="12" fill="#374151">
+    <rect x="40" y="104" width="640" height="44" fill="#f8fafc"/>
+    <text x="56" y="131">Tracking map and share links</text>
+    <text x="380" y="131" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="500" y="131" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="620" y="131" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="56" y="175">Exception banner</text>
+    <text x="380" y="175" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="500" y="175" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="620" y="175" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <rect x="40" y="192" width="640" height="44" fill="#f8fafc"/>
+    <text x="56" y="219">Confidence band (eta_low / eta_high)</text>
+    <text x="380" y="219" text-anchor="middle" fill="#9ca3af">—</text>
+    <text x="500" y="219" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="620" y="219" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="56" y="263">shipment.eta_changed webhook</text>
+    <text x="380" y="263" text-anchor="middle" fill="#9ca3af">—</text>
+    <text x="500" y="263" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <text x="620" y="263" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+    <rect x="40" y="280" width="640" height="44" fill="#f8fafc"/>
+    <text x="56" y="307">Position history retained</text>
+    <text x="380" y="307" text-anchor="middle">30 days</text>
+    <text x="500" y="307" text-anchor="middle">180 days</text>
+    <text x="620" y="307" text-anchor="middle">2 years</text>
+    <text x="56" y="351">Tracking success manager</text>
+    <text x="380" y="351" text-anchor="middle" fill="#9ca3af">—</text>
+    <text x="500" y="351" text-anchor="middle" fill="#9ca3af">—</text>
+    <text x="620" y="351" text-anchor="middle">First 90 days</text>
+  </g>
+  <line x1="40" y1="368" x2="680" y2="368" stroke="#e5e7eb"/>
+</svg>

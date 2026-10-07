@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" font-family="Inter, system-ui, sans-serif">
+  <title>Battery connector of the TW-200: red wire on the left, latch on top, press the plug straight in</title>
+  <rect width="720" height="440" fill="#ffffff"/>
+
+  <!-- Main board edge -->
+  <rect x="120" y="300" width="480" height="70" rx="4" fill="#ecfdf5" stroke="#3f3f46" stroke-width="1.6"/>
+  <g fill="#a7f3d0" stroke="none">
+    <rect x="150" y="320" width="40" height="8" rx="2"/><rect x="520" y="340" width="50" height="8" rx="2"/>
+  </g>
+
+  <!-- Socket (5) on the board -->
+  <g stroke="#3f3f46" stroke-width="1.8" fill="#e4e4e7">
+    <rect x="270" y="236" width="180" height="64" rx="4"/>
+  </g>
+  <g fill="#a1a1aa">
+    <rect x="296" y="268" width="14" height="22" rx="1"/>
+    <rect x="352" y="268" width="14" height="22" rx="1"/>
+    <rect x="408" y="268" width="14" height="22" rx="1"/>
+  </g>
+  <!-- Latch on top of the socket -->
+  <path d="M300 236 V222 H420 V236" fill="#d4d4d8" stroke="#3f3f46" stroke-width="1.8"/>
+  <path d="M330 222 L360 210 L390 222" fill="none" stroke="#3f3f46" stroke-width="1.6"/>
+
+  <!-- Plug, above the socket, about to be pressed in -->
+  <rect x="282" y="120" width="156" height="64" rx="5" fill="#fafafa" stroke="#3f3f46" stroke-width="1.8"/>
+  <path d="M282 148 h-8 M438 148 h8" stroke="#3f3f46" stroke-width="1.6"/>
+  <!-- Wires: red on the left, black in the middle, gray sense wire on the right -->
+  <path d="M303 120 C303 90 250 70 230 40" fill="none" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+  <path d="M359 120 C359 86 360 60 362 34" fill="none" stroke="#18181b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M415 120 C415 90 470 70 492 40" fill="none" stroke="#a1a1aa" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Press direction -->
+  <g stroke="#0f766e" stroke-width="3" fill="#0f766e">
+    <line x1="520" y1="130" x2="520" y2="218"/>
+    <path d="M508 210 L520 232 L532 210 Z" stroke="none"/>
+  </g>
+  <text x="536" y="180" font-size="15" font-weight="600" fill="#0f766e">Press straight in</text>
+  <text x="536" y="200" font-size="13" fill="#0f766e">until the latch clicks</text>
+
+  <!-- Labels -->
+  <g font-size="14" fill="#18181b">
+    <text x="70" y="40" font-weight="600" fill="#dc2626">Red wire on the left</text>
+    <line x1="200" y1="44" x2="232" y2="56" stroke="#dc2626" stroke-width="1"/>
+    <text x="440" y="214" font-weight="600">Latch</text>
+    <line x1="436" y1="210" x2="406" y2="218" stroke="#18181b" stroke-width="1"/>
+    <text x="120" y="268" font-weight="600">Socket on main board</text>
+  </g>
+
+  <!-- Callout 5 -->
+  <line x1="450" y1="268" x2="620" y2="268" stroke="#27272a" stroke-width="1"/>
+  <circle cx="634" cy="268" r="13" fill="#ffffff" stroke="#18181b" stroke-width="1.5"/>
+  <text x="634" y="273" font-size="13" font-weight="700" text-anchor="middle" fill="#18181b">5</text>
+
+  <text x="360" y="420" font-size="12" fill="#71717a" text-anchor="middle">Battery connector (5), viewed from the battery bay</text>
+</svg>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chunking by Document Type</title>
+<meta name="description" content="Pick a document type and see exactly how it is split into chunks for retrieval: where the cuts fall, what stays together, and what context each chunk carries.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  // Set the theme before first paint: the saved choice, else the system's.
+  (() => {
+    let t = null;
+    try { t = localStorage.getItem("chunking-theme"); } catch {}
+    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>
+</head>
+<body class="bg-zinc-50 font-sans text-[15px] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+<header class="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-zinc-200 bg-zinc-50/80 px-6 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
+  <a class="flex items-center gap-2.5 font-semibold tracking-tight" href="./">
+    <span class="grid size-7 place-items-center rounded-lg bg-teal-600 pb-px text-[15px] leading-none font-extrabold tracking-tight text-white shadow-sm shadow-teal-900/20" aria-hidden="true">ai</span>
+    Chunking by Document Type
+  </a>
+  <nav class="ml-auto flex items-center gap-1 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+    <a class="hidden rounded-lg px-2.5 py-1.5 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 sm:block dark:hover:bg-zinc-800 dark:hover:text-zinc-100" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/chunking-strategies">Code</a>
+    <button id="theme" type="button" class="rounded-lg p-2 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label="Switch color theme" title="Switch color theme">
+      <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<div class="grid min-h-[calc(100vh-3.5rem)] grid-cols-[minmax(0,1fr)] md:grid-cols-[15.5rem_minmax(0,1fr)]">
+  <aside class="border-b border-zinc-200 bg-white px-4 py-3 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:overflow-auto md:border-r md:border-b-0 md:px-3 md:py-5 dark:border-zinc-800 dark:bg-zinc-900" aria-label="Document types">
+    <p class="mx-2 mb-2.5 hidden text-[11px] font-bold tracking-widest text-zinc-500 uppercase md:block">Document type</p>
+    <div id="types" role="tablist" aria-orientation="vertical" class="flex gap-1.5 overflow-x-auto pb-1 md:grid md:gap-0.5 md:overflow-visible md:pb-0"></div>
+  </aside>
+
+  <main class="max-w-[1400px] min-w-0 px-4 pt-5 pb-10 md:px-8 md:pt-7 md:pb-12">
+    <header>
+      <p id="kind" class="mb-2 text-xs font-bold tracking-widest text-teal-600 uppercase dark:text-teal-400"></p>
+      <h1 id="headline" class="mb-2 text-2xl leading-tight font-bold tracking-tight md:text-[32px]"></h1>
+      <p id="lede" class="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400"></p>
+    </header>
+
+    <section id="rules" aria-label="How we chunk it" class="my-5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4"></section>
+
+    <section id="production" aria-labelledby="production-title" class="mb-6 hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"></section>
+
+    <div class="mb-2.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <div id="method" role="tablist" aria-label="Method" class="inline-flex rounded-xl border border-zinc-200 bg-zinc-100 p-[3px] dark:border-zinc-800 dark:bg-zinc-900">
+        <button role="tab" type="button" data-m="ours" aria-selected="true" class="seg">How we chunk it</button>
+        <button role="tab" type="button" data-m="fixed" aria-selected="false" class="seg">Fixed-size, for comparison</button>
+      </div>
+      <label class="flex items-center gap-2.5 text-[13px] text-zinc-600 dark:text-zinc-400">Max chunk size
+        <b id="size-label" class="min-w-[74px] font-semibold text-zinc-900 dark:text-zinc-100">400 tokens</b>
+        <input id="size" type="range" min="100" max="800" step="50" value="400" class="w-36 accent-zinc-900 sm:w-44 dark:accent-zinc-100">
+      </label>
+    </div>
+
+    <p id="summary" aria-live="polite" class="mb-3 text-[14.5px] text-zinc-600 dark:text-zinc-400"></p>
+
+    <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <section class="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-zinc-200 px-3.5 py-2.5 dark:border-zinc-800">
+          <span class="flex items-center gap-3">
+            <span id="view" role="tablist" aria-label="View" class="inline-flex rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-800 dark:bg-zinc-950">
+              <button role="tab" type="button" data-v="preview" aria-selected="true" class="seg !px-2.5 !py-1 !text-xs">Preview</button>
+              <button role="tab" type="button" data-v="source" aria-selected="false" class="seg !px-2.5 !py-1 !text-xs">Source</button>
+            </span>
+            <span id="file" class="font-mono text-xs text-zinc-600 dark:text-zinc-400"></span>
+          </span>
+          <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-zinc-500">
+            <i class="inline-block h-[11px] w-[22px] rounded-[3px] bg-linear-to-r from-chunk-1 from-33% via-chunk-2 via-50% to-chunk-3 to-66%"></i>each color is one chunk
+            <i class="ml-2 inline-block h-[11px] w-3.5 rounded-[3px] outline-[1.5px] outline-teal-500 outline-dashed"></i>context attached to the selected chunk
+            <i class="cut ml-2 !h-[11px] !align-[-1px]"></i>cut inside a sentence
+          </span>
+        </div>
+        <div id="doc" tabindex="0" class="h-[520px] overflow-auto px-5 py-4 font-mono text-[12.5px] leading-[1.7] break-words whitespace-pre-wrap focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-500 xl:h-[calc(100vh-330px)] xl:min-h-[420px]"></div>
+      </section>
+
+      <aside aria-label="Selected chunk" class="min-w-0 rounded-2xl border border-zinc-200 bg-white shadow-sm xl:sticky xl:top-[76px] dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="flex items-center justify-between border-b border-zinc-200 px-3.5 py-2 text-[13px] font-semibold dark:border-zinc-800">
+          <span id="chunk-title">Chunk</span>
+          <span class="inline-flex gap-0.5">
+            <button id="prev" type="button" class="navbtn" aria-label="Previous chunk"><svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 5 8l5 5"/></svg></button>
+            <button id="next" type="button" class="navbtn" aria-label="Next chunk"><svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 3 5 5-5 5"/></svg></button>
+          </span>
+        </div>
+        <p class="mx-3.5 mt-2.5 text-[12.5px] leading-normal text-zinc-500">Exactly what gets embedded and returned to the model. Click any chunk in the document, or use the arrow keys, to inspect it.</p>
+        <div id="chunk" class="mx-3.5 my-2.5 min-h-40 overflow-auto rounded-xl border border-zinc-200 p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap xl:max-h-[calc(100vh-430px)] dark:border-zinc-800"></div>
+        <dl id="facts" class="m-0 grid grid-cols-[70px_1fr] gap-x-2.5 gap-y-1.5 px-3.5 pt-1 pb-3.5 text-[13px] [&_dt]:text-zinc-500"></dl>
+        <div id="links" class="px-3.5 pb-3 empty:hidden"></div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="build/app.js"></script>
+</body>
+</html>
