@@ -42,6 +42,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Chunking by document type](rag-retrieval/chunking-strategies/README.md) ([try it](https://chunking-strategies-blond.vercel.app)) is a small web app: pick a document type (API docs, a FAQ, a research report, Python code, a CSV, a contract, a meeting transcript, a report with charts, a slide deck or a manual with diagrams) and it highlights how that document is chunked. Each type shows where we cut, what we keep together and the context we attach to every chunk, with a fixed-size split for comparison. It runs in the browser with no API keys.
 
+[Tools, tool calling and unsafe execution](agents/tool-calling-safety/README.md) ([try it](https://tool-calling-safety.vercel.app)) is a small web app about the one step where agent safety is won or lost: your code running a tool the model asked for. Pick one of five tools (`read_file`, `fetch_url`, `run_command`, `calculate`, `lookup_order`) and a call the model might make, and watch a naive implementation and a safe one run side by side — the naive one reading a file outside its folder, fetching an internal address, running an injected shell command, evaluating arbitrary code or leaking another customer's order, each shown next to its fix. It maps the five bugs to OWASP's Top 10 for Agentic Applications (2026) and to real CVEs (EscapeRoute, mcp-remote). All simulated in the browser, no API keys.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

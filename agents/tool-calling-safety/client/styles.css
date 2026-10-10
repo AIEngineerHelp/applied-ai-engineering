@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@source "../site/index.html";
+@source "./app.ts";
+
+/* Dark mode follows data-theme on <html>, set before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
+
+@layer base {
+  .font-mono { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+}
+
+@layer components {
+  /* Left-rail tool buttons. */
+  .tool {
+    @apply flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-zinc-200/60 dark:hover:bg-zinc-800/70;
+  }
+  .tool[aria-selected="true"] { @apply bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700; }
+
+  /* Example-call chips. */
+  .ex {
+    @apply rounded-lg border px-3 py-1.5 text-left font-mono text-[12.5px] transition-colors;
+  }
+  .ex[aria-selected="true"] { @apply border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900; }
+  .ex[aria-selected="false"] { @apply border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-500; }
+
+  /* One line in an execution trace. */
+  .step { @apply flex gap-2.5 rounded-lg px-3 py-2 text-[13px] leading-snug; }
+  .step-info { @apply bg-zinc-100/70 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300; }
+  .step-ok { @apply bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200; }
+  .step-bad { @apply bg-red-50 text-red-900 ring-1 ring-red-200 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-900/60; }
+  .step-stop { @apply bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200; }
+  .step-ask { @apply bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200; }
+  .step code { @apply mt-1 block font-mono text-[12px] break-all text-zinc-600 dark:text-zinc-400; }
+
+  /* Code blocks (naive/safe implementation). */
+  .code { @apply overflow-auto rounded-xl bg-zinc-950 px-4 py-3 font-mono text-[12.5px] leading-relaxed text-zinc-100; }
+
+  .pill { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; }
+}

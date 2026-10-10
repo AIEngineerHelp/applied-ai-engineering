@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools, Tool Calling and Unsafe Execution</title>
+<meta name="description" content="See how an agent's tool calling works, and how an unsafe implementation turns a harmless model output into a real attack: path traversal, SSRF, command injection, code eval and the confused deputy — each shown next to its fix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  (() => {
+    let t = null;
+    try { t = localStorage.getItem("tcs-theme"); } catch {}
+    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>
+</head>
+<body class="bg-zinc-50 font-sans text-[15px] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+<header class="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-zinc-200 bg-zinc-50/80 px-6 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
+  <a class="flex items-center gap-2.5 font-semibold tracking-tight" href="./">
+    <span class="grid size-7 place-items-center rounded-lg bg-teal-600 pb-px text-[15px] leading-none font-extrabold tracking-tight text-white shadow-sm shadow-teal-900/20" aria-hidden="true">ai</span>
+    Tool Calling &amp; Unsafe Execution
+  </a>
+  <nav class="ml-auto flex items-center gap-1 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+    <a class="hidden rounded-lg px-2.5 py-1.5 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 sm:block dark:hover:bg-zinc-800 dark:hover:text-zinc-100" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/tool-calling-safety">Code</a>
+    <button id="theme" type="button" class="rounded-lg p-2 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label="Switch color theme" title="Switch color theme">
+      <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main class="mx-auto max-w-[1180px] px-4 pt-7 pb-16 md:px-8">
+  <!-- Intro: what a tool is and the calling loop -->
+  <section class="mb-8">
+    <p class="mb-2 text-xs font-bold tracking-widest text-teal-600 uppercase dark:text-teal-400">Agents · Tool calling</p>
+    <h1 class="mb-3 max-w-3xl text-3xl leading-tight font-bold tracking-tight md:text-[38px]">A tool is a promise the model can’t keep by itself</h1>
+    <p class="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+      You hand the model a <b>name</b>, a <b>description</b> and a <b>JSON schema</b> for the arguments. The model never runs anything —
+      it only writes text asking for a call. <b>Your code</b> runs the tool and feeds the result back. Everything hinges on that step:
+      a tool call is untrusted input, and the model’s argument may come from a web page or a file it just read, not from the user.
+    </p>
+    <div id="loop" class="mt-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"></div>
+  </section>
+
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[13.5rem_minmax(0,1fr)]">
+    <!-- Tool rail -->
+    <aside class="lg:sticky lg:top-[72px] lg:self-start" aria-label="Tools">
+      <p class="mb-2 px-1 text-[11px] font-bold tracking-widest text-zinc-500 uppercase">Pick a tool</p>
+      <div id="tools" role="tablist" aria-orientation="vertical" class="flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0"></div>
+    </aside>
+
+    <!-- Detail -->
+    <div class="min-w-0">
+      <header class="mb-4">
+        <div class="mb-2 flex flex-wrap items-center gap-2">
+          <span id="kind" class="pill bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300"></span>
+          <span id="risk" class="pill bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"></span>
+        </div>
+        <h2 id="headline" class="mb-2 font-mono text-xl font-bold tracking-tight md:text-2xl"></h2>
+        <p id="lede" class="max-w-3xl text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400"></p>
+      </header>
+
+      <!-- Tool definition -->
+      <details id="defbox" class="mb-5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <summary class="cursor-pointer list-none px-4 py-2.5 text-sm font-semibold select-none">The tool definition the model sees <span class="font-normal text-zinc-500">(name, description, JSON schema)</span></summary>
+        <pre id="def" class="code mx-4 mb-4 !bg-zinc-950"></pre>
+      </details>
+
+      <!-- Example picker -->
+      <p class="mb-2 text-[11px] font-bold tracking-widest text-zinc-500 uppercase">The model asks to call it with…</p>
+      <div id="examples" role="tablist" class="mb-2 flex flex-wrap gap-2"></div>
+      <p id="exsource" class="mb-5 text-[13px] text-zinc-500"></p>
+
+      <!-- Side by side -->
+      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
+        <section class="min-w-0 rounded-2xl border border-red-200 bg-white shadow-sm dark:border-red-900/50 dark:bg-zinc-900">
+          <div class="flex items-center gap-2 border-b border-red-200 px-4 py-2.5 dark:border-red-900/50">
+            <span class="pill bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">Naive implementation</span>
+            <span id="naive-badge" class="ml-auto"></span>
+          </div>
+          <pre id="naive-code" class="code m-4"></pre>
+          <div class="px-4 pb-1 text-[11px] font-bold tracking-widest text-zinc-500 uppercase">What runs</div>
+          <div id="naive-steps" class="flex flex-col gap-1.5 px-4 pb-3"></div>
+          <p id="naive-verdict" class="mx-4 mb-4 rounded-lg px-3 py-2 text-[13px] leading-snug"></p>
+        </section>
+
+        <section class="min-w-0 rounded-2xl border border-emerald-200 bg-white shadow-sm dark:border-emerald-900/50 dark:bg-zinc-900">
+          <div class="flex items-center gap-2 border-b border-emerald-200 px-4 py-2.5 dark:border-emerald-900/50">
+            <span class="pill bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Safe implementation</span>
+            <span id="safe-badge" class="ml-auto"></span>
+          </div>
+          <pre id="safe-code" class="code m-4"></pre>
+          <div class="px-4 pb-1 text-[11px] font-bold tracking-widest text-zinc-500 uppercase">What runs</div>
+          <div id="safe-steps" class="flex flex-col gap-1.5 px-4 pb-3"></div>
+          <p id="safe-verdict" class="mx-4 mb-4 rounded-lg px-3 py-2 text-[13px] leading-snug"></p>
+        </section>
+      </div>
+
+      <!-- Permission + fixes -->
+      <section class="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <h3 class="mb-2 flex items-center gap-2 text-sm font-semibold"><svg class="size-4 text-teal-600" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5 2.5 4v4c0 3 2.3 5.3 5.5 6.5 3.2-1.2 5.5-3.5 5.5-6.5V4z"/></svg>The permission rule</h3>
+          <p id="permission" class="text-[13.5px] leading-relaxed text-zinc-600 dark:text-zinc-400"></p>
+        </div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <h3 class="mb-2 text-sm font-semibold">The fixes</h3>
+          <ul id="fixes" class="flex flex-col gap-1.5 text-[13.5px] leading-snug text-zinc-600 dark:text-zinc-400"></ul>
+        </div>
+      </section>
+
+      <!-- Real incident -->
+      <section id="incident" class="mt-4 hidden rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/50 dark:bg-amber-950/20"></section>
+    </div>
+  </div>
+
+  <footer class="mt-12 border-t border-zinc-200 pt-6 text-[13px] leading-relaxed text-zinc-500 dark:border-zinc-800">
+    <p class="mb-2">Everything here is simulated against a pretend machine in <span class="font-mono">src/sandbox.ts</span>; no command runs, no request leaves your browser, and every secret is a fake placeholder. The permissions and fixes follow <a class="underline underline-offset-2 hover:text-teal-600" href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP’s Top 10 for Agentic Applications (2026)</a> and <a class="underline underline-offset-2 hover:text-teal-600" href="https://genai.owasp.org/llmrisk/llm062025-excessive-agency/">LLM06: Excessive Agency</a>.</p>
+    <p>Part of <a class="underline underline-offset-2 hover:text-teal-600" href="https://aiengineer.help/">AI Engineer Help</a>. The companion piece on layered defences — classifiers, a tool policy and human approval — is the <a class="underline underline-offset-2 hover:text-teal-600" href="https://agent-guardrails-beta.vercel.app">agent guardrails</a> example.</p>
+  </footer>
+</main>
+
+<script type="module" src="build/app.js"></script>
+</body>
+</html>
