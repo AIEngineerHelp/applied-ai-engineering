@@ -171,6 +171,8 @@ export interface Block {
   tokens: number;
   /** Pinned blocks are re-sent after a compaction; the rest are summarized. */
   pinned?: boolean;
+  /** For an offloaded output: the size of the full output that went to a file. */
+  full?: number;
 }
 
 export type Tone = "info" | "good" | "bad" | "pause";
@@ -284,8 +286,8 @@ export function run(installed: Iterable<PartId>): Run {
   const problems: Problem[] = [];
   let finished = true;
 
-  const add = (kind: BlockKind, label: string, tokens: number, pinned = false) => {
-    blocks = [...blocks, { id: `b${n++}`, kind, label, tokens, pinned }];
+  const add = (kind: BlockKind, label: string, tokens: number, pinned = false, full?: number) => {
+    blocks = [...blocks, { id: `b${n++}`, kind, label, tokens, pinned, ...(full ? { full } : {}) }];
   };
   const tick = (text: string) => {
     const t = todos.find((x) => x.text === text);
@@ -314,7 +316,8 @@ export function run(installed: Iterable<PartId>): Run {
 
   const push = (d: Draft) => {
     const used = sum(blocks);
-    if (d.call_model !== false) {
+    // A window over the limit cannot be sent, so that call never happens.
+    if (d.call_model !== false && used <= WINDOW) {
       calls += 1;
       billed += used;
     }
@@ -381,7 +384,7 @@ export function run(installed: Iterable<PartId>): Run {
   const output = (file: string, label: string, tokens: number): boolean => {
     if (has("offloading")) {
       scratch.push(file);
-      add("tag", `${label} → ${file}`, OFFLOAD_TAG);
+      add("tag", `${label} → ${file}`, OFFLOAD_TAG, false, tokens);
       return true;
     }
     add("output", label, tokens);

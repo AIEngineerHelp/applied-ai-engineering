@@ -138,6 +138,15 @@
   .x { @apply font-mono text-[11px] text-muted; }
   .prob { @apply inline-block rounded px-1.5 py-0.5 text-[11.5px]; background: var(--bad-soft); color: var(--bad); }
   .ok { color: var(--good); }
+  /* The caption over the factory. */
+  .beat { @apply pointer-events-none absolute top-3 left-1/2 z-10 max-w-[92%] -translate-x-1/2 rounded-full border border-rule bg-card/95 px-4 py-2 font-sans text-[13.5px] font-medium shadow-sm backdrop-blur-sm transition-[opacity,transform] duration-300 ease-out; }
+  .beat[data-show="false"] { @apply -translate-y-1 opacity-0; }
+  .beat-text { @apply leading-snug; }
+  .pip { @apply size-1.5 rounded-full bg-rule transition-colors duration-300; }
+  .pip[data-on="true"] { background: var(--accent); }
+  .seg { @apply inline-flex rounded-lg border border-rule p-0.5 text-[11.5px]; }
+  .seg button { @apply rounded-md px-2 py-1 text-muted transition-colors; }
+  .seg button[data-on="true"] { @apply bg-well text-ink; }
   kbd { @apply rounded border border-rule bg-well px-1 font-mono text-[10px] text-muted; }
 
   /* About panel: a sheet from the right. */
@@ -230,8 +239,8 @@
 @keyframes sheet { from { transform: translateX(40px); opacity: 0; } }
 
 /* Things that arrive by crate appear when it lands (--d from engine.ts). */
-.machine .arrive { animation: land 260ms var(--ease-out) var(--d, 0ms) both; }
-@keyframes land { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.machine .arrive { animation: land 380ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes land { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .machine .blk.over polygon { animation: alarm 700ms ease-in-out infinite alternate; }
 
 /* Belts: dashed slats that the engine slides along (--belt). */
@@ -241,15 +250,25 @@
 /* Gears turn (engine.ts sets the angle). */
 .machine .gear-body { fill: var(--dt); stroke: var(--dln); stroke-width: 0.8; }
 .machine .gear-body.gear-model { fill: #6a6a6a; stroke: #2a2a2a; }
-.machine .gear-body.gear-hot, .machine .thinking .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); transition: fill 200ms; }
+.machine .gear-body { transition: fill 300ms var(--ease-out); }
+.machine .gear-body.gear-hot, .machine.thinking-now .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); }
 [data-theme="dark"] .machine .gear-body.gear-model { fill: #b5b5b5; stroke: #555; }
+[data-theme="dark"] .machine.thinking-now .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); }
 
 /* A model call: the vents glow while the scan light reads the tray. */
-.machine .thinking .vent { animation: vent 800ms ease-out both; }
-@keyframes vent { 0%, 80% { stroke: var(--accent); stroke-width: 1.6; } 100% { stroke: #777; stroke-width: 0.8; } }
-.machine .scan { fill: var(--accent); fill-opacity: 0.22; stroke: var(--accent); stroke-width: 1; opacity: 0; transition: none; }
+.machine .vent { transition: stroke 300ms, stroke-width 300ms; }
+.machine.thinking-now .vent { stroke: var(--accent); stroke-width: 1.6; }
+.machine .scan { fill: var(--accent); fill-opacity: 0.25; stroke: var(--accent); stroke-width: 1.2; opacity: 0; transition: none; }
 .machine .puff { fill: var(--muted); }
 .machine .crate polygon { stroke-width: 0.7; }
+.machine .crate-label rect { fill: var(--ink); }
+.machine .crate-label text { fill: var(--ground); font-family: var(--font-sans); font-size: 9.5px; font-weight: 500; }
+
+/* Spotlight: during a beat, only the parts involved stay lit. */
+.machine [data-part], .machine [data-core] { transition: opacity 450ms var(--ease-out); }
+.machine.spot [data-part]:not(.lit):not(.pin), .machine.spot [data-core]:not(.lit) { opacity: 0.4; }
+.machine.spot .pin:not(.lit) { opacity: 0.25; }
+.machine.spot .lit.pin circle { stroke: var(--accent); stroke-width: 1.6; }
 
 /* Beacon: off, or a flashing alarm when the window overflows. */
 .machine .beacon.t, .machine .beacon.l { fill: var(--l); }
@@ -257,19 +276,21 @@
 @keyframes alarm { to { opacity: 0.35; } }
 
 /* Parts moving. */
-.machine .lift { animation: lift 600ms var(--ease-out) 300ms both; }
+.machine .lift { animation: lift 700ms var(--ease-out) var(--d, 0ms) both; }
 @keyframes lift { to { transform: translateY(-38px); } }
-.machine .drawer-open { animation: drawer 400ms var(--ease-out) 100ms both; }
+.machine .drawer-open { animation: drawer 500ms var(--ease-out) var(--d, 0ms) both; }
 @keyframes drawer { to { transform: translate(15px, 8.5px); } }
-.machine .pressing { animation: press 1100ms var(--ease-out) 800ms both; }
-@keyframes press { 0% { transform: none; } 35%, 65% { transform: translateY(30px); } 100% { transform: none; } }
-.machine .flap { animation: flap 900ms ease-in-out 900ms both; }
+.machine .pressing { animation: press 1700ms cubic-bezier(0.45, 0, 0.25, 1) var(--d, 0ms) both; }
+@keyframes press { 0% { transform: none; } 40%, 65% { transform: translateY(30px); } 100% { transform: none; } }
+.machine .blk.leave { transform-box: fill-box; transform-origin: 50% 100%; animation: squash 600ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes squash { to { transform: scaleY(0.05); opacity: 0; } }
+.machine .flap { animation: flap 900ms ease-in-out var(--d, 0ms) both; }
 @keyframes flap { 30%, 70% { transform: translateY(-6px); } }
-.machine .gate-open { animation: gate 500ms var(--ease-out) 200ms both; }
+.machine .gate-open { animation: gate 600ms var(--ease-out) var(--d, 0ms) both; }
 @keyframes gate { from { opacity: 0; transform: translateY(20px); } }
 .machine .blink { animation: alarm 600ms steps(2) infinite; }
 .machine .cursor { fill: var(--screen-ink); animation: alarm 900ms steps(2) infinite; }
-.machine .write line { stroke: var(--accent); stroke-dasharray: 20; stroke-dashoffset: 20; animation: write 400ms linear calc(900ms + var(--i) * 140ms) forwards; }
+.machine .write line { stroke: var(--accent); stroke-dasharray: 20; stroke-dashoffset: 20; animation: write 400ms linear calc(var(--d, 0ms) + var(--i) * 160ms) forwards; }
 @keyframes write { to { stroke-dashoffset: 0; } }
 
 @media (prefers-reduced-motion: reduce) {

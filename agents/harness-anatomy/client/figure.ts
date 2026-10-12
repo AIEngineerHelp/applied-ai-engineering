@@ -142,12 +142,17 @@ export function scanPane(x: number): Pt[] {
 }
 
 /** A crate drawn around the origin, for the animation layer. */
-export function crate(size: number, m: string): string {
+export function crate(size: number, m: string, text?: string): string {
   tracking = false;
   const h = size / 2;
-  const svg = box(-h, -h, -h, size, size, size, m);
+  // box() projects relative to the world origin, which projects to (0, 0).
+  let svg = box(-h, -h, -h, size, size, size, m);
   tracking = true;
-  // box() projects relative to world origin, which projects to (0, 0).
+  if (text) {
+    const w = text.length * 5.6 + 12;
+    const y = -h * S - 22;
+    svg += `<g class="crate-label"><rect x="${f(-w / 2)}" y="${f(y)}" width="${f(w)}" height="15" rx="7.5"/><text x="0" y="${f(y + 10.6)}" text-anchor="middle">${esc(text)}</text></g>`;
+  }
   return svg;
 }
 
@@ -196,6 +201,9 @@ export interface FigureState {
   thinking: boolean;
   /** The window no longer fits: the alarm runs. */
   alarm: boolean;
+  /** The window before this step, and the blocks the press squeezes out of it. */
+  before: Block[];
+  leaving: Block[];
 }
 
 /** Inline style that hides something until its crate lands. */
@@ -229,7 +237,7 @@ export function drawFigure(st: FigureState): string {
       const x = 1.35 + i * 0.62;
       const out_ = step.skillOut === i;
       const m = out_ ? "acc" : "card";
-      g += `<g class="${out_ ? "lift" : ""}">${box(x, 1.45, 0.45, 0.11, 2.7, 2.2, m)}${box(x, 1.55 + (i % 3) * 0.75, 2.65, 0.11, 0.6, 0.32, m)}</g>`;
+      g += `<g class="${out_ ? "lift" : ""}"${out_ ? at(st, "lift") : ""}>${box(x, 1.45, 0.45, 0.11, 2.7, 2.2, m)}${box(x, 1.55 + (i % 3) * 0.75, 2.65, 0.11, 0.6, 0.32, m)}</g>`;
     }
     g += label("SKILLS", 1.4, 4.6, 0.12, "front", 8.1);
     out.push(part("skills", st, g));
@@ -324,7 +332,8 @@ export function drawFigure(st: FigureState): string {
     let g = box(24.4, 6.1, 0, 3.9, 2.4, 1.05);
     const writing = step.active.includes("code");
     g += box(25, 6.5, 1.05, 1.6, 1.5, 0.06, writing ? "acc" : "paper");
-    for (let i = 0; i < 5; i++) g += `<g class="${writing ? "write" : ""}" style="--i:${i}">${line([25.2, 6.75 + i * 0.25, 1.12], [25.2 + 0.6 + (i % 3) * 0.3, 6.75 + i * 0.25, 1.12], "ink")}</g>`;
+    const wd = st.arrive.get("write") ?? 0;
+    for (let i = 0; i < 5; i++) g += `<g class="${writing ? "write" : ""}" style="--i:${i};--d:${Math.round(wd)}ms">${line([25.2, 6.75 + i * 0.25, 1.12], [25.2 + 0.6 + (i % 3) * 0.3, 6.75 + i * 0.25, 1.12], "ink")}</g>`;
     g += cyl(27.4, 7.3, 1.05, 0.28, 0.9, "dark");
     g += label("CODE", 24.6, 8.5, 0.3, "front", 7.4);
     out.push(part("code", st, g));
@@ -347,7 +356,7 @@ export function drawFigure(st: FigureState): string {
     const open = step.active.includes("memory");
     let g = box(1, 7.6, 0, 3.4, 4, 4.2);
     g += box(4.4, 7.9, 0.3, 0.15, 3.4, 1.75) + box(4.55, 9.2, 1.0, 0.12, 0.8, 0.18);
-    g += `<g class="${open ? "drawer-open" : ""}">${box(4.4, 7.9, 2.25, 0.15, 3.4, 1.75, open ? "acc" : "")}${box(4.55, 9.2, 2.95, 0.12, 0.8, 0.18)}${label("AGENTS.md", 4.56, 11.1, 3.55, "side", 6.8)}</g>`;
+    g += `<g class="${open ? "drawer-open" : ""}"${open ? at(st, "drawer") : ""}>${box(4.4, 7.9, 2.25, 0.15, 3.4, 1.75, open ? "acc" : "")}${box(4.55, 9.2, 2.95, 0.12, 0.8, 0.18)}${label("AGENTS.md", 4.56, 11.1, 3.55, "side", 6.8)}</g>`;
     g += label("NOTES", 4.56, 11.1, 1.6, "side", 6.8);
     g += label("MEMORY", 1.2, 11.6, 0.35, "front", 8.1);
     out.push(part("memory", st, g));
@@ -364,18 +373,18 @@ export function drawFigure(st: FigureState): string {
     g += gear("side", [16, 8.75, 2.05], 11, 7, -2.2, "gear-model");
     g += label("MODEL", 9.6, 12.4, 4.4, "front", 14.9, "lbl lbl-model");
     g += label("text in · text out", 9.6, 12.4, 3.5, "front", 8.1, "lbl lbl-model-sub");
-    out.push(`<g class="core model${st.thinking ? " thinking" : ""}" data-core="model">${g}</g>`);
+    out.push(`<g class="core model${st.thinking ? " thinking" : ""}" data-core="model"${st.thinking ? ` style="--d:${Math.round(st.arrive.get("think") ?? 0)}ms"` : ""}>${g}</g>`);
   }
 
   // Output belt toward the gate, with moving slats.
-  out.push(`<g class="core">${box(16, 11.1, 0, 10.6, 1.2, 0.45, "belt")}${line([16.1, 11.4, 0.46], [26.5, 11.4, 0.46], "belt-line")}${line([16.1, 12.0, 0.46], [26.5, 12.0, 0.46], "belt-line")}</g>`);
+  out.push(`<g class="core" data-core="belt">${box(16, 11.1, 0, 10.6, 1.2, 0.45, "belt")}${line([16.1, 11.4, 0.46], [26.5, 11.4, 0.46], "belt-line")}${line([16.1, 12.0, 0.46], [26.5, 12.0, 0.46], "belt-line")}</g>`);
 
   // 11 · Human in the loop: a gate across the belt, with a person's lever.
   {
     const gate = step.gate;
     let g = box(25.7, 10.5, 0, 0.5, 0.5, 3.2) + box(25.7, 12.4, 0, 0.5, 0.5, 3.2);
     if (gate === "waiting" || gate === "idle") g += box(25.8, 10.6, 1.0, 0.3, 2.3, 0.35, gate === "waiting" ? "acc" : "");
-    else g += `<g class="${gate === "approved" ? "gate-open" : ""}">${box(25.8, 10.6, 1.0, 0.3, 0.35, 2.4, gate === "approved" ? "acc" : "")}</g>`;
+    else g += `<g class="${gate === "approved" ? "gate-open" : ""}"${gate === "approved" ? at(st, "gate") : ""}>${box(25.8, 10.6, 1.0, 0.3, 0.35, 2.4, gate === "approved" ? "acc" : "")}</g>`;
     // The change waits on the belt until a person decides.
     if (gate === "waiting") g += `<g class="${arriving(st, "parked")}"${at(st, "parked")}>${box(24.55, 11.2, 0.45, 1.05, 1.05, 1.05, "k-edit")}</g>`;
     g += box(26.8, 13.4, 0, 1.6, 1.4, 1.5);
@@ -389,11 +398,11 @@ export function drawFigure(st: FigureState): string {
     let g = box(27.1, 10.4, 0, 3.1, 2.6, 1.3);
     g += label("BRANCH", 27.25, 13.0, 0.85, "front", 6.2) + label("MAIN", 28.95, 13.0, 0.85, "front", 6.2);
     if (st.shipped) g += `<g class="${arriving(st, "ship")}"${at(st, "ship")}>${box(st.shipped === "branch" ? 27.4 : 29.0, 10.9, 1.3, 1.0, 1.6, 0.25, st.shipped === "main" ? "bad" : "k-edit")}</g>`;
-    out.push(`<g class="core">${g}</g>`);
+    out.push(`<g class="core" data-core="outbox">${g}</g>`);
   }
 
   // Feed belt from the tray up to the model.
-  out.push(`<g class="core">${box(11, 12.4, 0, 4, 3.1, 0.3, "belt")}${[11.6, 12.5, 13.4, 14.3].map((x) => line([x, 15.4, 0.31], [x, 12.5, 0.31], "belt-line belt-in")).join("")}</g>`);
+  out.push(`<g class="core" data-core="feed">${box(11, 12.4, 0, 4, 3.1, 0.3, "belt")}${[11.6, 12.5, 13.4, 14.3].map((x) => line([x, 15.4, 0.31], [x, 12.5, 0.31], "belt-line belt-in")).join("")}</g>`);
 
   // The return line: tool output travels from the sandbox down to the tray.
   {
@@ -403,14 +412,14 @@ export function drawFigure(st: FigureState): string {
     g += poly([P(xa, ya, za + h), P(xb, ya, za + h), P(xb, yb, zb + h), P(xa, yb, zb + h)], "t");
     g += line([21.2, ya, za + h + 0.01], [21.2, yb, zb + h + 0.01], "belt-line belt-down");
     g += box(20.2, 14.6, 0.5, 2.0, 0.95, 1.0);
-    out.push(`<g class="core">${g}</g>`);
+    out.push(`<g class="core" data-core="return">${g}</g>`);
   }
 
   // 4 · Context offloading: a diverter on the return line that sends big output to a file.
   {
     const flow = step.chute;
     let g = box(20.35, 9.7, 3.6, 1.7, 1.3, 1.25, flow ? "acc" : "");
-    g += `<g class="${flow ? "flap" : ""}">${box(20.45, 9.75, 4.85, 1.5, 0.4, 0.12, flow ? "acc-dark" : "dark")}</g>`;
+    g += `<g class="${flow ? "flap" : ""}"${flow ? at(st, "flap") : ""}>${box(20.45, 9.75, 4.85, 1.5, 0.4, 0.12, flow ? "acc-dark" : "dark")}</g>`;
     g += label("DIVERT", 20.5, 11.0, 3.95, "front", 5.5);
     out.push(part("offloading", st, g));
   }
@@ -420,6 +429,12 @@ export function drawFigure(st: FigureState): string {
     const { x0, len } = TRAY;
     let g = box(x0, 15.5, 0, len, 2.1, 0.25, "tray");
     g += box(x0, 15.5, 0.25, len, 0.15, 0.75, "tray");
+    // Blocks the press squeezes out are drawn where they were, then flattened.
+    const was = slots(st.before);
+    for (const b of st.leaving) {
+      const { x, w } = was.get(b.id)!;
+      g += `<g class="blk leave"${at(st, "leave")}>${box(x, TRAY.y, TRAY.z, w - 0.04, TRAY.d, TRAY.h, KIND_CLASS[b.kind])}</g>`;
+    }
     const at_ = slots(step.blocks);
     for (const b of step.blocks) {
       const { x, w } = at_.get(b.id)!;
@@ -442,7 +457,7 @@ export function drawFigure(st: FigureState): string {
     const down = step.pressing;
     let g = box(5.6, 14.9, 0, 0.45, 0.45, 4.4) + box(5.6, 17.85, 0, 0.45, 0.45, 4.4);
     g += box(5.6, 14.9, 4.4, 2.9, 3.4, 0.5, down ? "acc" : "");
-    g += `<g class="${down ? "pressing" : ""}">${cyl(7.05, 16.6, 2.85, 0.35, 1.55, "steel")}${box(5.95, 15.75, 2.6, 2.2, 1.7, 0.3, down ? "acc" : "dark")}</g>`;
+    g += `<g class="${down ? "pressing" : ""}"${down ? at(st, "press") : ""}>${cyl(7.05, 16.6, 2.85, 0.35, 1.55, "steel")}${box(5.95, 15.75, 2.6, 2.2, 1.7, 0.3, down ? "acc" : "dark")}</g>`;
     out.push(part("summarization", st, g));
   }
 

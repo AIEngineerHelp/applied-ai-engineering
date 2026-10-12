@@ -60,7 +60,8 @@
     <!-- The factory -->
     <section id="machine" class="order-1 flex min-h-0 min-w-0 flex-col lg:order-none" aria-label="The factory">
       <div class="relative aspect-[3/2] lg:aspect-auto lg:min-h-0 lg:flex-1">
-        <div id="figure" class="absolute inset-0 px-3 pt-4 pb-2"></div>
+        <div id="figure" class="absolute inset-0 px-3 pt-14 pb-2"></div>
+        <div id="beat" class="beat" data-show="false" aria-live="polite"></div>
         <div id="partcard" class="partcard" hidden></div>
         <div id="tip" class="tip" hidden></div>
       </div>
@@ -83,6 +84,9 @@
               <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5.5 3.5v9L12 8z"/></svg>
             </button>
             <span id="counter" class="ml-2 font-mono text-[11.5px] whitespace-nowrap text-muted"></span>
+            <div class="seg ml-3" role="group" aria-label="Speed">
+              <button type="button" data-pace="slow">Slow</button><button type="button" data-pace="normal">Normal</button><button type="button" data-pace="fast">Fast</button>
+            </div>
           </div>
           <div id="narration" class="min-h-[64px] min-w-0 flex-1" aria-live="polite"></div>
         </div>

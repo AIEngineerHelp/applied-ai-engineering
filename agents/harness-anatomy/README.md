@@ -2,13 +2,16 @@
 
 A model turns text into text. Everything that makes it an **agent** — what it sees on each call, where its commands run, how it splits up work and when it stops to ask a person — is the **harness**. As LangChain puts it: *if you're not the model, you're the harness.*
 
-This example is a one-screen web app that draws a harness as a working isometric factory rather than boxes and arrows. The model is a sealed engine in the middle; the context window is a tray in front of it, one unit per 10k tokens; and eleven numbered parts sit around it. It plays one ordinary task, *"The checkout test has failed since Tuesday. Fix it and open a pull request."*, step by step and in motion:
+This example is a one-screen web app that draws a harness as a working isometric factory rather than boxes and arrows. The model is a sealed engine in the middle; the context window is a tray in front of it, one unit per 10k tokens; and eleven numbered parts sit around it. It plays one ordinary task, *"The checkout test has failed since Tuesday. Fix it and open a pull request."*, step by step.
 
-- Every model call spins the model's gears, puffs steam from its stack and sweeps a light across the tray, because each call re-reads the whole window.
-- Crates carry the work between stations. A command goes to the terminal; tool output rides the return line back to the tray, or the diverter files it on the scratch shelf and lets only a short tag through. A brief and a stream of files go to a subagent, which returns a small report. Skill cards lift out of the rack. The press comes down when the window passes 160k. Finished work waits at the gate for a person.
-- The gauges count up as crates land: context window, tokens billed and model calls.
+Each step plays as a short sequence of beats, one thing at a time. A caption over the factory says what is happening, a spotlight dims everything except the parts involved, and labelled crates carry the work between stations:
 
-Switch parts off in the left column and the run starts again without them: the missing part becomes a dashed ghost, and the run shows what goes wrong. The explanation, a table of every part pulled out one at a time, the limits and the sources are in the **About & sources** panel.
+- A command crate goes to the terminal. The output rides the return line back to the tray, or, with the diverter, the full log is filed on the scratch shelf and only a small "path + head/tail" crate goes on.
+- A brief and a stream of files go to a subagent; only its short report comes back.
+- A skill card lifts out of the rack only when the task matches it. The press squeezes old blocks flat when the window passes 160k. Finished work waits at the gate for a person.
+- Every step that calls the model ends with the same beat: the gears race, steam rises, and a light sweeps the whole tray, because each call re-reads the whole window and is billed for all of it. The gauges move at that moment.
+
+Switch parts off in the left column and the run starts again without them: the missing part becomes a dashed ghost, and the run shows what goes wrong. Slow, Normal and Fast change the pace. The explanation, a table of every part pulled out one at a time, the limits and the sources are in the **About & sources** panel.
 
 ## The four jobs and the eleven parts
 
@@ -53,7 +56,7 @@ No API keys, no network calls beyond Google Fonts. The factory starts playing on
 
 - `src/harness.ts` — the parts, their dependencies, and `run(installed)`: the task played step by step, returning every window, file, to-do and problem. This is the file to read.
 - `client/figure.ts` — the factory: a small isometric projection (`box`, `cyl`, gears and labels laid on faces), the station positions, and one function that draws the whole figure for a step. No libraries.
-- `client/engine.ts` — the motion: `plan()` turns a step into crate trips between stations and arrival times; `Engine` plays them with `requestAnimationFrame` and keeps the belts, gears, scan light and steam moving.
+- `client/engine.ts` — the motion: `plan()` turns a step into a sequence of beats (caption, spotlight, crate trips and arrival times); `Engine` plays them with `requestAnimationFrame` and keeps the belts, gears, scan light and steam moving.
 - `client/app.ts` — the step bar, gauges, parts list and the About panel.
 - `site/index.html` — the single full-screen page; `client/styles.css` — Tailwind CSS v4, the figure's materials for light and dark themes, and the CSS animations.
 - `tests/harness.test.ts` — checks the run model.

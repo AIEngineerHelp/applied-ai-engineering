@@ -2,17 +2,30 @@
 // About panel. Everything is computed from src/harness.ts.
 
 import { ALL_PARTS, GROUPS, PARTS, PROBLEMS, TASK, WINDOW, effective, fmt, partById, run, type PartId, type Run } from "../src/harness.ts";
-import { Engine, plan } from "./engine.ts";
+import { Engine, plan, type Beat } from "./engine.ts";
 import { LEGEND, PART_NUMBER, drawFigure } from "./figure.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** Long enough for each step's trips to land, with a beat to read. */
-const STEP_MIN = 2900;
+/** A pause after a step's last beat, before the next step starts. */
 const STEP_PAD = 900;
+/** Slow, normal, fast: how much every duration is stretched. */
+const PACES = { slow: 1.6, normal: 1, fast: 0.6 } as const;
+type Pace = keyof typeof PACES;
 
-const engine = new Engine();
+const engine = new Engine({
+  beat: (b, i, n) => showBeat(b, i, n),
+  gauges: (used, billed) => {
+    tweenGauges({ used: used ?? shown.used, billed: billed ?? shown.billed });
+    if (billed !== undefined) {
+      // The call count moves with the bill: the subagent's two calls, then the model call.
+      const s = state.run.steps[state.index];
+      const prev = state.run.steps[state.index - 1];
+      $("#m-calls").textContent = String(billed >= s.billed ? s.calls : (prev?.calls ?? 0) + 2);
+    }
+  },
+});
 
 const state = {
   installed: new Set<PartId>(ALL_PARTS),
@@ -24,7 +37,14 @@ const state = {
   timer: 0,
   /** How long the current step's choreography lasts. */
   stepEnd: 0,
+  pace: "normal" as Pace,
 };
+try {
+  const saved = localStorage.getItem("harness-pace");
+  if (saved && saved in PACES) state.pace = saved as Pace;
+} catch {
+  // Storage can be unavailable; the default pace is used.
+}
 
 // ---------- URL: ?off=subagents,offloading&step=4 ----------
 
@@ -71,16 +91,21 @@ function drawFactory(animate: boolean) {
   const prev = steps[state.index - 1];
   const on = effective(state.installed);
   const ship = shipped();
-  const p = animate && !engine.reduced ? plan(prev, step, on, ship) : { trips: [], arrive: new Map<string, number>(), think: 0, scanTo: 0, end: 0 };
+  const p = animate && !engine.reduced
+    ? plan(prev, step, on, ship, PACES[state.pace])
+    : { beats: [], trips: [], arrive: new Map<string, number>(), think: null, scanTo: 0, leaving: [], end: 0 };
   state.stepEnd = p.end;
+  if (p.think) p.arrive.set("think", p.think.start);
   $("#figure").innerHTML = drawFigure({
     on,
     step,
     arrive: p.arrive,
     lastCall: lastCall(state.index),
     shipped: ship,
-    thinking: p.think > 0,
+    thinking: !!p.think,
     alarm: step.used > WINDOW,
+    before: prev?.blocks ?? [],
+    leaving: p.leaving,
   });
   engine.attach(document.querySelector<SVGSVGElement>(".machine")!, p);
   applyFocus();
@@ -121,11 +146,11 @@ function showPartCard(id: PartId | null) {
 /** Counts a number up to its new value as the crates land. */
 const shown = { used: 0, billed: 0 };
 let tweenFrame = 0;
-function tweenGauges(to: { used: number; billed: number }, delay: number) {
+function tweenGauges(to: { used: number; billed: number }) {
   cancelAnimationFrame(tweenFrame);
   const from = { ...shown };
-  const t0 = performance.now() + delay;
-  const dur = engine.reduced ? 0 : 600;
+  const t0 = performance.now();
+  const dur = engine.reduced ? 0 : 650;
   const tick = (now: number) => {
     const u = dur ? Math.max(0, Math.min(1, (now - t0) / dur)) : 1;
     shown.used = from.used + (to.used - from.used) * u;
@@ -143,6 +168,23 @@ function paintGauges() {
   bar.style.width = `${Math.min(100, (shown.used / WINDOW) * 100)}%`;
   bar.dataset.over = String(over);
   $("#m-billed").textContent = fmt(Math.round(shown.billed), false);
+}
+
+/** The caption over the factory: what is happening right now. */
+function showBeat(b: Beat | null, i: number, n: number) {
+  const el = $("#beat");
+  if (!b) {
+    el.dataset.show = "false";
+    // The step is over: make sure the gauges show its exact values.
+    const s = state.run.steps[state.index];
+    if (shown.used !== s.used || shown.billed !== s.billed) tweenGauges({ used: s.used, billed: s.billed });
+    $("#m-calls").textContent = String(s.calls);
+    return;
+  }
+  const color = b.tone === "bad" ? "var(--bad)" : b.tone === "good" ? "var(--good)" : b.tone === "pause" ? "var(--accent)" : "var(--ink)";
+  const pips = Array.from({ length: n }, (_, k) => `<span class="pip" data-on="${k <= i}"></span>`).join("");
+  el.innerHTML = `<div class="flex items-center gap-2.5"><span class="flex gap-1">${pips}</span><span class="beat-text" style="color:${color}">${esc(b.caption)}</span></div>`;
+  el.dataset.show = "true";
 }
 
 function drawStepInfo(animate: boolean) {
@@ -166,9 +208,9 @@ function drawStepInfo(animate: boolean) {
   $("#counter").textContent = `${state.index + 1} / ${steps.length}`;
   playIcon();
 
-  $("#m-calls").textContent = String(s.calls);
-  if (animate) tweenGauges({ used: s.used, billed: s.billed }, Math.max(0, state.stepEnd - 600));
-  else {
+  const prevStep = steps[state.index - 1];
+  $("#m-calls").textContent = String(!animate || engine.reduced || !prevStep ? s.calls : prevStep.calls);
+  if (!animate || engine.reduced) {
     shown.used = s.used;
     shown.billed = s.billed;
     paintGauges();
@@ -246,7 +288,7 @@ function schedule() {
     }
     go(state.index + 1);
     schedule();
-  }, Math.max(STEP_MIN, state.stepEnd + STEP_PAD));
+  }, Math.max(1500, state.stepEnd + STEP_PAD * PACES[state.pace]));
 }
 
 function play() {
@@ -323,6 +365,20 @@ function wire() {
   $("#task").textContent = TASK;
   const legend = LEGEND.map((l) => `<span><span class="swatch ${l.cls}"></span>${esc(l.name)}</span>`).join("");
   $("#legend").innerHTML = legend;
+
+  const paintPace = () => document.querySelectorAll<HTMLElement>("[data-pace]").forEach((b) => (b.dataset.on = String(b.dataset.pace === state.pace)));
+  paintPace();
+  document.querySelectorAll<HTMLElement>("[data-pace]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.pace = b.dataset.pace as Pace;
+      paintPace();
+      try {
+        localStorage.setItem("harness-pace", state.pace);
+      } catch {
+        // Storage can be unavailable; the pace still applies for this visit.
+      }
+    }),
+  );
 
   $("#play").addEventListener("click", () => (state.playing ? (stop(), playIcon()) : play()));
   $("#next").addEventListener("click", () => (stop(), go(state.index + 1)));
