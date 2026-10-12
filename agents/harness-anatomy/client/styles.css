@@ -38,6 +38,7 @@
   --bad: #b42318;
   --bad-soft: #fdecea;
   --good: #2f7d4f;
+  --good-soft: #e8f4ec;
 
   /* Figure materials: top, +y face, +x face. */
   --t: #ffffff; --l: #efefef; --r: #e0e0e0; --ln: #8e8e8e;
@@ -64,6 +65,7 @@
   --bad: #ff8a80;
   --bad-soft: #3a1714;
   --good: #7fd19b;
+  --good-soft: #15291c;
 
   --t: #2f2f2f; --l: #262626; --r: #1f1f1f; --ln: #5a5a5a;
   --dt: #8a8a8a; --dl: #6e6e6e; --dr: #5c5c5c; --dln: #3a3a3a;
@@ -86,15 +88,11 @@
 @layer components {
   .navlink { @apply rounded-md px-2.5 py-1.5 no-underline transition-colors hover:bg-well hover:text-ink; }
   .kicker { @apply font-sans text-[12px] font-semibold tracking-[0.14em] text-accent uppercase; }
-  .column { @apply mx-auto max-w-[640px]; }
-  .wide { @apply mx-auto max-w-[960px]; }
 
-  .figure-card { @apply overflow-hidden rounded-2xl border border-rule bg-card; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.02), 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12); }
-  .figure-stage { @apply px-2 pt-6 pb-3 md:px-6; }
 
   .tbtn { @apply grid size-8 place-items-center rounded-lg text-ink-2 transition-[background-color,transform] duration-150 hover:bg-well active:scale-[0.97]; }
   .tbtn-primary { @apply bg-ink text-ground hover:bg-ink; }
-  .dot { @apply h-1.5 min-w-1 flex-1 rounded-full bg-rule transition-colors duration-200; }
+  .dot { @apply h-1.5 min-w-1 flex-1 bg-rule transition-colors duration-200; }
   .dot[data-state="done"] { @apply bg-faint; }
   .dot[data-state="now"] { @apply bg-ink; }
   .dot[data-tone="bad"] { background: var(--bad); opacity: 0.55; }
@@ -102,8 +100,6 @@
   .dot[data-tone="pause"] { background: var(--accent); opacity: 0.55; }
   .dot[data-tone="pause"][data-state="now"] { opacity: 1; }
 
-  .narration { @apply min-h-[148px] rounded-2xl border border-rule bg-card px-5 py-4; }
-  .meters { @apply space-y-4 rounded-2xl border border-rule bg-card px-4 py-4 font-sans; }
   .meter-head { @apply mb-1.5 flex items-baseline justify-between text-[12px] font-medium; }
   .meter-label { @apply font-sans text-[11px] font-medium tracking-wide text-muted uppercase; }
   .meter-num { @apply font-mono text-[17px] tabular-nums; }
@@ -130,40 +126,34 @@
   [data-theme="dark"] .switch[aria-checked="true"]::after { background: var(--ground); }
 
   /* Floating card for a hovered or selected part. */
-  .partcard { @apply pointer-events-none absolute top-3 left-3 max-w-[300px] rounded-xl border border-rule bg-card/95 px-3.5 py-3 font-sans text-[12.5px] leading-snug shadow-lg backdrop-blur-sm; }
+  .partcard { @apply pointer-events-none absolute top-3 right-3 max-w-[300px] rounded-xl border border-rule bg-card/95 px-3.5 py-3 font-sans text-[12.5px] leading-snug shadow-lg backdrop-blur-sm; }
   .tip { @apply pointer-events-none absolute z-10 rounded-md bg-ink px-2 py-1 font-sans text-[11.5px] whitespace-nowrap text-ground shadow; }
 
-  /* Article. */
-  .chapter { @apply mb-20 scroll-mt-16; }
-  .chapter p { @apply mb-4 leading-[1.7] text-ink-2; }
-  .chapter p.lede { @apply font-sans text-[15px] text-muted; }
-  .chapter-head { @apply mb-5 flex items-baseline gap-4 font-serif text-[28px] leading-tight tracking-tight text-ink md:text-[32px]; }
-  .chapter-num { @apply font-mono text-[13px] font-normal tracking-normal text-accent; }
-  .list { @apply space-y-3 pl-0 leading-[1.65] text-ink-2; }
-  .list li { @apply relative pl-5; }
-  .list li::before { content: ""; @apply absolute top-[0.75em] left-0 h-px w-2.5 bg-faint; }
-
-  .board { @apply mx-auto mt-10 max-w-[960px]; }
-  .board figcaption { @apply mt-3 text-center font-sans text-[12.5px] text-muted; }
-  .board-grid { @apply grid gap-px overflow-hidden rounded-2xl border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-4; }
-  .board-col { @apply bg-card px-5 py-5 font-sans; }
-
-  .compare { @apply mt-6 overflow-x-auto rounded-xl border border-rule bg-card font-sans text-[13px]; }
-  .compare table, .parts-table { @apply w-full border-collapse; }
-  .compare th, .parts-table th { @apply border-b border-rule px-3 py-2 text-left text-[11px] font-medium tracking-wide whitespace-nowrap text-muted uppercase; }
-  .compare td, .parts-table td { @apply border-b border-rule px-3 py-2 align-top; }
-  .compare tr:last-child td, .parts-table tr:last-child td { @apply border-b-0; }
-  .parts-table { @apply rounded-xl bg-card font-sans text-[13px]; }
+  .parts-table { @apply w-full border-collapse bg-card font-sans text-[13px]; }
+  .parts-table th { @apply border-b border-rule px-3 py-2 text-left text-[11px] font-medium tracking-wide whitespace-nowrap text-muted uppercase; }
+  .parts-table td { @apply border-b border-rule px-3 py-2 align-top; }
+  .parts-table tr:last-child td { @apply border-b-0; }
   .parts-table tbody tr { @apply cursor-pointer transition-colors hover:bg-well; }
   .num { @apply text-right font-mono tabular-nums whitespace-nowrap; }
   .x { @apply font-mono text-[11px] text-muted; }
   .prob { @apply inline-block rounded px-1.5 py-0.5 text-[11.5px]; background: var(--bad-soft); color: var(--bad); }
   .ok { color: var(--good); }
-  .try { @apply cursor-pointer rounded-md border border-rule px-2 py-0.5 text-[11.5px] whitespace-nowrap transition-colors hover:border-faint; }
+  kbd { @apply rounded border border-rule bg-well px-1 font-mono text-[10px] text-muted; }
+
+  /* About panel: a sheet from the right. */
+  .about { @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-[760px] overflow-y-auto border-l border-rule bg-card p-0 text-ink shadow-2xl; }
+  .about::backdrop { background: rgb(0 0 0 / 0.35); backdrop-filter: blur(2px); }
+  .about[open] { animation: sheet 260ms var(--ease-out); }
+  .prose-about { @apply font-serif text-[16px] leading-[1.65] text-ink-2; }
+  .prose-about p { @apply mb-3; }
+  .prose-about h3 { @apply mt-8 mb-2 font-serif text-[20px] text-ink; }
+  .prose-about ul { @apply mb-3 space-y-2; }
+  .prose-about li { @apply relative pl-5; }
+  .prose-about li::before { content: ""; @apply absolute top-[0.8em] left-0 h-px w-2.5 bg-faint; }
 }
 
 /* ---- The machine ---- */
-.machine { width: 100%; height: auto; display: block; overflow: visible; }
+.machine { width: 100%; height: 100%; display: block; overflow: visible; }
 .machine polygon, .machine path, .machine ellipse { stroke: var(--ln); stroke-width: 0.6; stroke-linejoin: round; transition: fill 220ms var(--ease-out), opacity 220ms var(--ease-out); }
 .machine .t { fill: var(--t); }
 .machine .l { fill: var(--l); }
@@ -236,10 +226,54 @@
 .machine .pin.removed text { fill: var(--faint); }
 .machine .pin.removed line { stroke: var(--faint); }
 
-/* A block arriving in the window drops in. */
-.machine .blk.fresh { animation: drop 360ms var(--ease-out) both; }
-@keyframes drop { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* ---- Motion ---- */
+@keyframes sheet { from { transform: translateX(40px); opacity: 0; } }
+
+/* Things that arrive by crate appear when it lands (--d from engine.ts). */
+.machine .arrive { animation: land 260ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes land { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.machine .blk.over polygon { animation: alarm 700ms ease-in-out infinite alternate; }
+
+/* Belts: dashed slats that the engine slides along (--belt). */
+.machine .belt-line { stroke: var(--faint); stroke-width: 2.2; stroke-dasharray: 2 7; stroke-dashoffset: var(--belt, 0); opacity: 0.9; }
+.machine .belt-in, .machine .belt-down { stroke-dashoffset: calc(var(--belt, 0) * -1); }
+
+/* Gears turn (engine.ts sets the angle). */
+.machine .gear-body { fill: var(--dt); stroke: var(--dln); stroke-width: 0.8; }
+.machine .gear-body.gear-model { fill: #6a6a6a; stroke: #2a2a2a; }
+.machine .gear-body.gear-hot, .machine .thinking .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); transition: fill 200ms; }
+[data-theme="dark"] .machine .gear-body.gear-model { fill: #b5b5b5; stroke: #555; }
+
+/* A model call: the vents glow while the scan light reads the tray. */
+.machine .thinking .vent { animation: vent 800ms ease-out both; }
+@keyframes vent { 0%, 80% { stroke: var(--accent); stroke-width: 1.6; } 100% { stroke: #777; stroke-width: 0.8; } }
+.machine .scan { fill: var(--accent); fill-opacity: 0.22; stroke: var(--accent); stroke-width: 1; opacity: 0; transition: none; }
+.machine .puff { fill: var(--muted); }
+.machine .crate polygon { stroke-width: 0.7; }
+
+/* Beacon: off, or a flashing alarm when the window overflows. */
+.machine .beacon.t, .machine .beacon.l { fill: var(--l); }
+.machine .beacon.alarm.t, .machine .beacon.alarm.l { fill: var(--bad); stroke: var(--bad); animation: alarm 500ms steps(2) infinite; }
+@keyframes alarm { to { opacity: 0.35; } }
+
+/* Parts moving. */
+.machine .lift { animation: lift 600ms var(--ease-out) 300ms both; }
+@keyframes lift { to { transform: translateY(-38px); } }
+.machine .drawer-open { animation: drawer 400ms var(--ease-out) 100ms both; }
+@keyframes drawer { to { transform: translate(15px, 8.5px); } }
+.machine .pressing { animation: press 1100ms var(--ease-out) 800ms both; }
+@keyframes press { 0% { transform: none; } 35%, 65% { transform: translateY(30px); } 100% { transform: none; } }
+.machine .flap { animation: flap 900ms ease-in-out 900ms both; }
+@keyframes flap { 30%, 70% { transform: translateY(-6px); } }
+.machine .gate-open { animation: gate 500ms var(--ease-out) 200ms both; }
+@keyframes gate { from { opacity: 0; transform: translateY(20px); } }
+.machine .blink { animation: alarm 600ms steps(2) infinite; }
+.machine .cursor { fill: var(--screen-ink); animation: alarm 900ms steps(2) infinite; }
+.machine .write line { stroke: var(--accent); stroke-dasharray: 20; stroke-dashoffset: 20; animation: write 400ms linear calc(900ms + var(--i) * 140ms) forwards; }
+@keyframes write { to { stroke-dashoffset: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .machine .blk.fresh { animation: none; }
-  .machine *, .bar-fill, .switch::after { transition: none !important; }
+  .machine *, .bar-fill, .switch::after, .about[open] { animation: none !important; transition: none !important; }
+  .machine .lift { transform: translateY(-38px); }
+  .machine .drawer-open { transform: translate(15px, 8.5px); }
 }

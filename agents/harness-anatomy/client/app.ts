@@ -1,14 +1,18 @@
-// The page: the machine, its transport and meters, the parts list, and the
-// tables in the article. Everything is computed from src/harness.ts.
+// The page: the factory, its step bar and gauges, the parts list, and the
+// About panel. Everything is computed from src/harness.ts.
 
 import { ALL_PARTS, GROUPS, PARTS, PROBLEMS, TASK, WINDOW, effective, fmt, partById, run, type PartId, type Run } from "../src/harness.ts";
+import { Engine, plan } from "./engine.ts";
 import { LEGEND, PART_NUMBER, drawFigure } from "./figure.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const STEP_MS = 1900;
+/** Long enough for each step's trips to land, with a beat to read. */
+const STEP_MIN = 2900;
+const STEP_PAD = 900;
+
+const engine = new Engine();
 
 const state = {
   installed: new Set<PartId>(ALL_PARTS),
@@ -17,7 +21,9 @@ const state = {
   playing: false,
   selected: null as PartId | null,
   hovered: null as PartId | null,
-  timer: 0 as number,
+  timer: 0,
+  /** How long the current step's choreography lasts. */
+  stepEnd: 0,
 };
 
 // ---------- URL: ?off=subagents,offloading&step=4 ----------
@@ -32,15 +38,17 @@ function readUrl() {
 }
 
 function writeUrl() {
+  const q = new URLSearchParams(location.search);
+  q.delete("off");
+  q.delete("step");
   const off = ALL_PARTS.filter((p) => !state.installed.has(p));
-  const q = new URLSearchParams();
   if (off.length) q.set("off", off.join(","));
   if (state.index > 0) q.set("step", String(state.index + 1));
   const s = q.toString();
-  history.replaceState(null, "", s ? `?${s}${location.hash}` : `${location.pathname}${location.hash}`);
+  history.replaceState(null, "", s ? `?${s}` : location.pathname);
 }
 
-// ---------- The machine ----------
+// ---------- The factory ----------
 
 function lastCall(upto: number): string {
   for (let i = upto; i >= 0; i--) {
@@ -56,18 +64,25 @@ function shipped(): "branch" | "main" | null {
   return state.installed.has("hitl") ? "branch" : "main";
 }
 
-function drawMachine() {
+/** Draws the factory for the current step and starts its choreography. */
+function drawFactory(animate: boolean) {
   const steps = state.run.steps;
   const step = steps[state.index];
-  const prev = new Set((steps[state.index - 1]?.blocks ?? []).map((b) => b.id));
-  const fresh = new Set(step.blocks.filter((b) => !prev.has(b.id)).map((b) => b.id));
+  const prev = steps[state.index - 1];
+  const on = effective(state.installed);
+  const ship = shipped();
+  const p = animate && !engine.reduced ? plan(prev, step, on, ship) : { trips: [], arrive: new Map<string, number>(), think: 0, scanTo: 0, end: 0 };
+  state.stepEnd = p.end;
   $("#figure").innerHTML = drawFigure({
-    on: effective(state.installed),
+    on,
     step,
-    fresh: state.index === 0 ? new Set() : fresh,
+    arrive: p.arrive,
     lastCall: lastCall(state.index),
-    shipped: shipped(),
+    shipped: ship,
+    thinking: p.think > 0,
+    alarm: step.used > WINDOW,
   });
+  engine.attach(document.querySelector<SVGSVGElement>(".machine")!, p);
   applyFocus();
 }
 
@@ -89,61 +104,89 @@ function showPartCard(id: PartId | null) {
     return;
   }
   const p = partById(id);
-  const on = effective(state.installed).has(id);
+  const on = effective(state.installed);
   const group = GROUPS.find((g) => g.id === p.group)!;
-  const missing = p.needs.filter((n) => !effective(state.installed).has(n)).map((n) => partById(n).name);
+  const missing = p.needs.filter((n) => !on.has(n)).map((n) => partById(n).name);
   card.innerHTML = `
     <div class="mb-1 flex items-center gap-2"><span class="pnum">${PART_NUMBER[id]}</span><b class="text-[13.5px]">${esc(p.name)}</b></div>
     <div class="mb-2 font-mono text-[10.5px] tracking-wide text-muted uppercase">${esc(group.name)} · ${esc(p.object)}</div>
     <p class="mb-2 text-ink-2">${esc(p.does)}</p>
     <p class="text-muted"><b class="font-medium text-ink-2">Without it:</b> ${esc(p.without)}</p>
-    ${!on ? `<p class="mt-2 font-medium" style="color:var(--accent)">${missing.length && state.installed.has(id) ? `Not working: it needs ${esc(missing.join(" and "))}.` : "Pulled out of this machine."}</p>` : ""}`;
+    ${!on.has(id) ? `<p class="mt-2 font-medium" style="color:var(--accent)">${missing.length && state.installed.has(id) ? `Not working: it needs ${esc(missing.join(" and "))}.` : "Pulled out of this factory."}</p>` : ""}`;
   card.hidden = false;
 }
 
-// ---------- Narration, meters, transport ----------
+// ---------- Step bar, gauges ----------
 
-function drawNarration() {
-  const s = state.run.steps[state.index];
-  const tone = s.tone === "bad" ? "color:var(--bad)" : s.tone === "good" ? "color:var(--good)" : s.tone === "pause" ? "color:var(--accent)" : "color:var(--muted)";
-  const toneName = { bad: "Went wrong", good: "Harness at work", pause: "Waiting for a person", info: "Step" }[s.tone];
-  const last = state.index === state.run.steps.length - 1;
-  const parts = s.active.map((id) => `<span class="pnum !size-[18px] !text-[10px]" title="${esc(partById(id).name)}">${PART_NUMBER[id]}</span>`).join("");
-  let outcome = "";
-  if (last) {
-    const r = state.run;
-    outcome = r.problems.length
-      ? `<div class="mt-3 border-t border-rule pt-3 font-sans text-[13px]"><b>End of run.</b> ${r.problems.length} problem${r.problems.length > 1 ? "s" : ""}: ${r.problems.map((p) => esc(PROBLEMS[p].toLowerCase())).join("; ")}.</div>`
-      : `<div class="mt-3 border-t border-rule pt-3 font-sans text-[13px]"><b class="ok">End of run.</b> Fixed, verified, reviewed and remembered, in ${r.calls} calls and ${fmt(r.billed)} billed.</div>`;
-  }
-  $("#narration").innerHTML = `
-    <div class="mb-1.5 flex items-center gap-2 font-sans text-[11px] font-medium tracking-wide uppercase" style="${tone}">
-      <span>${toneName}</span><span class="text-faint">·</span><span class="font-mono normal-case text-muted">${state.index + 1} / ${state.run.steps.length}</span>
-      <span class="ml-auto flex gap-1">${parts}</span>
-    </div>
-    <h3 class="mb-1.5 font-serif text-[22px] leading-snug">${esc(s.title)}</h3>
-    <p class="leading-relaxed text-ink-2">${esc(s.text)}</p>
-    ${s.call ? `<div class="mt-2.5 inline-block rounded-md bg-well px-2 py-1 font-mono text-[12px] text-ink-2">${esc(s.call)}</div>` : ""}
-    ${outcome}`;
+/** Counts a number up to its new value as the crates land. */
+const shown = { used: 0, billed: 0 };
+let tweenFrame = 0;
+function tweenGauges(to: { used: number; billed: number }, delay: number) {
+  cancelAnimationFrame(tweenFrame);
+  const from = { ...shown };
+  const t0 = performance.now() + delay;
+  const dur = engine.reduced ? 0 : 600;
+  const tick = (now: number) => {
+    const u = dur ? Math.max(0, Math.min(1, (now - t0) / dur)) : 1;
+    shown.used = from.used + (to.used - from.used) * u;
+    shown.billed = from.billed + (to.billed - from.billed) * u;
+    paintGauges();
+    if (u < 1) tweenFrame = requestAnimationFrame(tick);
+  };
+  tweenFrame = requestAnimationFrame(tick);
+}
 
-  const over = s.used > WINDOW;
-  $("#m-used").textContent = `${fmt(s.used, false)} / 200k`;
+function paintGauges() {
+  const over = shown.used > WINDOW;
+  $("#m-used").textContent = `${fmt(Math.round(shown.used), false)} / 200k`;
   const bar = $("#m-bar");
-  bar.style.width = `${Math.min(100, (s.used / WINDOW) * 100)}%`;
+  bar.style.width = `${Math.min(100, (shown.used / WINDOW) * 100)}%`;
   bar.dataset.over = String(over);
-  $("#m-billed").textContent = fmt(s.billed, false);
+  $("#m-billed").textContent = fmt(Math.round(shown.billed), false);
+}
+
+function drawStepInfo(animate: boolean) {
+  const steps = state.run.steps;
+  const s = steps[state.index];
+  const toneColor = { bad: "var(--bad)", good: "var(--good)", pause: "var(--accent)", info: "var(--muted)" }[s.tone];
+  const toneName = { bad: "Went wrong", good: "Harness at work", pause: "Waiting for a person", info: "Step" }[s.tone];
+  const parts = s.active.map((id) => `<span class="pnum !size-[18px] !text-[10px]" title="${esc(partById(id).name)}">${PART_NUMBER[id]}</span>`).join("");
+  $("#narration").innerHTML = `
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+      <span class="text-[10.5px] font-semibold tracking-wide uppercase" style="color:${toneColor}">${toneName}</span>
+      <h3 class="font-serif text-[19px] leading-tight">${esc(s.title)}</h3>
+      <span class="flex gap-1 self-center">${parts}</span>
+      ${s.call ? `<code class="!bg-well !text-[11.5px] text-ink-2">${esc(s.call)}</code>` : ""}
+    </div>
+    <p class="mt-1 text-[13.5px] leading-snug text-ink-2">${esc(s.text)}</p>`;
+
+  $("#dots").innerHTML = steps
+    .map((x, i) => `<button class="dot" type="button" data-i="${i}" data-tone="${x.tone}" data-state="${i < state.index ? "done" : i === state.index ? "now" : "todo"}" title="${i + 1}. ${esc(x.title)}" aria-label="Step ${i + 1}: ${esc(x.title)}"></button>`)
+    .join("");
+  $("#counter").textContent = `${state.index + 1} / ${steps.length}`;
+  playIcon();
+
   $("#m-calls").textContent = String(s.calls);
+  if (animate) tweenGauges({ used: s.used, billed: s.billed }, Math.max(0, state.stepEnd - 600));
+  else {
+    shown.used = s.used;
+    shown.billed = s.billed;
+    paintGauges();
+  }
   $("#m-problems").innerHTML = s.problems.length
     ? s.problems.map((p) => `<li class="flex gap-1.5" style="color:var(--bad)"><span aria-hidden="true">×</span>${esc(PROBLEMS[p])}</li>`).join("")
     : `<li class="text-muted">None</li>`;
+
+  const last = state.index === steps.length - 1;
+  const r = state.run;
+  $("#outcome").innerHTML = !last
+    ? ""
+    : r.problems.length
+      ? `<div class="rounded-lg px-3 py-2.5 text-[12.5px] leading-snug" style="background:var(--bad-soft);color:var(--bad)"><b>${r.finished ? "Finished, with problems." : "The run stopped."}</b> ${r.calls} calls, ${fmt(r.billed)} billed, peak window ${fmt(r.peak, false)}.</div>`
+      : `<div class="rounded-lg px-3 py-2.5 text-[12.5px] leading-snug" style="background:var(--good-soft);color:var(--good)"><b>Clean run.</b> Fixed, verified, reviewed and remembered: ${r.calls} calls, ${fmt(r.billed)} billed.</div>`;
 }
 
-function drawTransport() {
-  const steps = state.run.steps;
-  $("#dots").innerHTML = steps
-    .map((s, i) => `<button class="dot" type="button" data-i="${i}" data-tone="${s.tone}" data-state="${i < state.index ? "done" : i === state.index ? "now" : "todo"}" title="${i + 1}. ${esc(s.title)}" aria-label="Step ${i + 1}: ${esc(s.title)}"></button>`)
-    .join("");
-  $("#counter").textContent = `${state.index + 1}/${steps.length}`;
+function playIcon() {
   $("#play-icon").innerHTML = state.playing ? `<path d="M4.5 3h2.5v10H4.5zM9 3h2.5v10H9z"/>` : `<path d="M5 3v10l8-5z"/>`;
   $("#play").setAttribute("aria-label", state.playing ? "Pause" : "Play");
 }
@@ -172,19 +215,18 @@ function drawParts() {
   $("#installed-count").textContent = `${on.size} of ${ALL_PARTS.length} working`;
 }
 
-function render() {
-  drawMachine();
-  drawNarration();
-  drawTransport();
+function render(animate = true) {
+  drawFactory(animate);
+  drawStepInfo(animate);
   drawParts();
   writeUrl();
 }
 
-// ---------- Actions ----------
+// ---------- Playing ----------
 
-function go(i: number) {
+function go(i: number, animate = true) {
   state.index = Math.max(0, Math.min(state.run.steps.length - 1, i));
-  render();
+  render(animate);
 }
 
 function stop() {
@@ -192,21 +234,26 @@ function stop() {
   clearTimeout(state.timer);
 }
 
-function play() {
-  if (state.index >= state.run.steps.length - 1) state.index = 0;
-  state.playing = true;
-  render();
-  const tick = () => {
+function schedule() {
+  clearTimeout(state.timer);
+  if (!state.playing) return;
+  state.timer = window.setTimeout(() => {
     if (!state.playing) return;
     if (state.index >= state.run.steps.length - 1) {
       stop();
-      drawTransport();
+      playIcon();
       return;
     }
     go(state.index + 1);
-    state.timer = window.setTimeout(tick, STEP_MS);
-  };
-  state.timer = window.setTimeout(tick, reduced ? STEP_MS * 1.3 : STEP_MS);
+    schedule();
+  }, Math.max(STEP_MIN, state.stepEnd + STEP_PAD));
+}
+
+function play() {
+  state.playing = true;
+  if (state.index >= state.run.steps.length - 1) go(0);
+  else playIcon();
+  schedule();
 }
 
 function setInstalled(next: Set<PartId>, autoplay = true) {
@@ -214,98 +261,76 @@ function setInstalled(next: Set<PartId>, autoplay = true) {
   state.installed = next;
   state.run = run(next);
   state.index = 0;
-  if (autoplay) play();
-  else render();
+  shown.used = 0;
+  shown.billed = 0;
+  render();
+  if (autoplay) {
+    state.playing = true;
+    playIcon();
+    schedule();
+  }
 }
+
+const without = (ids: PartId[]) => new Set(ALL_PARTS.filter((p) => !ids.includes(p)));
+
+// ---------- About panel ----------
 
 /** "Write & run code" → "write & run code", but "REPL" stays "REPL". */
 const lower = (name: string) => (name === name.toUpperCase() ? name : name[0].toLowerCase() + name.slice(1));
 
-const without = (ids: PartId[]) => new Set(ALL_PARTS.filter((p) => !ids.includes(p)));
-
-// ---------- Article: the four-job board and the comparison tables ----------
-
-function drawBoard() {
+function drawAbout() {
   $("#board").innerHTML = GROUPS.map(
     (g) => `
-    <div class="board-col">
+    <div class="bg-card px-4 py-4">
       <div class="mb-1 font-mono text-[11px] tracking-wide uppercase" style="color:var(--accent)">${esc(g.name)}</div>
-      <p class="mb-3 text-[13px] leading-snug text-muted">${esc(g.job)}</p>
-      <ul class="space-y-1.5 text-[13.5px]">
+      <p class="!mb-3 !text-[13px] leading-snug text-muted">${esc(g.job)}</p>
+      <ul class="!m-0 !list-none space-y-2 !p-0 text-[13px]">
         ${PARTS.filter((p) => p.group === g.id)
-          .map((p) => `<li class="flex items-center gap-2"><span class="pnum">${PART_NUMBER[p.id]}</span>${esc(p.name)}<span class="ml-auto font-mono text-[10.5px] text-faint">${esc(p.object.toLowerCase())}</span></li>`)
+          .map((p) => `<li class="!m-0 !p-0 before:!hidden"><div class="flex items-center gap-2"><span class="pnum">${PART_NUMBER[p.id]}</span><b class="font-medium">${esc(p.name)}</b><span class="ml-auto font-mono text-[10.5px] text-faint">${esc(p.object.toLowerCase())}</span></div><div class="mt-0.5 pl-7 text-[12.5px] leading-snug text-muted">${esc(p.does)}</div></li>`)
           .join("")}
       </ul>
     </div>`,
   ).join("");
-}
 
-const full = run(ALL_PARTS);
-
-function ratio(n: number, base: number) {
-  if (n === base) return `<span class="x">same</span>`;
-  const r = n / base;
-  const pct = Math.round((r - 1) * 100);
-  return `<span class="x">${r >= 1.5 ? `×${r.toFixed(1)}` : pct === 0 ? "same" : `${pct > 0 ? "+" : "−"}${Math.abs(pct)}%`}</span>`;
-}
-
-function problemsCell(r: Run) {
-  return r.problems.length ? r.problems.map((p) => `<span class="prob">${esc(PROBLEMS[p])}</span>`).join(" ") : `<span class="ok">None</span>`;
-}
-
-function row(label: string, off: PartId[], r: Run, extra = "") {
-  return `<tr data-off="${off.join(",")}">
+  const full = run(ALL_PARTS);
+  const ratio = (n: number, base: number) => {
+    const r = n / base;
+    const pct = Math.round((r - 1) * 100);
+    return `<span class="x">${r >= 1.5 ? `×${r.toFixed(1)}` : pct === 0 ? "same" : `${pct > 0 ? "+" : "−"}${Math.abs(pct)}%`}</span>`;
+  };
+  const row = (label: string, off: PartId[], r: Run, extra = "") => `<tr data-off="${off.join(",")}">
     <td>${label}${extra}</td>
     <td class="num">${fmt(r.peak, false)} ${ratio(r.peak, full.peak)}</td>
     <td class="num">${fmt(r.billed, false)} ${ratio(r.billed, full.billed)}</td>
     <td class="num">${r.calls}</td>
-    <td>${problemsCell(r)}</td>
-    <td><button class="try" type="button" data-try="${off.join(",")}">Run it ↑</button></td>
+    <td>${r.problems.length ? r.problems.map((p) => `<span class="prob">${esc(PROBLEMS[p])}</span>`).join(" ") : `<span class="ok">None</span>`}</td>
   </tr>`;
-}
-
-const HEAD = `<thead><tr><th>Machine</th><th class="!text-right">Peak window</th><th class="!text-right">Tokens billed</th><th class="!text-right">Calls</th><th>Problems</th><th></th></tr></thead>`;
-
-function drawCompares() {
-  // Extra rows that show a part doing work only when others are missing.
-  const extras: Record<string, { label: string; off: PartId[] }[]> = {
-    context: [
-      { label: "Without subagents or offloading", off: ["subagents", "offloading"] },
-      { label: "… and without summarization", off: ["subagents", "offloading", "summarization"] },
-    ],
-  };
-  document.querySelectorAll<HTMLElement>("[data-compare]").forEach((el) => {
-    const g = el.dataset.compare!;
-    const rows = [row("Full harness", [], full)];
-    for (const p of PARTS.filter((x) => x.group === g)) rows.push(row(`Without ${lower(p.name)}`, [p.id], run(without([p.id]))));
-    for (const e of extras[g] ?? []) rows.push(row(e.label, e.off, run(without(e.off))));
-    el.innerHTML = `<table>${HEAD}<tbody>${rows.join("")}</tbody></table>`;
-  });
-
   const rows = [row("Full harness", [], full)];
   for (const p of PARTS) {
     const lost = ALL_PARTS.filter((x) => x !== p.id && !effective(without([p.id])).has(x));
     const extra = lost.length ? `<div class="x mt-0.5">also stops ${lost.map((x) => esc(lower(partById(x).name))).join(", ")}</div>` : "";
     rows.push(row(`<span class="pnum mr-1.5 inline-grid">${PART_NUMBER[p.id]}</span>Without ${esc(lower(p.name))}`, [p.id], run(without([p.id])), extra));
   }
+  const combo: PartId[] = ["subagents", "offloading", "summarization"];
+  rows.push(row("Without subagents, offloading and summarization", combo, run(without(combo))));
   rows.push(row("Bare model: no parts at all", ALL_PARTS, run([])));
-  $("#all-parts").innerHTML = `${HEAD}<tbody>${rows.join("")}</tbody>`;
+  $("#all-parts").innerHTML = `<thead><tr><th>Factory</th><th class="!text-right">Peak window</th><th class="!text-right">Tokens billed</th><th class="!text-right">Calls</th><th>Problems</th></tr></thead><tbody>${rows.join("")}</tbody>`;
 }
 
 // ---------- Events ----------
 
 function wire() {
   $("#task").textContent = TASK;
-  $("#legend").innerHTML = LEGEND.map((l) => `<span><span class="swatch ${l.cls}"></span>${esc(l.name)}</span>`).join("") +
-    `<span class="ml-auto font-mono text-[10.5px] text-faint">one tray unit = 10k tokens · sizes are illustrative</span>`;
+  const legend = LEGEND.map((l) => `<span><span class="swatch ${l.cls}"></span>${esc(l.name)}</span>`).join("");
+  $("#legend").innerHTML = legend;
 
-  $("#play").addEventListener("click", () => (state.playing ? (stop(), drawTransport()) : play()));
+  $("#play").addEventListener("click", () => (state.playing ? (stop(), playIcon()) : play()));
   $("#next").addEventListener("click", () => (stop(), go(state.index + 1)));
-  $("#prev").addEventListener("click", () => (stop(), go(state.index - 1)));
-  $("#reset").addEventListener("click", () => (stop(), go(0)));
+  $("#prev").addEventListener("click", () => (stop(), go(state.index - 1, false)));
+  $("#reset").addEventListener("click", () => (stop(), (shown.used = 0), (shown.billed = 0), go(0)));
   $("#dots").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-i]");
-    if (b) (stop(), go(Number(b.dataset.i)));
+    if (b) (stop(), go(Number(b.dataset.i), Number(b.dataset.i) === state.index + 1));
   });
 
   $("#parts").addEventListener("click", (e) => {
@@ -328,8 +353,7 @@ function wire() {
     }
   });
   $("#parts").addEventListener("mouseover", (e) => {
-    const rowEl = (e.target as HTMLElement).closest<HTMLElement>(".prow");
-    const id = (rowEl?.dataset.part as PartId) ?? null;
+    const id = ((e.target as HTMLElement).closest<HTMLElement>(".prow")?.dataset.part as PartId) ?? null;
     if (id !== state.hovered) ((state.hovered = id), applyFocus());
   });
   $("#parts").addEventListener("mouseleave", () => ((state.hovered = null), applyFocus()));
@@ -347,8 +371,7 @@ function wire() {
   const tip = $("#tip");
   fig.addEventListener("mousemove", (e) => {
     const t = e.target as Element;
-    const partEl = t.closest("[data-part]");
-    const id = (partEl?.getAttribute("data-part") as PartId) ?? null;
+    const id = (t.closest("[data-part]")?.getAttribute("data-part") as PartId) ?? null;
     if (id !== state.hovered) ((state.hovered = id), applyFocus());
     const tipEl = t.closest("[data-tip]");
     if (tipEl) {
@@ -371,28 +394,30 @@ function wire() {
     applyFocus();
   });
 
-  // Article buttons and table rows load a machine and scroll back up to it.
-  document.addEventListener("click", (e) => {
-    const t = e.target as HTMLElement;
-    const tryEl = t.closest<HTMLElement>("[data-try]") ?? t.closest<HTMLElement>("tr[data-off]");
-    if (!tryEl || !tryEl.closest("article")) return;
-    const off = (tryEl.dataset.try ?? tryEl.dataset.off ?? "").split(",").filter(Boolean) as PartId[];
-    state.selected = null;
-    setInstalled(without(off));
-    $("#machine").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  // About panel; a table row loads that factory.
+  const about = $<HTMLDialogElement>("#about");
+  $("#about-open").addEventListener("click", () => about.showModal());
+  $("#about-close").addEventListener("click", () => about.close());
+  about.addEventListener("click", (e) => {
+    if (e.target === about) about.close();
+    const tr = (e.target as HTMLElement).closest<HTMLElement>("tr[data-off]");
+    if (tr) {
+      about.close();
+      state.selected = null;
+      setInstalled(without((tr.dataset.off ?? "").split(",").filter(Boolean) as PartId[]));
+    }
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || about.open) return;
     const tag = (e.target as HTMLElement).tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
     if (e.key === " " && tag !== "BUTTON") {
       e.preventDefault();
-      if (state.playing) (stop(), drawTransport());
+      if (state.playing) (stop(), playIcon());
       else play();
     } else if (e.key === "ArrowRight") (stop(), go(state.index + 1));
-    else if (e.key === "ArrowLeft") (stop(), go(state.index - 1));
-    else if (e.key === "r" || e.key === "R") (stop(), go(0));
+    else if (e.key === "ArrowLeft") (stop(), go(state.index - 1, false));
+    else if (e.key === "r" || e.key === "R") (stop(), (shown.used = 0), (shown.billed = 0), go(0));
     else if (e.key === "Escape") ((state.selected = null), applyFocus());
   });
 
@@ -409,6 +434,12 @@ function wire() {
 
 readUrl();
 wire();
-drawBoard();
-drawCompares();
-render();
+drawAbout();
+const deepLinked = state.index > 0;
+render(!deepLinked);
+// A fresh visit starts the factory; a deep link holds the chosen step.
+if (!deepLinked && !engine.reduced) {
+  state.playing = true;
+  playIcon();
+  schedule();
+}
