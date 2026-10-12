@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anatomy of a Harness</title>
+<meta name="description" content="An agent harness drawn as a machine you can run and take apart: context management, the execution environment, delegation and steering, with every number taken from the run.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  (() => {
+    let t = new URLSearchParams(location.search).get("theme");
+    if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("harness-theme"); } catch {} }
+    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>
+</head>
+<body class="bg-ground font-serif text-[17px] text-ink antialiased">
+<header class="sticky top-0 z-30 border-b border-rule bg-ground/85 backdrop-blur-md">
+  <div class="mx-auto flex h-12 max-w-[1240px] items-center gap-5 px-4 font-sans text-[13px] md:px-8">
+    <a class="font-semibold tracking-tight" href="./">Anatomy of a harness</a>
+    <nav class="ml-auto flex items-center gap-1 text-muted">
+      <a class="navlink hidden sm:block" href="#machine">Machine</a>
+      <a class="navlink hidden sm:block" href="#parts-table">Every part</a>
+      <a class="navlink hidden sm:block" href="#sources">Sources</a>
+      <a class="navlink" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/harness-anatomy">Code</a>
+      <button id="theme" type="button" class="navlink p-2" aria-label="Switch color theme" title="Switch color theme">
+        <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Title -->
+  <section class="mx-auto max-w-[1240px] px-4 pt-12 md:px-8 md:pt-16">
+    <div class="column">
+      <p class="kicker">Agents &amp; Workflows · aiengineer.help</p>
+      <h1 class="mt-3 font-serif text-[40px] leading-[1.08] tracking-tight md:text-[54px]">Anatomy of a harness</h1>
+      <p class="mt-5 text-[19px] leading-relaxed text-ink-2">
+        A model turns text into text. That is all it does. Everything that makes it an <em>agent</em> — what it sees on each call,
+        where its commands run, how it splits up work and when it stops to ask a person — is the <strong>harness</strong>.
+        Here the harness is drawn as a machine running one ordinary task. Press play to watch it work, then pull parts out and run it again.
+      </p>
+    </div>
+  </section>
+
+  <!-- The machine -->
+  <section id="machine" class="mx-auto mt-10 max-w-[1240px] scroll-mt-16 px-4 md:px-8">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div class="min-w-0">
+        <div class="figure-card">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-4 py-2.5 font-sans text-[12.5px] text-muted">
+            <span class="font-mono text-[11px] tracking-wider uppercase">Task</span>
+            <span id="task" class="text-ink"></span>
+          </div>
+          <div class="relative">
+            <div id="figure" class="figure-stage"></div>
+            <div id="partcard" class="partcard" hidden></div>
+            <div id="tip" class="tip" hidden></div>
+          </div>
+          <!-- Transport -->
+          <div class="flex flex-wrap items-center gap-2 border-t border-rule px-3 py-2.5 font-sans">
+            <button id="reset" class="tbtn" type="button" title="Back to the start (R)" aria-label="Back to the start">
+              <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v4h4"/><path d="M3.5 7A5 5 0 1 1 4 11"/></svg>
+            </button>
+            <button id="prev" class="tbtn" type="button" title="Previous step (←)" aria-label="Previous step">
+              <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M10.5 3.5v9L4 8z"/></svg>
+            </button>
+            <button id="play" class="tbtn tbtn-primary" type="button" title="Play or pause (Space)" aria-label="Play">
+              <svg id="play-icon" viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5 3v10l8-5z"/></svg>
+            </button>
+            <button id="next" class="tbtn" type="button" title="Next step (→)" aria-label="Next step">
+              <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5.5 3.5v9L12 8z"/></svg>
+            </button>
+            <div id="dots" class="ml-2 flex min-w-0 flex-1 items-center gap-1" role="group" aria-label="Steps"></div>
+            <span id="counter" class="font-mono text-[11.5px] whitespace-nowrap text-muted"></span>
+          </div>
+        </div>
+
+        <!-- Narration and meters -->
+        <div class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
+          <div id="narration" class="narration" aria-live="polite"></div>
+          <div class="meters">
+            <div>
+              <div class="meter-head"><span>Context window</span><span id="m-used"></span></div>
+              <div class="bar"><div id="m-bar" class="bar-fill"></div><div class="bar-mark" style="left:80%" title="Compaction threshold: 160k"></div></div>
+              <div class="mt-1 flex justify-between font-mono text-[10.5px] text-faint"><span>0</span><span>160k press</span><span>200k</span></div>
+            </div>
+            <dl class="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <div><dt class="meter-label">Tokens billed</dt><dd id="m-billed" class="meter-num"></dd></div>
+              <div><dt class="meter-label" title="Main agent and subagents">Model calls</dt><dd id="m-calls" class="meter-num"></dd></div>
+            </dl>
+            <div>
+              <div class="meter-label mb-1">Problems so far</div>
+              <ul id="m-problems" class="space-y-1 font-sans text-[12.5px]"></ul>
+            </div>
+          </div>
+        </div>
+        <div id="legend" class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-sans text-[11.5px] text-muted"></div>
+      </div>
+
+      <!-- Parts list -->
+      <aside class="font-sans lg:sticky lg:top-16 lg:self-start" aria-label="Parts">
+        <div class="mb-2 flex items-baseline justify-between">
+          <h2 class="text-[13px] font-semibold">Parts installed</h2>
+          <span id="installed-count" class="font-mono text-[11px] text-muted"></span>
+        </div>
+        <p class="mb-3 text-[12.5px] leading-snug text-muted">Switch a part off to pull it out of the machine. The run starts again without it.</p>
+        <div id="parts" class="space-y-4"></div>
+        <div class="mt-4 border-t border-rule pt-3">
+          <div class="meter-label mb-2">Try</div>
+          <div class="flex flex-wrap gap-1.5">
+            <button class="chip" type="button" data-preset="all">Full harness</button>
+            <button class="chip" type="button" data-preset="subagents,offloading,summarization">Overflow the window</button>
+            <button class="chip" type="button" data-preset="none">Bare model</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Article -->
+  <article class="mx-auto mt-20 max-w-[1240px] px-4 pb-24 md:px-8">
+
+    <section class="chapter" id="what">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">01</span>If you’re not the model, you’re the harness</h2>
+        <p>
+          A harness is every piece of code, configuration and execution logic around a model that is not the model itself.
+          The model is the engine in the middle of the figure: it is sealed, it takes text in through one slot and puts text out of another,
+          and it remembers nothing between calls. Each call re-reads the whole tray in front of it — the <strong>context window</strong> — from the start.
+        </p>
+        <p>
+          That last fact explains most of the machine. The window has a fixed size, here 200,000 tokens, and every token in it is sent again on every call,
+          so a 40k-token log that lands in the window early is paid for once for each call that follows. The meter under the figure,
+          <em>tokens billed</em>, adds up exactly that: the size of the window at each model call.
+        </p>
+        <p>
+          The parts on the board below come from a sketch of the four jobs a harness does. LangChain’s
+          <a href="https://www.langchain.com/blog/the-anatomy-of-an-agent-harness">The Anatomy of an Agent Harness</a> (Vivek Trivedy, March 2026) and its
+          <a href="https://docs.langchain.com/oss/python/langchain/agents">agents documentation</a> use the same split.
+        </p>
+      </div>
+      <figure class="board">
+        <div class="board-grid" id="board"></div>
+        <figcaption>The four jobs, and the eleven parts that do them. The numbers match the pins on the machine.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="context">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">02</span>Context management</h2>
+        <p class="lede">Decide what the model sees on each call, inside a window that never grows.</p>
+        <p>
+          <strong>Skills</strong> (1) are a rack of playbook cards. The window holds only each card’s name and a one-line description,
+          about 120 tokens a card; when the task matches one, the full card is pulled in. This is progressive disclosure: knowledge is available
+          without being paid for until it is used. Take the rack away and all eight playbooks have to sit in the system prompt from the first call.
+        </p>
+        <p>
+          <strong>Memory</strong> (2) is the filing cabinet: an <code>AGENTS.md</code> file and notes saved by earlier sessions, loaded at the start.
+          It is small, but it is the reason the agent knows that this repository runs its tests in UTC. Without it, the first fix is wrong.
+        </p>
+        <p>
+          <strong>Summarization</strong> (3) is the press. When the tray passes 160k tokens, it keeps the pinned instructions and presses everything else
+          into one short summary, so the run can carry on. In the full harness it never moves, because the other parts keep the tray small.
+          It earns its place when they fail: remove subagents and offloading and the press is the only thing between the run and a full window.
+        </p>
+        <p>
+          <strong>Context offloading</strong> (4) is the chute. A test log can be 40,000 tokens of stack traces; the model needs maybe twenty lines of it.
+          The chute writes the full output to a file and leaves a short head, tail and path in the tray. Nothing is lost — the agent can read the file
+          if it needs more — but nothing is paid for twice.
+        </p>
+      </div>
+      <div class="wide"><div class="compare" data-compare="context"></div></div>
+    </section>
+
+    <section class="chapter" id="execution">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">03</span>Execution environment</h2>
+        <p class="lede">Give the model a computer: somewhere to run things and somewhere to keep files.</p>
+        <p>
+          The <strong>REPL</strong> (5) — read, execute, print, loop — is the terminal. The agent writes a command, the harness runs it, and the output becomes the next input.
+          This loop is how an agent checks its own work. Without it the agent can only read code and guess, and every change it makes goes out untested.
+        </p>
+        <p>
+          The <strong>sandbox</strong> (6) is the glass case around the terminal and the shelves: a disposable machine with only the repository mounted,
+          no personal credentials, and a network allowlist. In this run nothing malicious happens, but the agent does run <code>npm ci</code>, which executes
+          the install scripts of hundreds of packages. Remove the case and those scripts run on your own machine, as you.
+        </p>
+        <p>
+          The <strong>file system</strong> (7) is the shelving: a <em>scratch</em> shelf for work in progress and a <em>persistent</em> shelf for what should
+          outlast the session. Several other parts stand on it — offloading writes to it, memory reads from it, scratch scripts live on it — so removing it
+          takes them out too.
+        </p>
+        <p>
+          <strong>Write &amp; run code</strong> (8) is the workbench. Instead of only calling fixed tools, the agent writes a twelve-line script that builds one
+          order at 23:30 UTC and prints its delivery date. The script prints the wrong day, and the bug is found with 500 tokens of output instead of
+          another full test log.
+        </p>
+      </div>
+      <div class="wide"><div class="compare" data-compare="execution"></div></div>
+    </section>
+
+    <section class="chapter" id="delegation">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">04</span>Delegation</h2>
+        <p class="lede">Split work that is too big for one window, and keep track of where the run is.</p>
+        <p>
+          <strong>Planning</strong> (9) is the peg board. The agent’s first act is to write five to-dos, and it ticks them off as it goes. It sounds like
+          bookkeeping, but it changes behaviour: with a list to check, the agent runs the full suite before it calls the job done. Without one, it stops at
+          the first green test.
+        </p>
+        <p>
+          <strong>Subagents</strong> (10) are the two small engines behind the model. Each has its own small window. The explorer reads the fourteen files
+          around checkout — 110,000 tokens — in <em>its</em> window and hands back a 1,800-token report. The main window never sees the files.
+          The explorer’s own two calls still cost about 116,000 tokens, and the meter counts them; but they are paid once, where the main agent
+          would have re-sent those files on every call that followed. Subagents do not make reading free. They make it happen once, somewhere else,
+          and that is the single biggest saving in the run.
+        </p>
+      </div>
+      <div class="wide"><div class="compare" data-compare="delegation"></div></div>
+    </section>
+
+    <section class="chapter" id="steering">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">05</span>Steering</h2>
+        <p class="lede">Put a person at the decisions that should not be automatic.</p>
+        <p>
+          <strong>Human in the loop</strong> (11) is the gate across the output belt. Most of a run should not need anyone. A push, a payment, a deletion or
+          an email to a customer should. At the gate the run pauses; a person approves, edits or rejects the action, and the run continues. Here the person
+          approves the pull request but changes its target from <code>main</code> to a branch. Without the gate, the change lands on <code>main</code> unread.
+        </p>
+        <p>
+          A gate costs nothing in tokens. Its cost is a person’s attention, which is why it belongs at a few high-impact actions rather than every step.
+        </p>
+      </div>
+      <div class="wide"><div class="compare" data-compare="steering"></div></div>
+    </section>
+
+    <section class="chapter" id="parts-table">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">06</span>Every part, pulled out one at a time</h2>
+        <p>
+          Each row is the same task run with one part removed and everything else installed. Removing a part also removes the parts that stand on it,
+          shown in the second column. Click a row to load that machine.
+        </p>
+      </div>
+      <div class="wide mt-6 overflow-x-auto">
+        <table class="parts-table" id="all-parts"></table>
+      </div>
+      <div class="column mt-6">
+        <p>
+          Two things stand out. The parts that save the most tokens — subagents, offloading, skills — are the ones that keep large text <em>out</em>
+          of the window, not the ones that shrink it after the fact. And the parts that cost few or no tokens — the sandbox, the gate, planning —
+          are the ones that stop a run from doing the wrong thing. A harness is judged on both.
+        </p>
+      </div>
+    </section>
+
+    <section class="chapter" id="limits">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">07</span>What the figure leaves out</h2>
+        <ul class="list">
+          <li><strong>The numbers are illustrative.</strong> Token sizes are chosen to match common orders of magnitude for a coding agent; they are not measurements of any product. The run is scripted, not a live model. The arithmetic — what is in the window at each call, and what that adds up to — is exact for the script.</li>
+          <li><strong>One path through the task.</strong> A real agent branches, retries and sometimes recovers on its own. Here each missing part has one fixed consequence.</li>
+          <li><strong>Prompt caching is not modelled.</strong> Providers discount a repeated prefix of the window, which lowers the cost of carrying stable instructions. It does not shrink the window, and tool output added mid-run is rarely cached.</li>
+          <li><strong>More parts exist.</strong> Real harnesses also have the system prompt, tool definitions and MCP servers, hooks and middleware (lint checks, continuation), model routing and handoffs. The board shows the four jobs; it is not a complete parts list.</li>
+          <li><strong>Steering is more than a gate.</strong> A person can also interrupt and redirect a run mid-way. The figure shows only approval before an action.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="chapter" id="sources">
+      <div class="column">
+        <h2 class="chapter-head"><span class="chapter-num">08</span>Sources</h2>
+        <ul class="list">
+          <li>Vivek Trivedy, LangChain, <a href="https://www.langchain.com/blog/the-anatomy-of-an-agent-harness">The Anatomy of an Agent Harness</a>, 10 March 2026. “Agent = Model + Harness”; filesystems, code execution, sandboxes, memory, compaction, tool-call offloading and skills.</li>
+          <li>LangChain docs, <a href="https://docs.langchain.com/oss/python/langchain/agents">Agents</a>: execution environment, context management, subagents in isolated contexts, and steering with approve, edit or reject.</li>
+          <li>Anthropic, <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents</a>, 2025: context as a finite budget; compaction, structured note-taking and sub-agent architectures.</li>
+          <li>Manus, <a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus">Context Engineering for AI Agents: Lessons from Building Manus</a>, 2025: the file system as externalised context, with restorable compression (keep the path, drop the content).</li>
+          <li>The figure’s style follows Ryan’s <a href="https://skills.wheresryan.sh/anatomy">Anatomy</a> skill for Claude Code: draw the machine whose working is the idea, not boxes and arrows.</li>
+        </ul>
+        <p class="mt-8 font-sans text-[13px] text-muted">
+          Part of the <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a> category on aiengineer.help.
+          The run is in <code>src/harness.ts</code>; the drawing is in <code>client/figure.ts</code>.
+        </p>
+      </div>
+    </section>
+  </article>
+</main>
+<script type="module" src="build/app.js"></script>
+</body>
+</html>
