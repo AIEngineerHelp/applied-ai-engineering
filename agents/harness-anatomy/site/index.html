@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anatomy of a Harness</title>
+<meta name="description" content="An agent harness drawn as a working factory: context management, the execution environment, delegation and steering. Watch it run a task, then pull parts out and see what breaks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  (() => {
+    let t = new URLSearchParams(location.search).get("theme");
+    if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("harness-theme"); } catch {} }
+    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>
+</head>
+<body class="bg-ground font-sans text-[14px] text-ink antialiased lg:h-dvh lg:overflow-hidden">
+<div class="flex flex-col lg:h-dvh">
+
+  <!-- Top bar -->
+  <header class="flex h-12 shrink-0 items-center gap-4 border-b border-rule px-4">
+    <h1 class="font-serif text-[19px] leading-none tracking-tight whitespace-nowrap">Anatomy of a harness</h1>
+    <div class="hidden min-w-0 items-center gap-2 text-[12.5px] md:flex">
+      <span class="font-mono text-[10.5px] tracking-wider text-muted uppercase">Task</span>
+      <span id="task" class="truncate text-ink-2"></span>
+    </div>
+    <nav class="ml-auto flex shrink-0 items-center gap-1 text-[13px] text-muted">
+      <button id="about-open" type="button" class="navlink">About &amp; sources</button>
+      <a class="navlink hidden sm:block" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/harness-anatomy">Code</a>
+      <button id="theme" type="button" class="navlink p-2" aria-label="Switch color theme" title="Switch color theme">
+        <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <div class="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[236px_minmax(0,1fr)_264px]">
+
+    <!-- Parts -->
+    <aside class="order-3 border-rule p-4 lg:order-none lg:overflow-y-auto lg:border-r" aria-label="Parts">
+      <div class="mb-1 flex items-baseline justify-between">
+        <h2 class="text-[13px] font-semibold">Parts</h2>
+        <span id="installed-count" class="font-mono text-[10.5px] text-muted"></span>
+      </div>
+      <p class="mb-3 text-[12px] leading-snug text-muted">Switch one off to pull it out of the factory. The run starts again without it.</p>
+      <div id="parts" class="space-y-3"></div>
+      <div class="mt-4 border-t border-rule pt-3">
+        <div class="meter-label mb-2">Try</div>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="chip" type="button" data-preset="all">Full harness</button>
+          <button class="chip" type="button" data-preset="subagents,offloading,summarization">Overflow the window</button>
+          <button class="chip" type="button" data-preset="none">Bare model</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- The factory -->
+    <section id="machine" class="order-1 flex min-h-0 min-w-0 flex-col lg:order-none" aria-label="The factory">
+      <div class="relative aspect-[3/2] lg:aspect-auto lg:min-h-0 lg:flex-1">
+        <div id="figure" class="absolute inset-0 px-3 pt-14 pb-2"></div>
+        <div id="beat" class="beat" data-show="false" aria-live="polite"></div>
+        <div id="partcard" class="partcard" hidden></div>
+        <div id="tip" class="tip" hidden></div>
+      </div>
+
+      <!-- Step bar -->
+      <div class="shrink-0 border-t border-rule bg-card">
+        <div id="dots" class="flex h-1.5 gap-0.5" role="group" aria-label="Steps"></div>
+        <div class="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:gap-5">
+          <div class="flex shrink-0 items-center gap-1">
+            <button id="reset" class="tbtn" type="button" title="Back to the start (R)" aria-label="Back to the start">
+              <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v4h4"/><path d="M3.5 7A5 5 0 1 1 4 11"/></svg>
+            </button>
+            <button id="prev" class="tbtn" type="button" title="Previous step (←)" aria-label="Previous step">
+              <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M10.5 3.5v9L4 8z"/></svg>
+            </button>
+            <button id="play" class="tbtn tbtn-primary !size-10" type="button" title="Play or pause (Space)" aria-label="Play">
+              <svg id="play-icon" viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5 3v10l8-5z"/></svg>
+            </button>
+            <button id="next" class="tbtn" type="button" title="Next step (→)" aria-label="Next step">
+              <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5.5 3.5v9L12 8z"/></svg>
+            </button>
+            <span id="counter" class="ml-2 font-mono text-[11.5px] whitespace-nowrap text-muted"></span>
+            <div class="seg ml-3" role="group" aria-label="Speed">
+              <button type="button" data-pace="slow">Slow</button><button type="button" data-pace="normal">Normal</button><button type="button" data-pace="fast">Fast</button>
+            </div>
+          </div>
+          <div id="narration" class="min-h-[64px] min-w-0 flex-1" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gauges -->
+    <aside class="order-2 space-y-5 border-rule p-4 lg:order-none lg:overflow-y-auto lg:border-l" aria-label="Gauges">
+      <div>
+        <div class="meter-head"><span>Context window</span><span id="m-used" class="font-mono"></span></div>
+        <div class="bar"><div id="m-bar" class="bar-fill"></div><div class="bar-mark" style="left:80%" title="The press compacts at 160k"></div></div>
+        <div class="mt-1 flex justify-between font-mono text-[10px] text-faint"><span>0</span><span>press at 160k</span><span>200k</span></div>
+        <p class="mt-2 text-[11.5px] leading-snug text-muted">What the model re-reads on every call. Each sweep of light across the tray is one call.</p>
+      </div>
+      <dl class="grid grid-cols-2 gap-x-3 gap-y-3">
+        <div><dt class="meter-label">Tokens billed</dt><dd id="m-billed" class="meter-num"></dd></div>
+        <div><dt class="meter-label" title="Main agent and subagents">Model calls</dt><dd id="m-calls" class="meter-num"></dd></div>
+        <div class="col-span-2 -mt-1 text-[11.5px] leading-snug text-muted">The window’s size at every call, added up, the subagent’s own calls included.</div>
+      </dl>
+      <div>
+        <div class="meter-label mb-1.5">Problems so far</div>
+        <ul id="m-problems" class="space-y-1 text-[12.5px]"></ul>
+      </div>
+      <div id="outcome"></div>
+      <div class="border-t border-rule pt-3">
+        <div class="meter-label mb-1.5">In the tray</div>
+        <div id="legend" class="grid grid-cols-1 gap-1 text-[11.5px] text-muted"></div>
+      </div>
+      <p class="font-mono text-[10px] leading-relaxed text-faint">One tray unit = 10k tokens. Token sizes are illustrative; the arithmetic is exact.<br><kbd>Space</kbd> play · <kbd>←</kbd> <kbd>→</kbd> step · <kbd>R</kbd> reset</p>
+    </aside>
+  </div>
+</div>
+
+<!-- About: the explanation, every part compared, limits and sources -->
+<dialog id="about" class="about" aria-labelledby="about-title">
+  <div class="sticky top-0 z-10 flex items-center border-b border-rule bg-card px-6 py-3">
+    <h2 id="about-title" class="font-serif text-[22px]">About this factory</h2>
+    <button id="about-close" type="button" class="tbtn ml-auto" aria-label="Close">
+      <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+    </button>
+  </div>
+  <div class="prose-about px-6 py-5">
+    <p>
+      A model turns text into text, and nothing else. It is the sealed engine in the middle: text goes in through one slot, text comes out of
+      another, and it remembers nothing between calls. Every call re-reads the whole tray in front of it, the <strong>context window</strong>,
+      from the start. Everything around it is the <strong>harness</strong>: <em>if you’re not the model, you’re the harness.</em>
+      The harness does four jobs.
+    </p>
+    <div id="board" class="my-5 grid gap-px overflow-hidden rounded-xl border border-rule bg-rule sm:grid-cols-2"></div>
+    <h3>Every part, pulled out one at a time</h3>
+    <p>The same task with one part removed. Removing a part also stops the parts that stand on it. Click a row to load that factory.</p>
+    <div class="overflow-x-auto rounded-xl border border-rule"><table class="parts-table" id="all-parts"></table></div>
+    <p class="mt-4">
+      The parts that save the most tokens (subagents, offloading, skills) keep large text <em>out</em> of the window. The parts that cost few or
+      no tokens (the sandbox, the gate, planning) stop a run from doing the wrong thing. A harness is judged on both.
+    </p>
+    <h3>What the figure leaves out</h3>
+    <ul>
+      <li><strong>The numbers are illustrative.</strong> Token sizes match common orders of magnitude for a coding agent; they are not measurements of any product. The run is scripted, not a live model. The arithmetic over them is exact.</li>
+      <li><strong>One path through the task.</strong> A real agent branches and sometimes recovers on its own. Here each missing part has one fixed consequence.</li>
+      <li><strong>Prompt caching is not modelled.</strong> A cached prefix lowers the cost of carrying stable instructions; it does not shrink the window.</li>
+      <li><strong>More parts exist.</strong> System prompts, tool definitions, MCP servers, hooks and middleware, model routing. The four jobs are the frame, not a complete parts list.</li>
+      <li><strong>Steering is more than a gate.</strong> A person can also interrupt and redirect a run mid-way.</li>
+    </ul>
+    <h3>Sources</h3>
+    <ul>
+      <li>Vivek Trivedy, LangChain, <a href="https://www.langchain.com/blog/the-anatomy-of-an-agent-harness">The Anatomy of an Agent Harness</a>, 10 March 2026.</li>
+      <li>LangChain docs, <a href="https://docs.langchain.com/oss/python/langchain/agents">Agents</a>: execution environment, context management, subagents and steering.</li>
+      <li>Anthropic, <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents</a>, 29 September 2025: compaction, note-taking, sub-agents, progressive disclosure.</li>
+      <li>Manus, <a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus">Context Engineering for AI Agents: Lessons from Building Manus</a>: the file system as restorable context.</li>
+    </ul>
+    <p class="text-[13px] text-muted">Part of the <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a> category on aiengineer.help.</p>
+  </div>
+</dialog>
+
+<script type="module" src="build/app.js"></script>
+</body>
+</html>

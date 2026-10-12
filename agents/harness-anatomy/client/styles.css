@@ -1,0 +1,300 @@
+@import "tailwindcss";
+
+@source "../site/index.html";
+@source "./app.ts";
+
+/* Dark mode follows data-theme on <html>, set before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease-out: cubic-bezier(0.22, 0.75, 0.2, 1);
+  --color-ground: var(--ground);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-rule: var(--rule);
+  --color-well: var(--well);
+  --color-card: var(--card);
+  --color-accent: var(--accent);
+}
+
+/* Page tokens. One accent: the whiteboard's magenta. */
+:root {
+  color-scheme: light;
+  --ground: #fafafa;
+  --card: #ffffff;
+  --ink: #171717;
+  --ink-2: #3d3d3d;
+  --muted: #7a7a7a;
+  --faint: #b0b0b0;
+  --rule: #e8e8e8;
+  --well: #f2f2f2;
+  --accent: #c2255c;
+  --accent-soft: #fbe7ef;
+  --bad: #b42318;
+  --bad-soft: #fdecea;
+  --good: #2f7d4f;
+  --good-soft: #e8f4ec;
+
+  /* Figure materials: top, +y face, +x face. */
+  --t: #ffffff; --l: #efefef; --r: #e0e0e0; --ln: #8e8e8e;
+  --dt: #4a4a4a; --dl: #3a3a3a; --dr: #2e2e2e; --dln: #222;
+  --at: #f9dbe7; --al: #f1bcd0; --ar: #e7a2bc; --aln: #a3194b;
+  --adt: #c2255c; --adl: #a51f4f; --adr: #8b1a43;
+  --glass: rgba(120, 160, 190, 0.07); --glass-ln: #9fb3c2;
+  --screen: #1f2a24; --screen-ink: #9fe0b3;
+  --plate-t: #f4f4f4; --plate-l: #e7e7e7; --plate-r: #dadada;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #121212;
+  --card: #1a1a1a;
+  --ink: #ececec;
+  --ink-2: #c9c9c9;
+  --muted: #8f8f8f;
+  --faint: #5e5e5e;
+  --rule: #2a2a2a;
+  --well: #202020;
+  --accent: #f06595;
+  --accent-soft: #3a1626;
+  --bad: #ff8a80;
+  --bad-soft: #3a1714;
+  --good: #7fd19b;
+  --good-soft: #15291c;
+
+  --t: #2f2f2f; --l: #262626; --r: #1f1f1f; --ln: #5a5a5a;
+  --dt: #8a8a8a; --dl: #6e6e6e; --dr: #5c5c5c; --dln: #3a3a3a;
+  --at: #6b2340; --al: #561c34; --ar: #48172b; --aln: #f06595;
+  --adt: #d63a72; --adl: #b02e5d; --adr: #93264d;
+  --glass: rgba(150, 190, 220, 0.06); --glass-ln: #4c5d6a;
+  --screen: #0c120e; --screen-ink: #8fd6a5;
+  --plate-t: #1c1c1c; --plate-l: #171717; --plate-r: #141414;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent); }
+  code { font-family: var(--font-mono); font-size: 0.82em; background: var(--well); padding: 0.1em 0.35em; border-radius: 4px; }
+  .font-mono { font-variant-ligatures: none; }
+}
+
+@layer components {
+  .navlink { @apply rounded-md px-2.5 py-1.5 no-underline transition-colors hover:bg-well hover:text-ink; }
+  .kicker { @apply font-sans text-[12px] font-semibold tracking-[0.14em] text-accent uppercase; }
+
+
+  .tbtn { @apply grid size-8 place-items-center rounded-lg text-ink-2 transition-[background-color,transform] duration-150 hover:bg-well active:scale-[0.97]; }
+  .tbtn-primary { @apply bg-ink text-ground hover:bg-ink; }
+  .dot { @apply h-1.5 min-w-1 flex-1 bg-rule transition-colors duration-200; }
+  .dot[data-state="done"] { @apply bg-faint; }
+  .dot[data-state="now"] { @apply bg-ink; }
+  .dot[data-tone="bad"] { background: var(--bad); opacity: 0.55; }
+  .dot[data-tone="bad"][data-state="now"] { opacity: 1; }
+  .dot[data-tone="pause"] { background: var(--accent); opacity: 0.55; }
+  .dot[data-tone="pause"][data-state="now"] { opacity: 1; }
+
+  .meter-head { @apply mb-1.5 flex items-baseline justify-between text-[12px] font-medium; }
+  .meter-label { @apply font-sans text-[11px] font-medium tracking-wide text-muted uppercase; }
+  .meter-num { @apply font-mono text-[17px] tabular-nums; }
+  .bar { @apply relative h-2.5 overflow-hidden rounded-full bg-well; }
+  .bar-fill { @apply h-full rounded-full bg-ink transition-[width] duration-300 ease-out; }
+  .bar-fill[data-over="true"] { background: var(--bad); }
+  .bar-mark { @apply absolute top-0 h-full w-px; background: var(--accent); }
+
+  .chip { @apply rounded-full border border-rule bg-card px-2.5 py-1 text-[12px] transition-[border-color,transform] duration-150 hover:border-faint active:scale-[0.97]; }
+
+  /* Parts list. */
+  .pgroup-name { @apply mb-1 flex items-center gap-2 text-[11px] font-semibold tracking-wide text-muted uppercase; }
+  .prow { @apply flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-well; }
+  .prow[data-selected="true"] { @apply bg-well; }
+  .pnum { @apply grid size-5 shrink-0 place-items-center rounded-full border border-ink font-mono text-[10.5px]; }
+  .prow[data-on="false"] .pnum { @apply border-dashed border-faint text-faint; }
+  .prow[data-on="false"] .pname { @apply text-muted line-through decoration-faint; }
+  .prow[data-active="true"] .pnum { background: var(--accent); border-color: var(--accent); color: white; }
+  .pnote { @apply text-[11px] text-muted; }
+  .switch { @apply relative ml-auto h-[18px] w-[30px] shrink-0 rounded-full bg-faint transition-colors duration-150; }
+  .switch::after { content: ""; @apply absolute top-[2px] left-[2px] size-[14px] rounded-full bg-white shadow-sm transition-transform duration-150 ease-out; }
+  .switch[aria-checked="true"] { @apply bg-ink; }
+  .switch[aria-checked="true"]::after { transform: translateX(12px); }
+  [data-theme="dark"] .switch[aria-checked="true"]::after { background: var(--ground); }
+
+  /* Floating card for a hovered or selected part. */
+  .partcard { @apply pointer-events-none absolute top-3 right-3 max-w-[300px] rounded-xl border border-rule bg-card/95 px-3.5 py-3 font-sans text-[12.5px] leading-snug shadow-lg backdrop-blur-sm; }
+  .tip { @apply pointer-events-none absolute z-10 rounded-md bg-ink px-2 py-1 font-sans text-[11.5px] whitespace-nowrap text-ground shadow; }
+
+  .parts-table { @apply w-full border-collapse bg-card font-sans text-[13px]; }
+  .parts-table th { @apply border-b border-rule px-3 py-2 text-left text-[11px] font-medium tracking-wide whitespace-nowrap text-muted uppercase; }
+  .parts-table td { @apply border-b border-rule px-3 py-2 align-top; }
+  .parts-table tr:last-child td { @apply border-b-0; }
+  .parts-table tbody tr { @apply cursor-pointer transition-colors hover:bg-well; }
+  .num { @apply text-right font-mono tabular-nums whitespace-nowrap; }
+  .x { @apply font-mono text-[11px] text-muted; }
+  .prob { @apply inline-block rounded px-1.5 py-0.5 text-[11.5px]; background: var(--bad-soft); color: var(--bad); }
+  .ok { color: var(--good); }
+  /* The caption over the factory. */
+  .beat { @apply pointer-events-none absolute top-3 left-1/2 z-10 max-w-[92%] -translate-x-1/2 rounded-full border border-rule bg-card/95 px-4 py-2 font-sans text-[13.5px] font-medium shadow-sm backdrop-blur-sm transition-[opacity,transform] duration-300 ease-out; }
+  .beat[data-show="false"] { @apply -translate-y-1 opacity-0; }
+  .beat-text { @apply leading-snug; }
+  .pip { @apply size-1.5 rounded-full bg-rule transition-colors duration-300; }
+  .pip[data-on="true"] { background: var(--accent); }
+  .seg { @apply inline-flex rounded-lg border border-rule p-0.5 text-[11.5px]; }
+  .seg button { @apply rounded-md px-2 py-1 text-muted transition-colors; }
+  .seg button[data-on="true"] { @apply bg-well text-ink; }
+  kbd { @apply rounded border border-rule bg-well px-1 font-mono text-[10px] text-muted; }
+
+  /* About panel: a sheet from the right. */
+  .about { @apply fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-[760px] overflow-y-auto border-l border-rule bg-card p-0 text-ink shadow-2xl; }
+  .about::backdrop { background: rgb(0 0 0 / 0.35); backdrop-filter: blur(2px); }
+  .about[open] { animation: sheet 260ms var(--ease-out); }
+  .prose-about { @apply font-serif text-[16px] leading-[1.65] text-ink-2; }
+  .prose-about p { @apply mb-3; }
+  .prose-about h3 { @apply mt-8 mb-2 font-serif text-[20px] text-ink; }
+  .prose-about ul { @apply mb-3 space-y-2; }
+  .prose-about li { @apply relative pl-5; }
+  .prose-about li::before { content: ""; @apply absolute top-[0.8em] left-0 h-px w-2.5 bg-faint; }
+}
+
+/* ---- The machine ---- */
+.machine { width: 100%; height: 100%; display: block; overflow: visible; }
+.machine polygon, .machine path, .machine ellipse { stroke: var(--ln); stroke-width: 0.6; stroke-linejoin: round; transition: fill 220ms var(--ease-out), opacity 220ms var(--ease-out); }
+.machine .t { fill: var(--t); }
+.machine .l { fill: var(--l); }
+.machine .r { fill: var(--r); }
+.machine .plate.t, .machine .t.plate { fill: var(--plate-t); }
+.machine .l.plate { fill: var(--plate-l); }
+.machine .r.plate { fill: var(--plate-r); }
+.machine .t.dark, .machine .t.steel { fill: var(--dt); stroke: var(--dln); }
+.machine .l.dark, .machine .l.steel { fill: var(--dl); stroke: var(--dln); }
+.machine .r.dark, .machine .r.steel { fill: var(--dr); stroke: var(--dln); }
+.machine .t.acc { fill: var(--at); stroke: var(--aln); }
+.machine .l.acc { fill: var(--al); stroke: var(--aln); }
+.machine .r.acc { fill: var(--ar); stroke: var(--aln); }
+.machine .t.acc-dark, .machine .t.button { fill: var(--adt); stroke: var(--aln); }
+.machine .l.acc-dark, .machine .l.button { fill: var(--adl); stroke: var(--aln); }
+.machine .r.acc-dark { fill: var(--adr); stroke: var(--aln); }
+.machine .t.bad { fill: #f6c3bd; stroke: var(--bad); }
+.machine .l.bad { fill: #eea69e; stroke: var(--bad); }
+.machine .r.bad { fill: #e38a80; stroke: var(--bad); }
+.machine .t.done { fill: var(--at); stroke: var(--aln); }
+.machine .l.done { fill: var(--al); stroke: var(--aln); }
+.machine .t.blank, .machine .l.blank { fill: var(--well); }
+.machine .l.board { fill: var(--t); }
+.machine .glass { fill: var(--glass); stroke: var(--glass-ln); stroke-width: 0.8; }
+.machine .glass-front { fill: var(--glass); }
+.machine .glass-top { fill: transparent; }
+.machine .screen { fill: var(--screen); stroke: var(--dln); }
+.machine .lbl { font-family: var(--font-mono); fill: var(--muted); letter-spacing: 0.08em; }
+.machine .lbl-plate { fill: var(--faint); letter-spacing: 0.3em; }
+.machine .lbl-model { fill: #f0f0f0; font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.2em; }
+.machine .lbl-model-sub { fill: #c8c8c8; }
+[data-theme="dark"] .machine .lbl-model, [data-theme="dark"] .machine .lbl-model-sub { fill: #1a1a1a; }
+.machine .lbl-screen { fill: var(--screen-ink); letter-spacing: 0; }
+.machine .lbl-num { fill: var(--ink-2); letter-spacing: 0; }
+.machine .lbl-scale { letter-spacing: 0; }
+.machine .lbl-strong { fill: var(--ink-2); font-weight: 500; }
+.machine .edge { stroke: var(--ln); stroke-width: 0.5; opacity: 0.6; }
+.machine .vent { stroke: #777; stroke-width: 0.8; }
+.machine .ink { stroke: var(--faint); stroke-width: 0.7; }
+.machine .tickmark { stroke: var(--muted); stroke-width: 0.6; }
+.machine .threshold { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 2; }
+.machine .tick { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Context-window blocks: three tones per kind (top, +y, +x). */
+.machine .k-ins.t { fill: #efe5d0; } .machine .k-ins.l { fill: #e3d5b8; } .machine .k-ins.r { fill: #d6c49f; }
+.machine .k-file.t { fill: #dbe5f0; } .machine .k-file.l { fill: #c9d7e8; } .machine .k-file.r { fill: #b6c8de; }
+.machine .k-out.t { fill: #f7deb0; } .machine .k-out.l { fill: #efcd8e; } .machine .k-out.r { fill: #e4bb70; }
+.machine .k-tag.t { fill: #fbf3e2; } .machine .k-tag.l { fill: #f4e7cb; } .machine .k-tag.r { fill: #ecdab4; }
+.machine .k-rep.t { fill: #d9ead9; } .machine .k-rep.l { fill: #c5dec5; } .machine .k-rep.r { fill: #b0d0b0; }
+.machine .k-edit.t { fill: #e6def4; } .machine .k-edit.l { fill: #d7cbee; } .machine .k-edit.r { fill: #c6b7e5; }
+.machine .k-sum.t { fill: #f0d9e2; } .machine .k-sum.l { fill: #e6c3d1; } .machine .k-sum.r { fill: #dbacbf; }
+[data-theme="dark"] .machine [class*="k-"] { filter: brightness(0.62) saturate(0.9); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgb(0 0 0 / 0.12); }
+.swatch.k-ins { background: #e3d5b8; } .swatch.k-file { background: #c9d7e8; } .swatch.k-out { background: #efcd8e; }
+.swatch.k-tag { background: #f4e7cb; } .swatch.k-rep { background: #c5dec5; } .swatch.k-edit { background: #d7cbee; } .swatch.k-sum { background: #e6c3d1; }
+
+/* Parts: hover, focus from the list, removed. */
+.machine .part { cursor: pointer; }
+.machine.focusing .part:not(.focus), .machine.focusing .core, .machine.focusing .pin:not(.focus) { opacity: 0.28; }
+.machine .part, .machine .core, .machine .pin { transition: opacity 200ms var(--ease-out); }
+.machine .part.removed polygon, .machine .part.removed path, .machine .part.removed ellipse { fill: transparent !important; stroke: var(--faint) !important; stroke-dasharray: 2.5 2.5; filter: none; }
+.machine .part.removed text, .machine .part.removed line { opacity: 0.25; }
+.machine .pin { cursor: pointer; }
+.machine .pin line { stroke: var(--ink-2); stroke-width: 0.7; }
+.machine .pin circle { fill: var(--card); stroke: var(--ink); stroke-width: 1; }
+.machine .pin text { font-family: var(--font-mono); font-size: 8.5px; fill: var(--ink); }
+.machine .pin.active circle { fill: var(--accent); stroke: var(--accent); }
+.machine .pin.active text { fill: #fff; }
+.machine .pin.removed circle { stroke-dasharray: 2 2; stroke: var(--faint); }
+.machine .pin.removed text { fill: var(--faint); }
+.machine .pin.removed line { stroke: var(--faint); }
+
+/* ---- Motion ---- */
+@keyframes sheet { from { transform: translateX(40px); opacity: 0; } }
+
+/* Things that arrive by crate appear when it lands (--d from engine.ts). */
+.machine .arrive { animation: land 380ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes land { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.machine .blk.over polygon { animation: alarm 700ms ease-in-out infinite alternate; }
+
+/* Belts: dashed slats that the engine slides along (--belt). */
+.machine .belt-line { stroke: var(--faint); stroke-width: 2.2; stroke-dasharray: 2 7; stroke-dashoffset: var(--belt, 0); opacity: 0.9; }
+.machine .belt-in, .machine .belt-down { stroke-dashoffset: calc(var(--belt, 0) * -1); }
+
+/* Gears turn (engine.ts sets the angle). */
+.machine .gear-body { fill: var(--dt); stroke: var(--dln); stroke-width: 0.8; }
+.machine .gear-body.gear-model { fill: #6a6a6a; stroke: #2a2a2a; }
+.machine .gear-body { transition: fill 300ms var(--ease-out); }
+.machine .gear-body.gear-hot, .machine.thinking-now .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); }
+[data-theme="dark"] .machine .gear-body.gear-model { fill: #b5b5b5; stroke: #555; }
+[data-theme="dark"] .machine.thinking-now .gear-body.gear-model { fill: var(--adt); stroke: var(--aln); }
+
+/* A model call: the vents glow while the scan light reads the tray. */
+.machine .vent { transition: stroke 300ms, stroke-width 300ms; }
+.machine.thinking-now .vent { stroke: var(--accent); stroke-width: 1.6; }
+.machine .scan { fill: var(--accent); fill-opacity: 0.25; stroke: var(--accent); stroke-width: 1.2; opacity: 0; transition: none; }
+.machine .puff { fill: var(--muted); }
+.machine .crate polygon { stroke-width: 0.7; }
+.machine .crate-label rect { fill: var(--ink); }
+.machine .crate-label text { fill: var(--ground); font-family: var(--font-sans); font-size: 9.5px; font-weight: 500; }
+
+/* Spotlight: during a beat, only the parts involved stay lit. */
+.machine [data-part], .machine [data-core] { transition: opacity 450ms var(--ease-out); }
+.machine.spot [data-part]:not(.lit):not(.pin), .machine.spot [data-core]:not(.lit) { opacity: 0.4; }
+.machine.spot .pin:not(.lit) { opacity: 0.25; }
+.machine.spot .lit.pin circle { stroke: var(--accent); stroke-width: 1.6; }
+
+/* Beacon: off, or a flashing alarm when the window overflows. */
+.machine .beacon.t, .machine .beacon.l { fill: var(--l); }
+.machine .beacon.alarm.t, .machine .beacon.alarm.l { fill: var(--bad); stroke: var(--bad); animation: alarm 500ms steps(2) infinite; }
+@keyframes alarm { to { opacity: 0.35; } }
+
+/* Parts moving. */
+.machine .lift { animation: lift 700ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes lift { to { transform: translateY(-38px); } }
+.machine .drawer-open { animation: drawer 500ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes drawer { to { transform: translate(15px, 8.5px); } }
+.machine .pressing { animation: press 1700ms cubic-bezier(0.45, 0, 0.25, 1) var(--d, 0ms) both; }
+@keyframes press { 0% { transform: none; } 40%, 65% { transform: translateY(30px); } 100% { transform: none; } }
+.machine .blk.leave { transform-box: fill-box; transform-origin: 50% 100%; animation: squash 600ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes squash { to { transform: scaleY(0.05); opacity: 0; } }
+.machine .flap { animation: flap 900ms ease-in-out var(--d, 0ms) both; }
+@keyframes flap { 30%, 70% { transform: translateY(-6px); } }
+.machine .gate-open { animation: gate 600ms var(--ease-out) var(--d, 0ms) both; }
+@keyframes gate { from { opacity: 0; transform: translateY(20px); } }
+.machine .blink { animation: alarm 600ms steps(2) infinite; }
+.machine .cursor { fill: var(--screen-ink); animation: alarm 900ms steps(2) infinite; }
+.machine .write line { stroke: var(--accent); stroke-dasharray: 20; stroke-dashoffset: 20; animation: write 400ms linear calc(var(--d, 0ms) + var(--i) * 160ms) forwards; }
+@keyframes write { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .machine *, .bar-fill, .switch::after, .about[open] { animation: none !important; transition: none !important; }
+  .machine .lift { transform: translateY(-38px); }
+  .machine .drawer-open { transform: translate(15px, 8.5px); }
+}
