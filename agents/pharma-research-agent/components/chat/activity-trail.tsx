@@ -6,7 +6,7 @@ import { Brain, Check, ChevronDown, FileSearch, ListChecks, Loader2, PenLine, Sh
 import { useEffect, useMemo, useRef, useState } from "react";
 import { KB, KbIcon } from "@/components/report/kb";
 import type { SourceKind, Span } from "@/agent/types";
-import { agents, isTerminal, phase, thoughtTitles, type RunState } from "@/lib/run-state";
+import { agents, isTerminal, phase, thoughtSections, type RunState } from "@/lib/run-state";
 import { cn } from "@/lib/utils";
 
 interface Line {
@@ -15,6 +15,8 @@ interface Line {
   at: number;
   icon: React.ReactNode;
   text: React.ReactNode;
+  /** A short explanation under the step: what it does, or what the agent is thinking. */
+  detail?: string;
   state: "running" | "done" | "failed";
 }
 
@@ -58,6 +60,11 @@ function lines(state: RunState): Line[] {
           : screen.outcome === "redirect"
             ? "Turned a personal question into a general evidence question"
             : `Checked the question${pii?.outcome === "redact" ? " and removed personal details" : ""}`,
+      detail: !screen
+        ? "Looking for personal details, off-topic or harmful requests, and attempts to change the assistant's instructions."
+        : screen.outcome === "pass"
+          ? [pii?.outcome === "redact" ? pii.detail : "", screen.detail.replace(/^On topic\.\s*/, "") || "It is a question about medicines and clinical evidence, so research can start."].filter(Boolean).join(" ")
+          : screen.detail,
       state: screen ? "done" : "running",
     });
   }
@@ -66,21 +73,22 @@ function lines(state: RunState): Line[] {
   // Retrieved text that looked like instructions to the model, by sub-agent.
   for (const d of state.guardrails.values()) {
     if (d.stage !== "retrieval") continue;
-    out.push({ key: `guard-${d.check}`, at: 2.5, icon: <ShieldAlert className="size-3.5" />, text: "Removed text in the results that looked like instructions to an AI", state: "done" });
+    out.push({ key: `guard-${d.check}`, at: 2.5, icon: <ShieldAlert className="size-3.5" />, text: "Removed text in the results that looked like instructions to an AI", detail: d.detail, state: "done" });
   }
 
   // 1. Thinking about the question: each thought heading becomes a line.
-  const titles = thoughtTitles(plan?.text ?? "");
-  if (!titles.length && screen && state.report.status !== "queued") {
-    out.push({ key: "think", at: 0, icon: <Brain className="size-3.5" />, text: "Reading the question", state: state.plan ? "done" : "running" });
+  // Under each heading, the paragraph the planner wrote: what it is actually weighing.
+  const thoughts = thoughtSections(plan?.text ?? "");
+  if (!thoughts.length && screen && state.report.status !== "queued") {
+    out.push({ key: "think", at: 0, icon: <Brain className="size-3.5" />, text: "Reading the question", detail: "The planner reads the question and a one-line list of research skills before choosing where to search.", state: state.plan ? "done" : "running" });
   }
-  titles.forEach((t, i) =>
-    out.push({ key: `think-${i}`, at: i * 0.001, icon: <Brain className="size-3.5" />, text: t, state: state.plan || i < titles.length - 1 ? "done" : "running" }),
+  thoughts.forEach((t, i) =>
+    out.push({ key: `think-${i}`, at: i * 0.001, icon: <Brain className="size-3.5" />, text: t.title, detail: t.body || undefined, state: state.plan || i < thoughts.length - 1 ? "done" : "running" }),
   );
 
   // 2. The plan, in one line.
   if (state.plan?.mode === "answer") {
-    out.push({ key: "plan", at: orchestrator?.end ?? 1, icon: <ListChecks className="size-3.5" />, text: "No new search needed — answering from the earlier research", state: "done" });
+    out.push({ key: "plan", at: orchestrator?.end ?? 1, icon: <ListChecks className="size-3.5" />, text: "No new search needed — answering from the earlier research", detail: state.plan.reason ?? "The earlier answers and their sources already cover this follow-up.", state: "done" });
   } else if (state.plan) {
     const kinds = [...new Set(state.plan.subtasks.map((t) => t.source))];
     out.push({
@@ -88,6 +96,7 @@ function lines(state: RunState): Line[] {
       at: orchestrator?.end ?? 1,
       icon: <ListChecks className="size-3.5" />,
       text: `Planned ${state.plan.subtasks.length} searches across ${kinds.map((k) => KB[k].name).join(", ")}`,
+      detail: `${state.plan.focus} Each source gets its own research agent, and they run at the same time.`,
       state: "done",
     });
   }
@@ -95,6 +104,7 @@ function lines(state: RunState): Line[] {
   // 3. Each search, as it starts; the same line updates when results come back.
   const agentOf = new Map(spans.filter((s) => s.kind === "agent").map((s) => [s.id, s]));
   const rows = agents(state);
+  const explained = new Set<string>();
   for (const tool of spans.filter((s) => s.kind === "tool").sort((a, b) => a.start - b.start)) {
     const agent = agentOf.get(tool.parent ?? "");
     const row = rows.find((r) => agent?.name.startsWith(`${r.task.id} ·`));
@@ -104,10 +114,14 @@ function lines(state: RunState): Line[] {
     const n = Number(tool.attrs.results ?? 0);
     const running = tool.status === "running";
     const what = tool.name === "get_drug_label" ? "the FDA label" : tool.name === "count_adverse_events" ? "FAERS reports" : KB[kind].name;
+    // The agent's question goes under its first search only, so it is said once.
+    const first = !explained.has(row.task.id);
+    explained.add(row.task.id);
     out.push({
       key: tool.id,
       at: tool.start,
       icon: <KbIcon kind={kind} className="size-3.5 text-current" />,
+      detail: first ? row.task.question : undefined,
       state: tool.status === "error" ? "failed" : running ? "running" : "done",
       text: (
         <>
@@ -125,6 +139,7 @@ function lines(state: RunState): Line[] {
       key: `${r.task.id}-web`,
       at: span?.start ?? 2,
       icon: <KbIcon kind="web" className="size-3.5 text-current" />,
+      detail: r.task.question,
       state: r.status === "running" ? "running" : r.status === "failed" ? "failed" : "done",
       text: (
         <>
@@ -146,6 +161,7 @@ function lines(state: RunState): Line[] {
       icon: <FileSearch className="size-3.5" />,
       state: r.status === "failed" ? "failed" : "done",
       text: r.status === "failed" ? `No usable results from ${KB[r.task.source].name}` : `Read ${count(r.sources, ["source", "sources"])} from ${KB[r.task.source].name} — ${count(r.claims, ["finding", "findings"])}`,
+      detail: f.summary || undefined,
     });
   }
 
@@ -153,7 +169,14 @@ function lines(state: RunState): Line[] {
   const synth = spans.find((s) => s.kind === "agent" && s.name === "synthesis");
   // The writing itself is shown in the answer's place; the list keeps one line for the record.
   if (state.draft || state.result) {
-    out.push({ key: "write", at: synth?.start ?? 4, icon: <PenLine className="size-3.5" />, text: state.result ? "Wrote the answer" : "Writing the answer", state: state.result ? "done" : "running" });
+    out.push({
+      key: "write",
+      at: synth?.start ?? 4,
+      icon: <PenLine className="size-3.5" />,
+      text: state.result ? "Wrote the answer" : "Writing the answer",
+      detail: `The writer combines the findings into one answer from the saved research files, citing a retrieved source for every claim.`,
+      state: state.result ? "done" : "running",
+    });
   }
   const evals = spans.find((s) => s.kind === "eval");
   if (evals || state.evals) {
@@ -163,6 +186,7 @@ function lines(state: RunState): Line[] {
       at: evals?.start ?? 5,
       icon: <ShieldCheck className="size-3.5" />,
       text: v ? `Checked every citation — ${Math.round(v.score * 100)}% trace to a retrieved source` : "Checking citations against the sources",
+      detail: state.evals?.find((e) => e.name === "Groundedness")?.detail ?? "A judge model reads each cited sentence next to the passage it cites and decides whether the source supports it.",
       state: state.evals ? "done" : "running",
     });
   }
@@ -176,6 +200,7 @@ function lines(state: RunState): Line[] {
       at: outGuard?.start ?? 4.5,
       icon: <ShieldCheck className="size-3.5" />,
       text: !policy ? "Checking the answer against the safety rules" : policy.outcome === "flag" ? "The safety check could not run on this answer" : removed ? "Safety check removed content that broke the rules" : "Safety check passed",
+      detail: policy?.detail ?? "Removing citations to sources nobody retrieved, personal details, and sentences that give personal advice or overstate the evidence.",
       state: policy ? (policy.outcome === "flag" ? "failed" : "done") : "running",
     });
   }
@@ -249,13 +274,16 @@ export function ActivityTrail({ state }: { state: RunState }) {
       </button>
 
       {expanded && (
-        <ol ref={list} className="max-h-80 space-y-0.5 overflow-y-auto border-t px-4 py-3" aria-label="Steps">
+        <ol ref={list} className="max-h-[28rem] space-y-1 overflow-y-auto border-t px-4 py-3" aria-label="Steps">
           {feed.map((l) => (
             <li key={l.key} className="flex items-start gap-2.5 py-1 text-[13.5px] leading-snug animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
               <span className={cn("mt-px grid size-5 shrink-0 place-items-center rounded-md", l.state === "running" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
                 {l.state === "running" ? <Loader2 className="size-3 animate-spin" aria-label="In progress" /> : l.icon}
               </span>
-              <span className={cn("min-w-0 flex-1", l.state === "running" ? "text-foreground" : "text-foreground/80", l.state === "failed" && "text-destructive")}>{l.text}</span>
+              <span className="min-w-0 flex-1">
+                <span className={cn("block", l.state === "running" ? "text-foreground" : "text-foreground/80", l.state === "failed" && "text-destructive")}>{l.text}</span>
+                {l.detail && <span className="mt-0.5 block line-clamp-2 text-[12.5px] leading-snug text-muted-foreground">{l.detail}</span>}
+              </span>
               {l.state === "failed" && <X className="mt-0.5 size-3.5 shrink-0 text-destructive" aria-label="Failed" />}
             </li>
           ))}

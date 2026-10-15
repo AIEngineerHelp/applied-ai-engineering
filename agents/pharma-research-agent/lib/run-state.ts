@@ -147,7 +147,20 @@ export function liveUsage(s: RunState) {
 
 /** The first bold heading in a thought summary ("**Choosing sources**"), as a short status line. */
 export function thoughtTitles(text: string): string[] {
-  return [...text.matchAll(/\*\*([^*\n]{3,80})\*\*/g)].map((m) => m[1].trim());
+  return thoughtSections(text).map((s) => s.title);
+}
+
+/** A thought summary as its headings, each with the paragraph the model wrote under it (so far, while it streams). */
+export function thoughtSections(text: string): { title: string; body: string }[] {
+  const heads = [...text.matchAll(/\*\*([^*\n]{3,80})\*\*/g)];
+  return heads.map((m, i) => ({
+    title: m[1].trim(),
+    body: text
+      .slice(m.index! + m[0].length, heads[i + 1]?.index ?? text.length)
+      .replace(/\*\*/g, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+  }));
 }
 
 /** A copy of the state with fresh collections, for React to see a change. */
