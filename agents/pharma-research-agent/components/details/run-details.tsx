@@ -6,7 +6,8 @@ import { KB, KbIcon } from "@/components/report/kb";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReportStream, type Snapshot } from "@/hooks/use-report-stream";
-import type { Span } from "@/agent/types";
+import { riskById } from "@/agent/guardrails/risks";
+import type { GuardDecision, Span } from "@/agent/types";
 import { agents, liveUsage, type RunState } from "@/lib/run-state";
 import { cn } from "@/lib/utils";
 
@@ -268,14 +269,70 @@ export function RunDetails({ initial }: { initial: Snapshot }) {
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="trace">Trace</TabsTrigger>
           <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
+          <TabsTrigger value="guardrails">Guardrails</TabsTrigger>
           <TabsTrigger value="files">Files</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-5"><Overview s={state} /></TabsContent>
         <TabsContent value="agents" className="mt-5"><Agents s={state} /></TabsContent>
         <TabsContent value="trace" className="mt-5"><Trace s={state} /></TabsContent>
         <TabsContent value="evaluation" className="mt-5"><Evaluation s={state} /></TabsContent>
+        <TabsContent value="guardrails" className="mt-5"><Guardrails s={state} /></TabsContent>
         <TabsContent value="files" className="mt-5"><Files s={state} /></TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+const STAGES: { stage: GuardDecision["stage"]; title: string; about: string }[] = [
+  { stage: "input", title: "Question", about: "Before anything ran: personal data, then a screen against the risk catalogue." },
+  { stage: "retrieval", title: "Retrieved content", about: "Search results are untrusted: sentences that looked like instructions to an AI were removed." },
+  { stage: "output", title: "Answer", about: "Before the answer was final: citations, personal data, then a policy check against the risk catalogue." },
+];
+
+const OUTCOME: Record<GuardDecision["outcome"], string> = {
+  pass: "bg-success-soft text-success",
+  redact: "bg-primary/10 text-primary",
+  redirect: "bg-primary/10 text-primary",
+  remove: "bg-warning-soft text-warning",
+  flag: "bg-warning-soft text-warning",
+  block: "bg-danger-soft text-destructive",
+};
+
+function Guardrails({ s }: { s: RunState }) {
+  const all = [...s.guardrails.values()];
+  if (!all.length) return <p className="text-[13.5px] text-muted-foreground">No guardrail decisions were recorded for this run.</p>;
+  return (
+    <div className="space-y-6">
+      {STAGES.map(({ stage, title, about }) => {
+        const list = all.filter((d) => d.stage === stage);
+        if (!list.length && stage === "retrieval") return null;
+        return (
+          <section key={stage}>
+            <h3 className="text-[13px] font-semibold">{title}</h3>
+            <p className="mt-0.5 mb-2 text-[12.5px] text-muted-foreground">{about}</p>
+            {list.length ? (
+              <ul className="divide-y rounded-lg border bg-card">
+                {list.map((d) => (
+                  <li key={d.check} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cn("inline-flex h-5 items-center rounded px-1.5 text-[11.5px] font-medium capitalize", OUTCOME[d.outcome])}>{d.outcome}</span>
+                      <span className="font-mono text-[12px] text-muted-foreground">{d.check}</span>
+                      {d.risks?.map((r) => (
+                        <Badge key={r} variant="outline" className="text-[11px] font-normal">
+                          {riskById(r)?.title ?? r}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed">{d.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[13px] text-muted-foreground">Not reached in this run.</p>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

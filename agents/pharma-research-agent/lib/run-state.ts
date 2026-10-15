@@ -1,6 +1,6 @@
 // Client-side view of a research run, folded from its event stream. Shared by
 // the report page, the run details page and the shared (read-only) page.
-import type { EvalResult, Finding, Plan, Report, RunEvent, Source, Span, Subtask } from "../agent/types";
+import type { EvalResult, Finding, GuardDecision, Plan, Report, RunEvent, Source, Span, Subtask } from "../agent/types";
 import type { SerializedReport } from "./reports";
 
 export interface RunState {
@@ -21,6 +21,8 @@ export interface RunState {
   thoughts: Map<string, { agent: string; text: string; done: boolean }>;
   /** The report markdown as it streams, before the final report arrives. */
   draft?: string;
+  /** Guardrail decisions, by stage and check. */
+  guardrails: Map<string, GuardDecision>;
 }
 
 /** What the database sends for a "sources" event before enrichment. */
@@ -38,6 +40,7 @@ export function initialState(report: SerializedReport, sources: Source[], events
     sourcesBy: new Map(),
     findings: new Map(),
     thoughts: new Map(),
+    guardrails: new Map(),
     result: report.report ?? undefined,
     evals: report.evals ?? undefined,
     error: report.error ?? undefined,
@@ -86,6 +89,9 @@ export function apply(s: RunState, e: WireEvent) {
     }
     case "draft":
       s.draft = e.text;
+      break;
+    case "guardrail":
+      s.guardrails.set(`${e.decision.stage}:${e.decision.check}`, e.decision);
       break;
     case "error":
       s.error = e.message;
@@ -146,5 +152,11 @@ export function thoughtTitles(text: string): string[] {
 
 /** A copy of the state with fresh collections, for React to see a change. */
 export function cloneState(prev: RunState): RunState {
-  return { ...prev, spans: new Map(prev.spans), files: new Map(prev.files), sources: new Map(prev.sources), sourcesBy: new Map(prev.sourcesBy), findings: new Map(prev.findings), thoughts: new Map(prev.thoughts) };
+  return { ...prev, spans: new Map(prev.spans), files: new Map(prev.files), sources: new Map(prev.sources), sourcesBy: new Map(prev.sourcesBy), findings: new Map(prev.findings), thoughts: new Map(prev.thoughts), guardrails: new Map(prev.guardrails) };
+}
+
+/** The input screen's decision when it refused or redirected the question. */
+export function screenNotice(s: RunState): GuardDecision | undefined {
+  const d = s.guardrails.get("input:screen");
+  return d && (d.outcome === "block" || d.outcome === "redirect") ? d : undefined;
 }

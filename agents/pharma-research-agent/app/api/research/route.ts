@@ -6,6 +6,7 @@ import { z } from "zod";
 import { json } from "@/lib/access";
 import { createReport, markFailed, QUERY_MAX, QUERY_MIN, runsToday, setWorkflowRun } from "@/lib/reports";
 import { modelName } from "@/agent/config";
+import { redactPII } from "@/agent/guardrails/pii";
 import { WORKSPACE_COOKIE } from "@/lib/workspace-cookie";
 import { researchWorkflow } from "@/workflows/research";
 
@@ -23,9 +24,12 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return json(400, { error: `Write a research question between ${QUERY_MIN} and ${QUERY_MAX} characters.` });
 
+  // Personal data is removed here, before the question is stored, logged or sent to a model.
+  const { text: query } = redactPII(parsed.data.query);
+
   let report;
   try {
-    report = await createReport(workspaceId, parsed.data.query, modelName(), parsed.data.threadId);
+    report = await createReport(workspaceId, query, modelName(), parsed.data.threadId);
   } catch {
     return json(404, { error: "That conversation no longer exists." });
   }

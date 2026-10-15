@@ -17,6 +17,8 @@ const THOUGHTS = {
   researcher: "**Searching**\n\nStarting with a focused query, then reading the most relevant results before writing the finding.",
   synthesis: "**Organising the findings**\n\nGrouping the evidence by design and noting where sources agree or conflict.",
   judge: "",
+  guard: "",
+  policy: "",
 };
 
 export interface ScriptedCallOptions extends BaseChatModelCallOptions {
@@ -44,6 +46,8 @@ function returnedIds(messages: BaseMessage[]): string[] {
 /** Which agent is calling, from its system prompt; each agent's prompt opens differently. */
 function agentOf(messages: BaseMessage[]): Agent {
   const system = messages.find((m) => m.type === "system")?.text ?? "";
+  if (system.startsWith("You screen questions")) return "guard";
+  if (system.startsWith("You review a finished report")) return "policy";
   if (system.includes("orchestrator")) return "orchestrator";
   if (system.includes("research sub-agent")) return "researcher";
   if (system.includes("synthesis agent")) return "synthesis";
@@ -56,6 +60,19 @@ const toolName = (t: unknown) => (t && typeof t === "object" && "name" in t ? St
 function reply(messages: BaseMessage[], o: ScriptedCallOptions): Reply {
   const agent = agentOf(messages);
   const user = messages.find((m) => m.type === "human")?.text ?? "";
+  if (agent === "guard") {
+    const q = user.match(/Question to screen: ([\s\S]*)$/)?.[1] ?? user;
+    const verdict = /\b(overdose|kill myself|end my life)\b/i.test(q)
+      ? "self_harm"
+      : /\b(should i|for me|my (dose|mother|father|wife|husband)|can i (take|stop|double))\b/i.test(q)
+        ? "personal_advice"
+        : /\b(recipe|weather|football|poem|stock price)\b/i.test(q)
+          ? "off_topic"
+          : "research";
+    const general = verdict === "personal_advice" ? "What does the published evidence show about GLP-1 receptor agonists and pancreatitis in adults?" : "";
+    return { text: JSON.stringify({ verdict, risks: verdict === "personal_advice" ? ["personal-treatment-advice"] : verdict === "self_harm" ? ["self-harm"] : [], general_question: general, reason: "Offline screen (scripted)." }) };
+  }
+  if (agent === "policy") return { text: JSON.stringify({ violations: [] }) };
   if (agent === "orchestrator") {
     // A follow-up asking for a rewrite is answered from the earlier turns, as the live planner would.
     const followUp = user.match(/^Follow-up: (.*)$/m)?.[1];

@@ -16,7 +16,7 @@ async function Loader({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = await params;
   const turns = await getSharedThread(shareId);
   if (!turns.length) notFound();
-  return <ThreadView threadId={turns[0].threadId} share={shareId} initial={await Promise.all(turns.map(reportSnapshot))} />;
+  return <ThreadView threadId={turns[0].threadId} share={shareId} initial={await Promise.all(turns.map((t) => reportSnapshot(t)))} />;
 }
 
 /** A shared conversation: read-only, no workspace sidebar. */

@@ -108,6 +108,29 @@ export interface EvalResult {
   items?: { text: string; verdict: string; reason: string }[];
 }
 
+/** One guardrail decision, recorded in the run's trace. */
+export interface GuardDecision {
+  stage: "input" | "retrieval" | "output";
+  /** Which check, e.g. "personal-data", "screen", "policy", "retrieved-injection:agent-2". */
+  check: string;
+  outcome: "pass" | "redact" | "flag" | "redirect" | "block" | "remove";
+  /** What happened, in a sentence; for a block or redirect, the message shown to the user. */
+  detail: string;
+  /** Risk catalogue ids involved (agent/guardrails/risks.ts). */
+  risks?: string[];
+}
+
+/** The input screen's verdict on a question. */
+export interface Screen {
+  verdict: "research" | "personal_advice" | "off_topic" | "harmful" | "self_harm" | "prompt_injection";
+  /** The question the agents research: the user's, or its general form for personal advice. */
+  question: string;
+  /** Shown to the user when the question was refused or redirected. */
+  message?: string;
+  /** Personal advice turned into its general question: the run continues, with a notice. */
+  redirected?: boolean;
+}
+
 /** Everything the UI and the saved run file contain. */
 export type RunEvent =
   | { type: "run"; id: string; query: string; model: string; mode: "live" | "offline"; at: string }
@@ -124,5 +147,6 @@ export type RunEvent =
   | { type: "thought"; key: string; agent: string; text: string; done?: boolean }
   /** The report as it is being written (markdown so far). */
   | { type: "draft"; text: string }
+  | { type: "guardrail"; decision: GuardDecision }
   | { type: "error"; message: string }
   | { type: "done"; ms: number };

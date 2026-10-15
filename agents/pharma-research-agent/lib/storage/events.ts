@@ -22,6 +22,8 @@ export function eventKey(e: RunEvent): string {
       return `finding:${e.finding.subtask}`;
     case "thought":
       return `thought:${e.key}`;
+    case "guardrail":
+      return `guardrail:${e.decision.stage}:${e.decision.check}`;
     default:
       return e.type;
   }

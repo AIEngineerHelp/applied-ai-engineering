@@ -19,7 +19,7 @@ export const researcherNode = (store: RunStore) => async (s: RunState, config: L
   let finding: Finding;
   try {
     finding = await research(
-      { model: chatModel(), tracer, vfs, registry, onSources: (subtask, sources) => sink.emit({ type: "sources", subtask, sources }), onThought: thoughtStream(sink, task.id) },
+      { model: chatModel(), tracer, vfs, registry, onSources: (subtask, sources) => sink.emit({ type: "sources", subtask, sources }), onThought: thoughtStream(sink, task.id), onGuard: (decision) => sink.emit({ type: "guardrail", decision }) },
       task,
       getToolsets()[task.source],
       loadSkills(),

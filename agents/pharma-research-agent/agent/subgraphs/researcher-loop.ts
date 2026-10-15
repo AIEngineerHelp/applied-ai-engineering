@@ -15,12 +15,13 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { Annotation, END, MessagesAnnotation, START, StateGraph, type LangGraphRunnableConfig } from "@langchain/langgraph";
+import { neutralise } from "../guardrails/injection.ts";
 import { callModel } from "../model.ts";
 import { LAST_TURN, NUDGE, WEB_INSTRUCTIONS, researcherSystem, subtaskMessage } from "../prompts/researcher.ts";
 import type { Skill } from "../skills/index.ts";
 import { asLangChainTools, type Toolset } from "../tools/toolset.ts";
 import type { Tracer } from "../trace.ts";
-import type { Finding, Source, Subtask } from "../types.ts";
+import type { Finding, GuardDecision, Source, Subtask } from "../types.ts";
 import type { VirtualFS } from "../vfs.ts";
 
 export const MAX_TURNS = 6;
@@ -59,6 +60,8 @@ export interface ResearchContext {
   onSources: (subtask: string, sources: Source[]) => void;
   /** Streams a sub-agent's thought summary for one model call (key identifies the call). */
   onThought?: (key: string, soFar: string, done: boolean) => void;
+  /** Records a guardrail decision (retrieved text that looked like instructions). */
+  onGuard?: (d: GuardDecision) => void;
 }
 
 /** The sub-agent's state: its conversation, how many turns it has used, and its finding once done. */
@@ -71,6 +74,32 @@ type SubAgent = typeof SubAgentState.State;
 
 /** The markdown file a source is saved as. */
 export const sourceFile = (s: Source) => `/sources/${s.kind}/${s.id.replace(/[^A-Za-z0-9_.-]/g, "_")}.md`;
+
+/**
+ * Retrieved text is untrusted: a web page or an abstract could contain text
+ * aimed at the model (indirect prompt injection). Sentences that look like
+ * instructions are replaced before any model, file or report sees them.
+ */
+function screenSources(sources: Source[]): { sources: Source[]; removed: number } {
+  let removed = 0;
+  const out = sources.map((s) => {
+    const text = neutralise(s.text);
+    const title = neutralise(s.title);
+    removed += text.removed + title.removed;
+    return text.removed || title.removed ? { ...s, title: title.text, text: text.text, meta: { ...s.meta, flagged: true } } : s;
+  });
+  return { sources: out, removed };
+}
+
+/** Counts neutralised sentences per sub-agent and records them as one guardrail decision. */
+function retrievalGuard(ctx: ResearchContext, task: Subtask) {
+  let total = 0;
+  return (removed: number) => {
+    if (!removed) return;
+    total += removed;
+    ctx.onGuard?.({ stage: "retrieval", check: `retrieved-injection:${task.id}`, outcome: "flag", detail: `${total} sentence${total === 1 ? "" : "s"} in retrieved ${task.source} results looked like instructions to an AI and ${total === 1 ? "was" : "were"} removed before the model read them.`, risks: ["prompt-injection"] });
+  };
+}
 
 function saveSources(ctx: ResearchContext, task: Subtask, sources: Source[]) {
   const fresh = sources.filter((s) => !ctx.registry.has(s.id));
@@ -92,6 +121,7 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
     // Web search has no function tools: one grounded call, sources from the grounding metadata.
     if (toolset.kind === "web") return webResearch(ctx, task, system, span.id);
 
+    const guard = retrievalGuard(ctx, task);
     const tools = asLangChainTools(toolset);
     const byName = new Map(tools.map((t) => [t.name, t]));
 
@@ -121,14 +151,19 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
       const out: ToolMessage[] = [];
       for (const call of calls) {
         const t = byName.get(call.name);
-        const { content, sources } = await ctx.tracer.wrap("tool", call.name, span.id, async (sp) => {
+        const { content: raw, sources: rawSources } = await ctx.tracer.wrap("tool", call.name, span.id, async (sp) => {
           ctx.tracer.addToolCall();
           const msg = t ? ((await t.invoke({ ...call, type: "tool_call" })) as ToolMessage) : undefined;
           const sources = (msg?.artifact ?? []) as Source[];
           ctx.tracer.close(sp, { args: JSON.stringify(call.args).slice(0, 200), results: sources.length });
           return { content: msg?.text ?? JSON.stringify({ error: `Unknown tool ${call.name}` }), sources };
         });
-        saveSources(ctx, task, sources);
+        // What the model reads and what is saved are both screened for injected instructions.
+        const screened = screenSources(rawSources);
+        const safe = neutralise(raw);
+        guard(Math.max(screened.removed, safe.removed));
+        const content = safe.text;
+        saveSources(ctx, task, screened.sources);
         // Every result carries the remaining budget, so the model can plan its last search.
         let body: Record<string, unknown>;
         try {
@@ -189,7 +224,7 @@ async function webResearch(ctx: ResearchContext, task: Subtask, system: string, 
     ctx.tracer.close(s, { model: ctx.model.getName(), input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, results: r.grounding?.length ?? 0, searches: r.searches });
     return r;
   });
-  const sources: Source[] = (res.grounding ?? []).map((g, i) => ({
+  const grounded: Source[] = (res.grounding ?? []).map((g, i) => ({
     id: `WEB:${task.id.replace("agent-", "")}.${i + 1}`,
     kind: "web",
     title: g.title,
@@ -197,6 +232,9 @@ async function webResearch(ctx: ResearchContext, task: Subtask, system: string, 
     text: g.text,
     meta: { host: safeHost(g.url) },
   }));
+  const screened = screenSources(grounded);
+  retrievalGuard(ctx, task)(screened.removed);
+  const sources = screened.sources;
   saveSources(ctx, task, sources);
   // Each grounded sentence becomes a claim citing exactly the pages it came from.
   const claims = (res.supports ?? [])

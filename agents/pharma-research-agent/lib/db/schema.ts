@@ -127,3 +127,20 @@ export const graphWrites = pgTable(
   },
   (t) => [primaryKey({ columns: [t.threadId, t.namespace, t.checkpointId, t.taskId, t.idx] })],
 );
+
+/**
+ * Readers' feedback on an answer: thumbs up or down and an optional comment,
+ * one per answer per workspace. Exported as an eval dataset by
+ * scripts/export-feedback.ts, so real failures become test cases.
+ */
+export const reportFeedback = pgTable(
+  "report_feedback",
+  {
+    reportId: text("report_id").notNull().references(() => reports.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id").notNull(),
+    rating: text("rating", { enum: ["up", "down"] }).notNull(),
+    comment: text("comment"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.reportId, t.workspaceId] })],
+);

@@ -8,7 +8,7 @@ import { db, schema } from "./db";
 import { loadEvents, loadFiles, loadSources } from "./storage/events";
 import type { RunEvent, Source } from "../agent/types";
 
-const { reports, reportSources } = schema;
+const { reports, reportSources, reportFeedback } = schema;
 const ids = customAlphabet("0123456789abcdefghijkmnpqrstuvwxyz", 12);
 const shareIds = customAlphabet("0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz", 22);
 
@@ -117,14 +117,38 @@ export async function setSharing(threadId: string, workspaceId: string, on: bool
 }
 
 /** Everything needed to draw a report: the row, its sources and its event stream. */
-export async function reportSnapshot(row: ReportRow) {
-  const [sources, events] = await Promise.all([loadSources(row.id), loadEvents(row.id)]);
+/** A turn as the UI starts from. With the reader's workspace, it includes their feedback on it. */
+export async function reportSnapshot(row: ReportRow, workspaceId?: string) {
+  const [sources, events, feedback] = await Promise.all([loadSources(row.id), loadEvents(row.id), workspaceId ? getFeedback(row.id, workspaceId) : undefined]);
   return {
     report: serializeRow(row),
     sources,
     events: events.map((e) => e.data as RunEvent),
     lastSeq: events.at(-1)?.seq ?? 0,
+    feedback,
   };
+}
+
+export type Feedback = { rating: "up" | "down"; comment: string | null };
+
+export async function getFeedback(reportId: string, workspaceId: string): Promise<Feedback | undefined> {
+  const d = await db();
+  const [row] = await d.select({ rating: reportFeedback.rating, comment: reportFeedback.comment }).from(reportFeedback).where(and(eq(reportFeedback.reportId, reportId), eq(reportFeedback.workspaceId, workspaceId)));
+  return row;
+}
+
+/** Saves, replaces or (with rating null) clears a reader's feedback on one of their own answers. */
+export async function setFeedback(reportId: string, workspaceId: string, rating: "up" | "down" | null, comment?: string): Promise<boolean> {
+  const row = await getReport(reportId, { workspaceId });
+  if (!row) return false;
+  const d = await db();
+  if (rating === null) {
+    await d.delete(reportFeedback).where(and(eq(reportFeedback.reportId, reportId), eq(reportFeedback.workspaceId, workspaceId)));
+    return true;
+  }
+  const values = { reportId, workspaceId, rating, comment: comment?.trim() || null };
+  await d.insert(reportFeedback).values(values).onConflictDoUpdate({ target: [reportFeedback.reportId, reportFeedback.workspaceId], set: { rating, comment: values.comment, at: sql`now()` } });
+  return true;
 }
 
 export async function sourcesByIds(reportId: string, idList: string[]): Promise<Source[]> {

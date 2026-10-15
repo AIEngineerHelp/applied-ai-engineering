@@ -2,7 +2,7 @@
 // What the agents are doing, as one chronological feed: one short line per
 // action, in the order it happened. The searches run in parallel underneath,
 // but the reader follows a single story, newest line at the bottom.
-import { Brain, Check, ChevronDown, FileSearch, ListChecks, Loader2, PenLine, ShieldCheck, X } from "lucide-react";
+import { Brain, Check, ChevronDown, FileSearch, ListChecks, Loader2, PenLine, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { KB, KbIcon } from "@/components/report/kb";
 import type { SourceKind, Span } from "@/agent/types";
@@ -43,9 +43,35 @@ function lines(state: RunState): Line[] {
   const orchestrator = spans.find((s) => s.kind === "agent" && s.name === "orchestrator");
   const plan = state.thoughts.get("plan");
 
+  // 0. The input guard: was the question screened, refused or redirected?
+  const screen = state.guardrails.get("input:screen");
+  const pii = state.guardrails.get("input:personal-data");
+  if (state.report.status !== "queued") {
+    out.push({
+      key: "screen",
+      at: -1,
+      icon: screen?.outcome === "pass" ? <ShieldCheck className="size-3.5" /> : <ShieldAlert className="size-3.5" />,
+      text: !screen
+        ? "Checking the question"
+        : screen.outcome === "block"
+          ? "Didn't research this question"
+          : screen.outcome === "redirect"
+            ? "Turned a personal question into a general evidence question"
+            : `Checked the question${pii?.outcome === "redact" ? " and removed personal details" : ""}`,
+      state: screen ? "done" : "running",
+    });
+  }
+  if (screen?.outcome === "block") return out;
+
+  // Retrieved text that looked like instructions to the model, by sub-agent.
+  for (const d of state.guardrails.values()) {
+    if (d.stage !== "retrieval") continue;
+    out.push({ key: `guard-${d.check}`, at: 2.5, icon: <ShieldAlert className="size-3.5" />, text: "Removed text in the results that looked like instructions to an AI", state: "done" });
+  }
+
   // 1. Thinking about the question: each thought heading becomes a line.
   const titles = thoughtTitles(plan?.text ?? "");
-  if (!titles.length && state.report.status !== "queued") {
+  if (!titles.length && screen && state.report.status !== "queued") {
     out.push({ key: "think", at: 0, icon: <Brain className="size-3.5" />, text: "Reading the question", state: state.plan ? "done" : "running" });
   }
   titles.forEach((t, i) =>
@@ -140,6 +166,19 @@ function lines(state: RunState): Line[] {
       state: state.evals ? "done" : "running",
     });
   }
+  // 6. The output guard's safety check on the finished answer.
+  const policy = state.guardrails.get("output:policy");
+  const outGuard = spans.find((s) => s.kind === "agent" && s.name === "output guard");
+  if (outGuard || policy) {
+    const removed = ["output:policy", "output:citations"].map((k) => state.guardrails.get(k)).filter((d) => d?.outcome === "remove").length;
+    out.push({
+      key: "safety",
+      at: outGuard?.start ?? 4.5,
+      icon: <ShieldCheck className="size-3.5" />,
+      text: !policy ? "Checking the answer against the safety rules" : policy.outcome === "flag" ? "The safety check could not run on this answer" : removed ? "Safety check removed content that broke the rules" : "Safety check passed",
+      state: policy ? (policy.outcome === "flag" ? "failed" : "done") : "running",
+    });
+  }
   return out.sort((a, b) => a.at - b.at);
 }
 
@@ -179,8 +218,11 @@ export function ActivityTrail({ state }: { state: RunState }) {
   const done = `${reused ? "Used the earlier research" : `Researched · ${searches} ${searches === 1 ? "search" : "searches"}`} · ${state.sources.size} sources`;
   // Spinning only while this card is where the work is: research, then checking.
   const busy = running && (researching || p === "verifying");
+  const blocked = state.guardrails.get("input:screen")?.outcome === "block";
   const summary = !running
-    ? reused
+    ? blocked
+      ? "Checked the question · not researched"
+      : reused
       ? `Answered from the earlier research${elapsed ? ` in ${fmtElapsed(elapsed)}` : ""} · ${state.sources.size} sources`
       : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`
     : p === "verifying"

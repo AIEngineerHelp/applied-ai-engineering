@@ -24,6 +24,22 @@ export function chatModel(): BaseChatModel {
   });
 }
 
+/**
+ * The model for guardrail checks (screening questions, checking reports). It is
+ * configured on its own because models differ in how well they do each
+ * guardrail task; by default it is the main model, thinking less, for speed.
+ */
+export function guardModel(): BaseChatModel {
+  if (isOffline()) return new ScriptedChatModel({});
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+  return new ChatGoogle({
+    model: process.env.GEMINI_GUARD_MODEL || modelName(),
+    apiKey: process.env.GEMINI_API_KEY,
+    reasoningEffort: "low",
+    maxRetries: 2,
+  });
+}
+
 /** A Gemini built-in tool (Google Search) or a LangChain tool. */
 export type ModelTool = StructuredToolInterface | Record<string, unknown>;
 

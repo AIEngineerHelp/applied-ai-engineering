@@ -15,7 +15,8 @@
     "test": "node --import=tsx --test tests/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import=tsx scripts/migrate.ts",
-    "research": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import=tsx scripts/research.ts"
+    "research": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import=tsx scripts/research.ts",
+    "feedback:export": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import=tsx scripts/export-feedback.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.9",

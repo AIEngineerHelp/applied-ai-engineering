@@ -12,6 +12,8 @@ export interface Snapshot {
   sources: Source[];
   events: unknown[];
   lastSeq: number;
+  /** The reader's own feedback on this answer (owner view only). */
+  feedback?: { rating: "up" | "down"; comment: string | null };
 }
 
 export function useReportStream(initial: Snapshot, share?: string) {

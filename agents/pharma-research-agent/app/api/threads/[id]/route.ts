@@ -12,5 +12,5 @@ export async function GET(request: Request, ctx: RouteContext<"/api/threads/[id]
   if (!access) return json(404, { error: "Conversation not found" });
   const turns = await getThread(id, access);
   if (!turns.length) return json(404, { error: "Conversation not found" });
-  return json(200, { turns: await Promise.all(turns.map(reportSnapshot)) });
+  return json(200, { turns: await Promise.all(turns.map((t) => reportSnapshot(t, "workspaceId" in access ? access.workspaceId : undefined))) });
 }

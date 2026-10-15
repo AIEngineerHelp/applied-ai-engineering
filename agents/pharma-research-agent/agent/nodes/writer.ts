@@ -88,7 +88,7 @@ export const writerNode = (store: RunStore) => async (s: RunState): Promise<Part
   const skill = loadSkills().find((x) => x.source === "synthesis");
   const draft = throttle((text: string) => sink.emit({ type: "draft", text: draftForDisplay(text) }));
   const thought = thoughtStream(sink, "synthesis");
-  const report = await synthesize(chatModel(), tracer, vfs, run.query, plan, registry, skill, "run", {
+  const report = await synthesize(chatModel(), tracer, vfs, s.screen?.question ?? run.query, plan, registry, skill, "run", {
     context: answering ? undefined : conversationContext(turns),
     earlier,
     onText: (t) => draft.push(t),

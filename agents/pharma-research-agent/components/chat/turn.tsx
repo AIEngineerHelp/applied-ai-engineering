@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, Check, Copy, Download, FileText, ListTree, PenLine, RotateCw } from "lucide-react";
+import { AlertTriangle, Check, Copy, Download, FileText, ListTree, PenLine, RotateCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -13,8 +13,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useReportStream, type Snapshot } from "@/hooks/use-report-stream";
 import { blocks, numbered, numbering, referenceLine } from "@/lib/citations";
 import { parseReport } from "@/agent/report-format";
-import { isTerminal, phase, thoughtTitles, type RunState } from "@/lib/run-state";
+import { isTerminal, phase, screenNotice, thoughtTitles, type RunState } from "@/lib/run-state";
 import { ActivityTrail } from "./activity-trail";
+import { Feedback } from "./feedback";
 import { SourceStrip } from "./source-strip";
 
 function asMarkdown(state: RunState): string {
@@ -68,6 +69,24 @@ function Composing({ thought }: { thought?: string }) {
   );
 }
 
+/**
+ * The input guard's notice: why a question was not researched, or why the
+ * answer covers the general evidence instead of the reader's own situation.
+ */
+function ScreenNotice({ outcome, detail }: { outcome: "block" | "redirect"; detail: string }) {
+  const redirect = outcome === "redirect";
+  const Icon = redirect ? ShieldCheck : ShieldAlert;
+  return (
+    <div role={redirect ? "note" : "status"} className={redirect ? "flex gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5" : "flex gap-3 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3.5"}>
+      <Icon className={redirect ? "mt-0.5 size-5 shrink-0 text-primary" : "mt-0.5 size-5 shrink-0 text-warning"} aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="text-[14px] font-medium">{redirect ? "General evidence, not personal advice" : "This question wasn't researched"}</p>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
 export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot; share?: string; onRetry?: (query: string) => void; onStatus?: (id: string, status: string) => void }) {
   const { state, connected } = useReportStream(initial, share);
   const r = state.report;
@@ -90,6 +109,7 @@ export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot;
     setSheet(true);
   };
   const sources = [...state.sources.values()];
+  const notice = screenNotice(state);
 
   return (
     <article className="scroll-mt-20" id={`turn-${r.id}`} aria-labelledby={`q-${r.id}`}>
@@ -120,6 +140,8 @@ export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot;
 
         {sources.length > 0 && <SourceStrip sources={sources} nums={nums} onOpen={openSources} />}
 
+        {notice && <ScreenNotice outcome={notice.outcome as "block" | "redirect"} detail={notice.detail} />}
+
         {!shown && running && phase(state) === "writing" && <Composing thought={thoughtTitles(state.thoughts.get("synthesis")?.text ?? "").at(-1)} />}
 
         {shown && (
@@ -133,6 +155,8 @@ export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot;
           <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
             <Verification confidence={state.result.confidence} evals={state.evals} />
             <div className="flex items-center gap-1">
+              {!share && <Feedback reportId={r.id} initial={initial.feedback} />}
+              {!share && <span className="mx-1 h-4 w-px bg-border" aria-hidden="true" />}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

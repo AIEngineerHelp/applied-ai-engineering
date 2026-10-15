@@ -5,7 +5,6 @@
 
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { isOffline, modelName } from "../config.ts";
 import { callModel, chatModel } from "../model.ts";
 import { followUpRequest, plannerSystem } from "../prompts/planner.ts";
 import { loadSkills, skillIndex, type Skill } from "../skills/index.ts";
@@ -97,19 +96,17 @@ export async function plan(model: BaseChatModel, query: string, skills: Skill[],
 }
 
 export const plannerNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
-  const started = await store.start(s.reportId);
-  const { sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "plan");
+  const { run, sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "plan");
   const skills = loadSkills();
-
-  sink.emit({ type: "run", id: s.reportId, query: started.query, model: modelName(), mode: isOffline() ? "offline" : "live", at: started.startedAt.toISOString() });
+  // The input guard may have turned a personal question into its general form.
+  const question = s.screen?.question ?? run.query;
   sink.emit({ type: "skills", available: skills.map((x) => ({ name: x.name, description: x.description })) });
-  sink.emit({ type: "span", span: { id: "run", kind: "run", name: "research run", start: 0, status: "running", attrs: {} } });
 
   const context = conversationContext(await store.earlierTurns(s.reportId));
   const thought = thoughtStream(sink, "orchestrator");
   const p = await tracer.wrap("agent", "orchestrator", "run", async (span) =>
     tracer.wrap("llm", "plan subtasks", span.id, async (sp) => {
-      const r = await plan(chatModel(), started.query, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false), onUsage: (u) => tracer.addUsage(u) });
+      const r = await plan(chatModel(), question, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false), onUsage: (u) => tracer.addUsage(u) });
       tracer.close(sp, { subtasks: r.subtasks.length, input: tracer.usage.input, output: tracer.usage.output, cost: tracer.usage.cost });
       return r;
     }),

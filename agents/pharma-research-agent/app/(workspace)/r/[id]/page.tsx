@@ -18,7 +18,7 @@ async function Loader({ params }: { params: Promise<{ id: string }> }) {
     if (turn) redirect(`/r/${turn.threadId}#turn-${turn.id}`);
     notFound();
   }
-  return <ThreadView threadId={id} initial={await Promise.all(turns.map(reportSnapshot))} />;
+  return <ThreadView threadId={id} initial={await Promise.all(turns.map((t) => reportSnapshot(t, access.workspaceId)))} />;
 }
 
 export default function ThreadPage({ params }: PageProps<"/r/[id]">) {

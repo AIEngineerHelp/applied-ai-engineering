@@ -19,20 +19,25 @@ The agent (`agent/`) never touches the database directly. Everything it saves or
 A run is a LangGraph `StateGraph` (`agent/graph.ts`):
 
 ```
-START → planner ─┬─ Send × 2–4 ─→ researcher (in parallel) ─→ writer → checker → END
-                 └─ follow-up answered from earlier turns ──→ writer
+START → input guard ─┬─ refused ─→ END
+                     └─ planner ─┬─ Send × 2–4 ─→ researcher (parallel) ─→ writer → output guard → checker → END
+                                 └─ follow-up answered from earlier turns ──→ writer
 ```
 
 The state holds the report id, the plan, the findings (a reducer collects one per researcher), the report and the evals. The planner's conditional edge returns one `Send("researcher", { task })` per subtask, so the researchers run at once and the writer starts when all of them have finished. Each node keeps the app's own event stream: it writes spans, thoughts, files and sources to Postgres as it works, which is what the browser follows.
 
 | Node | Agent | What it does |
 |---|---|---|
+| input guard | Screen (`agent/nodes/input-guard.ts`, `agent/guardrails/input.ts`) | Records personal data the API route removed, refuses prompt injection by pattern, then classifies the question against the risk catalogue: research continues, personal advice continues as its general question, anything else ends the run. |
 | planner | Orchestrator (`agent/nodes/planner.ts`) | Splits the question into 2–4 subtasks, one knowledge base each, and assigns skills from a one-line index. For a follow-up it first decides between **research** (new evidence needed) and **answer** (simplify, shorten or explain from the earlier turns). |
 | researcher | Sub-agent (`agent/nodes/researcher.ts` running `agent/subgraphs/researcher-loop.ts`), one per subtask, in parallel | A graph of its own: a model node and a tools node in a loop until the model calls `finish`. The turn count is in its state; at most 6 turns, and on the last only `finish` is offered, with the model forced to call it. A failed knowledge base becomes an honest empty finding rather than failing the run. |
 | writer | Synthesis (`agent/nodes/writer.ts`) | Reads the files (`/findings/*`, `/sources/CATALOGUE.md`), not the sub-agents' conversations, and writes one markdown report in which every claim cites a retrieved source id. In answer mode it reads `/context/earlier.md`, the earlier answers with their citations, instead. |
+| output guard | Policy check (`agent/nodes/output-guard.ts`, `agent/guardrails/output.ts`) | Removes citations to sources nobody retrieved, redacts personal data, and removes sentences that break the risk catalogue, noting it in the report's limitations. |
 | checker | Checks and judge (`agent/nodes/checker.ts`, `agent/evals/`) | Citation validity and coverage, subtasks answered and source diversity, plus a model judge that checks cited sentences against the passages of their sources most relevant to each claim. |
 
-The planner, writer and checker have a LangGraph retry policy (two attempts). A follow-up in answer mode has no subtasks, so it goes straight from planner to writer (the dashed line in the diagram). It reuses the earlier turns' sources, so its citations still resolve.
+Inside each researcher, retrieved text that looks like instructions to an AI is removed before the model, the files or the report see it. The guardrails, their risk catalogue and the OWASP mapping are described in [security.md](security.md).
+
+The input guard, planner, writer, output guard and checker have a LangGraph retry policy (two attempts). A follow-up in answer mode has no subtasks, so it goes straight from planner to writer (the dashed line in the diagram). It reuses the earlier turns' sources, so its citations still resolve.
 
 ## Durability
 

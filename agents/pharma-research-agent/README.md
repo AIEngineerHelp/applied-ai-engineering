@@ -33,6 +33,8 @@ evals & traces  (4 deterministic checks + an LLM-judge groundedness check; every
 - **You can see it working.** A single activity line shows what is happening right now. Expanded, it becomes a chronological list: the planner's thinking as it streams (Gemini thought summaries), the planned searches, each search with its query and result count, what each source yielded, writing and checking. The answer then streams in token by token.
 - **A report inside every answer.** A direct answer, then sections such as efficacy, safety, trial landscape and regulatory status, then limitations. Citations appear as numbered chips; hovering one shows the source, and clicking one opens its excerpt in the sources panel.
 - **Sources you can check.** Sources are listed in citation order and can be filtered by database. Each has its journal and year, trial phase, status and enrollment, or label date; an excerpt of what the agent read; and a link to the original.
+- **Guardrails at every stage.** Questions are screened before any research runs: personal details are removed, off-topic, harmful and prompt-injection requests are refused, and a request for personal medical advice is redirected to the general evidence, with a notice. Search results are treated as untrusted, so text in them that tries to instruct the AI is removed. Each answer is checked against a risk catalogue before it is final. Every decision is listed under Run details › Guardrails; see [docs/security.md](docs/security.md).
+- **Feedback.** Thumbs up or down, with an optional comment, on every answer. `npm run feedback:export` turns the ratings into an eval dataset.
 - **Trust signals in plain words.** A confidence grade, *citations verified* (every citation points to a retrieved source) and *claims supported* (a judge model checked cited sentences against their sources).
 - **Live progress.** Plan → Research → Write → Verify, with one line per sub-agent showing what it is searching and what it has found so far.
 - **Reports that last.** A searchable sidebar of past reports, grouped by date. Export to PDF and Word with a numbered reference list. Public read-only share links that you can turn off. Run again, and delete.
@@ -106,7 +108,7 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 18 tests: the agents and the sub-agent graph, citations, report parsing, and the research graph against in-memory Postgres (a full run, a follow-up answered without new research, and a crashed run resuming from its checkpoint)
+npm test          # 26 tests: the agents and the sub-agent graph, the guardrails (personal data, injection, refusals, redirects, output removals), citations, report parsing, and the research graph against in-memory Postgres (a full run, a follow-up answered without new research, and a crashed run resuming from its checkpoint)
 npm run build
 ```
 
@@ -135,6 +137,8 @@ CI: `.github/workflows/ci.yml` runs lint, type check, tests and build. It is kep
 - **FAERS counts are reports, not rates.** The skills tell the models never to convert them.
 - **Web sources are Google grounding redirect links.** They can stop resolving over time; the title and the cited text are kept.
 - **No accounts yet.** Reports belong to the browser that created them. Clearing cookies loses access, although shared links keep working.
+- **Guardrails are imperfect.** The question screen and the answer's policy check are model calls and can miss things or over-block; personal-data redaction catches identifiers such as record numbers, contacts and dates of birth, not a bare name. See the known gaps in [docs/security.md](docs/security.md).
+- **No per-run budget or per-user rate limit yet.** Only the kill switch and the optional daily cap limit spending.
 - **One model family.** The groundedness judge is the same model that wrote the report. See [llm-judge-reliability](../../evaluations-reliability/llm-judge-reliability/README.md) for why that matters.
 
 ## Earlier evaluation
