@@ -25,3 +25,17 @@ test("adjacent citations become one group, and render as [1, 2]", () => {
 test("prose splits into paragraphs and bullet lists", () => {
   assert.deepEqual(blocks("One.\n\n- a\n- b"), [{ kind: "p", items: ["One."] }, { kind: "ul", items: ["a", "b"] }]);
 });
+
+test("the streamed report markdown parses into a report, even half-written", async () => {
+  const { parseReport, draftForDisplay } = await import("../lib/research/report-format.ts");
+  const md = "# Title here\n\nAnswer [PMID:1].\n\n## Efficacy\n\nWorks [NCT02].\n\n## Limitations\n\n- Small trials.\n\nConfidence: moderate";
+  const r = parseReport(md, "fallback");
+  assert.equal(r.title, "Title here");
+  assert.equal(r.answer, "Answer [PMID:1].");
+  assert.deepEqual(r.sections, [{ heading: "Efficacy", body: "Works [NCT02]." }]);
+  assert.deepEqual(r.limitations, ["Small trials."]);
+  assert.equal(r.confidence, "moderate");
+  const partial = parseReport("# Ti", "fallback");
+  assert.equal(partial.title, "Ti");
+  assert.equal(draftForDisplay("Works [PMID:12"), "Works ");
+});

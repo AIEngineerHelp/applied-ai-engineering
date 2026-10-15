@@ -6,7 +6,8 @@ import { getReport, loadEvents, sourcesByIds } from "@/lib/reports";
 import type { RunEvent } from "@/lib/research/types";
 
 export const maxDuration = 300;
-const POLL_MS = 700;
+// Short enough for streamed text to feel live; each poll is one indexed query.
+const POLL_MS = 400;
 const MAX_MS = 280_000;
 
 export async function GET(request: Request, ctx: RouteContext<"/api/reports/[id]/events">) {

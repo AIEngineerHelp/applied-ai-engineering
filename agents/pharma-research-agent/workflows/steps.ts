@@ -2,17 +2,18 @@
 // default), and each writes only keyed rows, so a retry overwrites its own
 // output instead of duplicating it.
 
-import { eq } from "drizzle-orm";
+import { and, asc, eq, lt } from "drizzle-orm";
 import { FatalError } from "workflow";
 import { db, schema } from "@/lib/db";
 import { plan as makePlan } from "@/lib/research/agents/orchestrator";
 import { research } from "@/lib/research/agents/researcher";
-import { renderReport, synthesize } from "@/lib/research/agents/synthesis";
+import { draftForDisplay, renderReport, synthesize } from "@/lib/research/agents/synthesis";
 import { checks, groundedness } from "@/lib/research/evals";
 import type { LLM } from "@/lib/research/llm";
 import { EventSink, addUsage, loadFiles, loadSources } from "@/lib/research/persist";
 import { getRuntime } from "@/lib/research/runtime";
 import { loadSkills } from "@/lib/research/skills";
+import { throttle } from "@/lib/research/throttle";
 import { Tracer } from "@/lib/research/trace";
 import type { Finding, Plan, Report, Source, Subtask } from "@/lib/research/types";
 import { VirtualFS } from "@/lib/research/vfs";
@@ -25,6 +26,41 @@ async function getReport(id: string) {
   const [row] = await d.select().from(reports).where(eq(reports.id, id));
   if (!row) throw new FatalError(`Report ${id} not found`);
   return row;
+}
+
+/**
+ * Earlier turns of this report's conversation, condensed, so a follow-up is
+ * understood in context ("what about in women?"). Citations are stripped: the
+ * new turn must find and cite its own sources.
+ */
+async function threadContext(row: { threadId: string; position: number }): Promise<string | undefined> {
+  if (row.position === 0) return undefined;
+  const d = await db();
+  const prior = await d
+    .select({ query: reports.query, report: reports.report })
+    .from(reports)
+    .where(and(eq(reports.threadId, row.threadId), lt(reports.position, row.position), eq(reports.status, "completed")))
+    .orderBy(asc(reports.position));
+  if (!prior.length) return undefined;
+  const strip = (t: string) => t.replace(/\s*\[[^\]]+\]/g, "");
+  return [
+    "Earlier in this conversation:",
+    ...prior.map((p, i) => `Q${i + 1}: ${p.query}\nA${i + 1}: ${strip(p.report?.answer ?? "").slice(0, 900)}${p.report?.sections.length ? `\n(Sections: ${p.report.sections.map((x) => x.heading).join("; ")})` : ""}`),
+  ].join("\n");
+}
+
+/** Streams thought summaries for many concurrent model calls, a few writes a second each. */
+function thoughtStream(sink: EventSink, agent: string) {
+  const streams = new Map<string, ReturnType<typeof throttle<{ text: string; done: boolean }>>>();
+  return (key: string, text: string, done: boolean) => {
+    let t = streams.get(key);
+    if (!t) {
+      t = throttle((v) => sink.emit({ type: "thought", key, agent, text: v.text, done: v.done }));
+      streams.set(key, t);
+    }
+    t.push({ text, done });
+    if (done) t.flush();
+  };
 }
 
 /** A tracer and file system for one step, writing through to the database. */
@@ -59,13 +95,16 @@ export async function planStep(reportId: string): Promise<{ plan: Plan; t0: numb
   sink.emit({ type: "skills", available: skills.map((s) => ({ name: s.name, description: s.description })) });
   sink.emit({ type: "span", span: { id: "run", kind: "run", name: "research run", start: 0, status: "running", attrs: {} } });
 
+  const context = await threadContext(row);
+  const thought = thoughtStream(sink, "orchestrator");
   const plan = await tracer.wrap("agent", "orchestrator", "run", async (span) =>
     tracer.wrap("llm", "plan subtasks", span.id, async (s) => {
-      const p = await makePlan(counted(llm, tracer), row.query, skills, MAX_SUBTASKS);
+      const p = await makePlan(counted(llm, tracer), row.query, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false) });
       tracer.close(s, { subtasks: p.subtasks.length, input: tracer.usage.input, output: tracer.usage.output, cost: tracer.usage.cost });
       return p;
     }),
   );
+  thought("plan", "", true);
   vfs.write("/plan.md", ["# Plan", "", plan.focus, "", ...plan.subtasks.map((t) => `- **${t.id}** (${t.source}; skills: ${t.skills.join(", ") || "none"}): ${t.question}`)].join("\n"), "orchestrator");
   sink.emit({ type: "plan", plan, loaded: [...new Set(plan.subtasks.flatMap((t) => t.skills))] });
   await done();
@@ -81,7 +120,13 @@ export async function researchStep(reportId: string, task: Subtask, t0: number):
   const registry = new Map<string, Source>();
   let finding: Finding;
   try {
-    finding = await research({ llm, tracer, vfs, registry, onSources: (subtask, sources) => sink.emit({ type: "sources", subtask, sources }) }, task, toolsets[task.source], loadSkills(), "run");
+    finding = await research(
+      { llm, tracer, vfs, registry, onSources: (subtask, sources) => sink.emit({ type: "sources", subtask, sources }), onThought: thoughtStream(sink, task.id) },
+      task,
+      toolsets[task.source],
+      loadSkills(),
+      "run",
+    );
   } catch (err) {
     finding = { subtask: task.id, summary: `This sub-agent failed: ${(err as Error).message}`, claims: [], gaps: [task.question] };
   }
@@ -98,7 +143,15 @@ export async function synthesisStep(reportId: string, plan: Plan, t0: number): P
   const registry = new Map((await loadSources(reportId)).map((s) => [s.id, s] as const));
   const { llm } = getRuntime();
   const skill = loadSkills().find((s) => s.source === "synthesis");
-  const report = await synthesize(llm, tracer, vfs, row.query, plan, registry, skill, "run");
+  const draft = throttle((text: string) => sink.emit({ type: "draft", text: draftForDisplay(text) }));
+  const thought = thoughtStream(sink, "synthesis");
+  const report = await synthesize(llm, tracer, vfs, row.query, plan, registry, skill, "run", {
+    context: await threadContext(row),
+    onText: (t) => draft.push(t),
+    onThought: (t) => thought("synthesis", t, false),
+  });
+  draft.flush();
+  thought("synthesis", "", true);
   sink.emit({ type: "report", report, markdown: renderReport(report) });
   await done();
   const d = await db();

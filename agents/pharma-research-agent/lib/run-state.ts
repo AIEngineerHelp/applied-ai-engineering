@@ -17,6 +17,10 @@ export interface RunState {
   evals?: EvalResult[];
   error?: string;
   doneMs?: number;
+  /** Thought summaries by model call: "plan", "agent-1:t2", "synthesis". */
+  thoughts: Map<string, { agent: string; text: string; done: boolean }>;
+  /** The report markdown as it streams, before the final report arrives. */
+  draft?: string;
 }
 
 /** What the database sends for a "sources" event before enrichment. */
@@ -33,6 +37,7 @@ export function initialState(report: SerializedReport, sources: Source[], events
     sources: new Map(sources.map((x) => [x.id, x])),
     sourcesBy: new Map(),
     findings: new Map(),
+    thoughts: new Map(),
     result: report.report ?? undefined,
     evals: report.evals ?? undefined,
     error: report.error ?? undefined,
@@ -72,6 +77,15 @@ export function apply(s: RunState, e: WireEvent) {
       break;
     case "evals":
       s.evals = e.evals;
+      break;
+    case "thought": {
+      const prev = s.thoughts.get(e.key);
+      // A final "done" marker may carry no text; keep what streamed.
+      s.thoughts.set(e.key, { agent: e.agent, text: e.text || prev?.text || "", done: !!e.done });
+      break;
+    }
+    case "draft":
+      s.draft = e.text;
       break;
     case "error":
       s.error = e.message;
@@ -123,4 +137,14 @@ export function liveUsage(s: RunState) {
     else cost += Number(x.attrs.cost);
   }
   return { input, output, calls, tools, cost: priced ? cost : undefined };
+}
+
+/** The first bold heading in a thought summary ("**Choosing sources**"), as a short status line. */
+export function thoughtTitles(text: string): string[] {
+  return [...text.matchAll(/\*\*([^*\n]{3,80})\*\*/g)].map((m) => m[1].trim());
+}
+
+/** A copy of the state with fresh collections, for React to see a change. */
+export function cloneState(prev: RunState): RunState {
+  return { ...prev, spans: new Map(prev.spans), files: new Map(prev.files), sources: new Map(prev.sources), sourcesBy: new Map(prev.sourcesBy), findings: new Map(prev.findings), thoughts: new Map(prev.thoughts) };
 }

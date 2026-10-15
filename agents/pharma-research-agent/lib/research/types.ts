@@ -112,5 +112,9 @@ export type RunEvent =
   | { type: "report"; report: Report; markdown: string }
   | { type: "evals"; evals: EvalResult[] }
   | { type: "usage"; usage: Usage; calls: number; toolCalls: number }
+  /** The model's thought summary for one call, as it streams (text so far). */
+  | { type: "thought"; key: string; agent: string; text: string; done?: boolean }
+  /** The report as it is being written (markdown so far). */
+  | { type: "draft"; text: string }
   | { type: "error"; message: string }
   | { type: "done"; ms: number };

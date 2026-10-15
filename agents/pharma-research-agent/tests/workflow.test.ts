@@ -14,7 +14,7 @@ const { reports, reportEvents, reportSources, reportFiles } = schema;
 
 async function newReport(id: string, query = "What is the evidence on GLP-1 receptor agonists and pancreatitis?") {
   const d = await db();
-  await d.insert(reports).values({ id, workspaceId: "a".repeat(32), query, model: "offline (scripted)" });
+  await d.insert(reports).values({ id, threadId: id, workspaceId: "a".repeat(32), query, model: "offline (scripted)" });
 }
 
 test("a run goes queued → completed, and every stage is persisted", async () => {

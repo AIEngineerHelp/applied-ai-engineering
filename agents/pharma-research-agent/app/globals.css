@@ -193,3 +193,22 @@
   0% { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
 }
+
+/* The typing caret follows the last word while the answer streams. */
+.streaming .prose-report > :last-child p:last-child::after,
+.streaming .prose-report > :last-child li:last-child::after,
+.streaming .prose-report > p:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: var(--primary);
+  opacity: 0.7;
+  animation: caret 1s steps(2, start) infinite;
+}
+@keyframes caret {
+  to { visibility: hidden; }
+}

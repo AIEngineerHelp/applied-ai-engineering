@@ -37,6 +37,10 @@ export interface GenerateRequest {
   /** Let the model search the web; its sources come back in `grounding`. */
   search?: boolean;
   temperature?: number;
+  /** Streams the model's thought summaries as they arrive (the text so far). */
+  onThought?: (soFar: string) => void;
+  /** Streams the answer text as it arrives (the text so far). */
+  onText?: (soFar: string) => void;
 }
 
 export interface GenerateResult {
@@ -51,6 +55,8 @@ export interface GenerateResult {
   grounding?: { title: string; url: string; text: string }[];
   /** Which sentences of the answer came from which grounding sources (indices into `grounding`). */
   supports?: { text: string; chunks: number[] }[];
+  /** The model's thought summaries, when requested. */
+  thoughts?: string;
   /** How many web searches the model ran (grounding is billed per query). */
   searches?: number;
   model: string;

@@ -256,8 +256,8 @@ export function RunDetails({ initial }: { initial: Snapshot }) {
   const { state } = useReportStream(initial);
   return (
     <div className="mx-auto w-full max-w-[1240px] px-4 pt-6 pb-24 sm:px-6 lg:px-10 lg:pt-10">
-      <Link href={`/r/${state.report.id}`} className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Back to report
+      <Link href={`/r/${state.report.threadId}#turn-${state.report.id}`} className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> Back to conversation
       </Link>
       <h1 className="mt-3 text-[22px] font-semibold tracking-tight">Run details</h1>
       <p className="mt-1 max-w-[80ch] text-[13.5px] text-muted-foreground">{state.report.query}</p>

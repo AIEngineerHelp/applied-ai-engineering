@@ -7,19 +7,19 @@ import { ReportsProvider } from "@/components/app/reports-provider";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ReportSkeleton } from "@/components/report/report-skeleton";
-import { ReportView } from "@/components/report/report-view";
-import { getSharedReport, reportSnapshot } from "@/lib/reports";
+import { ThreadView } from "@/components/chat/thread-view";
+import { getSharedThread, reportSnapshot } from "@/lib/reports";
 
 async function Loader({ params }: { params: Promise<{ shareId: string }> }) {
   // A report is always read at request time (it is private, and it changes while running).
   await connection();
   const { shareId } = await params;
-  const row = await getSharedReport(shareId);
-  if (!row) notFound();
-  return <ReportView initial={await reportSnapshot(row)} share={shareId} />;
+  const turns = await getSharedThread(shareId);
+  if (!turns.length) notFound();
+  return <ThreadView threadId={turns[0].threadId} share={shareId} initial={await Promise.all(turns.map(reportSnapshot))} />;
 }
 
-/** A shared report: read-only, no workspace sidebar. */
+/** A shared conversation: read-only, no workspace sidebar. */
 export default function SharedReport({ params }: PageProps<"/s/[shareId]">) {
   return (
     <ReportsProvider>

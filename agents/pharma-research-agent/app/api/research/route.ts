@@ -9,7 +9,7 @@ import { modelName } from "@/lib/research/runtime";
 import { WORKSPACE_COOKIE } from "@/lib/workspace-cookie";
 import { researchWorkflow } from "@/workflows/research";
 
-const Body = z.object({ query: z.string().trim().min(QUERY_MIN).max(QUERY_MAX) });
+const Body = z.object({ query: z.string().trim().min(QUERY_MIN).max(QUERY_MAX), threadId: z.string().regex(/^[a-z0-9]{12}$/).optional() });
 
 export async function POST(request: Request) {
   const workspaceId = (await cookies()).get(WORKSPACE_COOKIE)?.value;
@@ -23,7 +23,12 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return json(400, { error: `Write a research question between ${QUERY_MIN} and ${QUERY_MAX} characters.` });
 
-  const report = await createReport(workspaceId, parsed.data.query, modelName());
+  let report;
+  try {
+    report = await createReport(workspaceId, parsed.data.query, modelName(), parsed.data.threadId);
+  } catch {
+    return json(404, { error: "That conversation no longer exists." });
+  }
   try {
     const run = await start(researchWorkflow, [report.id]);
     await setWorkflowRun(report.id, run.runId);
@@ -32,5 +37,5 @@ export async function POST(request: Request) {
     await markFailed(report.id, "The research job could not be started.");
     return json(502, { error: "The research job could not be started. Please try again." });
   }
-  return json(201, { id: report.id });
+  return json(201, { id: report.id, threadId: report.threadId });
 }

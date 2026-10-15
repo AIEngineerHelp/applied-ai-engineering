@@ -20,6 +20,8 @@ export function eventKey(e: RunEvent): string {
       return `sources:${e.subtask}`;
     case "finding":
       return `finding:${e.finding.subtask}`;
+    case "thought":
+      return `thought:${e.key}`;
     default:
       return e.type;
   }

@@ -1,6 +1,6 @@
 # Pharma research agent
 
-A research workspace for drug and clinical-evidence questions. Ask a question; an agent team plans the research, searches **PubMed, ClinicalTrials.gov, FDA labels and the web** in parallel, and writes a report in which every claim is cited to the study, trial or label it came from. Each report is checked automatically, can be exported to PDF or Word, and can be shared by link.
+A research assistant for drug and clinical-evidence questions, in a chat interface. Ask a question; an agent team plans the research, searches **PubMed, ClinicalTrials.gov, FDA labels and the web** in parallel, and streams back an answer in which every claim is cited to the study, trial or label it came from. Ask follow-ups in the same conversation. Each answer is checked automatically, can be exported to PDF or Word, and conversations can be shared by link.
 
 It is a production-shaped Next.js application rather than a notebook. Runs are durable jobs that survive a closed tab or a crashed function, everything is stored in Postgres, and progress streams live to the browser. It is also a worked example of an agent architecture you can read and adapt:
 
@@ -29,7 +29,9 @@ evals & traces  (4 deterministic checks + an LLM-judge groundedness check; every
 
 ## What users get
 
-- **A report, not a chat.** A direct answer, then sections such as efficacy, safety, trial landscape and regulatory status, then limitations. Citations appear as numbered chips; hovering one shows the source, and clicking one opens its excerpt in the sources panel.
+- **A conversation.** Each question is a turn. Follow-ups ("what about in type 1 diabetes?") are planned and answered with the earlier answers as context, and each turn runs its own cited research.
+- **You can see it working.** A single activity line shows what is happening right now. Expanded, it becomes a chronological list: the planner's thinking as it streams (Gemini thought summaries), the planned searches, each search with its query and result count, what each source yielded, writing and checking. The answer then streams in token by token.
+- **A report inside every answer.** A direct answer, then sections such as efficacy, safety, trial landscape and regulatory status, then limitations. Citations appear as numbered chips; hovering one shows the source, and clicking one opens its excerpt in the sources panel.
 - **Sources you can check.** Sources are listed in citation order and can be filtered by database. Each has its journal and year, trial phase, status and enrollment, or label date; an excerpt of what the agent read; and a link to the original.
 - **Trust signals in plain words.** A confidence grade, *citations verified* (every citation points to a retrieved source) and *claims supported* (a judge model checked cited sentences against their sources).
 - **Live progress.** Plan → Research → Write → Verify, with one line per sub-agent showing what it is searching and what it has found so far.
@@ -46,7 +48,7 @@ There are no accounts yet. Each browser gets a private, anonymous workspace thro
 | UI | Tailwind CSS v4, shadcn/ui (Radix), IBM Plex Sans + Newsreader + IBM Plex Mono, light and dark themes |
 | Durable runs | [Vercel Workflow](https://workflow-sdk.dev): plan, sub-agents (in parallel), synthesis, evals and finalize are separate steps, each retried on failure. A run resumes from the last completed step. |
 | Data | Postgres via Drizzle ORM with versioned migrations (`drizzle/`). Neon in production; embedded [PGlite](https://pglite.dev) locally and in tests (no Docker). |
-| Live updates | Server-sent events read from the `report_events` table. Clients resume from the last sequence number after a disconnect. |
+| Live updates | Gemini responses stream (`streamGenerateContent`, SSE), including thought summaries. Agents write thoughts and the report draft to `report_events` a few times a second, and the browser follows them over server-sent events, resuming from the last sequence number after a disconnect. |
 | Model | Gemini (`gemini-3.8-flash`) over the REST `generateContent` endpoint, with no SDK. Structured output, function calling with forced `finish` on the last turn, Google Search grounding, and thought signatures preserved across turns. |
 | Knowledge bases | NCBI E-utilities, ClinicalTrials.gov API v2 and openFDA. All are free, rate-limited client side, with timeouts and bounded retries. |
 | Exports | `@react-pdf/renderer` (PDF), `docx` (Word) |
@@ -84,7 +86,7 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 15 tests: agent core, citations, and the durable pipeline against in-memory Postgres
+npm test          # 16 tests: agent core, streaming client, citations, report parsing, and the durable pipeline against in-memory Postgres
 npm run build
 ```
 

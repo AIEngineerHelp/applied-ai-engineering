@@ -43,6 +43,8 @@ export interface ResearchContext {
   /** Every source any agent retrieved, by id. */
   registry: Map<string, Source>;
   onSources: (subtask: string, sources: Source[]) => void;
+  /** Streams a sub-agent's thought summary for one model call (key identifies the call). */
+  onThought?: (key: string, soFar: string, done: boolean) => void;
 }
 
 /** The markdown file a source is saved as. */
@@ -76,7 +78,17 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
     for (let turn = 0; turn < MAX_TURNS; turn++) {
       const last = turn === MAX_TURNS - 1;
       const res = await ctx.tracer.wrap("llm", `${task.id} turn ${turn + 1}`, span.id, async (s) => {
-        const r = await ctx.llm.generate({ agent: `researcher:${toolset.kind}`, system, turns, tools: last ? [FINISH] : tools, force: last ? "finish" : undefined, temperature: 0.2 });
+        const key = `${task.id}:t${turn + 1}`;
+        const r = await ctx.llm.generate({
+          agent: `researcher:${toolset.kind}`,
+          system,
+          turns,
+          tools: last ? [FINISH] : tools,
+          force: last ? "finish" : undefined,
+          temperature: 0.2,
+          onThought: ctx.onThought ? (t) => ctx.onThought!(key, t, false) : undefined,
+        });
+        if (ctx.onThought && r.thoughts) ctx.onThought(key, r.thoughts, true);
         ctx.tracer.addUsage(r.usage);
         ctx.tracer.close(s, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, calls: r.calls.map((c) => c.name).join(", ") });
         return r;
@@ -119,7 +131,9 @@ async function webResearch(ctx: ResearchContext, task: Subtask, system: string, 
       turns: [{ role: "user", text: task.question }],
       search: true,
       temperature: 0.2,
+      onThought: ctx.onThought ? (t) => ctx.onThought!(`${task.id}:web`, t, false) : undefined,
     });
+    if (ctx.onThought && r.thoughts) ctx.onThought(`${task.id}:web`, r.thoughts, true);
     ctx.tracer.addUsage(r.usage);
     ctx.tracer.addToolCall();
     ctx.tracer.close(s, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, results: r.grounding?.length ?? 0, searches: r.searches });

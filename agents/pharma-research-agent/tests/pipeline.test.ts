@@ -108,21 +108,32 @@ test("source parsers normalise PubMed XML, trial records and FDA labels", () => 
   assert.match(l.text, /^Boxed warning: WARNING: X/);
 });
 
-test("the Gemini client echoes the model's content back unchanged, so thought signatures survive", async () => {
-  const sent: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { parametersJsonSchema?: unknown }[] }[]; toolConfig?: unknown }[] = [];
+test("the Gemini client streams thoughts and text, and echoes the model's content back with its signature", async () => {
+  const sent: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { parametersJsonSchema?: unknown }[] }[]; toolConfig?: unknown; generationConfig?: Record<string, unknown> }[] = [];
   const real = globalThis.fetch;
+  // A streamed response, as the API sends it: thought parts, then a function call, then a signature.
+  const sse = (chunks: unknown[]) => new Response(chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join(""), { headers: { "content-type": "text/event-stream" } });
   globalThis.fetch = (async (_url: string, init: { body: string }) => {
     sent.push(JSON.parse(init.body));
-    const content = { role: "model", parts: [{ functionCall: { name: "search_pubmed", args: { query: "x" } }, thoughtSignature: "SIG123" }] };
-    return new Response(JSON.stringify({ candidates: [{ content }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 2, thoughtsTokenCount: 5 } }));
+    return sse([
+      { candidates: [{ content: { role: "model", parts: [{ text: "**Choosing a search**", thought: true }] } }], usageMetadata: { promptTokenCount: 10 } },
+      { candidates: [{ content: { role: "model", parts: [{ functionCall: { name: "search_pubmed", args: { query: "x" } }, thoughtSignature: "SIG123" }] } }] },
+      { candidates: [{ content: { role: "model", parts: [{ text: "" }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 2, thoughtsTokenCount: 5 } },
+    ]);
   }) as typeof fetch;
   try {
     const llm = createGemini({ apiKey: "k", inputPrice: 1, outputPrice: 2 });
-    const first = await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], tools: [{ name: "search_pubmed", description: "d", parameters: { type: "object" } }] });
+    const thoughts: string[] = [];
+    const first = await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], tools: [{ name: "search_pubmed", description: "d", parameters: { type: "object" } }], onThought: (t) => thoughts.push(t) });
     assert.equal(first.calls[0].name, "search_pubmed");
+    assert.deepEqual(thoughts, ["**Choosing a search**"]);
+    assert.equal(first.thoughts, "**Choosing a search**");
     assert.equal(first.usage.cost, (10 * 1 + 7 * 2) / 1e6);
+    assert.deepEqual(sent[0].generationConfig?.thinkingConfig, { includeThoughts: true });
     await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }, { role: "model", text: "", calls: first.calls, raw: first.raw }, { role: "tool", results: [{ name: "search_pubmed", response: [1, 2] }] }] });
     const contents = sent[1].contents;
+    // Thought text is not echoed back; the call keeps its signature.
+    assert.equal(contents[1].parts.length, 1);
     assert.equal(contents[1].parts[0].thoughtSignature, "SIG123");
     assert.equal(contents[2].role, "user");
     assert.deepEqual(contents[2].parts[0].functionResponse, { name: "search_pubmed", response: { result: [1, 2] } });

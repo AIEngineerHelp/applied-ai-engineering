@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SerializedReport } from "@/lib/reports";
 import type { Source } from "@/lib/research/types";
-import { apply, initialState, isTerminal, type RunState } from "@/lib/run-state";
+import { apply, cloneState, initialState, isTerminal, type RunState } from "@/lib/run-state";
 
 export interface Snapshot {
   report: SerializedReport;
@@ -49,7 +49,7 @@ export function useReportStream(initial: Snapshot, share?: string) {
         if (msg.event && msg.seq) {
           seq.current = msg.seq;
           setState((prev) => {
-            const next = { ...prev, spans: new Map(prev.spans), files: new Map(prev.files), sources: new Map(prev.sources), sourcesBy: new Map(prev.sourcesBy), findings: new Map(prev.findings) };
+            const next = cloneState(prev);
             apply(next, msg.event as never);
             if (msg.status) next.report = { ...next.report, status: msg.status };
             return next;

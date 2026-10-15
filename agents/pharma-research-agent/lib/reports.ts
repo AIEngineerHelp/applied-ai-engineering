@@ -2,7 +2,7 @@
 // here, so access rules live in one place: a report is visible to the
 // workspace that created it, or to anyone holding its share link.
 import "server-only";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
 import { db, schema } from "./db";
 import { loadEvents, loadFiles, loadSources } from "./research/persist";
@@ -13,7 +13,8 @@ const ids = customAlphabet("0123456789abcdefghijkmnpqrstuvwxyz", 12);
 const shareIds = customAlphabet("0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz", 22);
 
 export type ReportRow = typeof reports.$inferSelect;
-export type ReportSummary = Pick<ReportRow, "id" | "query" | "title" | "status" | "createdAt" | "confidence">;
+/** One conversation in the sidebar: its first question, latest status and turn count. */
+export type ReportSummary = Pick<ReportRow, "id" | "query" | "title" | "status" | "createdAt" | "confidence"> & { turns: number };
 export type Access = { workspaceId: string } | { shareId: string };
 
 export const QUERY_MIN = 12;
@@ -21,30 +22,69 @@ export const QUERY_MAX = 500;
 
 export async function listReports(workspaceId: string, limit = 100): Promise<ReportSummary[]> {
   const d = await db();
-  return d
-    .select({ id: reports.id, query: reports.query, title: reports.title, status: reports.status, createdAt: reports.createdAt, confidence: reports.confidence })
+  const rows = await d
+    .select({ id: reports.id, threadId: reports.threadId, position: reports.position, query: reports.query, title: reports.title, status: reports.status, createdAt: reports.createdAt, confidence: reports.confidence })
     .from(reports)
     .where(eq(reports.workspaceId, workspaceId))
     .orderBy(desc(reports.createdAt))
-    .limit(limit);
+    .limit(limit * 4);
+  // One entry per conversation: titled by its first turn, dated and statused by its latest.
+  const threads = new Map<string, ReportSummary>();
+  for (const r of rows) {
+    const t = threads.get(r.threadId);
+    if (!t) threads.set(r.threadId, { id: r.threadId, query: r.query, title: r.title, status: r.status, createdAt: r.createdAt, confidence: r.confidence, turns: 1 });
+    else {
+      t.turns += 1;
+      if (r.position === 0) Object.assign(t, { query: r.query, title: r.title ?? t.title });
+    }
+  }
+  return [...threads.values()].slice(0, limit);
+}
+
+/** Resolves a share id to the thread it opens (share ids live on a thread's first turn). */
+async function sharedThread(shareId: string): Promise<string | null> {
+  const d = await db();
+  const [row] = await d.select({ threadId: reports.threadId }).from(reports).where(eq(reports.shareId, shareId));
+  return row?.threadId ?? null;
 }
 
 export async function getReport(id: string, access: Access): Promise<ReportRow | null> {
   const d = await db();
-  const cond = "workspaceId" in access ? and(eq(reports.id, id), eq(reports.workspaceId, access.workspaceId)) : and(eq(reports.id, id), eq(reports.shareId, access.shareId));
-  const [row] = await d.select().from(reports).where(cond);
+  if ("workspaceId" in access) {
+    const [row] = await d.select().from(reports).where(and(eq(reports.id, id), eq(reports.workspaceId, access.workspaceId)));
+    return row ?? null;
+  }
+  const threadId = await sharedThread(access.shareId);
+  if (!threadId) return null;
+  const [row] = await d.select().from(reports).where(and(eq(reports.id, id), eq(reports.threadId, threadId)));
   return row ?? null;
 }
 
-export async function getSharedReport(shareId: string): Promise<ReportRow | null> {
+/** Every turn of a conversation, in order, if the caller may see it. */
+export async function getThread(threadId: string, access: Access): Promise<ReportRow[]> {
   const d = await db();
-  const [row] = await d.select().from(reports).where(eq(reports.shareId, shareId));
-  return row ?? null;
+  if ("workspaceId" in access) return d.select().from(reports).where(and(eq(reports.threadId, threadId), eq(reports.workspaceId, access.workspaceId))).orderBy(asc(reports.position));
+  const shared = await sharedThread(access.shareId);
+  if (shared !== threadId) return [];
+  return d.select().from(reports).where(eq(reports.threadId, threadId)).orderBy(asc(reports.position));
 }
 
-export async function createReport(workspaceId: string, query: string, model: string): Promise<ReportRow> {
+export async function getSharedThread(shareId: string): Promise<ReportRow[]> {
+  const threadId = await sharedThread(shareId);
+  return threadId ? getThread(threadId, { shareId }) : [];
+}
+
+/** Starts a conversation, or adds a follow-up turn to one the workspace owns. */
+export async function createReport(workspaceId: string, query: string, model: string, threadId?: string): Promise<ReportRow> {
   const d = await db();
-  const [row] = await d.insert(reports).values({ id: ids(), workspaceId, query, model }).returning();
+  const id = ids();
+  let position = 0;
+  if (threadId) {
+    const turns = await d.select({ position: reports.position }).from(reports).where(and(eq(reports.threadId, threadId), eq(reports.workspaceId, workspaceId)));
+    if (!turns.length) throw new Error("Conversation not found");
+    position = Math.max(...turns.map((t) => t.position)) + 1;
+  }
+  const [row] = await d.insert(reports).values({ id, workspaceId, query, model, threadId: threadId ?? id, position }).returning();
   return row;
 }
 
@@ -58,15 +98,17 @@ export async function markFailed(id: string, error: string) {
   await d.update(reports).set({ status: "failed", error, completedAt: new Date() }).where(eq(reports.id, id));
 }
 
-export async function deleteReport(id: string, workspaceId: string): Promise<boolean> {
+/** Deletes a whole conversation (all its turns). */
+export async function deleteThread(threadId: string, workspaceId: string): Promise<boolean> {
   const d = await db();
-  const rows = await d.delete(reports).where(and(eq(reports.id, id), eq(reports.workspaceId, workspaceId))).returning();
+  const rows = await d.delete(reports).where(and(eq(reports.threadId, threadId), eq(reports.workspaceId, workspaceId))).returning();
   return rows.length > 0;
 }
 
-/** Turns sharing on (returns the share id) or off (returns null). */
-export async function setSharing(id: string, workspaceId: string, on: boolean): Promise<string | null> {
+/** Turns a conversation's public link on (returns the share id) or off (returns null). */
+export async function setSharing(threadId: string, workspaceId: string, on: boolean): Promise<string | null> {
   const d = await db();
+  const id = threadId; // share ids live on the first turn, whose id is the thread id
   const [row] = await d.select({ shareId: reports.shareId }).from(reports).where(and(eq(reports.id, id), eq(reports.workspaceId, workspaceId)));
   if (!row) throw new Error("Not found");
   const shareId = on ? (row.shareId ?? shareIds()) : null;
@@ -107,6 +149,8 @@ export type SerializedReport = ReturnType<typeof serializeRow>;
 export function serializeRow(r: ReportRow) {
   return {
     id: r.id,
+    threadId: r.threadId,
+    position: r.position,
     query: r.query,
     title: r.title,
     status: r.status,

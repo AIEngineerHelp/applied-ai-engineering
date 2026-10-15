@@ -36,7 +36,14 @@ const PLAN_SCHEMA: Schema = {
   required: ["focus", "subtasks"],
 };
 
-export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks: number): Promise<Plan> {
+export interface PlanOptions {
+  /** Earlier turns of the conversation, so a follow-up is planned in context. */
+  context?: string;
+  /** Streams the planner's thought summaries. */
+  onThought?: (soFar: string) => void;
+}
+
+export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks: number, opts: PlanOptions = {}): Promise<Plan> {
   const system = [
     "You are the orchestrator of a pharmaceutical research team. You do not answer questions yourself.",
     "Split the research query into 2 to " + maxSubtasks + " subtasks that can run in parallel, each answered from exactly one knowledge base.",
@@ -48,7 +55,8 @@ export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks
     "Skills you can assign (load only the ones a subtask needs):",
     skillIndex(skills.filter((s) => s.source !== "synthesis")),
   ].join("\n");
-  const res = await llm.generate({ agent: "orchestrator", system, turns: [{ role: "user", text: query }], schema: PLAN_SCHEMA, temperature: 0.2 });
+  const user = opts.context ? `${opts.context}\n\nFollow-up question (plan research for this; reuse context only to resolve what it refers to):\n${query}` : query;
+  const res = await llm.generate({ agent: "orchestrator", system, turns: [{ role: "user", text: user }], schema: PLAN_SCHEMA, temperature: 0.2, onThought: opts.onThought });
   const raw = res.json as { focus: string; subtasks: { question: string; source: string; skills: string[]; why: string }[] };
   const known = new Set(skills.map((s) => s.name));
   const kinds = new Set<string>(SOURCES.map((s) => s.kind));

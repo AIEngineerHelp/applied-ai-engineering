@@ -44,14 +44,37 @@ function returnedIds(turns: Turn[]): string[] {
   return list.map((x) => x.id);
 }
 
+const delay = () => Number(process.env.RESEARCH_OFFLINE_DELAY_MS) || 40;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Streams text in small pieces, like the live model, through a callback. */
+async function streamOut(text: string, cb: ((soFar: string) => void) | undefined, totalMs: number) {
+  if (!cb) return;
+  const words = text.split(/(?<=\s)/);
+  const step = Math.max(1, Math.ceil(words.length / 40));
+  for (let i = step; i < words.length + step; i += step) {
+    cb(words.slice(0, i).join(""));
+    await sleep(totalMs / 40);
+  }
+}
+
+const THOUGHTS: Record<string, string> = {
+  orchestrator: "**Reading the question**\n\nThe question asks about a drug class and one adverse outcome, so I need pooled trial evidence, the registered trials and the label wording.\n\n**Choosing the sources**\n\nPubMed for meta-analyses, ClinicalTrials.gov for the trial landscape, and the FDA label for the regulator's position.",
+  researcher: "**Searching**\n\nStarting with a focused query, then reading the most relevant results before writing the finding.",
+  synthesis: "**Organising the findings**\n\nGrouping the evidence by design and noting where sources agree or conflict.",
+};
+
 export function offlineLLM(): LLM {
   return {
     model: "offline (scripted)",
     mode: "offline",
     async generate(req: GenerateRequest): Promise<GenerateResult> {
       // RESEARCH_OFFLINE_DELAY_MS simulates model latency, to see the live progress UI.
-      await new Promise((r) => setTimeout(r, Number(process.env.RESEARCH_OFFLINE_DELAY_MS) || 40));
+      const kind = req.agent.startsWith("researcher") ? "researcher" : req.agent;
+      if (THOUGHTS[kind]) await streamOut(THOUGHTS[kind], req.onThought, delay() * 0.6);
+      await sleep(delay() * 0.4);
       const base = { text: "", calls: [], usage: usage(1200, 200), model: "offline (scripted)" } as GenerateResult;
+      if (THOUGHTS[kind]) base.thoughts = THOUGHTS[kind];
       if (req.agent === "orchestrator") {
         const json = {
           focus: "GLP-1 receptor agonists (semaglutide) and pancreatitis: trial evidence, registered trials and label warnings.",
@@ -81,14 +104,23 @@ export function offlineLLM(): LLM {
       }
       if (req.agent === "synthesis") {
         const ids = [...new Set([...(req.turns[0] as { text: string }).text.matchAll(/^\[([^\]]+)\]/gm)].map((m) => m[1]))];
-        const json = {
-          title: "Offline run: structure only",
-          answer: `This report was written by the offline stand-in, so its text is a placeholder [${ids[0]}]. The pipeline, the files and the citations are real.`,
-          sections: [{ heading: "Sources used", body: ids.slice(0, 6).map((id) => `A placeholder sentence citing a recorded source [${id}].`).join(" ") }],
-          limitations: ["Offline mode: run with --live for a real report."],
-          confidence: "low",
-        };
-        return { ...base, text: JSON.stringify(json), json };
+        const md = [
+          "# Offline run: structure only",
+          "",
+          `This report was written by the offline stand-in, so its text is a placeholder [${ids[0]}]. The pipeline, the files and the citations are real.`,
+          "",
+          "## Sources used",
+          "",
+          ids.slice(0, 6).map((id) => `A placeholder sentence citing a recorded source [${id}].`).join(" "),
+          "",
+          "## Limitations",
+          "",
+          "- Offline mode: run with a Gemini key for a real report.",
+          "",
+          "Confidence: low",
+        ].join("\n");
+        await streamOut(md, req.onText, delay() * 2);
+        return { ...base, text: md };
       }
       if (req.agent === "judge") {
         const n = (req.turns[0] as { text: string }).text.match(/^\d+\. CLAIM/gm)?.length ?? 0;

@@ -13,6 +13,10 @@ export const reports = pgTable(
   {
     id: text("id").primaryKey(),
     workspaceId: text("workspace_id").notNull(),
+    /** The conversation this report is a turn of; the first turn's id. */
+    threadId: text("thread_id").notNull(),
+    /** Turn number within the thread, from 0. */
+    position: integer("position").notNull().default(0),
     query: text("query").notNull(),
     title: text("title"),
     status: text("status", { enum: ["queued", "running", "completed", "failed", "cancelled"] }).notNull().default("queued"),
@@ -34,7 +38,7 @@ export const reports = pgTable(
     startedAt: timestamp("started_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
-  (t) => [index("reports_workspace_idx").on(t.workspaceId, t.createdAt), uniqueIndex("reports_share_idx").on(t.shareId)],
+  (t) => [index("reports_workspace_idx").on(t.workspaceId, t.createdAt), index("reports_thread_idx").on(t.threadId, t.position), uniqueIndex("reports_share_idx").on(t.shareId)],
 );
 
 /**
