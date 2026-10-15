@@ -140,6 +140,16 @@ function lines(state: RunState): Line[] {
   return out.sort((a, b) => a.at - b.at);
 }
 
+const STAGE: Record<ReturnType<typeof phase>, string> = {
+  queued: "Starting…",
+  planning: "Planning the research",
+  researching: "Researching the sources",
+  writing: "Writing the answer",
+  verifying: "Checking the answer",
+  done: "Done",
+  failed: "Stopped",
+};
+
 function fmtElapsed(ms: number) {
   const s = Math.round(ms / 1000);
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
@@ -161,8 +171,11 @@ export function ActivityTrail({ state }: { state: RunState }) {
   const searches = [...state.spans.values()].filter((s) => s.kind === "tool").length;
   const elapsed = state.report.durationMs ?? state.doneMs;
   const p = phase(state);
+  // Open, the list already shows the live step, so the header names the stage instead of repeating it.
   const summary = running
-    ? (current?.text ?? (p === "queued" ? "Starting…" : "Working…"))
+    ? expanded
+      ? STAGE[p]
+      : (current?.text ?? STAGE[p])
     : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`;
 
   return (
