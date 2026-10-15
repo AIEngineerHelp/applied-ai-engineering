@@ -11,6 +11,8 @@ Each step plays as a short sequence of beats, one thing at a time. A caption ove
 - A skill card lifts out of the rack only when the task matches it. The press squeezes old blocks flat when the window passes 160k. Finished work waits at the gate for a person.
 - Every step that calls the model ends with the same beat: the gears race, steam rises, and a light sweeps the whole tray, because each call re-reads the whole window and is billed for all of it. The gauges move at that moment.
 
+**Live:** [harness-anatomy.vercel.app](https://harness-anatomy.vercel.app).
+
 Switch parts off in the left column and the run starts again without them: the missing part becomes a dashed ghost, and the run shows what goes wrong. Slow, Normal and Fast change the pace. The explanation, a table of every part pulled out one at a time, the limits and the sources are in the **About & sources** panel.
 
 ## The four jobs and the eleven parts
