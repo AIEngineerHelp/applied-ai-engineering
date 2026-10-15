@@ -46,6 +46,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Anatomy of a harness](agents/harness-anatomy/README.md) draws an agent harness as an animated isometric factory on one full-screen page: the model sealed in the middle, the context window as a tray in front of it, and eleven numbered parts around it for context management (skills, memory, summarization, offloading), the execution environment (REPL, sandbox, file system, write and run code), delegation (planning, subagents) and steering (human in the loop). Watch crates of work move between stations as it fixes a failing test, then pull parts out and run it again: without subagents the run bills about four times the tokens, and without subagents, offloading and summarization it runs out of window. Every number comes from one scripted run; no API keys.
 
+
+[Pharma research agent](agents/pharma-research-agent/README.md) is a production-shaped research workspace for drug and clinical-evidence questions. An orchestrator reads a skills layer and plans the research, parallel sub-agents search PubMed, ClinicalTrials.gov, FDA labels and the web, and a synthesis agent writes a report with every claim cited and checked. It's a Next.js 16 app with durable Vercel Workflow runs, Postgres, live progress, PDF and Word export and share links. It runs offline with no key; live research needs a Gemini key.
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

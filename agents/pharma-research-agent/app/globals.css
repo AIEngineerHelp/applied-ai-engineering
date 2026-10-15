@@ -1,0 +1,233 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens. A calm, clinical palette: slate surfaces, one deep medical
+ * blue for links and citations, and status colours only where they carry
+ * meaning (success, warning, failure). Light and dark are designed together;
+ * every text pair meets WCAG AA (4.5:1) on its surface.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-plex-sans);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-plex-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-cite: var(--cite);
+  --color-cite-foreground: var(--cite-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --ease-out: cubic-bezier(0.22, 0.75, 0.2, 1);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: #f7f8fa;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1f4e8c;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f5;
+  --secondary-foreground: #1e293b;
+  --muted: #f0f2f5;
+  --muted-foreground: #586172;
+  --accent: #eaf0f8;
+  --accent-foreground: #173d6e;
+  --destructive: #b42318;
+  --border: #e2e6ec;
+  --input: #d5dbe3;
+  --ring: #2f67b2;
+  --cite: #e7eef9;
+  --cite-foreground: #1f4e8c;
+  --success: #1c7148;
+  --success-soft: #e7f4ed;
+  --warning: #8a5300;
+  --warning-soft: #fbf1df;
+  --danger-soft: #fdecea;
+  --sidebar: #f2f4f7;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #1f4e8c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6eaf0;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e6ec;
+  --sidebar-ring: #2f67b2;
+}
+
+.dark {
+  --background: #0d1015;
+  --foreground: #e6eaf0;
+  --card: #141920;
+  --card-foreground: #e6eaf0;
+  --popover: #171c24;
+  --popover-foreground: #e6eaf0;
+  --primary: #8fb4ea;
+  --primary-foreground: #0d1015;
+  --secondary: #1c222b;
+  --secondary-foreground: #e6eaf0;
+  --muted: #1a2029;
+  --muted-foreground: #9aa4b2;
+  --accent: #1a2535;
+  --accent-foreground: #c9dbf5;
+  --destructive: #f0706a;
+  --border: #242b35;
+  --input: #2c3440;
+  --ring: #6e9bdb;
+  --cite: #1b2a40;
+  --cite-foreground: #a9c6f0;
+  --success: #5cc48d;
+  --success-soft: #12261c;
+  --warning: #e3a64a;
+  --warning-soft: #2b2112;
+  --danger-soft: #2d1517;
+  --sidebar: #10141a;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-primary: #8fb4ea;
+  --sidebar-primary-foreground: #0d1015;
+  --sidebar-accent: #1a2029;
+  --sidebar-accent-foreground: #e6eaf0;
+  --sidebar-border: #1f262f;
+  --sidebar-ring: #6e9bdb;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv05";
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The report as a document: a serif reading face, a comfortable measure. */
+@layer components {
+  .prose-report {
+    @apply font-serif text-[17.5px] leading-[1.72] text-foreground;
+    max-width: 68ch;
+  }
+  .prose-report h2 {
+    @apply mt-10 mb-3 font-sans text-[15px] font-semibold tracking-tight text-foreground;
+  }
+  .prose-report p {
+    @apply mb-4;
+  }
+  .prose-report ul {
+    @apply mb-4 list-disc space-y-1.5 pl-5;
+  }
+  .prose-report strong {
+    @apply font-semibold;
+  }
+  .cite-chip {
+    @apply mx-[1px] inline-flex h-[18px] min-w-[18px] -translate-y-[2px] items-center justify-center rounded-[4px] bg-cite px-1 align-baseline font-sans text-[11px] font-semibold text-cite-foreground transition-colors duration-150 hover:bg-primary hover:text-primary-foreground;
+  }
+  .cite-chip[data-active="true"] {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Placeholder sheen: a highlight moving left to right across muted bars. */
+.shimmer {
+  --sheen: color-mix(in oklab, var(--muted), white 70%);
+  background: linear-gradient(90deg, var(--muted) 30%, var(--sheen) 50%, var(--muted) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+.dark .shimmer {
+  --sheen: color-mix(in oklab, var(--muted), white 7%);
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@keyframes write {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  50% { transform: translate(1.5px, -1px) rotate(-8deg); }
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* The typing caret follows the last word while the answer streams. */
+.streaming .prose-report > :last-child p:last-child::after,
+.streaming .prose-report > :last-child li:last-child::after,
+.streaming .prose-report > p:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: var(--primary);
+  opacity: 0.7;
+  animation: caret 1s steps(2, start) infinite;
+}
+@keyframes caret {
+  to { visibility: hidden; }
+}

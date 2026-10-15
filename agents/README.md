@@ -16,6 +16,7 @@ Use this category for tool use, agent coordination, memory, context management, 
 | [Incident response agent](incident-response-agent/README.md) | A LangGraph agent that investigates incidents from logs: planning, tool use, guardrails, human approval, memory and a knowledge graph, with a dashboard | Runnable Python/Next.js prototype, evaluated on Loghub BGL; README lists ways to extend it |
 | [Tools, tool calling and unsafe execution](tool-calling-safety/README.md) | How tool calling works, and how an unsafe implementation of one tool turns a harmless model output into a real attack: path traversal, SSRF, command injection, code eval and the confused deputy, each shown next to its fix | Runnable TypeScript web app; all simulated, no API keys |
 | [Anatomy of a harness](harness-anatomy/README.md) | The parts around a model that make it an agent — context management, the execution environment, delegation and steering — drawn as an animated factory you can run and take apart, with what each missing part costs | Runnable TypeScript web app; scripted run, no API keys |
+| [Pharma research agent](pharma-research-agent/README.md) | A production-shaped research workspace: an orchestrator with a skills layer, parallel sub-agents over PubMed, ClinicalTrials.gov, openFDA and the web, a virtual file system, a synthesis agent, evals and traces; durable runs, Postgres, live streaming, PDF/DOCX export and share links | Runnable Next.js 16 app; offline mode needs no key |
 
 ## Adding a contribution
 

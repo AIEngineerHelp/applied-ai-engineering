@@ -1,0 +1,29 @@
+# CI for agents/pharma-research-agent. Kept in the project folder for
+# reference: GitHub only runs workflows from the repository root's .github/.
+name: pharma-research-agent
+on:
+  pull_request:
+    paths: ["agents/pharma-research-agent/**"]
+  push:
+    branches: [main]
+    paths: ["agents/pharma-research-agent/**"]
+defaults:
+  run:
+    working-directory: agents/pharma-research-agent
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: agents/pharma-research-agent/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+        env:
+          RESEARCH_OFFLINE: "1"
