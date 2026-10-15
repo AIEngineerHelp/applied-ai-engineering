@@ -1,0 +1,12 @@
+# Keep secrets, local data and build output out of CLI uploads.
+.env
+.env.*
+!.env.example
+.data/
+.workflow-data/
+runs/
+.next/
+node_modules/
+.swc/
+.vercel/
+*.tsbuildinfo

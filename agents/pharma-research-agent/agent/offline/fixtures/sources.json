@@ -1,0 +1,304 @@
+{
+ "recorded": "2026-10-12",
+ "pubmed": {
+  "name": "search_pubmed",
+  "args": {
+   "query": "(semaglutide OR GLP-1 receptor agonist) AND pancreatitis AND (meta-analysis[pt] OR randomized controlled trial[pt])",
+   "max": 5
+  },
+  "output": {
+   "forModel": {
+    "total": 190,
+    "articles": [
+     {
+      "id": "PMID:36578889",
+      "title": "Efficacy and Safety of Semaglutide for Weight Loss in Obesity Without Diabetes: A Systematic Review and Meta-Analysis.",
+      "journal": "Journal of the ASEAN Federation of Endocrine Societies",
+      "year": 2022,
+      "type": "Meta-Analysis, Systematic Review",
+      "abstract": "BACKGROUND: The weight loss benefit of semaglutide in patients with diabetes is well-documented, but its clinical utility in treating obesity among patients without diabetes is less described. We therefore assessed the efficacy and safety of subcutaneous semaglutide as treatment for obesity in patients without diabetes. METHODOLOGY: A comprehensive search of PubMed/MEDLINE, Cochrane and Google scholar was performed to identify trials on the efficacy and safety of subcutaneous semaglutide on patients with obesity without diabetes. Primary outcome was expressed as percent mean weight difference. Secondary outcomes including risk for gastrointestinal adverse events, discontinuation of treatmen…"
+     },
+     {
+      "id": "PMID:31422062",
+      "title": "Cardiovascular, mortality, and kidney outcomes with GLP-1 receptor agonists in patients with type 2 diabetes: a systematic review and meta-analysis of cardiovascular outcome trials.",
+      "journal": "The lancet. Diabetes & endocrinology",
+      "year": 2019,
+      "type": "Meta-Analysis, Research Support, Non-U.S. Gov't, Systematic Review",
+      "abstract": "BACKGROUND: Glucagon-like peptide-1 (GLP-1) receptor agonists differ in their structure and duration of action and have been studied in trials of varying sizes and with different patient populations, with inconsistent effects on cardiovascular outcomes reported. We aimed to synthesise the available evidence by doing a systematic review and meta-analysis of cardiovascular outcome trials of these drugs. METHODS: We searched MEDLINE (via PubMed) and the Cochrane Central Register of Controlled Trials for eligible placebo-controlled trials reporting major adverse cardiovascular events (MACE; ie, cardiovascular death, stroke, or myocardial infarction) up to June 15, 2019. We did a meta-analysis u…"
+     },
+     {
+      "id": "PMID:40499738",
+      "title": "Glucagon-Like Peptide-1 Receptor Agonists and Gastrointestinal Adverse Events: A Systematic Review and Meta-Analysis.",
+      "journal": "Gastroenterology",
+      "year": 2025,
+      "type": "Systematic Review, Meta-Analysis",
+      "abstract": "BACKGROUND &amp; AIMS: Glucagon-like peptide-1 receptor agonists (GLP-1RAs) are widely used for glycemic control or weight management in patients with type 2 diabetes mellitus or overweight/obesity. However, there are concerns regarding their association with serious gastrointestinal adverse events, although findings have been inconsistent. METHODS: We systematically searched 5 databases for placebo-controlled randomized controlled trials assessing GLP-1RAs in patients with type 2 diabetes mellitus, overweight/obesity, or metabolic dysfunction-associated steatohepatitis/metabolic dysfunction-associated steatotic liver disease. We included trials that reported cholecystitis, cholelithiasis, …"
+     },
+     {
+      "id": "PMID:27295427",
+      "title": "Liraglutide and Cardiovascular Outcomes in Type 2 Diabetes.",
+      "journal": "The New England journal of medicine",
+      "year": 2016,
+      "type": "Multicenter Study, Randomized Controlled Trial, Research Support, N.I.H., Extramural, Research Support, Non-U.S. Gov't",
+      "abstract": "BACKGROUND: The cardiovascular effect of liraglutide, a glucagon-like peptide 1 analogue, when added to standard care in patients with type 2 diabetes, remains unknown. METHODS: In this double-blind trial, we randomly assigned patients with type 2 diabetes and high cardiovascular risk to receive liraglutide or placebo. The primary composite outcome in the time-to-event analysis was the first occurrence of death from cardiovascular causes, nonfatal myocardial infarction, or nonfatal stroke. The primary hypothesis was that liraglutide would be noninferior to placebo with regard to the primary outcome, with a margin of 1.30 for the upper boundary of the 95% confidence interval of the hazard ra…"
+     },
+     {
+      "id": "PMID:41359966",
+      "title": "Risk for Cancer With Glucagon-Like Peptide-1 Receptor Agonists and Dual Agonists : A Systematic Review and Meta-analysis.",
+      "journal": "Annals of internal medicine",
+      "year": 2026,
+      "type": "Systematic Review, Meta-Analysis",
+      "abstract": "BACKGROUND: Glucagon-like peptide-1 receptor agonists (GLP-1RAs) are used for type 2 diabetes mellitus (T2DM) and overweight or obesity, but their association with cancer is unclear. PURPOSE: To investigate the risk for obesity-related cancer associated with GLP-1RAs. DATA SOURCES: PubMed, Embase, Web of Science, Scopus, and the Cochrane Central Register of Controlled Trials from inception to August 2025. STUDY SELECTION: Randomized placebo-controlled trials reporting any of the following cancer outcomes: thyroid, pancreatic, colorectal, gastric, esophageal, liver, gallbladder, breast, ovarian, endometrial, or kidney cancer; multiple myeloma; or meningioma. DATA EXTRACTION: Risk of bias was…"
+     }
+    ]
+   },
+   "sources": [
+    {
+     "id": "PMID:36578889",
+     "kind": "pubmed",
+     "title": "Efficacy and Safety of Semaglutide for Weight Loss in Obesity Without Diabetes: A Systematic Review and Meta-Analysis.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/36578889/",
+     "text": "BACKGROUND: The weight loss benefit of semaglutide in patients with diabetes is well-documented, but its clinical utility in treating obesity among patients without diabetes is less described. We therefore assessed the efficacy and safety of subcutaneous semaglutide as treatment for obesity in patients without diabetes.\nMETHODOLOGY: A comprehensive search of PubMed/MEDLINE, Cochrane and Google scholar was performed to identify trials on the efficacy and safety of subcutaneous semaglutide on patients with obesity without diabetes. Primary outcome was expressed as percent mean weight difference. Secondary outcomes including risk for gastrointestinal adverse events, discontinuation of treatment and serious adverse events were expressed as risk ratios. These were calculated using the random effects model.\nRESULTS: The study included 4 randomized controlled trials having a total of 3,613 individuals with obesity without diabetes. The mean difference for weight reduction was -11.85%, favoring semaglutide [95% confidence interval (CI) (-12.81,-10.90), p<0.00001]. Secondary outcomes showed that the risk of developing gastrointestinal adverse events was 1.59 times more likely with semaglutide (RR 1.59, 95%CI [1.34, 1.88], p<0.00001). Risk for discontinuation due to adverse events was twice as likely in the semaglutide group (RR 2.19, 95%CI [1.36,3.55], p=0.001) and the risk for serious adverse events was 1.6 times more likely for semaglutide (RR1.60, 95%CI [1.24, 2.07], p=0.0003). Serious events were mostly of gastrointestinal and hepatobiliary disorders such as acute pancreatitis and cholelithiasis.\nCONCLUSION: Among individuals with obesity without type 2 diabetes, subcutaneous semaglutide is effective for weight loss with an 11.85% reduction from baseline compared to placebo. This supports the use of semaglutide for weight management in obesity. However, risk of gastrointestinal adverse events, discontinuation of treatment and serious adverse events were higher in the semaglutide group versus placebo.",
+     "meta": {
+      "journal": "Journal of the ASEAN Federation of Endocrine Societies",
+      "year": 2022,
+      "type": "Meta-Analysis, Systematic Review"
+     }
+    },
+    {
+     "id": "PMID:31422062",
+     "kind": "pubmed",
+     "title": "Cardiovascular, mortality, and kidney outcomes with GLP-1 receptor agonists in patients with type 2 diabetes: a systematic review and meta-analysis of cardiovascular outcome trials.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/31422062/",
+     "text": "BACKGROUND: Glucagon-like peptide-1 (GLP-1) receptor agonists differ in their structure and duration of action and have been studied in trials of varying sizes and with different patient populations, with inconsistent effects on cardiovascular outcomes reported. We aimed to synthesise the available evidence by doing a systematic review and meta-analysis of cardiovascular outcome trials of these drugs.\nMETHODS: We searched MEDLINE (via PubMed) and the Cochrane Central Register of Controlled Trials for eligible placebo-controlled trials reporting major adverse cardiovascular events (MACE; ie, cardiovascular death, stroke, or myocardial infarction) up to June 15, 2019. We did a meta-analysis using a random-effects model to estimate overall hazard ratios (HRs) for MACE, its components, death from any cause, hospital admission for heart failure, kidney outcomes, and key safety outcomes (severe hypoglycaemia, pancreatitis, and pancreatic cancer). We also examined MACE in several subgroups based on patient characteristics (history of cardiovascular disease, BMI, age, baseline HbA1c, and baseline estimated glomerular filtration rate), trial duration, treatment dosing interval, and structural homology.\nFINDINGS: Of 27 publications screened, seven trials, with a combined total of 56ߘ004 participants, were included: ELIXA (lixisenatide), LEADER (liraglutide), SUSTAIN-6 (semaglutide), EXSCEL (exenatide), Harmony Outcomes (albiglutide), REWIND (dulaglutide), and PIONEER 6 (oral semaglutide). Overall, GLP-1 receptor agonist treatment reduced MACE by 12% (HR 0·88, 95% CI 0·82-0·94; p<0·0001). There was no statistically significant heterogeneity across the subgroups examined. HRs were 0·88 (95% CI 0·81-0·96; p=0·003) for death from cardiovascular causes, 0·84 (0·76-0·93; p<0·0001) for fatal or non-fatal stroke, and 0·91 (0·84-1·00; p=0·043) for fatal or non-fatal myocardial infarction. GLP-1 receptor agonist treatment reduced all-cause mortality by 12% (0·88, 0·83-0·95; p=0·001), hospital admission for heart failure by 9% (0·91, 0·83-0·99; p=0·028), and a broad composite kidney outcome (development of new-onset macroalbuminuria, decline in estimated glomerular filtration rate [or increase in creatinine], progression to end-stage kidney disease, or death attributable to kidney causes) by 17% (0·83, 0·78-0·89; p<0·0001), mainly due to a reduction in urinary albumin excretion. There was no increase in risk of severe hypoglycaemia, pancreatitis, or pancreatic cancer.\nINTERPRETATION: Treatment with GLP-1 receptor agonists has beneficial effects on cardiovascular, mortality, and kidney outcomes in patients with type 2 diabetes.\nFUNDING: None.",
+     "meta": {
+      "journal": "The lancet. Diabetes & endocrinology",
+      "year": 2019,
+      "type": "Meta-Analysis, Research Support, Non-U.S. Gov't, Systematic Review"
+     }
+    },
+    {
+     "id": "PMID:40499738",
+     "kind": "pubmed",
+     "title": "Glucagon-Like Peptide-1 Receptor Agonists and Gastrointestinal Adverse Events: A Systematic Review and Meta-Analysis.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/40499738/",
+     "text": "BACKGROUND &amp; AIMS: Glucagon-like peptide-1 receptor agonists (GLP-1RAs) are widely used for glycemic control or weight management in patients with type 2 diabetes mellitus or overweight/obesity. However, there are concerns regarding their association with serious gastrointestinal adverse events, although findings have been inconsistent.\nMETHODS: We systematically searched 5 databases for placebo-controlled randomized controlled trials assessing GLP-1RAs in patients with type 2 diabetes mellitus, overweight/obesity, or metabolic dysfunction-associated steatohepatitis/metabolic dysfunction-associated steatotic liver disease. We included trials that reported cholecystitis, cholelithiasis, cholangitis, cholestasis, pancreatitis, gastroesophageal reflux disease (GERD), gastritis, esophagitis, gastrointestinal ischemia, gastrointestinal hemorrhage, intestinal obstruction, paralytic ileus, gastrointestinal ulceration, gastrointestinal perforation, or gastroparesis. Meta-analyses were performed using a random-effects model, with subgroup analyses evaluating risks based on patient population, GLP-1RA vs dual-agonist formulation, weight-loss profile, dosing, and duration of action.\nRESULTS: We included 55 randomized controlled trials involving 106,395 participants. GLP-1RAs increased the risk of cholelithiasis (risk ratio [RR], 1.46; 95% CI, 1.09-1.97; 2 more cases per 1000) and probably increased the risk of GERD (RR, 2.19; 95% CI, 1.48-3.25; 4 more cases per 1000) compared with placebo. GLP-1RAs probably have little or no effect on the risk of other gastrointestinal or biliary events. Subgroup analyses showed that the increased risks of cholelithiasis and GERD were more pronounced in trials including individuals with overweight/obesity or metabolic dysfunction-associated steatohepatitis/metabolic dysfunction-associated steatotic liver disease, weight-loss-inducing GLP-1RAs, or high-dose formulations, although these subgroup effects were not statistically significant.\nCONCLUSIONS: GLP-1RAs are associated with an increased risk of cholelithiasis and GERD, but do not appear to increase the risk of other gastrointestinal or biliary adverse events.",
+     "meta": {
+      "journal": "Gastroenterology",
+      "year": 2025,
+      "type": "Systematic Review, Meta-Analysis"
+     }
+    },
+    {
+     "id": "PMID:27295427",
+     "kind": "pubmed",
+     "title": "Liraglutide and Cardiovascular Outcomes in Type 2 Diabetes.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27295427/",
+     "text": "BACKGROUND: The cardiovascular effect of liraglutide, a glucagon-like peptide 1 analogue, when added to standard care in patients with type 2 diabetes, remains unknown.\nMETHODS: In this double-blind trial, we randomly assigned patients with type 2 diabetes and high cardiovascular risk to receive liraglutide or placebo. The primary composite outcome in the time-to-event analysis was the first occurrence of death from cardiovascular causes, nonfatal myocardial infarction, or nonfatal stroke. The primary hypothesis was that liraglutide would be noninferior to placebo with regard to the primary outcome, with a margin of 1.30 for the upper boundary of the 95% confidence interval of the hazard ratio. No adjustments for multiplicity were performed for the prespecified exploratory outcomes.\nRESULTS: A total of 9340 patients underwent randomization. The median follow-up was 3.8 years. The primary outcome occurred in significantly fewer patients in the liraglutide group (608 of 4668 patients [13.0%]) than in the placebo group (694 of 4672 [14.9%]) (hazard ratio, 0.87; 95% confidence interval [CI], 0.78 to 0.97; P<0.001 for noninferiority; P=0.01 for superiority). Fewer patients died from cardiovascular causes in the liraglutide group (219 patients [4.7%]) than in the placebo group (278 [6.0%]) (hazard ratio, 0.78; 95% CI, 0.66 to 0.93; P=0.007). The rate of death from any cause was lower in the liraglutide group (381 patients [8.2%]) than in the placebo group (447 [9.6%]) (hazard ratio, 0.85; 95% CI, 0.74 to 0.97; P=0.02). The rates of nonfatal myocardial infarction, nonfatal stroke, and hospitalization for heart failure were nonsignificantly lower in the liraglutide group than in the placebo group. The most common adverse events leading to the discontinuation of liraglutide were gastrointestinal events. The incidence of pancreatitis was nonsignificantly lower in the liraglutide group than in the placebo group.\nCONCLUSIONS: In the time-to-event analysis, the rate of the first occurrence of death from cardiovascular causes, nonfatal myocardial infarction, or nonfatal stroke among patients with type 2 diabetes mellitus was lower with liraglutide than with placebo. (Funded by Novo Nordisk and the National Institutes of Health; LEADER ClinicalTrials.gov number, NCT01179048.).",
+     "meta": {
+      "journal": "The New England journal of medicine",
+      "year": 2016,
+      "type": "Multicenter Study, Randomized Controlled Trial, Research Support, N.I.H., Extramural, Research Support, Non-U.S. Gov't"
+     }
+    },
+    {
+     "id": "PMID:41359966",
+     "kind": "pubmed",
+     "title": "Risk for Cancer With Glucagon-Like Peptide-1 Receptor Agonists and Dual Agonists : A Systematic Review and Meta-analysis.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/41359966/",
+     "text": "BACKGROUND: Glucagon-like peptide-1 receptor agonists (GLP-1RAs) are used for type 2 diabetes mellitus (T2DM) and overweight or obesity, but their association with cancer is unclear.\nPURPOSE: To investigate the risk for obesity-related cancer associated with GLP-1RAs.\nDATA SOURCES: PubMed, Embase, Web of Science, Scopus, and the Cochrane Central Register of Controlled Trials from inception to August 2025.\nSTUDY SELECTION: Randomized placebo-controlled trials reporting any of the following cancer outcomes: thyroid, pancreatic, colorectal, gastric, esophageal, liver, gallbladder, breast, ovarian, endometrial, or kidney cancer; multiple myeloma; or meningioma.\nDATA EXTRACTION: Risk of bias was evaluated using the Cochrane Risk of Bias 2 tool, and certainty of evidence was assessed using the GRADE (Grading of Recommendations Assessment, Development and Evaluation) approach. Odds ratios (ORs) were pooled using random-effects meta-analysis.\nDATA SYNTHESIS: The review included 48 trials involving 94ߙ245 participants. GLP-1RAs probably have little or no effect on risk for thyroid cancer (OR, 1.37 [95% CI, 0.82 to 2.31]; 1 fewer to 9 more cases per 10ߙ000 patients treated), pancreatic cancer (OR, 0.84 [CI, 0.53 to 1.35]; 9 fewer to 6 more per 10ߙ000), breast cancer (OR, 0.95 [CI, 0.60 to 1.49]; 10 fewer to 12 more per 10ߙ000), or kidney cancer (OR, 1.12 [CI, 0.78 to 1.60]; 5 fewer to 13 more per 10ߙ000) (moderate certainty). GLP-1RAs may have little or no effect on colorectal, esophageal, liver, gallbladder, ovarian, or endometrial cancer; multiple myeloma; or meningioma (low certainty). The effect on gastric cancer is very uncertain. Results were consistent in sensitivity analyses of trials with low risk of bias and studies of semaglutide or tirzepatide and across subgroups stratified by follow-up duration, population, GLP-1RA class, weight loss profile, dose, and duration of action.\nLIMITATION: The included trials were not designed to evaluate cancer outcomes and had short follow-up.\nCONCLUSION: GLP-1RAs may have little or no effect on risk for obesity-related cancers. Longer-term studies are needed to clarify potential risks or benefits.\nPRIMARY FUNDING SOURCE: None. (PROSPERO: CRD42024608365).",
+     "meta": {
+      "journal": "Annals of internal medicine",
+      "year": 2026,
+      "type": "Systematic Review, Meta-Analysis"
+     }
+    }
+   ]
+  }
+ },
+ "trials": {
+  "name": "search_trials",
+  "args": {
+   "intervention": "semaglutide",
+   "condition": "heart failure",
+   "max": 6
+  },
+  "output": {
+   "forModel": {
+    "total": 16,
+    "trials": [
+     {
+      "id": "NCT06541509",
+      "title": "Mechanisms of Semaglutide Therapy in Heart Failure Patients",
+      "phase": "Phase 1/Phase 2",
+      "status": "UNKNOWN",
+      "enrollment": 10,
+      "results_posted": false,
+      "primary_outcome": "Primary outcome: Interleukin-6 (IL-6) (4 months); Interleukin-8 (IL-8) (4 months); Tumor Necrosis Factor-alpha (TNF-α) (4 months); Interferon-gamma (IFN-γ) (4 months); B-type Natriuretic Peptide (BNP) (4 months); C-reactive Protein (CRP) (…"
+     },
+     {
+      "id": "NCT06980623",
+      "title": "Comparative Effectiveness of Tirzepatide vs Semaglutide in Participants With Type 2 Diabetes and Heart Failure With Preserved Ejection Fraction",
+      "phase": "N/A",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "enrollment": 26000,
+      "results_posted": false,
+      "primary_outcome": "Primary outcome: Hospitalization for heart failure and all-cause mortality (From treatment initiation to end of follow up, up to 48 months.)."
+     },
+     {
+      "id": "NCT07610174",
+      "title": "Effects of Dapagliflozin, Semaglutide, and Their Combination in Heart Failure Patients With Prosthetic Heart Valves",
+      "phase": "Phase 2",
+      "status": "COMPLETED",
+      "enrollment": 160,
+      "results_posted": false,
+      "primary_outcome": "Primary outcome: Change from Baseline in Left Ventricular Global Longitudinal Strain (LV-GLS) assessed by echocardiography (Baseline and 12 weeks)."
+     },
+     {
+      "id": "NCT07390110",
+      "title": "Comparative Effectiveness of Oral Semaglutide vs Sitagliptin Among Individuals With Heart Failure With Preserved Ejection Fraction (STEP-HFpEF DM ORAL)",
+      "phase": "N/A",
+      "status": "COMPLETED",
+      "enrollment": 25664,
+      "results_posted": false,
+      "primary_outcome": "Primary outcome: Composite of worsening heart failure event (exacerbated symptoms of heart failure resulting in hospitalization, intravenous diuretic therapy in an urgent care setting) or all-cause mortality. (Through study completion unti…"
+     },
+     {
+      "id": "NCT04788511",
+      "title": "Research Study to Investigate How Well Semaglutide Works in People Living With Heart Failure and Obesity",
+      "phase": "Phase 3",
+      "status": "COMPLETED",
+      "enrollment": 529,
+      "results_posted": true,
+      "primary_outcome": "Primary outcome: Change in Kansas City Cardiomyopathy Questionnaire Clinical Summary Score (KCCQ-CSS) (From baseline (week 0) to end of treatment (week 52)); Change in Body Weight (From baseline (week 0) to end of treatment (week 52))."
+     },
+     {
+      "id": "NCT04916470",
+      "title": "Research Study to Look at How Well Semaglutide Works in People Living With Heart Failure, Obesity and Type 2 Diabetes",
+      "phase": "Phase 3",
+      "status": "COMPLETED",
+      "enrollment": 617,
+      "results_posted": false,
+      "primary_outcome": "Primary outcome: Change in KCCQ (Kansas City Cardiomyopathy Questionnaire) clinical summary score (From baseline (week 0) to end of treatment (week 52)); Change in body weight (From baseline (week 0) to end of treatment (week 52))."
+     }
+    ]
+   },
+   "sources": [
+    {
+     "id": "NCT06541509",
+     "kind": "trials",
+     "title": "Mechanisms of Semaglutide Therapy in Heart Failure Patients",
+     "url": "https://clinicaltrials.gov/study/NCT06541509",
+     "text": "Conditions: Heart Failure; Obesity\nInterventions: Semaglutide\nPhase: Phase 1/Phase 2. Status: UNKNOWN. Enrollment: 10 (ESTIMATED).\nStart: 2024-07-10. Primary completion: 2025-07-10.\nPrimary outcome: Interleukin-6 (IL-6) (4 months); Interleukin-8 (IL-8) (4 months); Tumor Necrosis Factor-alpha (TNF-α) (4 months); Interferon-gamma (IFN-γ) (4 months); B-type Natriuretic Peptide (BNP) (4 months); C-reactive Protein (CRP) (4 months); Hemoglobin A1C (HgA1C) (4 months); Complete Blood Count (CBC) (4 months); Comprehensive Metabolic Panel (Chem 7) (4 months); Liver Function Tests (LFT) (4 months); Body mass index (4 months).\nResults posted: no.",
+     "meta": {
+      "phase": "Phase 1/Phase 2",
+      "status": "UNKNOWN",
+      "enrollment": 10,
+      "year": 2024,
+      "results": false
+     }
+    },
+    {
+     "id": "NCT06980623",
+     "kind": "trials",
+     "title": "Comparative Effectiveness of Tirzepatide vs Semaglutide in Participants With Type 2 Diabetes and Heart Failure With Preserved Ejection Fraction",
+     "url": "https://clinicaltrials.gov/study/NCT06980623",
+     "text": "Conditions: Type 2 Diabetes; Heart Failure\nInterventions: Tirzepatide; Semaglutide\nPhase: N/A. Status: ACTIVE_NOT_RECRUITING. Enrollment: 26000 (ESTIMATED).\nStart: 2025-01-01. Primary completion: 2025-11-30.\nPrimary outcome: Hospitalization for heart failure and all-cause mortality (From treatment initiation to end of follow up, up to 48 months.).\nResults posted: no.",
+     "meta": {
+      "phase": "N/A",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "enrollment": 26000,
+      "year": 2025,
+      "results": false
+     }
+    },
+    {
+     "id": "NCT07610174",
+     "kind": "trials",
+     "title": "Effects of Dapagliflozin, Semaglutide, and Their Combination in Heart Failure Patients With Prosthetic Heart Valves",
+     "url": "https://clinicaltrials.gov/study/NCT07610174",
+     "text": "Conditions: Heart Failure; Heart Valve Prosthesis\nInterventions: semaglutide; Dapagliflozin (10mg Tab)\nPhase: Phase 2. Status: COMPLETED. Enrollment: 160 (ACTUAL).\nStart: 2025-06-02. Primary completion: 2026-04-29.\nPrimary outcome: Change from Baseline in Left Ventricular Global Longitudinal Strain (LV-GLS) assessed by echocardiography (Baseline and 12 weeks).\nResults posted: no.",
+     "meta": {
+      "phase": "Phase 2",
+      "status": "COMPLETED",
+      "enrollment": 160,
+      "year": 2025,
+      "results": false
+     }
+    },
+    {
+     "id": "NCT07390110",
+     "kind": "trials",
+     "title": "Comparative Effectiveness of Oral Semaglutide vs Sitagliptin Among Individuals With Heart Failure With Preserved Ejection Fraction (STEP-HFpEF DM ORAL)",
+     "url": "https://clinicaltrials.gov/study/NCT07390110",
+     "text": "Conditions: Type 2 Diabetes; Heart Failure\nInterventions: Oral semaglutide; Sitagliptin\nPhase: N/A. Status: COMPLETED. Enrollment: 25664 (ACTUAL).\nStart: 2026-01-24. Primary completion: 2026-06-30.\nPrimary outcome: Composite of worsening heart failure event (exacerbated symptoms of heart failure resulting in hospitalization, intravenous diuretic therapy in an urgent care setting) or all-cause mortality. (Through study completion until the first of outcome, disenrollment, end of study period, discontinuation (45 days grace and risk window), switch between the arms, start of any other GLP-1-RA including injectable semaglutide.); Worsening heart failure event (exacerbated symptoms of heart failure resulting in hospitalization, intravenous diuretic therapy in an urgent care setting). (Through study completion until the first of outcome, disenrollment, end of study period, discontinuation (45 days grace and risk window), switch between the arms, start of any other GLP-1-RA including injectable semaglutide.).\nResults posted: no.",
+     "meta": {
+      "phase": "N/A",
+      "status": "COMPLETED",
+      "enrollment": 25664,
+      "year": 2026,
+      "results": false
+     }
+    },
+    {
+     "id": "NCT04788511",
+     "kind": "trials",
+     "title": "Research Study to Investigate How Well Semaglutide Works in People Living With Heart Failure and Obesity",
+     "url": "https://clinicaltrials.gov/study/NCT04788511",
+     "text": "Conditions: Obesity\nInterventions: Semaglutide; Placebo (semaglutide)\nPhase: Phase 3. Status: COMPLETED. Enrollment: 529 (ACTUAL).\nStart: 2021-03-16. Primary completion: 2023-04-18.\nPrimary outcome: Change in Kansas City Cardiomyopathy Questionnaire Clinical Summary Score (KCCQ-CSS) (From baseline (week 0) to end of treatment (week 52)); Change in Body Weight (From baseline (week 0) to end of treatment (week 52)).\nResults posted: yes.",
+     "meta": {
+      "phase": "Phase 3",
+      "status": "COMPLETED",
+      "enrollment": 529,
+      "year": 2021,
+      "results": true
+     }
+    },
+    {
+     "id": "NCT04916470",
+     "kind": "trials",
+     "title": "Research Study to Look at How Well Semaglutide Works in People Living With Heart Failure, Obesity and Type 2 Diabetes",
+     "url": "https://clinicaltrials.gov/study/NCT04916470",
+     "text": "Conditions: Heart Failure With Preserved Ejection Fraction (HFpEF) and Diabetes Mellitus, Type 2\nInterventions: Semaglutide; Placebo (Semaglutide)\nPhase: Phase 3. Status: COMPLETED. Enrollment: 617 (ACTUAL).\nStart: 2021-06-15. Primary completion: 2023-10-11.\nPrimary outcome: Change in KCCQ (Kansas City Cardiomyopathy Questionnaire) clinical summary score (From baseline (week 0) to end of treatment (week 52)); Change in body weight (From baseline (week 0) to end of treatment (week 52)).\nResults posted: no.",
+     "meta": {
+      "phase": "Phase 3",
+      "status": "COMPLETED",
+      "enrollment": 617,
+      "year": 2021,
+      "results": false
+     }
+    }
+   ]
+  }
+ },
+ "fda": {
+  "name": "get_drug_label",
+  "args": {
+   "generic_name": "semaglutide"
+  },
+  "output": {
+   "forModel": {
+    "found": true,
+    "id": "FDA:27f15fac-7d98-4114-a2ec-92494a91da98",
+    "title": "FDA label: OZEMPIC, RYBELSUS (ORAL SEMAGLUTIDE)",
+    "effective": "2026-01-30",
+    "label": "Boxed warning: WARNING: RISK OF THYROID C-CELL TUMORS • In rodents, semaglutide causes dose-dependent and treatment-duration-dependent thyroid C-cell tumors at clinically relevant exposures. It is unknown whether RYBELSUS and OZEMPIC tablets cause thyroid C-cell tumors, including medullary thyroid carcinoma (MTC), in humans as human relevance of semaglutide-induced rodent thyroid C-cell tumors has not been determined [see Warnings and Precautions ( 5.1 ), Nonclinical Toxicology ( 13.1 )] . • RYBELSUS and OZEMPIC tablets are contraindicated in patients with a personal or family history of MTC or in patients with Multiple Endocrine Neoplasia syndrome type 2 (MEN 2) [see Contraindications ( 4 )] . Counsel patients regarding the potential risk for MTC with the use of RYBELSUS or OZEMPIC tablets and inform them of symptoms of thyroid tumors (e.g., a mass in the neck, dysphagia, dyspnea, persistent hoarseness). Routine monitoring of serum calcitonin or using thyroid ultrasound is of uncertain value for early detection of MTC in patients treated with RYBELSUS or OZEMPIC tablets [see Contraindications ( 4 ), Warnings and Precautions ( 5.1 )]. WARNING: RISK OF THYROID C-CELL TUMORS See full prescribing information for complete boxed warning. • In rodents, semaglutide causes thyroid C-cell tumors. It is unknown whether RYBELSUS and OZEMPIC tablets cause thyroid C-cell tumors, including medullary thyroid carcinoma (MTC), in humans as the human relevance of semaglutide-induced rodent thyroid C-cell tumors has not been determined ( 5.1 , 13.1 ). • RYBELSUS and OZEMPIC tablets are contraindicated in patients with a personal or family history of MTC or in patients with Multiple Endocrine Neoplasia syndrome type 2 (MEN 2). Counsel patients regarding the potential risk of MTC and symptoms of thyroid tumors ( 4 , 5.1 ). Indications and usage: 1 INDICATIONS AND USAGE RYBELSUS and OZEMPIC tablets are indicated: • as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. • to reduce the risk of major adverse cardiovascular (CV) events (CV death, non-fatal myocardial infarction or non-fatal stroke) in adults with type 2 diabetes mellitus who are at high risk for these events. RYBELSUS and OZEMPIC tablets are glucagon-like peptide-1 (GLP-1) receptor agonists indicated: • as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. ( 1 ) • to reduce the risk of major adverse cardiovascular e…"
+   },
+   "sources": [
+    {
+     "id": "FDA:27f15fac-7d98-4114-a2ec-92494a91da98",
+     "kind": "fda",
+     "title": "FDA label: OZEMPIC, RYBELSUS (ORAL SEMAGLUTIDE)",
+     "url": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=27f15fac-7d98-4114-a2ec-92494a91da98",
+     "text": "Boxed warning: WARNING: RISK OF THYROID C-CELL TUMORS • In rodents, semaglutide causes dose-dependent and treatment-duration-dependent thyroid C-cell tumors at clinically relevant exposures. It is unknown whether RYBELSUS and OZEMPIC tablets cause thyroid C-cell tumors, including medullary thyroid carcinoma (MTC), in humans as human relevance of semaglutide-induced rodent thyroid C-cell tumors has not been determined [see Warnings and Precautions ( 5.1 ), Nonclinical Toxicology ( 13.1 )] . • RYBELSUS and OZEMPIC tablets are contraindicated in patients with a personal or family history of MTC or in patients with Multiple Endocrine Neoplasia syndrome type 2 (MEN 2) [see Contraindications ( 4 )] . Counsel patients regarding the potential risk for MTC with the use of RYBELSUS or OZEMPIC tablets and inform them of symptoms of thyroid tumors (e.g., a mass in the neck, dysphagia, dyspnea, persistent hoarseness). Routine monitoring of serum calcitonin or using thyroid ultrasound is of uncertain value for early detection of MTC in patients treated with RYBELSUS or OZEMPIC tablets [see Contraindications ( 4 ), Warnings and Precautions ( 5.1 )]. WARNING: RISK OF THYROID C-CELL TUMORS See full prescribing information for complete boxed warning. • In rodents, semaglutide causes thyroid C-cell tumors. It is unknown whether RYBELSUS and OZEMPIC tablets cause thyroid C-cell tumors, including medullary thyroid carcinoma (MTC), in humans as the human relevance of semaglutide-induced rodent thyroid C-cell tumors has not been determined ( 5.1 , 13.1 ). • RYBELSUS and OZEMPIC tablets are contraindicated in patients with a personal or family history of MTC or in patients with Multiple Endocrine Neoplasia syndrome type 2 (MEN 2). Counsel patients regarding the potential risk of MTC and symptoms of thyroid tumors ( 4 , 5.1 ).\n\nIndications and usage: 1 INDICATIONS AND USAGE RYBELSUS and OZEMPIC tablets are indicated: • as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. • to reduce the risk of major adverse cardiovascular (CV) events (CV death, non-fatal myocardial infarction or non-fatal stroke) in adults with type 2 diabetes mellitus who are at high risk for these events. RYBELSUS and OZEMPIC tablets are glucagon-like peptide-1 (GLP-1) receptor agonists indicated: • as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus. ( 1 ) • to reduce the risk of major adverse cardiovascular events (cardiovascular death, non-fatal myocardial infarction, or non-fatal stroke) in adults with type 2 diabetes mellitus who are at high risk for these events. ( 1 )\n\nWarnings and precautions: 5 WARNINGS AND PRECAUTIONS • Acute Pancreatitis : Has been observed in patients treated with GLP-1 receptor agonists, including RYBELSUS or OZEMPIC tablets. Discontinue if pancreatitis is suspected. ( 5.2 ) • Diabetic Retinopathy Complications : Has been reported in a cardiovascular outcomes trial with semaglutide injection. Patients with a history of diabetic retinopathy should be monitored. ( 5.3 ) • Hypoglycemia with Concomitant Use of Insulin Secretagogues or Insulin : May increase the risk of hypoglycemia, including severe hypoglycemia. Reducing the dosage of insulin secretagogue or insulin may be necessary. ( 5.4 ) • Acute Kidney Injury Due to Volume Depletion : Monitor renal function in patients reporting adverse reactions that could lead to volume depletion. ( 5.5 ) • Severe Gastrointestinal Adverse Reactions : Use of RYBELSUS or OZEMPIC tablets has been associated with gastrointestinal adverse reactions, sometimes severe. RYBELSUS and OZEMPIC tablets are not recommended in patients with severe gastroparesis. ( 5.6 ) • Hypersensitivity Reactions : Serious hypersensitivity reactions (e.g., anaphylaxis and angioedema) have been reported. Discontinue RYBELSUS or OZEMPIC tablets if hypersensitivity reactions occur and monitor until signs and symptoms resolve. ( 5.7 ) • Acute Gallbladder Disease : If cholelithiasis or cholecystitis are suspected, gallbladder studies are indicated. ( 5.8 ) • Pulmonary Aspiration During General Anesthesia or Deep Sedation : Has been reported in patients receiving GLP-1 receptor agonists undergoing elective surgeries or procedures. Instruct patients to inform healthcare providers of any planned surgeries or procedures. ( 5.9 ) 5.1 Risk of Thyroid C-Cell Tumors In mice and rats, semaglutide caused a dose-dependent and treatment-duration-dependent increase in the incidence of thyroid C-cell tumors (adenomas and carcinomas) after lifetime exposure at clinically relevant plasma exposures [see Nonclinical Toxicology ( 13.1 )] . It is unknown whether RYBELSUS and OZEMPIC tablets cause thyroid C-cell tumors, including medullary thyroid carcinoma (MTC), in humans as human relevance of semaglutide-induced rodent thyroid C-cell tumors has not been determined. Cases of MTC in patients treated with liraglutide, another GLP-1 receptor agonist, have been reported in the postmarketing period; the data in these reports are insufficient to establish or exclude a causal relationship between MTC and GLP-1 receptor agonist use in humans. RYB…\n\nAdverse reactions: 6 ADVERSE REACTIONS The following serious adverse reactions are described below or elsewhere in the prescribing information: • Risk of Thyroid C-cell Tumors [see Warnings and Precautions ( 5.1 )] • Acute Pancreatitis [see Warnings and Precautions ( 5.2 )] • Diabetic Retinopathy Complications [see Warnings and Precautions ( 5.3 )] • Hypoglycemia with Concomitant Use of Insulin Secretagogues or Insulin [see Warnings and Precautions ( 5.4 )] • Acute Kidney Injury Due to Volume Depletion [see Warnings and Precautions ( 5.5 )] • Severe Gastrointestinal Adverse Reactions [see Warnings and Precautions ( 5.6 )] • Hypersensitivity Reactions [see Warnings and Precautions ( 5.7 )] • Acute Gallbladder Disease [see Warnings and Precautions ( 5.8 )] • Pulmonary Aspiration During General Anesthesia or Deep Sedation [see Warnings and Precautions ( 5.9 )] Most common adverse reactions (incidence ≥5%) are nausea, abdominal pain, diarrhea, decreased appetite, vomiting and constipation. ( 6.1 ) To report SUSPECTED ADVERSE REACTIONS, contact Novo Nordisk Inc., at 1-833-457-7455 or FDA at 1-800-FDA-1088 or www.fda.gov/medwatch. 6.1 Clinical Trials Experience Because clinical trials are conducted under widely varying conditions, adverse reaction rates observed in the clinical trials of a drug cannot be directly compared to rates in the clinical trials of another drug and may not reflect the rates observed in practice. The safety of OZEMPIC tablets (1.5 mg, 4 mg and 9 mg strengths) [see Dosage and Administration ( 2.2 )] and RYBELSUS (3 mg, 7, mg and 14 mg strengths) [see Dosage and Administration ( 2.2 )] has been established as an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus based on adequate and well-controlled studies of RYBELSUS in adult patients with type 2 diabetes mellitus [see Clinical Pharmacology ( 12.3 ), Clinical Studies ( 14 )] . Below is a display of the safety results of the adequate and well-controlled studies of RYBELSUS (referred to below as semaglutide tablets) in adult patients with type 2 diabetes mellitus. Pool of Placebo-Controlled Trials The data in Table 2 are derived from 2 placebo-controlled trials in adult patients with type 2 diabetes mellitus [see Clinical Studies ( 14 )] . These data reflect exposure of 1,071 patients to semaglutide tablets (3 mg, 7, mg or 14 mg orally once daily) with a mean duration of exposure of 41.8 weeks. The mean age of patients was 58 years, 3.9% were 75 years or older an…\n\nContraindications: 4 CONTRAINDICATIONS RYBELSUS and OZEMPIC tablets are contraindicated in patients with: • A personal or family history of medullary thyroid carcinoma (MTC) or in patients with Multiple Endocrine Neoplasia syndrome type 2 (MEN 2) [see Warnings and Precautions ( 5.1 )] . • A prior serious hypersensitivity reaction to semaglutide or to any of the excipients in RYBELSUS or OZEMPIC tablets. Serious hypersensitivity reactions including anaphylaxis and angioedema have been reported with semaglutide tablets [see Warnings and Precautions ( 5.7 )] . • Personal or family history of MTC or in patients with MEN 2 syndrome type 2 ( 4 ) • Prior serious hypersensitivity reaction to semaglutide or any of the excipients in OZEMPIC ( 4 )",
+     "meta": {
+      "generic": "ORAL SEMAGLUTIDE",
+      "brand": "OZEMPIC, RYBELSUS",
+      "effective": "2026-01-30",
+      "boxed_warning": true
+     }
+    }
+   ]
+  }
+ }
+}
