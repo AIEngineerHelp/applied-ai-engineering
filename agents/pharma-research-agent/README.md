@@ -86,7 +86,7 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 16 tests: agent core, streaming client, citations, report parsing, and the durable pipeline against in-memory Postgres
+npm test          # 17 tests: agent core, streaming client, citations, report parsing, and the durable pipeline against in-memory Postgres
 npm run build
 ```
 

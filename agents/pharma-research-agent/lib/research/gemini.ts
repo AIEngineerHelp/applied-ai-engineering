@@ -158,19 +158,13 @@ export function createGemini(opts: GeminiOptions = {}): LLM {
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let buf = "";
+        const sse = new SseParser();
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
-          buf += decoder.decode(value, { stream: true });
-          let i: number;
-          while ((i = buf.indexOf("\n\n")) >= 0) {
-            const event = buf.slice(0, i);
-            buf = buf.slice(i + 2);
-            for (const line of event.split("\n")) if (line.startsWith("data: ")) handle(JSON.parse(line.slice(6)) as GenerateResponse);
-          }
+          for (const data of sse.push(decoder.decode(value, { stream: true }))) handle(JSON.parse(data) as GenerateResponse);
         }
-        if (buf.trim().startsWith("data: ")) handle(JSON.parse(buf.trim().slice(6)) as GenerateResponse);
+        for (const data of sse.end()) handle(JSON.parse(data) as GenerateResponse);
 
         return {
           candidates: [
@@ -255,6 +249,38 @@ export function createGemini(opts: GeminiOptions = {}): LLM {
 }
 
 /** Which sentences of the answer came from which grounding chunks. */
+/**
+ * Splits a server-sent event stream into its data payloads. Gemini ends lines
+ * with CRLF, so events are separated by "\r\n\r\n", not "\n\n"; line endings
+ * are normalized before splitting. A chunk can end mid-event or mid-CRLF.
+ */
+export class SseParser {
+  private buf = "";
+
+  push(chunk: string): string[] {
+    this.buf += chunk;
+    // Hold back a trailing "\r": its "\n" may arrive in the next chunk.
+    const cut = this.buf.endsWith("\r") ? this.buf.length - 1 : this.buf.length;
+    const text = this.buf.slice(0, cut).replace(/\r\n?/g, "\n");
+    const last = text.lastIndexOf("\n\n");
+    if (last < 0) return [];
+    this.buf = text.slice(last + 2) + this.buf.slice(cut);
+    return text.slice(0, last).split("\n\n").flatMap(dataOf);
+  }
+
+  end(): string[] {
+    const rest = this.buf.replace(/\r\n?/g, "\n");
+    this.buf = "";
+    return rest.split("\n\n").flatMap(dataOf);
+  }
+}
+
+/** The data of one event; multi-line data fields are joined with "\n". */
+function dataOf(event: string): string[] {
+  const lines = event.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(l.startsWith("data: ") ? 6 : 5));
+  return lines.length ? [lines.join("\n")] : [];
+}
+
 function groundingSupports(cand: { groundingMetadata?: GroundingMetadata }): { text: string; chunks: number[] }[] | undefined {
   const s = cand.groundingMetadata?.groundingSupports;
   return s?.map((x) => ({ text: x.segment?.text ?? "", chunks: x.groundingChunkIndices ?? [] })).filter((x) => x.text);

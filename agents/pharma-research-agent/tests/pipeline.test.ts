@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { checks, citedSentences } from "../lib/research/evals.ts";
-import { createGemini } from "../lib/research/gemini.ts";
+import { createGemini, SseParser } from "../lib/research/gemini.ts";
 import type { LLM } from "../lib/research/llm.ts";
 import { fixtureToolsets, offlineLLM } from "../lib/research/offline.ts";
 import { runResearch } from "../lib/research/run.ts";
@@ -143,6 +143,40 @@ test("the Gemini client streams thoughts and text, and echoes the model's conten
   } finally {
     globalThis.fetch = real;
   }
+});
+
+test("the Gemini client reads CRLF-separated events and returns streamed JSON intact", async () => {
+  // The live API ends lines with CRLF. Structured output arrives as text deltas, then an empty part with the signature.
+  const events = [
+    { candidates: [{ content: { role: "model", parts: [{ text: "**Planning**", thought: true }] } }] },
+    { candidates: [{ content: { role: "model", parts: [{ text: '{"focus":"safety",' }] } }] },
+    { candidates: [{ content: { role: "model", parts: [{ text: '"items":["FAERS","VigiBase"]}' }] } }] },
+    { candidates: [{ content: { role: "model", parts: [{ text: "", thoughtSignature: "SIG" }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 3 } },
+  ];
+  const body = events.map((e) => `data: ${JSON.stringify(e)}\r\n\r\n`).join("");
+  // Deliver it in 7-byte pieces, so chunks split events, lines and CRLF pairs.
+  const bytes = new TextEncoder().encode(body);
+  const stream = new ReadableStream({
+    start(c) {
+      for (let i = 0; i < bytes.length; i += 7) c.enqueue(bytes.slice(i, i + 7));
+      c.close();
+    },
+  });
+  const real = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(stream, { headers: { "content-type": "text/event-stream" } })) as typeof fetch;
+  try {
+    const llm = createGemini({ apiKey: "k" });
+    const r = await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], schema: { type: "object" }, onThought: () => {} });
+    assert.deepEqual(r.json, { focus: "safety", items: ["FAERS", "VigiBase"] });
+    assert.equal(r.thoughts, "**Planning**");
+  } finally {
+    globalThis.fetch = real;
+  }
+  // The parser on its own: a trailing event without a blank line is still read at the end.
+  const p = new SseParser();
+  assert.deepEqual(p.push("data: 1\r\n\r"), []);
+  assert.deepEqual(p.push("\ndata: 2\r\n"), ["1"]);
+  assert.deepEqual(p.end(), ["2"]);
 });
 
 test("the judge sees the passages relevant to a claim, not just the start of a long source", async () => {
