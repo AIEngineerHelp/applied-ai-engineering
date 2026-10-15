@@ -42,6 +42,8 @@ There are no accounts yet. Each browser gets a private, anonymous workspace thro
 
 ## How it is built
 
+[docs/architecture.md](docs/architecture.md) has the full diagram and a walk-through of one research turn.
+
 | Concern | Choice |
 |---|---|
 | App | Next.js 16 (App Router, Cache Components, partial prerendering), React 19, TypeScript |
