@@ -85,6 +85,28 @@ export function ThreadView({ initial, threadId, share }: { initial: Snapshot[]; 
     if (status === "completed" || status === "failed") void refresh();
   }, [refresh]);
 
+  // Follow the answer as it streams, but only while the reader is at the bottom:
+  // scrolling up to read stops the following, scrolling back down resumes it.
+  const content = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = content.current;
+    if (!el) return;
+    const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 96;
+    let follow = atBottom();
+    const onScroll = () => {
+      follow = atBottom();
+    };
+    const grow = new ResizeObserver(() => {
+      if (follow) window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+    });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    grow.observe(el);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      grow.disconnect();
+    };
+  }, []);
+
   // A new turn scrolls into view.
   useEffect(() => {
     if (turns.length > initial.length) document.getElementById(`turn-${turns.at(-1)!.report.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -140,7 +162,7 @@ export function ThreadView({ initial, threadId, share }: { initial: Snapshot[]; 
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[820px] flex-1 space-y-14 px-4 pt-8 pb-10 sm:px-6">
+      <div ref={content} className="mx-auto w-full max-w-[820px] flex-1 space-y-14 px-4 pt-8 pb-10 sm:px-6">
         {turns.map((t) => (
           <Turn key={t.report.id} initial={t} share={share} onStatus={onStatus} onRetry={readOnly ? undefined : (q) => void ask(q, true)} />
         ))}

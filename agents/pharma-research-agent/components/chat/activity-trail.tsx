@@ -124,7 +124,20 @@ function lines(state: RunState): Line[] {
   // 5. Writing and checking.
   const synth = spans.find((s) => s.kind === "agent" && s.name === "synthesis");
   if (synth || state.draft || state.result) {
-    out.push({ key: "write", at: synth?.start ?? 4, icon: <PenLine className="size-3.5" />, text: state.result ? "Wrote the report" : "Writing the report", state: state.result ? "done" : "running" });
+    const at = synth?.start ?? 4;
+    // The writer thinks before its first word; each thought heading is a line, so the wait isn't silent.
+    const steps = thoughtTitles(state.thoughts.get("synthesis")?.text ?? "");
+    const busy = !state.result && !state.draft;
+    steps.forEach((t, i) =>
+      out.push({ key: `write-think-${i}`, at: at + (i + 1) * 0.001, icon: <Brain className="size-3.5" />, text: t, state: busy && i === steps.length - 1 ? "running" : "done" }),
+    );
+    out.push({
+      key: "write",
+      at: at + (state.draft || state.result ? (steps.length + 1) * 0.001 : 0),
+      icon: <PenLine className="size-3.5" />,
+      text: state.result ? "Wrote the report" : state.draft ? "Writing the report" : "Preparing to write the report",
+      state: state.result ? "done" : busy && steps.length ? "done" : "running",
+    });
   }
   const evals = spans.find((s) => s.kind === "eval");
   if (evals || state.evals) {

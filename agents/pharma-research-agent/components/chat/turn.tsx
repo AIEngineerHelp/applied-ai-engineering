@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, Check, Copy, Download, FileText, ListTree, RotateCw } from "lucide-react";
+import { AlertTriangle, Check, Copy, Download, FileText, ListTree, PenLine, RotateCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useReportStream, type Snapshot } from "@/hooks/use-report-stream";
 import { blocks, numbered, numbering, referenceLine } from "@/lib/citations";
 import { parseReport } from "@/lib/research/report-format";
-import { isTerminal, type RunState } from "@/lib/run-state";
+import { isTerminal, phase, thoughtTitles, type RunState } from "@/lib/run-state";
 import { ActivityTrail } from "./activity-trail";
 import { SourceStrip } from "./source-strip";
 
@@ -29,6 +29,23 @@ function asMarkdown(state: RunState): string {
     out.push(`${n}. ${s ? `${referenceLine(s)}. ${s.url}` : id}`);
   }
   return out.join("\n");
+}
+
+/** Holds the answer's place while the writer thinks, naming what it is weighing. */
+function Composing({ thought }: { thought?: string }) {
+  return (
+    <div className="rounded-xl border border-dashed px-4 py-4" aria-live="polite">
+      <p className="flex items-center gap-2 text-[13.5px] text-muted-foreground">
+        <PenLine className="size-4 shrink-0 text-primary" aria-hidden="true" />
+        <span className="min-w-0 truncate">{thought ? `${thought}…` : "Reading the findings and planning the answer…"}</span>
+      </p>
+      <div className="mt-4 space-y-2.5" aria-hidden="true">
+        {[92, 84, 88, 61].map((w) => (
+          <div key={w} className="h-3 animate-pulse rounded bg-muted" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot; share?: string; onRetry?: (query: string) => void; onStatus?: (id: string, status: string) => void }) {
@@ -82,6 +99,8 @@ export function Turn({ initial, share, onRetry, onStatus }: { initial: Snapshot;
         )}
 
         {sources.length > 0 && <SourceStrip sources={sources} nums={nums} onOpen={openSources} />}
+
+        {!shown && running && phase(state) === "writing" && <Composing thought={thoughtTitles(state.thoughts.get("synthesis")?.text ?? "").at(-1)} />}
 
         {shown && (
           <div className={running && !state.result ? "streaming" : undefined} aria-busy={running && !state.result}>
