@@ -1,21 +1,34 @@
 // A research sub-agent: one subtask, one knowledge base, its assigned skills.
-// It runs a short tool loop — search, read, maybe search again — then calls
-// `finish` with claims tied to source ids. Full documents go to the virtual
-// file system; the model sees only short excerpts.
+// It is a small LangGraph graph of its own — a model node and a tools node in
+// a loop — that ends when the model calls `finish` with claims tied to source
+// ids. Full documents go to the virtual file system; the model sees only short
+// excerpts.
+//
+//   START → model ─┬─ tool calls ──→ tools ──→ model
+//                  ├─ finish ──────→ finish → END
+//                  └─ no call ─────→ model (nudged)
+//
+// The turn limit lives in the graph's state: on the last turn the model is
+// given only `finish`, and forced to call it.
 
-import type { LLM, Schema, ToolDecl, Turn } from "../llm.ts";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
+import { tool } from "@langchain/core/tools";
+import { Annotation, END, MessagesAnnotation, START, StateGraph, type LangGraphRunnableConfig } from "@langchain/langgraph";
+import { callModel } from "../model.ts";
 import type { Skill } from "../skills.ts";
-import type { Toolset } from "../sources/toolset.ts";
+import { asLangChainTools, type Toolset } from "../sources/toolset.ts";
 import type { Tracer } from "../trace.ts";
 import type { Finding, Source, Subtask } from "../types.ts";
 import type { VirtualFS } from "../vfs.ts";
 
 export const MAX_TURNS = 6;
 
-const FINISH: ToolDecl = {
+/** The tool that ends the loop. It is never executed: its arguments are the finding. */
+const finishTool = tool(async () => "recorded", {
   name: "finish",
   description: "Call once, when you have enough evidence or have run out of useful searches. Every claim must cite source ids you retrieved.",
-  parameters: {
+  schema: {
     type: "object",
     properties: {
       summary: { type: "string", description: "Two or three sentences answering your subtask." },
@@ -33,11 +46,11 @@ const FINISH: ToolDecl = {
       gaps: { type: "array", items: { type: "string" }, description: "What you looked for and could not find." },
     },
     required: ["summary", "claims", "gaps"],
-  } satisfies Schema,
-};
+  },
+});
 
 export interface ResearchContext {
-  llm: LLM;
+  model: BaseChatModel;
   tracer: Tracer;
   vfs: VirtualFS;
   /** Every source any agent retrieved, by id. */
@@ -46,6 +59,14 @@ export interface ResearchContext {
   /** Streams a sub-agent's thought summary for one model call (key identifies the call). */
   onThought?: (key: string, soFar: string, done: boolean) => void;
 }
+
+/** The sub-agent's state: its conversation, how many turns it has used, and its finding once done. */
+const SubAgentState = Annotation.Root({
+  ...MessagesAnnotation.spec,
+  turn: Annotation<number>({ reducer: (_, next) => next, default: () => 0 }),
+  finding: Annotation<Finding | undefined>(),
+});
+type SubAgent = typeof SubAgentState.State;
 
 /** The markdown file a source is saved as. */
 export const sourceFile = (s: Source) => `/sources/${s.kind}/${s.id.replace(/[^A-Za-z0-9_.-]/g, "_")}.md`;
@@ -60,7 +81,9 @@ function saveSources(ctx: ResearchContext, task: Subtask, sources: Source[]) {
   if (sources.length) ctx.onSources(task.id, sources);
 }
 
-export async function research(ctx: ResearchContext, task: Subtask, toolset: Toolset, skills: Skill[], parent: string): Promise<Finding> {
+const lastAI = (messages: BaseMessage[]) => [...messages].reverse().find((m): m is AIMessage => AIMessage.isInstance(m) || m.type === "ai") as AIMessage | undefined;
+
+export async function research(ctx: ResearchContext, task: Subtask, toolset: Toolset, skills: Skill[], parent: string, config?: LangGraphRunnableConfig): Promise<Finding> {
   return ctx.tracer.wrap("agent", `${task.id} · ${toolset.kind}`, parent, async (span) => {
     const playbooks = skills.filter((s) => task.skills.includes(s.name));
     const system = [
@@ -69,74 +92,105 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
       `You have at most ${MAX_TURNS} turns. Search, read what matters, then call finish.`,
       ...playbooks.map((p) => `\n## Skill: ${p.name}\n${p.body}`),
     ].join("\n");
-    const turns: Turn[] = [{ role: "user", text: `Subtask: ${task.question}\nWhy it matters: ${task.why}` }];
-    const tools = [...toolset.tools, FINISH];
 
     // Web search has no function tools: one grounded call, sources from the grounding metadata.
     if (toolset.kind === "web") return webResearch(ctx, task, system, span.id);
 
-    for (let turn = 0; turn < MAX_TURNS; turn++) {
-      const last = turn === MAX_TURNS - 1;
-      const res = await ctx.tracer.wrap("llm", `${task.id} turn ${turn + 1}`, span.id, async (s) => {
-        const key = `${task.id}:t${turn + 1}`;
-        const r = await ctx.llm.generate({
-          agent: `researcher:${toolset.kind}`,
-          system,
-          turns,
-          tools: last ? [FINISH] : tools,
-          force: last ? "finish" : undefined,
-          temperature: 0.2,
+    const tools = asLangChainTools(toolset);
+    const byName = new Map(tools.map((t) => [t.name, t]));
+
+    const model = async (s: SubAgent) => {
+      const turn = s.turn + 1;
+      const last = turn >= MAX_TURNS;
+      const key = `${task.id}:t${turn}`;
+      const r = await ctx.tracer.wrap("llm", `${task.id} turn ${turn}`, span.id, async (sp) => {
+        const r = await callModel(ctx.model, s.messages, {
+          tools: last ? [finishTool] : [...tools, finishTool],
+          toolChoice: last ? "finish" : undefined,
           onThought: ctx.onThought ? (t) => ctx.onThought!(key, t, false) : undefined,
         });
         if (ctx.onThought && r.thoughts) ctx.onThought(key, r.thoughts, true);
         ctx.tracer.addUsage(r.usage);
-        ctx.tracer.close(s, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, calls: r.calls.map((c) => c.name).join(", ") });
+        ctx.tracer.close(sp, { model: ctx.model.getName(), input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, calls: (r.message.tool_calls ?? []).map((c) => c.name).join(", ") });
         return r;
       });
-      turns.push({ role: "model", text: res.text, calls: res.calls, raw: res.raw });
+      const messages: BaseMessage[] = [r.message];
+      if (!r.message.tool_calls?.length && !last) messages.push(new HumanMessage("Use a tool, or call finish with what you have."));
+      return { messages, turn };
+    };
 
-      const done = res.calls.find((c) => c.name === "finish");
-      if (done) return finish(ctx, task, done.args);
-      if (!res.calls.length) {
-        turns.push({ role: "user", text: "Use a tool, or call finish with what you have." });
-        continue;
-      }
-      const results: { name: string; response: unknown }[] = [];
-      for (const call of res.calls) {
-        const out = await ctx.tracer.wrap("tool", `${call.name}`, span.id, async (s) => {
+    const runTools = async (s: SubAgent) => {
+      const calls = lastAI(s.messages)?.tool_calls ?? [];
+      const left = MAX_TURNS - s.turn;
+      const out: ToolMessage[] = [];
+      for (const call of calls) {
+        const t = byName.get(call.name);
+        const { content, sources } = await ctx.tracer.wrap("tool", call.name, span.id, async (sp) => {
           ctx.tracer.addToolCall();
-          const o = await toolset.call(call.name, call.args).catch((err: Error) => ({ forModel: { error: err.message }, sources: [] as Source[] }));
-          ctx.tracer.close(s, { args: JSON.stringify(call.args).slice(0, 200), results: o.sources.length });
-          return o;
+          const msg = t ? ((await t.invoke({ ...call, type: "tool_call" })) as ToolMessage) : undefined;
+          const sources = (msg?.artifact ?? []) as Source[];
+          ctx.tracer.close(sp, { args: JSON.stringify(call.args).slice(0, 200), results: sources.length });
+          return { content: msg?.text ?? JSON.stringify({ error: `Unknown tool ${call.name}` }), sources };
         });
-        saveSources(ctx, task, out.sources);
+        saveSources(ctx, task, sources);
         // Every result carries the remaining budget, so the model can plan its last search.
-        const left = MAX_TURNS - turn - 1;
-        const response = out.forModel && typeof out.forModel === "object" && !Array.isArray(out.forModel) ? { ...(out.forModel as object), turns_left: left } : { result: out.forModel, turns_left: left };
-        results.push({ name: call.name, response });
+        let body: Record<string, unknown>;
+        try {
+          const parsed = JSON.parse(content) as unknown;
+          body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? { ...(parsed as object) } : { result: parsed };
+        } catch {
+          body = { result: content };
+        }
+        body.turns_left = left;
+        if (left === 1) body.note = "Last turn: call finish now, citing the source ids you have.";
+        out.push(new ToolMessage({ content: JSON.stringify(body), tool_call_id: call.id ?? call.name, name: call.name }));
       }
-      turns.push({ role: "tool", results });
-      if (turn === MAX_TURNS - 2) turns.push({ role: "user", text: "Last turn: call finish now, citing the source ids you have." });
-    }
-    // Out of turns without finishing: record an honest empty finding.
-    return finish(ctx, task, { summary: "The sub-agent ran out of turns before finishing.", claims: [], gaps: [task.question] });
+      return { messages: out };
+    };
+
+    const done = async (s: SubAgent) => {
+      const call = (lastAI(s.messages)?.tool_calls ?? []).find((c) => c.name === "finish");
+      // Out of turns without finishing: record an honest empty finding.
+      const args = call?.args ?? { summary: "The sub-agent ran out of turns before finishing.", claims: [], gaps: [task.question] };
+      return { finding: finish(ctx, task, args) };
+    };
+
+    const route = (s: SubAgent) => {
+      const calls = lastAI(s.messages)?.tool_calls ?? [];
+      if (calls.some((c) => c.name === "finish")) return "finish";
+      if (s.turn >= MAX_TURNS) return "finish";
+      return calls.length ? "tools" : "model";
+    };
+
+    const graph = new StateGraph(SubAgentState)
+      .addNode("model", model)
+      .addNode("tools", runTools)
+      .addNode("finish", done)
+      .addEdge(START, "model")
+      .addConditionalEdges("model", route, ["tools", "finish", "model"])
+      .addEdge("tools", "model")
+      .addEdge("finish", END)
+      .compile({ name: `researcher-${task.id}` });
+
+    const out = await graph.invoke(
+      { messages: [new SystemMessage(system), new HumanMessage(`Subtask: ${task.question}\nWhy it matters: ${task.why}`)] },
+      { ...config, recursionLimit: 4 * MAX_TURNS },
+    );
+    return out.finding ?? finish(ctx, task, { summary: "The sub-agent stopped without a finding.", claims: [], gaps: [task.question] });
   });
 }
 
 async function webResearch(ctx: ResearchContext, task: Subtask, system: string, parent: string): Promise<Finding> {
   const res = await ctx.tracer.wrap("llm", `${task.id} web search`, parent, async (s) => {
-    const r = await ctx.llm.generate({
-      agent: "researcher:web",
-      system: `${system}\n\nSearch the web, then answer in plain prose. Do not write citations; the sources you used are recorded automatically.`,
-      turns: [{ role: "user", text: task.question }],
-      search: true,
-      temperature: 0.2,
-      onThought: ctx.onThought ? (t) => ctx.onThought!(`${task.id}:web`, t, false) : undefined,
-    });
+    const r = await callModel(
+      ctx.model,
+      [new SystemMessage(`${system}\n\nSearch the web, then answer in plain prose. Do not write citations; the sources you used are recorded automatically.`), new HumanMessage(task.question)],
+      { tools: [{ googleSearch: {} }], onThought: ctx.onThought ? (t) => ctx.onThought!(`${task.id}:web`, t, false) : undefined },
+    );
     if (ctx.onThought && r.thoughts) ctx.onThought(`${task.id}:web`, r.thoughts, true);
     ctx.tracer.addUsage(r.usage);
     ctx.tracer.addToolCall();
-    ctx.tracer.close(s, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, results: r.grounding?.length ?? 0, searches: r.searches });
+    ctx.tracer.close(s, { model: ctx.model.getName(), input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost, results: r.grounding?.length ?? 0, searches: r.searches });
     return r;
   });
   const sources: Source[] = (res.grounding ?? []).map((g, i) => ({

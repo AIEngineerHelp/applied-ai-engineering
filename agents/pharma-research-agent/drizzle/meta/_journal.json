@@ -15,6 +15,13 @@
       "when": 1791889495135,
       "tag": "0001_threads",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791963735067,
+      "tag": "0002_graph_checkpoints",
+      "breakpoints": true
     }
   ]
 }

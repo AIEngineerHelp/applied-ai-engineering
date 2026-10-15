@@ -2,7 +2,11 @@
 // groundedness, asks a judge model whether each cited sentence is supported by
 // the sources it cites.
 
-import type { LLM, Schema } from "./llm.ts";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { callModel } from "./model.ts";
+
+type Schema = Record<string, unknown>;
 import type { Tracer } from "./trace.ts";
 import type { EvalResult, Finding, Plan, Report, Source } from "./types.ts";
 
@@ -98,7 +102,7 @@ const JUDGE_SCHEMA: Schema = {
 };
 
 /** Judge up to `limit` cited sentences against the text of the sources they cite. */
-export async function groundedness(llm: LLM, tracer: Tracer, report: Report, registry: Map<string, Source>, parent: string, limit = 12): Promise<EvalResult & { verdicts: { text: string; verdict: string; reason: string }[] }> {
+export async function groundedness(model: BaseChatModel, tracer: Tracer, report: Report, registry: Map<string, Source>, parent: string, limit = 12): Promise<EvalResult & { verdicts: { text: string; verdict: string; reason: string }[] }> {
   const items = citedSentences(report)
     .filter((s) => s.ids.some((id) => registry.has(id)))
     .slice(0, limit);
@@ -113,15 +117,16 @@ export async function groundedness(llm: LLM, tracer: Tracer, report: Report, reg
     })
     .join("\n\n");
   const res = await tracer.wrap("llm", "judge groundedness", parent, async (span) => {
-    const r = await llm.generate({
-      agent: "judge",
-      system: "You check claims against evidence. For each numbered claim, decide if the evidence text supports it: supported (fully), partial (some of it, or a number differs), unsupported (not in the evidence). Judge only from the evidence given.",
-      turns: [{ role: "user", text: prompt }],
-      schema: JUDGE_SCHEMA,
-      temperature: 0,
-    });
+    const r = await callModel(
+      model,
+      [
+        new SystemMessage("You check claims against evidence. For each numbered claim, decide if the evidence text supports it: supported (fully), partial (some of it, or a number differs), unsupported (not in the evidence). Judge only from the evidence given."),
+        new HumanMessage(prompt),
+      ],
+      { schema: JUDGE_SCHEMA },
+    );
     tracer.addUsage(r.usage);
-    tracer.close(span, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost });
+    tracer.close(span, { model: model.getName(), input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost });
     return r;
   });
   const verdicts = ((res.json as { verdicts: { n: number; verdict: string; reason: string }[] }).verdicts ?? [])

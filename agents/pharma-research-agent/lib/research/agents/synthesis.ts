@@ -2,7 +2,9 @@
 // a catalogue of every source retrieved — and writes one cited report. It sees
 // file contents, not the sub-agents' conversations.
 
-import type { LLM } from "../llm.ts";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { callModel } from "../model.ts";
 import type { Skill } from "../skills.ts";
 import type { Tracer } from "../trace.ts";
 import type { Plan, Report, Source } from "../types.ts";
@@ -56,7 +58,7 @@ export interface SynthesisOptions {
   onThought?: (soFar: string) => void;
 }
 
-export async function synthesize(llm: LLM, tracer: Tracer, vfs: VirtualFS, query: string, plan: Plan, registry: Map<string, Source>, skill: Skill | undefined, parent: string, opts: SynthesisOptions = {}): Promise<Report> {
+export async function synthesize(model: BaseChatModel, tracer: Tracer, vfs: VirtualFS, query: string, plan: Plan, registry: Map<string, Source>, skill: Skill | undefined, parent: string, opts: SynthesisOptions = {}): Promise<Report> {
   return tracer.wrap("agent", "synthesis", parent, async (span) => {
     // The agent works from files: list them, then read the findings.
     const answering = plan.mode === "answer";
@@ -87,9 +89,9 @@ export async function synthesize(llm: LLM, tracer: Tracer, vfs: VirtualFS, query
           vfs.read("/sources/CATALOGUE.md"),
         ].join("\n");
     const res = await tracer.wrap("llm", "write report", span.id, async (s) => {
-      const r = await llm.generate({ agent: "synthesis", system, turns: [{ role: "user", text: user }], temperature: 0.2, onText: opts.onText, onThought: opts.onThought });
+      const r = await callModel(model, [new SystemMessage(system), new HumanMessage(user)], { onText: opts.onText, onThought: opts.onThought });
       tracer.addUsage(r.usage);
-      tracer.close(s, { model: r.model, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost });
+      tracer.close(s, { model: model.getName(), input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost });
       return r;
     });
     const report = parseReport(res.text, query);

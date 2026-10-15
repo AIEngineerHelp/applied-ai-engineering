@@ -1,69 +1,91 @@
-import { test } from "node:test";
+// The agents, one at a time, on the scripted LangChain model: the planner,
+// a sub-agent's LangGraph tool loop, the model helper, and the pure parts
+// (citation checks, file system, skills, source parsers).
+import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { plan } from "../lib/research/agents/orchestrator.ts";
+import { MAX_TURNS, research } from "../lib/research/agents/researcher.ts";
 import { checks, citedSentences } from "../lib/research/evals.ts";
-import { createGemini, SseParser } from "../lib/research/gemini.ts";
-import type { LLM } from "../lib/research/llm.ts";
-import { fixtureToolsets, offlineLLM } from "../lib/research/offline.ts";
-import { runResearch } from "../lib/research/run.ts";
+import { callModel } from "../lib/research/model.ts";
+import { ScriptedChatModel, fixtureToolsets, type ScriptedCallOptions } from "../lib/research/offline.ts";
 import { loadSkills, parseSkill, skillIndex } from "../lib/research/skills.ts";
 import { parsePubmedXml } from "../lib/research/sources/pubmed.ts";
 import { studyToSource } from "../lib/research/sources/trials.ts";
 import { labelToSource } from "../lib/research/sources/fda.ts";
-import type { Report } from "../lib/research/types.ts";
+import { Tracer } from "../lib/research/trace.ts";
+import type { Report, RunEvent, Source, Subtask } from "../lib/research/types.ts";
 import { VirtualFS } from "../lib/research/vfs.ts";
 
-test("an offline run goes through every stage and writes the expected files", async () => {
-  const r = await runResearch("What is the evidence on GLP-1 receptor agonists and pancreatitis?", { llm: offlineLLM(), toolsets: fixtureToolsets() });
-  const types = new Set(r.events.map((e) => e.type));
-  for (const t of ["run", "skills", "plan", "sources", "finding", "report", "evals", "done"]) assert.ok(types.has(t as never), `event ${t}`);
-  assert.ok(!types.has("error"));
-  const paths = r.files.map((f) => f.path);
-  for (const p of ["/plan.md", "/findings/agent-1.md", "/findings/agent-2.md", "/findings/agent-3.md", "/sources/CATALOGUE.md", "/report.md"]) assert.ok(paths.includes(p), p);
-  assert.ok(paths.some((p) => p.startsWith("/sources/pubmed/PMID_")));
-  const validity = r.evals.find((e) => e.name === "Citation validity")!;
-  assert.equal(validity.score, 1);
-  // Sub-agents ran in parallel: their agent spans overlap in time.
-  const spans = r.events.filter((e) => e.type === "span").map((e) => (e as { span: { name: string; start: number; end?: number } }).span);
-  const agentSpans = spans.filter((s) => s.name.startsWith("agent-") && s.end !== undefined);
-  const a = agentSpans.find((s) => s.name.startsWith("agent-1"))!, b = agentSpans.find((s) => s.name.startsWith("agent-2"))!;
-  assert.ok(a.start < b.end! && b.start < a.end!, "agent-1 and agent-2 overlap");
+afterEach(() => {
+  ScriptedChatModel.script = undefined;
 });
+
+const task: Subtask = { id: "agent-1", question: "What do trials report about pancreatitis?", source: "pubmed", skills: ["literature-review"], why: "Pooled evidence." };
+
+/** A sub-agent's context, collecting its events. */
+function context() {
+  const events: RunEvent[] = [];
+  const tracer = new Tracer((e) => events.push(e));
+  const vfs = new VirtualFS();
+  const registry = new Map<string, Source>();
+  return { events, tracer, vfs, registry, ctx: { model: new ScriptedChatModel({}), tracer, vfs, registry, onSources: () => {} } };
+}
 
 test("the orchestrator's plan is bounded and only uses real skills", async () => {
-  const llm: LLM = {
-    ...offlineLLM(),
-    async generate(req) {
-      if (req.agent !== "orchestrator") return offlineLLM().generate(req);
-      const json = { focus: "f", subtasks: Array.from({ length: 9 }, (_, i) => ({ question: `q${i}`, source: i === 0 ? "nowhere" : "pubmed", skills: ["literature-review", "made-up-skill"], why: "w" })) };
-      return { text: "", json, calls: [], usage: { input: 0, output: 0, thinking: 0 }, model: "t" };
-    },
-  };
-  const r = await runResearch("A question long enough", { llm, toolsets: fixtureToolsets(), maxSubtasks: 3, judge: false });
-  const plan = r.events.find((e) => e.type === "plan");
-  assert.ok(plan && plan.type === "plan");
-  assert.equal(plan.plan.subtasks.length, 3);
-  assert.ok(plan.plan.subtasks.every((t) => t.source === "pubmed" && t.skills.join() === "literature-review"));
+  ScriptedChatModel.script = (agent) =>
+    agent === "orchestrator"
+      ? { text: JSON.stringify({ focus: "f", subtasks: Array.from({ length: 9 }, (_, i) => ({ question: `q${i}`, source: i === 0 ? "nowhere" : "pubmed", skills: ["literature-review", "made-up-skill"], why: "w" })) }) }
+      : undefined;
+  const p = await plan(new ScriptedChatModel({}), "A question long enough", loadSkills(), 3);
+  assert.equal(p.subtasks.length, 3);
+  assert.ok(p.subtasks.every((t) => t.source === "pubmed" && t.skills.join() === "literature-review"));
+  assert.deepEqual(p.subtasks.map((t) => t.id), ["agent-1", "agent-2", "agent-3"]);
 });
 
-test("a sub-agent that never finishes stops after its turn limit, and the run still completes", async () => {
-  let researcherCalls = 0;
-  const base = offlineLLM();
-  const llm: LLM = {
-    ...base,
-    async generate(req) {
-      if (req.agent.startsWith("researcher:")) {
-        researcherCalls++;
-        return { text: "thinking…", calls: [], usage: { input: 0, output: 0, thinking: 0 }, model: "t" };
-      }
-      return base.generate(req);
-    },
+test("a sub-agent's graph searches, then finishes with claims citing only what it retrieved", async () => {
+  const { events, vfs, registry, ctx } = context();
+  const finding = await research(ctx, task, fixtureToolsets().pubmed, loadSkills(), "run");
+  assert.ok(finding.claims.length > 0);
+  assert.ok(finding.claims.every((c) => c.sources.length && c.sources.every((id) => registry.has(id))));
+  assert.ok(vfs.read("/findings/agent-1.md").includes("## Claims"));
+  assert.ok(vfs.list("/sources/pubmed").length > 0);
+  const spans = events.filter((e) => e.type === "span").map((e) => (e as { span: { kind: string; end?: number } }).span);
+  assert.equal(spans.filter((s) => s.kind === "tool" && s.end !== undefined).length, 1);
+  assert.equal(spans.filter((s) => s.kind === "llm" && s.end !== undefined).length, 2, "one search turn, one finish turn");
+});
+
+test("a sub-agent that never calls a tool stops at its turn limit, forced to finish on the last turn", async () => {
+  const seen: ScriptedCallOptions[] = [];
+  ScriptedChatModel.script = (agent, _m, o) => {
+    if (agent !== "researcher") return undefined;
+    seen.push(o);
+    return { text: "thinking…" };
   };
-  const r = await runResearch("A question long enough", { llm, toolsets: fixtureToolsets(), judge: false });
-  assert.equal(researcherCalls, 3 * 6);
-  assert.ok(r.report);
-  const answered = r.evals.find((e) => e.name === "Subtasks answered")!;
-  assert.equal(answered.score, 0);
+  const { ctx } = context();
+  const finding = await research(ctx, task, fixtureToolsets().pubmed, loadSkills(), "run");
+  assert.equal(seen.length, MAX_TURNS);
+  assert.equal(seen.at(-1)!.tool_choice, "finish");
+  assert.ok(seen.slice(0, -1).every((o) => o.tool_choice === undefined));
+  assert.equal(finding.claims.length, 0);
+  assert.match(finding.summary, /ran out of turns/);
+});
+
+test("callModel streams thought summaries and text, and counts thinking apart from output", async () => {
+  const thoughts: string[] = [];
+  const texts: string[] = [];
+  const r = await callModel(new ScriptedChatModel({}), [new SystemMessage("You are the synthesis agent."), new HumanMessage("[PMID:1] A study")], {
+    onThought: (t) => thoughts.push(t),
+    onText: (t) => texts.push(t),
+  });
+  assert.ok(thoughts.length > 1 && thoughts.at(-1)!.startsWith("**Organising the findings**"));
+  assert.ok(texts.length > 1 && texts.at(-1) === r.text);
+  assert.match(r.text, /^# Offline run/);
+  assert.equal(r.usage.input, 1200);
+  assert.equal(r.usage.cost, 0);
+  const judged = await callModel(new ScriptedChatModel({}), [new SystemMessage("You check claims."), new HumanMessage("1. CLAIM: x")], { schema: { type: "object" } });
+  assert.deepEqual((judged.json as { verdicts: unknown[] }).verdicts.length, 1);
 });
 
 test("citation checks catch ids the agents never retrieved", () => {
@@ -108,76 +130,6 @@ test("source parsers normalise PubMed XML, trial records and FDA labels", () => 
   assert.match(l.text, /^Boxed warning: WARNING: X/);
 });
 
-test("the Gemini client streams thoughts and text, and echoes the model's content back with its signature", async () => {
-  const sent: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { parametersJsonSchema?: unknown }[] }[]; toolConfig?: unknown; generationConfig?: Record<string, unknown> }[] = [];
-  const real = globalThis.fetch;
-  // A streamed response, as the API sends it: thought parts, then a function call, then a signature.
-  const sse = (chunks: unknown[]) => new Response(chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join(""), { headers: { "content-type": "text/event-stream" } });
-  globalThis.fetch = (async (_url: string, init: { body: string }) => {
-    sent.push(JSON.parse(init.body));
-    return sse([
-      { candidates: [{ content: { role: "model", parts: [{ text: "**Choosing a search**", thought: true }] } }], usageMetadata: { promptTokenCount: 10 } },
-      { candidates: [{ content: { role: "model", parts: [{ functionCall: { name: "search_pubmed", args: { query: "x" } }, thoughtSignature: "SIG123" }] } }] },
-      { candidates: [{ content: { role: "model", parts: [{ text: "" }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 2, thoughtsTokenCount: 5 } },
-    ]);
-  }) as typeof fetch;
-  try {
-    const llm = createGemini({ apiKey: "k", inputPrice: 1, outputPrice: 2 });
-    const thoughts: string[] = [];
-    const first = await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], tools: [{ name: "search_pubmed", description: "d", parameters: { type: "object" } }], onThought: (t) => thoughts.push(t) });
-    assert.equal(first.calls[0].name, "search_pubmed");
-    assert.deepEqual(thoughts, ["**Choosing a search**"]);
-    assert.equal(first.thoughts, "**Choosing a search**");
-    assert.equal(first.usage.cost, (10 * 1 + 7 * 2) / 1e6);
-    assert.deepEqual(sent[0].generationConfig?.thinkingConfig, { includeThoughts: true });
-    await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }, { role: "model", text: "", calls: first.calls, raw: first.raw }, { role: "tool", results: [{ name: "search_pubmed", response: [1, 2] }] }] });
-    const contents = sent[1].contents;
-    // Thought text is not echoed back; the call keeps its signature.
-    assert.equal(contents[1].parts.length, 1);
-    assert.equal(contents[1].parts[0].thoughtSignature, "SIG123");
-    assert.equal(contents[2].role, "user");
-    assert.deepEqual(contents[2].parts[0].functionResponse, { name: "search_pubmed", response: { result: [1, 2] } });
-    assert.ok(sent[0].tools[0].functionDeclarations[0].parametersJsonSchema);
-    await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], tools: [{ name: "finish", description: "d", parameters: { type: "object" } }], force: "finish" });
-    assert.deepEqual(sent[2].toolConfig, { functionCallingConfig: { mode: "ANY", allowedFunctionNames: ["finish"] } });
-  } finally {
-    globalThis.fetch = real;
-  }
-});
-
-test("the Gemini client reads CRLF-separated events and returns streamed JSON intact", async () => {
-  // The live API ends lines with CRLF. Structured output arrives as text deltas, then an empty part with the signature.
-  const events = [
-    { candidates: [{ content: { role: "model", parts: [{ text: "**Planning**", thought: true }] } }] },
-    { candidates: [{ content: { role: "model", parts: [{ text: '{"focus":"safety",' }] } }] },
-    { candidates: [{ content: { role: "model", parts: [{ text: '"items":["FAERS","VigiBase"]}' }] } }] },
-    { candidates: [{ content: { role: "model", parts: [{ text: "", thoughtSignature: "SIG" }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 3 } },
-  ];
-  const body = events.map((e) => `data: ${JSON.stringify(e)}\r\n\r\n`).join("");
-  // Deliver it in 7-byte pieces, so chunks split events, lines and CRLF pairs.
-  const bytes = new TextEncoder().encode(body);
-  const stream = new ReadableStream({
-    start(c) {
-      for (let i = 0; i < bytes.length; i += 7) c.enqueue(bytes.slice(i, i + 7));
-      c.close();
-    },
-  });
-  const real = globalThis.fetch;
-  globalThis.fetch = (async () => new Response(stream, { headers: { "content-type": "text/event-stream" } })) as typeof fetch;
-  try {
-    const llm = createGemini({ apiKey: "k" });
-    const r = await llm.generate({ agent: "a", system: "s", turns: [{ role: "user", text: "hi" }], schema: { type: "object" }, onThought: () => {} });
-    assert.deepEqual(r.json, { focus: "safety", items: ["FAERS", "VigiBase"] });
-    assert.equal(r.thoughts, "**Planning**");
-  } finally {
-    globalThis.fetch = real;
-  }
-  // The parser on its own: a trailing event without a blank line is still read at the end.
-  const p = new SseParser();
-  assert.deepEqual(p.push("data: 1\r\n\r"), []);
-  assert.deepEqual(p.push("\ndata: 2\r\n"), ["1"]);
-  assert.deepEqual(p.end(), ["2"]);
-});
 
 test("the judge sees the passages relevant to a claim, not just the start of a long source", async () => {
   const { relevant } = await import("../lib/research/evals.ts");

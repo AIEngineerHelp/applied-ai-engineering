@@ -1,16 +1,13 @@
-// Run one research query from the command line.
+// Run one research query from the command line, through the same LangGraph
+// graph the app runs, against an in-memory database.
 //   npm run research -- "your question"          offline dry run: scripted model, recorded sources, no network
 //   npm run research -- --live "your question"   live: Gemini (paid) + PubMed, ClinicalTrials.gov, openFDA, web search
-// Saves the run to runs/<id>.json (replay it in the app) and prints the report and evals.
+// Prints the plan, each agent as it finishes, the report and the evals, and
+// saves the run's events to runs/<id>.json.
 
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createGemini } from "../lib/research/gemini.ts";
-import { fixtureToolsets, offlineLLM } from "../lib/research/offline.ts";
-import { runResearch } from "../lib/research/run.ts";
-import { createToolsets } from "../lib/research/sources/index.ts";
-import { renderReport } from "../lib/research/agents/synthesis.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -21,25 +18,40 @@ if (live && !process.env.GEMINI_API_KEY) {
   console.error("--live needs GEMINI_API_KEY in .env");
   process.exit(1);
 }
-const llm = live ? createGemini() : offlineLLM();
-const toolsets = live ? createToolsets() : fixtureToolsets();
-console.log(`${live ? "LIVE" : "DRY RUN (offline)"} · ${llm.model}\n${query}\n`);
+async function main() {
+  // Set before the app's modules read them.
+  process.env.PGLITE_DIR = "memory";
+  delete process.env.DATABASE_URL;
+  if (!live) process.env.RESEARCH_OFFLINE = "1";
 
-const result = await runResearch(query, {
-  llm,
-  toolsets,
-  emit: (e) => {
-    if (e.type === "plan") for (const t of e.plan.subtasks) console.log(`  plan  ${t.id} [${t.source}] ${t.question}`);
-    if (e.type === "span" && e.span.end !== undefined && (e.span.kind === "tool" || e.span.kind === "agent")) console.log(`  ${e.span.kind.padEnd(5)} ${e.span.name} (${e.span.end - e.span.start} ms)${e.span.status === "error" ? ` ERROR ${e.span.attrs.error}` : ""}`);
-    if (e.type === "error") console.error(`  error ${e.message}`);
-  },
+  const { asc, eq } = await import("drizzle-orm");
+  const { db, schema } = await import("../lib/db/index.ts");
+  const { runResearchGraph } = await import("../lib/research/graph.ts");
+  const { renderReport } = await import("../lib/research/agents/synthesis.ts");
+  const { modelName } = await import("../lib/research/runtime.ts");
+  const { reports, reportEvents } = schema;
+
+  const id = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z") + "-" + Math.random().toString(36).slice(2, 6);
+  const d = await db();
+  await d.insert(reports).values({ id, threadId: id, workspaceId: "cli", query, model: modelName() });
+  console.log(`${live ? "LIVE" : "DRY RUN (offline)"} · ${modelName()}\n${query}\n`);
+
+  const state = await runResearchGraph(id);
+  for (const t of state.plan?.subtasks ?? []) console.log(`  plan  ${t.id} [${t.source}] ${t.question}`);
+  for (const f of state.findings) console.log(`  found ${f.subtask}: ${f.claims.length} claims`);
+  if (state.report) console.log(`\n${renderReport(state.report)}\n`);
+  for (const e of state.evals ?? []) console.log(`  ${e.name.padEnd(20)} ${(e.score * 100).toFixed(0).padStart(3)}%  ${e.detail}`);
+  const [row] = await d.select().from(reports).where(eq(reports.id, id));
+  console.log(`\n  ${row.modelCalls} model calls, ${row.toolCalls} tool calls, ${row.tokensIn} in / ${row.tokensOut} out tokens${row.costUsd !== null ? `, $${Number(row.costUsd).toFixed(4)}` : ""}`);
+
+  const events = await d.select({ data: reportEvents.data }).from(reportEvents).where(eq(reportEvents.reportId, id)).orderBy(asc(reportEvents.seq));
+  mkdirSync(join(ROOT, "runs"), { recursive: true });
+  const file = join(ROOT, "runs", `${id}.json`);
+  writeFileSync(file, JSON.stringify({ id, query, events: events.map((e) => e.data) }));
+  console.log(`\nSaved ${file}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
-
-mkdirSync(join(ROOT, "runs"), { recursive: true });
-const file = join(ROOT, "runs", `${result.id}.json`);
-writeFileSync(file, JSON.stringify({ id: result.id, events: result.events }));
-if (result.report) console.log(`\n${renderReport(result.report)}\n`);
-for (const e of result.evals) console.log(`  ${e.name.padEnd(20)} ${(e.score * 100).toFixed(0).padStart(3)}%  ${e.detail}`);
-const usage = result.events.findLast((e) => e.type === "usage");
-if (usage?.type === "usage") console.log(`\n  ${usage.calls} model calls, ${usage.toolCalls} tool calls, ${usage.usage.input} in / ${usage.usage.output + usage.usage.thinking} out tokens${usage.usage.cost !== undefined ? `, $${usage.usage.cost.toFixed(4)}` : ""}`);
-console.log(`\nSaved ${file}`);

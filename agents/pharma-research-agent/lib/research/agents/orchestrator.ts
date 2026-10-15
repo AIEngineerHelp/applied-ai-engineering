@@ -2,9 +2,13 @@
 // descriptions only), and splits the query into a few subtasks, each tied to
 // one knowledge base and the skills its sub-agent should load.
 
-import type { LLM, Schema } from "../llm.ts";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { callModel } from "../model.ts";
 import { skillIndex, type Skill } from "../skills.ts";
-import type { Plan, SourceKind } from "../types.ts";
+import type { Plan, SourceKind, Usage } from "../types.ts";
+
+type Schema = Record<string, unknown>;
 
 export const SOURCES: { kind: SourceKind; name: string; holds: string }[] = [
   { kind: "pubmed", name: "PubMed", holds: "published studies, trials, meta-analyses and reviews (abstracts)" },
@@ -61,9 +65,11 @@ export interface PlanOptions {
   context?: string;
   /** Streams the planner's thought summaries. */
   onThought?: (soFar: string) => void;
+  /** Receives the call's token usage and cost. */
+  onUsage?: (u: Usage) => void;
 }
 
-export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks: number, opts: PlanOptions = {}): Promise<Plan> {
+export async function plan(model: BaseChatModel, query: string, skills: Skill[], maxSubtasks: number, opts: PlanOptions = {}): Promise<Plan> {
   const system = [
     "You are the orchestrator of a pharmaceutical research team. You do not answer questions yourself.",
     "Split the research query into 2 to " + maxSubtasks + " subtasks that can run in parallel, each answered from exactly one knowledge base.",
@@ -79,7 +85,8 @@ export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks
   const user = followUp
     ? `${opts.context}\n\nFollow-up: ${query}\n\nFirst decide whether this follow-up needs new research or can be answered from the earlier answers alone. Choose research only if it asks about something the earlier answers do not cover. If research, plan subtasks for the new part only, using the context to resolve what the follow-up refers to.`
     : query;
-  const res = await llm.generate({ agent: "orchestrator", system, turns: [{ role: "user", text: user }], schema: followUp ? FOLLOW_UP_SCHEMA : PLAN_SCHEMA, temperature: 0.2, onThought: opts.onThought });
+  const res = await callModel(model, [new SystemMessage(system), new HumanMessage(user)], { schema: followUp ? FOLLOW_UP_SCHEMA : PLAN_SCHEMA, onThought: opts.onThought });
+  opts.onUsage?.(res.usage);
   const raw = res.json as { mode?: string; reason?: string; focus: string; subtasks: { question: string; source: string; skills: string[]; why: string }[] };
   if (followUp && raw.mode === "answer") return { focus: raw.focus, subtasks: [], mode: "answer", reason: raw.reason };
   const known = new Set(skills.map((s) => s.name));

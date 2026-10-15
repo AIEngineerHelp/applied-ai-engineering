@@ -2,8 +2,15 @@
 // and the code that runs them. Every result is normalised into Sources so it
 // can be cited, saved to the virtual file system and checked by the evals.
 
-import type { ToolDecl } from "../llm.ts";
+import { tool, type StructuredToolInterface } from "@langchain/core/tools";
 import type { Source, SourceKind } from "../types.ts";
+
+/** A tool as the model sees it: a name, a description and a JSON schema for its arguments. */
+export interface ToolDecl {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
 
 export interface ToolOutput {
   /** What goes back to the model: short and structured. */
@@ -55,3 +62,20 @@ export const clip = (s: string | undefined, n: number) => {
   const t = (s ?? "").replace(/\s+/g, " ").trim();
   return t.length > n ? `${t.slice(0, n - 1)}…` : t;
 };
+
+/**
+ * The toolset as LangChain tools. Each returns content and an artifact: the
+ * content is the short result the model reads, the artifact the full Sources,
+ * which the sub-agent saves and registers so they can be cited.
+ */
+export function asLangChainTools(toolset: Toolset): StructuredToolInterface[] {
+  return toolset.tools.map((d) =>
+    tool(
+      async (args: Record<string, unknown>): Promise<[string, Source[]]> => {
+        const out = await toolset.call(d.name, args).catch((err: Error) => ({ forModel: { error: err.message }, sources: [] as Source[] }));
+        return [JSON.stringify(out.forModel), out.sources];
+      },
+      { name: d.name, description: d.description, schema: d.parameters, responseFormat: "content_and_artifact" },
+    ),
+  );
+}

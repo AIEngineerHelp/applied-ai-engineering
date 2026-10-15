@@ -89,3 +89,41 @@ export const reportFiles = pgTable(
   },
   (t) => [primaryKey({ columns: [t.reportId, t.path] })],
 );
+
+/**
+ * LangGraph checkpoints: the graph's state after each step of a run, so a run
+ * that dies resumes from its last checkpoint. The thread is the report.
+ * Values are LangGraph's own serialization (type + base64 bytes).
+ */
+export const graphCheckpoints = pgTable(
+  "graph_checkpoints",
+  {
+    threadId: text("thread_id").notNull().references(() => reports.id, { onDelete: "cascade" }),
+    namespace: text("namespace").notNull().default(""),
+    checkpointId: text("checkpoint_id").notNull(),
+    parentId: text("parent_id"),
+    type: text("type").notNull(),
+    checkpoint: text("checkpoint").notNull(),
+    metadataType: text("metadata_type").notNull(),
+    metadata: text("metadata").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.threadId, t.namespace, t.checkpointId] })],
+);
+
+/** Writes a step made before its checkpoint was saved: finished parallel branches are not redone. */
+export const graphWrites = pgTable(
+  "graph_writes",
+  {
+    threadId: text("thread_id").notNull().references(() => reports.id, { onDelete: "cascade" }),
+    namespace: text("namespace").notNull().default(""),
+    checkpointId: text("checkpoint_id").notNull(),
+    taskId: text("task_id").notNull(),
+    idx: integer("idx").notNull(),
+    channel: text("channel").notNull(),
+    type: text("type").notNull(),
+    value: text("value").notNull(),
+    taskPath: text("task_path").notNull().default(""),
+  },
+  (t) => [primaryKey({ columns: [t.threadId, t.namespace, t.checkpointId, t.taskId, t.idx] })],
+);

@@ -2,7 +2,7 @@
 
 A research assistant for drug and clinical-evidence questions, in a chat interface. Ask a question; an agent team plans the research, searches **PubMed, ClinicalTrials.gov, FDA labels and the web** in parallel, and streams back an answer in which every claim is cited to the study, trial or label it came from. Ask follow-ups in the same conversation. Each answer is checked automatically, can be exported to PDF or Word, and conversations can be shared by link.
 
-It is a production-shaped Next.js application rather than a notebook. Runs are durable jobs that survive a closed tab or a crashed function, everything is stored in Postgres, and progress streams live to the browser. It is also a worked example of an agent architecture you can read and adapt:
+It is a production-shaped Next.js application rather than a notebook. The agents are built with **LangGraph** and **LangChain**: the run is a graph that fans out to parallel sub-agents, each sub-agent is a graph of its own, and every model call goes through LangChain's Gemini integration. Runs are durable jobs that survive a closed tab or a crashed function, everything is stored in Postgres (including LangGraph's checkpoints), and progress streams live to the browser. It is also a worked example of an agent architecture you can read and adapt:
 
 ```
 research query
@@ -48,23 +48,27 @@ There are no accounts yet. Each browser gets a private, anonymous workspace thro
 |---|---|
 | App | Next.js 16 (App Router, Cache Components, partial prerendering), React 19, TypeScript |
 | UI | Tailwind CSS v4, shadcn/ui (Radix), IBM Plex Sans + Newsreader + IBM Plex Mono, light and dark themes |
-| Durable runs | [Vercel Workflow](https://workflow-sdk.dev): plan, sub-agents (in parallel), synthesis, evals and finalize are separate steps, each retried on failure. A run resumes from the last completed step. |
+| Orchestration | [LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) (`@langchain/langgraph`): a `StateGraph` of planner → researchers → writer → checker. The planner's conditional edge fans out with `Send`, one researcher per subtask, all in parallel; each researcher is its own model ⇄ tools graph with a turn limit in its state. |
+| Durable runs | LangGraph checkpoints every step to Postgres through a small Drizzle checkpointer (`lib/research/checkpointer.ts`). [Vercel Workflow](https://workflow-sdk.dev) runs the graph as a retried step: if the function dies, the retry resumes from the last checkpoint, and finished researchers are not run again. |
 | Data | Postgres via Drizzle ORM with versioned migrations (`drizzle/`). Neon in production; embedded [PGlite](https://pglite.dev) locally and in tests (no Docker). |
-| Live updates | Gemini responses stream (`streamGenerateContent`, SSE), including thought summaries. Agents write thoughts and the report draft to `report_events` a few times a second, and the browser follows them over server-sent events, resuming from the last sequence number after a disconnect. |
-| Model | Gemini (`gemini-3.8-flash`) over the REST `generateContent` endpoint, with no SDK. Structured output, function calling with forced `finish` on the last turn, Google Search grounding, and thought signatures preserved across turns. |
+| Live updates | Model calls stream through LangChain, including Gemini's thought summaries. Agents write thoughts and the report draft to `report_events` a few times a second, and the browser follows them over server-sent events, resuming from the last sequence number after a disconnect. |
+| Model | Gemini (`gemini-3.8-flash`) through LangChain's `ChatGoogle` (`@langchain/google`). Structured output against a JSON schema, tools defined with LangChain's `tool()`, a forced `finish` on a sub-agent's last turn, Google Search grounding, and thought signatures kept across turns of a tool loop. |
 | Knowledge bases | NCBI E-utilities, ClinicalTrials.gov API v2 and openFDA. All are free, rate-limited client side, with timeouts and bounded retries. |
 | Exports | `@react-pdf/renderer` (PDF), `docx` (Word) |
 
 The parts most worth reading:
 
-- `workflows/research.ts` and `workflows/steps.ts`: the durable run. Every step writes only keyed rows, so a retried step overwrites its own output instead of duplicating it.
+- `lib/research/graph.ts`: the LangGraph graph, its state and its nodes, and `runResearchGraph`, which starts a run or resumes it from its checkpoint.
+- `workflows/research.ts` and `workflows/steps.ts`: the durable wrapper. Every node writes only keyed rows, so work that is redone overwrites its own output instead of duplicating it.
 - `lib/research/`: the agent core.
   - `agents/orchestrator.ts`: plans the subtasks.
-  - `agents/researcher.ts`: the bounded tool loop each sub-agent runs.
+  - `agents/researcher.ts`: each sub-agent's graph, a bounded model ⇄ tools loop.
   - `agents/synthesis.ts`: writes the report from the files.
   - `evals.ts`: the deterministic checks and the judge.
   - `sources/`: one client per knowledge base.
-  - `gemini.ts`: the model client.
+  - `model.ts`: the LangChain chat model and `callModel`, which streams one call and returns its text, thoughts, tool calls, grounding and cost.
+  - `checkpointer.ts`: LangGraph checkpoints in the app's own Postgres tables.
+  - `offline.ts`: a scripted LangChain chat model, so the whole graph runs without an API key.
 - `lib/research/persist.ts`: an event sink that writes every agent event to Postgres, in order, without blocking the agent.
 - `skills/*.md`: the five playbooks. The orchestrator sees only their one-line descriptions; a full playbook is loaded into a sub-agent's prompt only when assigned (progressive disclosure).
 - `lib/reports.ts`: the data access layer. Access rules live there: a report is visible to its workspace, or to anyone holding its share link.
@@ -88,11 +92,11 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 18 tests: agent core, streaming client, citations, report parsing, and the durable pipeline (including follow-ups answered without new research) against in-memory Postgres
+npm test          # 18 tests: the agents and the sub-agent graph, citations, report parsing, and the research graph against in-memory Postgres (a full run, a follow-up answered without new research, and a crashed run resuming from its checkpoint)
 npm run build
 ```
 
-`npm run research -- "question"` runs one research job from the command line (offline by default; `--live` uses Gemini). `npx tsx scripts/record-fixtures.ts` re-records the offline fixtures from the public APIs.
+`npm run research -- "question"` runs the same graph from the command line against an in-memory database (offline by default; `--live` uses Gemini and is paid). `npx tsx scripts/record-fixtures.ts` re-records the offline fixtures from the public APIs.
 
 ## Deploy to Vercel
 
@@ -129,7 +133,7 @@ Four live runs on 2026-10-12, from the prototype of this agent, are kept in `res
 ## Sources
 
 - NCBI, [Entrez Programming Utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/). ClinicalTrials.gov, [API v2](https://clinicaltrials.gov/data-api/api). openFDA, [drug label](https://open.fda.gov/apis/drug/label/) and [adverse events](https://open.fda.gov/apis/drug/event/).
-- Google, [Gemini API: generateContent](https://ai.google.dev/api/generate-content) and [pricing](https://ai.google.dev/gemini-api/docs/pricing).
+- LangChain, [LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) and [ChatGoogle](https://docs.langchain.com/oss/javascript/integrations/chat/google). Google, [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
 - Vercel, [Workflow SDK](https://workflow-sdk.dev). Next.js, [Cache Components](https://nextjs.org/docs/app/getting-started/caching).
 - Anthropic, [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system), for the orchestrator–sub-agent pattern.
 
