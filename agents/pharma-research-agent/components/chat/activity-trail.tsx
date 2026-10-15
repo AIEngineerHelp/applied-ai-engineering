@@ -53,7 +53,9 @@ function lines(state: RunState): Line[] {
   );
 
   // 2. The plan, in one line.
-  if (state.plan) {
+  if (state.plan?.mode === "answer") {
+    out.push({ key: "plan", at: orchestrator?.end ?? 1, icon: <ListChecks className="size-3.5" />, text: "No new search needed — answering from the earlier research", state: "done" });
+  } else if (state.plan) {
     const kinds = [...new Set(state.plan.subtasks.map((t) => t.source))];
     out.push({
       key: "plan",
@@ -189,7 +191,9 @@ export function ActivityTrail({ state }: { state: RunState }) {
     ? expanded
       ? STAGE[p]
       : (current?.text ?? STAGE[p])
-    : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`;
+    : state.plan?.mode === "answer"
+      ? `Answered from the earlier research${elapsed ? ` in ${fmtElapsed(elapsed)}` : ""} · ${state.sources.size} sources`
+      : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`;
 
   return (
     <section aria-label="Research activity" className="rounded-xl border bg-card">

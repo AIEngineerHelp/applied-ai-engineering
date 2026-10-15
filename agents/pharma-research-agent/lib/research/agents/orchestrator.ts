@@ -36,6 +36,26 @@ const PLAN_SCHEMA: Schema = {
   required: ["focus", "subtasks"],
 };
 
+/**
+ * A follow-up first decides whether it needs new evidence at all. "Simplify the
+ * answer" or "what does HFpEF mean?" is a rewrite of what the earlier turns
+ * already found; searching again wastes a minute and money, and can change the facts.
+ */
+const FOLLOW_UP_SCHEMA: Schema = {
+  type: "object",
+  properties: {
+    mode: {
+      type: "string",
+      enum: ["answer", "research"],
+      description: "answer: the earlier answers and their sources already hold everything needed (rewrite, simplify, shorten, translate, explain a term, reformat, compare things already covered). research: the follow-up needs evidence the earlier turns did not gather.",
+    },
+    reason: { type: "string", description: "Why, in one sentence." },
+    focus: (PLAN_SCHEMA.properties as Record<string, Schema>).focus,
+    subtasks: { ...(PLAN_SCHEMA.properties as Record<string, Schema>).subtasks, minItems: 0, description: "Empty when mode is answer." },
+  },
+  required: ["mode", "reason", "focus", "subtasks"],
+};
+
 export interface PlanOptions {
   /** Earlier turns of the conversation, so a follow-up is planned in context. */
   context?: string;
@@ -55,9 +75,13 @@ export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks
     "Skills you can assign (load only the ones a subtask needs):",
     skillIndex(skills.filter((s) => s.source !== "synthesis")),
   ].join("\n");
-  const user = opts.context ? `${opts.context}\n\nFollow-up question (plan research for this; reuse context only to resolve what it refers to):\n${query}` : query;
-  const res = await llm.generate({ agent: "orchestrator", system, turns: [{ role: "user", text: user }], schema: PLAN_SCHEMA, temperature: 0.2, onThought: opts.onThought });
-  const raw = res.json as { focus: string; subtasks: { question: string; source: string; skills: string[]; why: string }[] };
+  const followUp = !!opts.context;
+  const user = followUp
+    ? `${opts.context}\n\nFollow-up: ${query}\n\nFirst decide whether this follow-up needs new research or can be answered from the earlier answers alone. Choose research only if it asks about something the earlier answers do not cover. If research, plan subtasks for the new part only, using the context to resolve what the follow-up refers to.`
+    : query;
+  const res = await llm.generate({ agent: "orchestrator", system, turns: [{ role: "user", text: user }], schema: followUp ? FOLLOW_UP_SCHEMA : PLAN_SCHEMA, temperature: 0.2, onThought: opts.onThought });
+  const raw = res.json as { mode?: string; reason?: string; focus: string; subtasks: { question: string; source: string; skills: string[]; why: string }[] };
+  if (followUp && raw.mode === "answer") return { focus: raw.focus, subtasks: [], mode: "answer", reason: raw.reason };
   const known = new Set(skills.map((s) => s.name));
   const kinds = new Set<string>(SOURCES.map((s) => s.kind));
   // Keep the model honest: real sources, real skills, a bounded number of subtasks.
@@ -72,5 +96,5 @@ export async function plan(llm: LLM, query: string, skills: Skill[], maxSubtasks
       why: t.why ?? "",
     }));
   if (!subtasks.length) throw new Error("The orchestrator produced no usable subtasks");
-  return { focus: raw.focus, subtasks };
+  return { focus: raw.focus, subtasks, mode: "research", ...(raw.reason ? { reason: raw.reason } : {}) };
 }

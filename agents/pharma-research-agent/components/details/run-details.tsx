@@ -40,6 +40,7 @@ function Overview({ s }: { s: RunState }) {
         <section className="rounded-lg border bg-card p-4">
           <h3 className="text-[13px] font-semibold">Plan</h3>
           <p className="mt-1 text-[13.5px] text-muted-foreground">{s.plan.focus}</p>
+          {s.plan.mode === "answer" && <p className="mt-3 text-[13.5px]">No new research: answered from the earlier turns of this conversation. {s.plan.reason}</p>}
           <ol className="mt-3 space-y-2">
             {s.plan.subtasks.map((t) => (
               <li key={t.id} className="flex gap-3 text-[13.5px]">

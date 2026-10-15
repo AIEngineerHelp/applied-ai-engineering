@@ -49,6 +49,8 @@ export function catalogue(sources: Source[]): string {
 export interface SynthesisOptions {
   /** Earlier turns of the conversation. */
   context?: string;
+  /** Answer mode: the earlier answers in full, citations kept, as the only evidence. */
+  earlier?: string;
   /** Streams the report markdown as it is written. */
   onText?: (soFar: string) => void;
   onThought?: (soFar: string) => void;
@@ -57,26 +59,33 @@ export interface SynthesisOptions {
 export async function synthesize(llm: LLM, tracer: Tracer, vfs: VirtualFS, query: string, plan: Plan, registry: Map<string, Source>, skill: Skill | undefined, parent: string, opts: SynthesisOptions = {}): Promise<Report> {
   return tracer.wrap("agent", "synthesis", parent, async (span) => {
     // The agent works from files: list them, then read the findings.
+    const answering = plan.mode === "answer";
     const findings = vfs.list("/findings").map((f) => f.content);
     vfs.write("/sources/CATALOGUE.md", `# Sources retrieved (${registry.size})\n\n${catalogue([...registry.values()])}\n`, "synthesis");
+    if (answering) vfs.write("/context/earlier.md", opts.earlier ?? "", "synthesis");
     const system = [
       "You are the synthesis agent of a pharmaceutical research team. You write the final report from the research files only.",
+      answering
+        ? "This is a follow-up that needs no new research. Answer it from /context/earlier.md, the earlier answers with their citations, and nothing else: do not add facts, numbers or sources that are not there. Do what the follow-up asks (for example, plain language and fewer, shorter sections for a simpler answer) and keep each claim's citation."
+        : "",
       FORMAT,
       skill ? `\n## Skill: ${skill.name}\n${skill.body}` : "",
     ].join("\n");
-    const user = [
-      opts.context ? `${opts.context}\n` : "",
-      `Research query: ${query}`,
-      `Focus: ${plan.focus}`,
-      "",
-      "Files in the workspace:",
-      vfs.tree("/findings"),
-      "/sources/CATALOGUE.md",
-      "",
-      ...findings.map((f) => `---\n${f}`),
-      "---",
-      vfs.read("/sources/CATALOGUE.md"),
-    ].join("\n");
+    const user = answering
+      ? [`Follow-up: ${query}`, `Focus: ${plan.focus}`, "", "Files in the workspace:", "/context/earlier.md", "/sources/CATALOGUE.md", "", "---", vfs.read("/context/earlier.md"), "---", vfs.read("/sources/CATALOGUE.md")].join("\n")
+      : [
+          opts.context ? `${opts.context}\n` : "",
+          `Research query: ${query}`,
+          `Focus: ${plan.focus}`,
+          "",
+          "Files in the workspace:",
+          vfs.tree("/findings"),
+          "/sources/CATALOGUE.md",
+          "",
+          ...findings.map((f) => `---\n${f}`),
+          "---",
+          vfs.read("/sources/CATALOGUE.md"),
+        ].join("\n");
     const res = await tracer.wrap("llm", "write report", span.id, async (s) => {
       const r = await llm.generate({ agent: "synthesis", system, turns: [{ role: "user", text: user }], temperature: 0.2, onText: opts.onText, onThought: opts.onThought });
       tracer.addUsage(r.usage);

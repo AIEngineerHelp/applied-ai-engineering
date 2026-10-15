@@ -29,7 +29,7 @@ evals & traces  (4 deterministic checks + an LLM-judge groundedness check; every
 
 ## What users get
 
-- **A conversation.** Each question is a turn. Follow-ups ("what about in type 1 diabetes?") are planned and answered with the earlier answers as context, and each turn runs its own cited research.
+- **A conversation.** Each question is a turn. The orchestrator first decides whether a follow-up needs new evidence. "What about in type 1 diabetes?" runs new cited research, with the earlier answers as context. "Simplify the answer" or "what does HFpEF mean?" does not: it is answered in seconds from the earlier answers and their sources, without searching again, and every citation still points to a source an earlier turn retrieved.
 - **You can see it working.** A single activity line shows what is happening right now. Expanded, it becomes a chronological list: the planner's thinking as it streams (Gemini thought summaries), the planned searches, each search with its query and result count, what each source yielded, writing and checking. The answer then streams in token by token.
 - **A report inside every answer.** A direct answer, then sections such as efficacy, safety, trial landscape and regulatory status, then limitations. Citations appear as numbered chips; hovering one shows the source, and clicking one opens its excerpt in the sources panel.
 - **Sources you can check.** Sources are listed in citation order and can be filtered by database. Each has its journal and year, trial phase, status and enrollment, or label date; an excerpt of what the agent read; and a link to the original.
@@ -86,7 +86,7 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 17 tests: agent core, streaming client, citations, report parsing, and the durable pipeline against in-memory Postgres
+npm test          # 18 tests: agent core, streaming client, citations, report parsing, and the durable pipeline (including follow-ups answered without new research) against in-memory Postgres
 npm run build
 ```
 

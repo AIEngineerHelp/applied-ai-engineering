@@ -12,9 +12,18 @@ import { evalStep, finalizeStep, planStep, researchStep, synthesisStep } from ".
 
 const { reports, reportEvents, reportSources, reportFiles } = schema;
 
-async function newReport(id: string, query = "What is the evidence on GLP-1 receptor agonists and pancreatitis?") {
+async function newReport(id: string, query = "What is the evidence on GLP-1 receptor agonists and pancreatitis?", thread?: { id: string; position: number }) {
   const d = await db();
-  await d.insert(reports).values({ id, threadId: id, workspaceId: "a".repeat(32), query, model: "offline (scripted)" });
+  await d.insert(reports).values({ id, threadId: thread?.id ?? id, position: thread?.position ?? 0, workspaceId: "a".repeat(32), query, model: "offline (scripted)" });
+}
+
+async function runAll(id: string) {
+  const { plan, t0 } = await planStep(id);
+  const findings = await Promise.all(plan.subtasks.map((t) => researchStep(id, t, t0)));
+  const report = await synthesisStep(id, plan, t0);
+  await evalStep(id, plan, findings, report, t0);
+  await finalizeStep(id, "completed");
+  return plan;
 }
 
 test("a run goes queued → completed, and every stage is persisted", async () => {
@@ -72,4 +81,27 @@ test("a failed run is marked failed with its reason", async () => {
   const [row] = await d.select().from(reports).where(eq(reports.id, "t3"));
   assert.equal(row.status, "failed");
   assert.equal(row.error, "The model provider was unavailable.");
+});
+
+test("a follow-up asking for a rewrite is answered from the earlier turn, with no new searches", async () => {
+  await newReport("f1");
+  await runAll("f1");
+  await newReport("f2", "Simplify the answer", { id: "f1", position: 1 });
+  const plan = await runAll("f2");
+  assert.equal(plan.mode, "answer");
+  assert.equal(plan.subtasks.length, 0);
+
+  const d = await db();
+  const [row] = await d.select().from(reports).where(eq(reports.id, "f2"));
+  assert.equal(row.status, "completed");
+  assert.equal(row.toolCalls, 0);
+  // The earlier turn's sources carry over, so every citation still resolves.
+  const own = new Set((await d.select().from(reportSources).where(eq(reportSources.reportId, "f2"))).map((s) => s.sourceId));
+  const earlier = new Set((await d.select().from(reportSources).where(eq(reportSources.reportId, "f1"))).map((s) => s.sourceId));
+  assert.deepEqual(own, earlier);
+  const validity = row.evals!.find((e) => e.name === "Citation validity")!;
+  assert.equal(validity.score, 1);
+  assert.ok(!row.evals!.some((e) => e.name === "Subtasks answered"));
+  const files = await d.select().from(reportFiles).where(eq(reportFiles.reportId, "f2"));
+  assert.ok(files.some((f) => f.path === "/context/earlier.md" && f.content.includes("Question: What is the evidence")));
 });

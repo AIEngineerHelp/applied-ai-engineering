@@ -48,7 +48,7 @@ export function checks(report: Report, plan: Plan, findings: Finding[], registry
   const answered = plan.subtasks.filter((t) => findings.find((f) => f.subtask === t.id)?.claims.some((c) => c.sources.length));
   const planned = new Set(plan.subtasks.map((t) => t.source));
   const cited = new Set(valid.map((id) => registry.get(id)!.kind));
-  return [
+  const list: EvalResult[] = [
     {
       name: "Citation validity",
       score: ids.length ? valid.length / ids.length : 0,
@@ -74,6 +74,8 @@ export function checks(report: Report, plan: Plan, findings: Finding[], registry
       method: "check",
     },
   ];
+  // An answer from earlier turns ran no sub-agents; scoring them would only report zeros.
+  return plan.mode === "answer" ? list.slice(0, 2) : list;
 }
 
 const JUDGE_SCHEMA: Schema = {

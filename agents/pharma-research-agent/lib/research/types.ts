@@ -34,6 +34,14 @@ export interface Plan {
   /** The orchestrator's restatement of the query. */
   focus: string;
   subtasks: Subtask[];
+  /**
+   * "answer" when a follow-up can be answered from the earlier turns alone
+   * (simplify, shorten, explain a term): no new searches, no subtasks.
+   * Absent on plans made before follow-up routing existed; read as "research".
+   */
+  mode?: "research" | "answer";
+  /** Why the orchestrator chose the mode, in one sentence. */
+  reason?: string;
 }
 
 /** A claim a sub-agent makes, with the sources that support it. */

@@ -49,6 +49,23 @@ async function threadContext(row: { threadId: string; position: number }): Promi
   ].join("\n");
 }
 
+/**
+ * For a follow-up answered without new research: the earlier answers in full,
+ * citations kept, and every source they could cite.
+ */
+async function earlierTurns(row: { threadId: string; position: number }): Promise<{ text: string; sources: Source[] }> {
+  const d = await db();
+  const prior = await d
+    .select({ id: reports.id, query: reports.query, report: reports.report })
+    .from(reports)
+    .where(and(eq(reports.threadId, row.threadId), lt(reports.position, row.position), eq(reports.status, "completed")))
+    .orderBy(asc(reports.position));
+  const sources = new Map<string, Source>();
+  for (const p of prior) for (const s of await loadSources(p.id)) sources.set(s.id, s);
+  const text = prior.filter((p) => p.report).map((p, i) => `## Turn ${i + 1}\n\nQuestion: ${p.query}\n\n${renderReport(p.report!)}`).join("\n\n");
+  return { text, sources: [...sources.values()] };
+}
+
 /** Streams thought summaries for many concurrent model calls, a few writes a second each. */
 function thoughtStream(sink: EventSink, agent: string) {
   const streams = new Map<string, ReturnType<typeof throttle<{ text: string; done: boolean }>>>();
@@ -105,7 +122,7 @@ export async function planStep(reportId: string): Promise<{ plan: Plan; t0: numb
     }),
   );
   thought("plan", "", true);
-  vfs.write("/plan.md", ["# Plan", "", plan.focus, "", ...plan.subtasks.map((t) => `- **${t.id}** (${t.source}; skills: ${t.skills.join(", ") || "none"}): ${t.question}`)].join("\n"), "orchestrator");
+  vfs.write("/plan.md", ["# Plan", "", plan.focus, "", ...(plan.mode === "answer" ? [`No new research: ${plan.reason ?? "answered from the earlier turns."}`] : []), ...plan.subtasks.map((t) => `- **${t.id}** (${t.source}; skills: ${t.skills.join(", ") || "none"}): ${t.question}`)].join("\n"), "orchestrator");
   sink.emit({ type: "plan", plan, loaded: [...new Set(plan.subtasks.flatMap((t) => t.skills))] });
   await done();
   await d.update(reports).set({ plan }).where(eq(reports.id, reportId));
@@ -140,13 +157,17 @@ export async function synthesisStep(reportId: string, plan: Plan, t0: number): P
   const row = await getReport(reportId);
   const { sink, tracer, vfs, done } = stepContext(reportId, t0, "synthesis");
   vfs.load(await loadFiles(reportId));
-  const registry = new Map((await loadSources(reportId)).map((s) => [s.id, s] as const));
+  // Answer mode: no sub-agents ran, so this turn takes over the earlier turns' sources.
+  const earlier = plan.mode === "answer" ? await earlierTurns(row) : undefined;
+  if (earlier?.sources.length) sink.emit({ type: "sources", subtask: "earlier", sources: earlier.sources });
+  const registry = new Map([...(await loadSources(reportId)), ...(earlier?.sources ?? [])].map((s) => [s.id, s] as const));
   const { llm } = getRuntime();
   const skill = loadSkills().find((s) => s.source === "synthesis");
   const draft = throttle((text: string) => sink.emit({ type: "draft", text: draftForDisplay(text) }));
   const thought = thoughtStream(sink, "synthesis");
   const report = await synthesize(llm, tracer, vfs, row.query, plan, registry, skill, "run", {
-    context: await threadContext(row),
+    context: earlier ? undefined : await threadContext(row),
+    earlier: earlier?.text,
     onText: (t) => draft.push(t),
     onThought: (t) => thought("synthesis", t, false),
   });

@@ -76,6 +76,12 @@ export function offlineLLM(): LLM {
       const base = { text: "", calls: [], usage: usage(1200, 200), model: "offline (scripted)" } as GenerateResult;
       if (THOUGHTS[kind]) base.thoughts = THOUGHTS[kind];
       if (req.agent === "orchestrator") {
+        // A follow-up asking for a rewrite is answered from the earlier turns, as the live planner would.
+        const followUp = (req.turns[0] as { text: string }).text.match(/^Follow-up: (.*)$/m)?.[1];
+        if (followUp && /\b(simplif|simpler|shorter|plain|summari[sz]e|explain)/i.test(followUp)) {
+          const json = { mode: "answer", reason: "The follow-up asks for a rewrite of the earlier answer.", focus: followUp, subtasks: [] };
+          return { ...base, text: JSON.stringify(json), json };
+        }
         const json = {
           focus: "GLP-1 receptor agonists (semaglutide) and pancreatitis: trial evidence, registered trials and label warnings.",
           subtasks: [
