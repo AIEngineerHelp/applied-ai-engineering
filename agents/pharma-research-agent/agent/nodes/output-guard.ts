@@ -8,6 +8,7 @@ import { enforceCitations, policyCheck, redactReport, removeSentences } from "..
 import { guardModel } from "../model.ts";
 import { renderReport } from "../report-format.ts";
 import type { RunState } from "../state.ts";
+import { isLimit, type RunBudget } from "../limits.ts";
 import type { RunStore } from "../store.ts";
 import type { GuardDecision, Report } from "../types.ts";
 import { nodeContext } from "./context.ts";
@@ -15,8 +16,8 @@ import { nodeContext } from "./context.ts";
 /** Added to a redirected personal question's report, so exports carry it too. */
 export const REDIRECT_NOTE = "This answer describes general evidence, not advice for any individual. Decisions about your own treatment or dose need a clinician who knows your health history.";
 
-export const outputGuardNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
-  const { sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "guard-out");
+export const outputGuardNode = (store: RunStore, budget?: RunBudget) => async (s: RunState): Promise<Partial<RunState>> => {
+  const { sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "guard-out", budget);
   const decide = (d: GuardDecision) => sink.emit({ type: "guardrail", decision: d });
   const registry = new Map((await store.sources(s.reportId)).map((x) => [x.id, x] as const));
   const before = s.report!;
@@ -33,7 +34,7 @@ export const outputGuardNode = (store: RunStore) => async (s: RunState): Promise
 
     try {
       const v = await tracer.wrap("llm", "check report against risks", span.id, async (sp) => {
-        const r = await policyCheck(guardModel(), report);
+        const r = await policyCheck(guardModel(budget), report);
         tracer.addUsage(r.usage);
         tracer.close(sp, { checked: r.checked, violations: r.violations.length, input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost });
         return r;
@@ -47,6 +48,7 @@ export const outputGuardNode = (store: RunStore) => async (s: RunState): Promise
         risks: v.violations.length ? [...new Set(v.violations.map((x) => x.risk))] : undefined,
       });
     } catch (err) {
+      if (isLimit(err)) throw err;
       decide({ stage: "output", check: "policy", outcome: "flag", detail: `The policy check could not run (${(err as Error).message.slice(0, 160)}); the report was not checked against the risk catalogue.` });
     }
   });

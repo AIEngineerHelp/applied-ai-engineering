@@ -10,6 +10,7 @@ import { writerSystem } from "../prompts/writer.ts";
 import { draftForDisplay, parseReport, renderReport } from "../report-format.ts";
 import { loadSkills, type Skill } from "../skills/index.ts";
 import type { RunState } from "../state.ts";
+import type { RunBudget } from "../limits.ts";
 import type { RunStore } from "../store.ts";
 import { throttle } from "../throttle.ts";
 import type { Tracer } from "../trace.ts";
@@ -73,9 +74,9 @@ export async function synthesize(model: BaseChatModel, tracer: Tracer, vfs: Virt
   });
 }
 
-export const writerNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
+export const writerNode = (store: RunStore, budget?: RunBudget) => async (s: RunState): Promise<Partial<RunState>> => {
   const plan = s.plan!;
-  const { run, sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "synthesis");
+  const { run, sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "synthesis", budget);
   vfs.load(await store.files(s.reportId));
   // Answer mode: no sub-agents ran, so this turn takes over the earlier turns' sources.
   const answering = plan.mode === "answer";
@@ -88,7 +89,7 @@ export const writerNode = (store: RunStore) => async (s: RunState): Promise<Part
   const skill = loadSkills().find((x) => x.source === "synthesis");
   const draft = throttle((text: string) => sink.emit({ type: "draft", text: draftForDisplay(text) }));
   const thought = thoughtStream(sink, "synthesis");
-  const report = await synthesize(chatModel(), tracer, vfs, s.screen?.question ?? run.query, plan, registry, skill, "run", {
+  const report = await synthesize(chatModel(budget), tracer, vfs, s.screen?.question ?? run.query, plan, registry, skill, "run", {
     context: answering ? undefined : conversationContext(turns),
     earlier,
     onText: (t) => draft.push(t),

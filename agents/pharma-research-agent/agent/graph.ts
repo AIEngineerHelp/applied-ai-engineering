@@ -27,6 +27,7 @@ import { plannerNode } from "./nodes/planner.ts";
 import { researcherNode } from "./nodes/researcher.ts";
 import { writerNode } from "./nodes/writer.ts";
 import { RunStateAnnotation, type RunState } from "./state.ts";
+import { LimitReached, RunBudget, isLimit, limitsFromEnv, type Limits } from "./limits.ts";
 import type { RunStore } from "./store.ts";
 
 /** The planner's edge: one researcher per subtask, in parallel, or straight to the writer. */
@@ -38,17 +39,17 @@ function fanOut(s: RunState): Send[] | "writer" {
 /** The input guard's edge: a refused question ends the run. */
 const afterScreen = (s: RunState) => (s.screen && isBlocked(s.screen) ? END : "planner");
 
-/** A failed model call is retried once by the node before the run gives up. */
-const retry = { retryPolicy: { maxAttempts: 2 } };
+/** A failed model call is retried once by the node before the run gives up; a run limit is not retried. */
+const retry = { retryPolicy: { maxAttempts: 2, retryOn: (e: unknown) => !isLimit(e) && !["AbortError", "TimeoutError"].includes((e as Error | undefined)?.name ?? "") } };
 
-export function buildResearchGraph(store: RunStore) {
+export function buildResearchGraph(store: RunStore, budget?: RunBudget) {
   return new StateGraph(RunStateAnnotation)
-    .addNode("input_guard", inputGuardNode(store), retry)
-    .addNode("planner", plannerNode(store), retry)
-    .addNode("researcher", researcherNode(store))
-    .addNode("writer", writerNode(store), retry)
-    .addNode("output_guard", outputGuardNode(store), retry)
-    .addNode("checker", checkerNode(store), retry)
+    .addNode("input_guard", inputGuardNode(store, budget), retry)
+    .addNode("planner", plannerNode(store, budget), retry)
+    .addNode("researcher", researcherNode(store, budget))
+    .addNode("writer", writerNode(store, budget), retry)
+    .addNode("output_guard", outputGuardNode(store, budget), retry)
+    .addNode("checker", checkerNode(store, budget), retry)
     .addEdge(START, "input_guard")
     .addConditionalEdges("input_guard", afterScreen, ["planner", END])
     .addConditionalEdges("planner", fanOut, ["researcher", "writer"])
@@ -61,14 +62,34 @@ export function buildResearchGraph(store: RunStore) {
 /**
  * Runs a report's research graph, or resumes it. The report id is the thread
  * id, so a second call after a crash picks up from the last checkpoint.
+ *
+ * Limits (limits.ts): every model call checks the run's budget, which counts
+ * what earlier attempts spent. The run has a total deadline from its start, and
+ * each attempt stops early enough to resume from its checkpoint rather than be
+ * killed by the platform's function time limit.
  */
-export async function runResearchGraph(reportId: string, deps: { store: RunStore; checkpointer: BaseCheckpointSaver }): Promise<RunState> {
-  const graph = buildResearchGraph(deps.store).compile({ checkpointer: deps.checkpointer, name: "research" });
+export async function runResearchGraph(reportId: string, deps: { store: RunStore; checkpointer: BaseCheckpointSaver; limits?: Limits }): Promise<RunState> {
+  const limits = deps.limits ?? limitsFromEnv();
+  const run = await deps.store.get(reportId);
+  const remaining = limits.maxSeconds * 1000 - (Date.now() - run.startedAt.getTime());
+  if (remaining <= 0) throw new LimitReached(`This research stopped because it ran longer than ${Math.round(limits.maxSeconds / 60)} minutes.`);
+  const budget = new RunBudget(limits, run.spent);
+  const graph = buildResearchGraph(deps.store, budget).compile({ checkpointer: deps.checkpointer, name: "research" });
+  const attempt = Math.min(remaining, limits.attemptSeconds * 1000);
   // Run name, tags and the report id show up in LangSmith when tracing is on (LANGSMITH_TRACING=true).
-  const config = { configurable: { thread_id: reportId }, recursionLimit: 25, runName: "research", tags: ["pharma-research-agent"], metadata: { report_id: reportId } };
-  if (!(await deps.checkpointer.getTuple(config))) return graph.invoke({ reportId }, config);
-  const saved = await graph.getState(config);
-  // Steps left to run: resume from the checkpoint. None: the graph already finished.
-  if (saved.next.length) return graph.invoke(null, config);
-  return saved.values as RunState;
+  const config = { configurable: { thread_id: reportId }, recursionLimit: 25, runName: "research", tags: ["pharma-research-agent"], metadata: { report_id: reportId }, signal: AbortSignal.timeout(attempt) };
+  try {
+    if (!(await deps.checkpointer.getTuple(config))) return await graph.invoke({ reportId }, config);
+    const saved = await graph.getState(config);
+    // Steps left to run: resume from the checkpoint. None: the graph already finished.
+    if (saved.next.length) return await graph.invoke(null, config);
+    return saved.values as RunState;
+  } catch (err) {
+    if (config.signal.aborted) {
+      // Out of time for the whole run: stop. Out of time for this attempt only: a retry resumes from the checkpoint.
+      if (attempt >= remaining) throw new LimitReached(`This research stopped because it ran longer than ${Math.round(limits.maxSeconds / 60)} minutes.`);
+      throw new Error(`This attempt reached its ${limits.attemptSeconds}s time limit; the run resumes from its last checkpoint.`);
+    }
+    throw err;
+  }
 }

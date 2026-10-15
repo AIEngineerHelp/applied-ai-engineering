@@ -47,7 +47,7 @@ Every decision is a `guardrail` event in the run's trace, shown in the activity 
 | LLM07 System Prompt Leakage | Prompts hold no secrets; requests to reveal them are refused as prompt injection. |
 | LLM08 Vector and Embedding Weaknesses | Not applicable: no vector store. |
 | LLM09 Misinformation | Every claim must cite a retrieved source; unsupported citations are removed; overstated claims are removed; an LLM judge scores groundedness; a disclaimer is on every answer. |
-| LLM10 Unbounded Consumption | Bounded turns and retries, a kill switch and an optional global daily cap. **Open:** no per-run budget, per-user rate limit or run deadline yet. |
+| LLM10 Unbounded Consumption | A cost and model-call budget per run, checked before every model call (`agent/limits.ts`); a run deadline; rate limits per browser and per IP address and on runs in progress (`lib/rate-limit.ts`); bounded turns and retries; a kill switch and an optional global daily cap. |
 
 ## OWASP Top 10 for Agentic Applications (2026)
 
@@ -68,7 +68,7 @@ The agentic list's category names come from summaries of the OWASP release (Dece
 
 ## Known gaps
 
-- **Runtime limits.** No per-run cost or call budget, no per-workspace rate limit and no overall run deadline. The global daily cap is off by default.
+- **Rate limits without accounts.** Limits are per browser cookie and per IP address; a visitor with many addresses can start more runs. The per-run budget and the optional daily cap bound the cost.
 - **Names in free text.** Personal-data redaction catches structured identifiers (contacts, record and ID numbers, dates of birth); a bare name with health details is not detected.
 - **Guardrails are models too.** The screen and the policy check can miss things or over-block; they are measured only by the tests in `tests/guardrails.test.ts`, not yet by an adversarial eval set.
 - **Streaming before the check.** The answer streams as it is written; a sentence removed by the output guard can appear briefly before the final report replaces the draft.

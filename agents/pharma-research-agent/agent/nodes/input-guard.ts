@@ -9,13 +9,14 @@ import { redactedKinds } from "../guardrails/pii.ts";
 import { isOffline, modelName } from "../config.ts";
 import { guardModel } from "../model.ts";
 import type { RunState } from "../state.ts";
+import type { RunBudget } from "../limits.ts";
 import type { RunStore } from "../store.ts";
 import type { GuardDecision } from "../types.ts";
 import { conversationContext, nodeContext } from "./context.ts";
 
-export const inputGuardNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
+export const inputGuardNode = (store: RunStore, budget?: RunBudget) => async (s: RunState): Promise<Partial<RunState>> => {
   const started = await store.start(s.reportId);
-  const { sink, tracer, done } = await nodeContext(store, s.reportId, "guard-in");
+  const { sink, tracer, done } = await nodeContext(store, s.reportId, "guard-in", budget);
   const decide = (d: GuardDecision) => sink.emit({ type: "guardrail", decision: d });
 
   sink.emit({ type: "run", id: s.reportId, query: started.query, model: modelName(), mode: isOffline() ? "offline" : "live", at: started.startedAt.toISOString() });
@@ -28,7 +29,7 @@ export const inputGuardNode = (store: RunStore) => async (s: RunState): Promise<
   const context = conversationContext(await store.earlierTurns(s.reportId));
   const result = await tracer.wrap("agent", "input guard", "run", async (span) =>
     tracer.wrap("llm", "screen question", span.id, async (sp) => {
-      const r = await screenQuestion(guardModel(), started.query, context);
+      const r = await screenQuestion(guardModel(budget), started.query, context);
       if (r.usage) tracer.addUsage(r.usage);
       tracer.close(sp, { verdict: r.screen.verdict, by: r.by, ...(r.usage ? { input: r.usage.input, output: r.usage.output, thinking: r.usage.thinking, cost: r.usage.cost } : {}) });
       return r;

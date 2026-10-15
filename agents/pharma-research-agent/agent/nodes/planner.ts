@@ -9,6 +9,7 @@ import { callModel, chatModel } from "../model.ts";
 import { followUpRequest, plannerSystem } from "../prompts/planner.ts";
 import { loadSkills, skillIndex, type Skill } from "../skills/index.ts";
 import type { RunState } from "../state.ts";
+import type { RunBudget } from "../limits.ts";
 import type { RunStore } from "../store.ts";
 import { KNOWLEDGE_BASES } from "../tools/index.ts";
 import type { Plan, SourceKind, Usage } from "../types.ts";
@@ -95,8 +96,8 @@ export async function plan(model: BaseChatModel, query: string, skills: Skill[],
   return { focus: raw.focus, subtasks, mode: "research", ...(raw.reason ? { reason: raw.reason } : {}) };
 }
 
-export const plannerNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
-  const { run, sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "plan");
+export const plannerNode = (store: RunStore, budget?: RunBudget) => async (s: RunState): Promise<Partial<RunState>> => {
+  const { run, sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "plan", budget);
   const skills = loadSkills();
   // The input guard may have turned a personal question into its general form.
   const question = s.screen?.question ?? run.query;
@@ -106,7 +107,7 @@ export const plannerNode = (store: RunStore) => async (s: RunState): Promise<Par
   const thought = thoughtStream(sink, "orchestrator");
   const p = await tracer.wrap("agent", "orchestrator", "run", async (span) =>
     tracer.wrap("llm", "plan subtasks", span.id, async (sp) => {
-      const r = await plan(chatModel(), question, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false), onUsage: (u) => tracer.addUsage(u) });
+      const r = await plan(chatModel(budget), question, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false), onUsage: (u) => tracer.addUsage(u) });
       tracer.close(sp, { subtasks: r.subtasks.length, input: tracer.usage.input, output: tracer.usage.output, cost: tracer.usage.cost });
       return r;
     }),

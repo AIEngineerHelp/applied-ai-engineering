@@ -15,7 +15,8 @@ async function row(runId: string) {
   return r;
 }
 
-const info = (r: Awaited<ReturnType<typeof row>>): RunInfo => ({ id: r.id, query: r.query, startedAt: r.startedAt ?? r.createdAt });
+const spent = (r: Awaited<ReturnType<typeof row>>) => ({ cost: r.costUsd === null ? (r.modelCalls ? null : 0) : Number(r.costUsd), calls: r.modelCalls });
+const info = (r: Awaited<ReturnType<typeof row>>): RunInfo => ({ id: r.id, query: r.query, startedAt: r.startedAt ?? r.createdAt, spent: spent(r) });
 
 export const postgresRunStore: RunStore = {
   async start(runId) {
@@ -23,7 +24,7 @@ export const postgresRunStore: RunStore = {
     const startedAt = r.startedAt ?? new Date();
     const d = await db();
     await d.update(reports).set({ status: "running", startedAt }).where(eq(reports.id, runId));
-    return { id: r.id, query: r.query, startedAt };
+    return { id: r.id, query: r.query, startedAt, spent: spent(r) };
   },
 
   async get(runId) {

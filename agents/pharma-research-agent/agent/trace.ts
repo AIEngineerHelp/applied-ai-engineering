@@ -9,6 +9,8 @@ export interface TracerOptions {
   t0?: number;
   /** Prefix for span ids, unique per step, so a retried step reuses its ids. */
   prefix?: string;
+  /** Called with each model call's usage, e.g. to count it against the run's budget. */
+  onUsage?: (u: Usage) => void;
 }
 
 export class Tracer {
@@ -20,10 +22,12 @@ export class Tracer {
   calls = 0;
   toolCalls = 0;
   private _priced = true;
+  private onUsage?: (u: Usage) => void;
 
   constructor(private emit: (e: RunEvent) => void, opts: TracerOptions = {}) {
     this.t0 = opts.t0 ?? Date.now();
     this.prefix = opts.prefix ? `${opts.prefix}:` : "";
+    this.onUsage = opts.onUsage;
   }
 
   now(): number {
@@ -65,6 +69,7 @@ export class Tracer {
 
   /** Adds one model call's usage; cost stays unknown if any call is unpriced. */
   addUsage(u: Usage) {
+    this.onUsage?.(u);
     this.calls += 1;
     this.usage.input += u.input;
     this.usage.output += u.output;

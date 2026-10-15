@@ -11,6 +11,8 @@ export interface RunInfo {
   query: string;
   /** When the run started; span times are relative to it. */
   startedAt: Date;
+  /** What the run has spent so far (cost is null when a call was unpriced), so a resumed run keeps counting. */
+  spent: { cost: number | null; calls: number };
 }
 
 /** One earlier, completed turn of the run's conversation. */

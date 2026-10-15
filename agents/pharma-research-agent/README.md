@@ -100,7 +100,7 @@ npm run dev                    # http://localhost:4325
 ```
 
 - **Without `GEMINI_API_KEY`**, development uses an offline stand-in: a scripted model plus API responses recorded in `agent/offline/fixtures/`. The whole pipeline runs (plan, parallel steps, database, streaming, report, evals, exports), but the report text is a placeholder. Set `RESEARCH_OFFLINE_DELAY_MS=2500` to slow it down and watch the live progress.
-- **With a key**, each report makes about 14–19 Gemini calls and costs roughly $0.09–0.14 with `gemini-3.8-flash`. The figure comes from live runs on 2026-10-12; the cost of each run is shown under Run details.
+- **With a key**, each report makes about 20 Gemini calls, costs about $0.17 and takes about 3 minutes with `gemini-3.8-flash` (a live run of the LangGraph agent, guardrails included, on 2026-10-15). The cost of each run is shown under Run details.
 - **Local data** goes to `.data/pglite` (embedded Postgres, migrated automatically) and `.workflow-data/`. Delete both folders to start fresh.
 
 Checks:
@@ -108,7 +108,7 @@ Checks:
 ```bash
 npm run lint
 npm run check     # TypeScript
-npm test          # 26 tests: the agents and the sub-agent graph, the guardrails (personal data, injection, refusals, redirects, output removals), citations, report parsing, and the research graph against in-memory Postgres (a full run, a follow-up answered without new research, and a crashed run resuming from its checkpoint)
+npm test          # 32 tests: the agents and the sub-agent graph, the guardrails (personal data, injection, refusals, redirects, output removals), the run limits and rate limits, citations, report parsing, and the research graph against in-memory Postgres (a full run, a follow-up answered without new research, and a crashed run resuming from its checkpoint)
 npm run build
 ```
 
@@ -126,7 +126,12 @@ Operator controls, with no redeploy of code:
 - `RESEARCH_ENABLED=false` pauses new research while keeping existing reports readable.
 - `DAILY_RUN_CAP=<n>` caps runs per UTC day across all users.
 
-Both are off by default. Every report is paid for by the deployment's Gemini key, so watch usage on a public deployment.
+Both are off by default. Limits that are on by default, all set in the environment (see `.env.example`):
+
+- **Per run:** a cost budget (`RUN_MAX_COST_USD`, $0.75) and a model-call budget (`RUN_MAX_MODEL_CALLS`, 45), checked before every model call, and a deadline (`RUN_MAX_SECONDS`, 10 minutes). A run that reaches one stops with a message saying why and is not retried. Each attempt also stops after `RUN_ATTEMPT_SECONDS` (270 s), below Vercel's function limit, and resumes from its checkpoint.
+- **Per visitor:** 10 runs an hour per browser, 20 an hour per IP address (stored only as a salted hash; set `RATE_LIMIT_SALT`), and at most 2 runs in progress per browser.
+
+Every report is paid for by the deployment's Gemini key, so watch usage on a public deployment.
 
 CI: `.github/workflows/ci.yml` runs lint, type check, tests and build. It is kept in this folder for reference, because GitHub only runs workflows from the repository root.
 
@@ -138,7 +143,7 @@ CI: `.github/workflows/ci.yml` runs lint, type check, tests and build. It is kep
 - **Web sources are Google grounding redirect links.** They can stop resolving over time; the title and the cited text are kept.
 - **No accounts yet.** Reports belong to the browser that created them. Clearing cookies loses access, although shared links keep working.
 - **Guardrails are imperfect.** The question screen and the answer's policy check are model calls and can miss things or over-block; personal-data redaction catches identifiers such as record numbers, contacts and dates of birth, not a bare name. See the known gaps in [docs/security.md](docs/security.md).
-- **No per-run budget or per-user rate limit yet.** Only the kill switch and the optional daily cap limit spending.
+- **Rate limits are per browser and per IP address.** Without accounts, someone with many addresses can still start more runs; the daily cap and the per-run budget bound the damage.
 - **One model family.** The groundedness judge is the same model that wrote the report. See [llm-judge-reliability](../../evaluations-reliability/llm-judge-reliability/README.md) for why that matters.
 
 ## Earlier evaluation

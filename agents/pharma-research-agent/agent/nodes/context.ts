@@ -1,16 +1,17 @@
 // What every node works with: a tracer, a virtual file system and an event
 // writer for its run, all saving through the RunStore.
 
+import type { RunBudget } from "../limits.ts";
 import type { EventWriter, RunStore } from "../store.ts";
 import { throttle } from "../throttle.ts";
 import { Tracer } from "../trace.ts";
 import { VirtualFS } from "../vfs.ts";
 
-export async function nodeContext(store: RunStore, runId: string, prefix: string) {
+export async function nodeContext(store: RunStore, runId: string, prefix: string, budget?: RunBudget) {
   const run = await store.get(runId);
   const sink = store.events(runId);
   // Span ids are prefixed per node, so a node that is run again reuses its ids and overwrites its own spans.
-  const tracer = new Tracer((e) => sink.emit(e), { t0: run.startedAt.getTime(), prefix });
+  const tracer = new Tracer((e) => sink.emit(e), { t0: run.startedAt.getTime(), prefix, onUsage: (u) => budget?.add(u) });
   const vfs = new VirtualFS((f) => sink.emit({ type: "file", path: f.path, bytes: f.content.length, by: f.by, content: f.content }));
   const done = async () => {
     await sink.flush();

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { start } from "workflow/api";
 import { z } from "zod";
 import { json } from "@/lib/access";
+import { clientHash, rateLimited } from "@/lib/rate-limit";
 import { createReport, markFailed, QUERY_MAX, QUERY_MIN, runsToday, setWorkflowRun } from "@/lib/reports";
 import { modelName } from "@/agent/config";
 import { redactPII } from "@/agent/guardrails/pii";
@@ -24,12 +25,17 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return json(400, { error: `Write a research question between ${QUERY_MIN} and ${QUERY_MAX} characters.` });
 
+  // Per-browser and per-network limits, so one visitor cannot spend the demo's budget.
+  const client = clientHash(request);
+  const limited = await rateLimited(workspaceId, client);
+  if (limited) return json(429, { error: limited });
+
   // Personal data is removed here, before the question is stored, logged or sent to a model.
   const { text: query } = redactPII(parsed.data.query);
 
   let report;
   try {
-    report = await createReport(workspaceId, query, modelName(), parsed.data.threadId);
+    report = await createReport(workspaceId, query, modelName(), parsed.data.threadId, client);
   } catch {
     return json(404, { error: "That conversation no longer exists." });
   }

@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { FatalError } from "workflow";
 import { db, schema } from "@/lib/db";
 import { runResearchGraph } from "@/agent/graph";
+import { isLimit } from "@/agent/limits";
 import { DrizzleSaver } from "@/lib/storage/checkpointer";
 import { EventSink } from "@/lib/storage/events";
 import { postgresRunStore } from "@/lib/storage/run-store";
@@ -16,7 +17,13 @@ const { reports } = schema;
 
 export async function graphStep(reportId: string): Promise<void> {
   "use step";
-  await runResearchGraph(reportId, { store: postgresRunStore, checkpointer: new DrizzleSaver() });
+  try {
+    await runResearchGraph(reportId, { store: postgresRunStore, checkpointer: new DrizzleSaver() });
+  } catch (err) {
+    // A run limit (budget or deadline) is final: retrying would only hit it again.
+    if (isLimit(err)) throw new FatalError(err.message);
+    throw err;
+  }
 }
 graphStep.maxRetries = 2;
 

@@ -75,7 +75,7 @@ export async function getSharedThread(shareId: string): Promise<ReportRow[]> {
 }
 
 /** Starts a conversation, or adds a follow-up turn to one the workspace owns. */
-export async function createReport(workspaceId: string, query: string, model: string, threadId?: string): Promise<ReportRow> {
+export async function createReport(workspaceId: string, query: string, model: string, threadId?: string, clientHash?: string): Promise<ReportRow> {
   const d = await db();
   const id = ids();
   let position = 0;
@@ -84,7 +84,7 @@ export async function createReport(workspaceId: string, query: string, model: st
     if (!turns.length) throw new Error("Conversation not found");
     position = Math.max(...turns.map((t) => t.position)) + 1;
   }
-  const [row] = await d.insert(reports).values({ id, workspaceId, query, model, threadId: threadId ?? id, position }).returning();
+  const [row] = await d.insert(reports).values({ id, workspaceId, query, model, threadId: threadId ?? id, position, clientHash }).returning();
   return row;
 }
 

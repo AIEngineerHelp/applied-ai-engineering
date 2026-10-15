@@ -9,19 +9,33 @@ import type { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { ChatGoogle } from "@langchain/google/node";
 import { isOffline, modelName } from "./config.ts";
+import { BudgetCallback, type RunBudget } from "./limits.ts";
 import { ScriptedChatModel } from "./offline/model.ts";
 import type { Usage } from "./types.ts";
 
-export function chatModel(): BaseChatModel {
-  if (isOffline()) return new ScriptedChatModel({});
+type Thinking = "low" | "medium" | "high";
+
+/** A Gemini chat model; with a budget, every call checks it first (limits.ts). */
+function gemini(model: string, thinking: Thinking, budget?: RunBudget): BaseChatModel {
+  const callbacks = budget ? [new BudgetCallback(budget)] : undefined;
+  if (isOffline()) return new ScriptedChatModel({ callbacks });
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
-  return new ChatGoogle({
-    model: modelName(),
-    apiKey: process.env.GEMINI_API_KEY,
-    // Setting a thinking level is what makes Gemini return thought summaries, which the UI streams.
-    reasoningEffort: (process.env.GEMINI_THINKING_LEVEL as "low" | "medium" | "high" | undefined) ?? "high",
-    maxRetries: 2,
-  });
+  // Setting a thinking level is what makes Gemini return thought summaries, which the UI streams.
+  return new ChatGoogle({ model, apiKey: process.env.GEMINI_API_KEY, reasoningEffort: thinking, maxRetries: 2, callbacks });
+}
+
+/** The model the agents think with: the planner, the researchers and the writer. */
+export function chatModel(budget?: RunBudget): BaseChatModel {
+  return gemini(modelName(), (process.env.GEMINI_THINKING_LEVEL as Thinking | undefined) ?? "high", budget);
+}
+
+/**
+ * The groundedness judge's model. Judging a claim against a passage is a
+ * check, not research: at a high thinking level it once took three minutes and
+ * $0.12 of a $0.29 run, so it thinks at a low level.
+ */
+export function judgeModel(budget?: RunBudget): BaseChatModel {
+  return gemini(process.env.GEMINI_JUDGE_MODEL || modelName(), "low", budget);
 }
 
 /**
@@ -29,15 +43,8 @@ export function chatModel(): BaseChatModel {
  * configured on its own because models differ in how well they do each
  * guardrail task; by default it is the main model, thinking less, for speed.
  */
-export function guardModel(): BaseChatModel {
-  if (isOffline()) return new ScriptedChatModel({});
-  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
-  return new ChatGoogle({
-    model: process.env.GEMINI_GUARD_MODEL || modelName(),
-    apiKey: process.env.GEMINI_API_KEY,
-    reasoningEffort: "low",
-    maxRetries: 2,
-  });
+export function guardModel(budget?: RunBudget): BaseChatModel {
+  return gemini(process.env.GEMINI_GUARD_MODEL || modelName(), "low", budget);
 }
 
 /** A Gemini built-in tool (Google Search) or a LangChain tool. */

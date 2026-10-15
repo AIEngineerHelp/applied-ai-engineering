@@ -34,11 +34,13 @@ export const reports = pgTable(
     durationMs: integer("duration_ms"),
     shareId: text("share_id"),
     workflowRunId: text("workflow_run_id"),
+    /** A salted hash of the client's IP address, for rate limiting; the address itself is never stored. */
+    clientHash: text("client_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     startedAt: timestamp("started_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
-  (t) => [index("reports_workspace_idx").on(t.workspaceId, t.createdAt), index("reports_thread_idx").on(t.threadId, t.position), uniqueIndex("reports_share_idx").on(t.shareId)],
+  (t) => [index("reports_workspace_idx").on(t.workspaceId, t.createdAt), index("reports_client_idx").on(t.clientHash, t.createdAt), index("reports_thread_idx").on(t.threadId, t.position), uniqueIndex("reports_share_idx").on(t.shareId)],
 );
 
 /**
