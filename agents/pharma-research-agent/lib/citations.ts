@@ -1,6 +1,6 @@
 // Citation numbering shared by the screen, PDF and DOCX exports: sources are
 // numbered in order of first citation, like a paper's reference list.
-import type { Report, Source } from "./research/types";
+import type { Report, Source } from "../agent/types";
 
 export const CITE_RE = /\[((?:PMID|NCT|FDA|FAERS|WEB)[^\]\s]*)\]/g;
 

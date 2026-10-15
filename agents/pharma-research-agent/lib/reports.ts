@@ -5,8 +5,8 @@ import "server-only";
 import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
 import { db, schema } from "./db";
-import { loadEvents, loadFiles, loadSources } from "./research/persist";
-import type { RunEvent, Source } from "./research/types";
+import { loadEvents, loadFiles, loadSources } from "./storage/events";
+import type { RunEvent, Source } from "../agent/types";
 
 const { reports, reportSources } = schema;
 const ids = customAlphabet("0123456789abcdefghijkmnpqrstuvwxyz", 12);

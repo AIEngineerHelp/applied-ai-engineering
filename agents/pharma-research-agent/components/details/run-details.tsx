@@ -6,7 +6,7 @@ import { KB, KbIcon } from "@/components/report/kb";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReportStream, type Snapshot } from "@/hooks/use-report-stream";
-import type { Span } from "@/lib/research/types";
+import type { Span } from "@/agent/types";
 import { agents, liveUsage, type RunState } from "@/lib/run-state";
 import { cn } from "@/lib/utils";
 

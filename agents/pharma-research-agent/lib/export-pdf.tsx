@@ -2,7 +2,7 @@ import "server-only";
 import { Document, Link, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import { blocks, numbered, numbering, referenceLine } from "./citations";
 import type { SerializedReport } from "./reports";
-import type { Source } from "./research/types";
+import type { Source } from "../agent/types";
 
 // Built-in PDF fonts: Times for reading, Helvetica for headings and metadata.
 const s = StyleSheet.create({

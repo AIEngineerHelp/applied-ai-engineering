@@ -1,5 +1,5 @@
 "use client";
-import type { Source } from "@/lib/research/types";
+import type { Source } from "@/agent/types";
 import { KB, KbIcon } from "@/components/report/kb";
 
 /** The first few sources as compact cards above the answer, like a search result strip. */

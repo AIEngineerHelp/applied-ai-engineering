@@ -4,7 +4,7 @@
 // reloads the final snapshot when the run finishes.
 import { useEffect, useRef, useState } from "react";
 import type { SerializedReport } from "@/lib/reports";
-import type { Source } from "@/lib/research/types";
+import type { Source } from "@/agent/types";
 import { apply, cloneState, initialState, isTerminal, type RunState } from "@/lib/run-state";
 
 export interface Snapshot {

@@ -1,21 +1,23 @@
-// The orchestrator: reads the query and the skill index (names and one-line
+// The planner node. It reads the query and the skill index (names and one-line
 // descriptions only), and splits the query into a few subtasks, each tied to
-// one knowledge base and the skills its sub-agent should load.
+// one knowledge base and the skills its sub-agent should load. For a follow-up
+// it first decides whether new research is needed at all.
 
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { callModel } from "../model.ts";
-import { skillIndex, type Skill } from "../skills.ts";
+import { isOffline, modelName } from "../config.ts";
+import { callModel, chatModel } from "../model.ts";
+import { followUpRequest, plannerSystem } from "../prompts/planner.ts";
+import { loadSkills, skillIndex, type Skill } from "../skills/index.ts";
+import type { RunState } from "../state.ts";
+import type { RunStore } from "../store.ts";
+import { KNOWLEDGE_BASES } from "../tools/index.ts";
 import type { Plan, SourceKind, Usage } from "../types.ts";
+import { conversationContext, nodeContext, thoughtStream } from "./context.ts";
 
 type Schema = Record<string, unknown>;
 
-export const SOURCES: { kind: SourceKind; name: string; holds: string }[] = [
-  { kind: "pubmed", name: "PubMed", holds: "published studies, trials, meta-analyses and reviews (abstracts)" },
-  { kind: "trials", name: "ClinicalTrials.gov", holds: "registered clinical trials: phase, status, size, outcomes, posted results" },
-  { kind: "fda", name: "openFDA", holds: "FDA drug labels (boxed warnings, warnings, adverse reactions) and FAERS adverse-event report counts" },
-  { kind: "web", name: "Web search", holds: "regulator announcements, approvals, guidance and other public pages" },
-];
+export const MAX_SUBTASKS = 4;
 
 const PLAN_SCHEMA: Schema = {
   type: "object",
@@ -29,7 +31,7 @@ const PLAN_SCHEMA: Schema = {
         type: "object",
         properties: {
           question: { type: "string", description: "One answerable question for one knowledge base." },
-          source: { type: "string", enum: SOURCES.map((s) => s.kind) },
+          source: { type: "string", enum: KNOWLEDGE_BASES.map((s) => s.kind) },
           skills: { type: "array", items: { type: "string" }, description: "Names of skills from the index to load for this subtask." },
           why: { type: "string", description: "Why this subtask matters for the query, in one sentence." },
         },
@@ -70,27 +72,15 @@ export interface PlanOptions {
 }
 
 export async function plan(model: BaseChatModel, query: string, skills: Skill[], maxSubtasks: number, opts: PlanOptions = {}): Promise<Plan> {
-  const system = [
-    "You are the orchestrator of a pharmaceutical research team. You do not answer questions yourself.",
-    "Split the research query into 2 to " + maxSubtasks + " subtasks that can run in parallel, each answered from exactly one knowledge base.",
-    "Use a knowledge base only if it can answer part of the question. Do not create two subtasks that would run the same search.",
-    "",
-    "Knowledge bases:",
-    ...SOURCES.map((s) => `- ${s.kind}: ${s.name} — ${s.holds}`),
-    "",
-    "Skills you can assign (load only the ones a subtask needs):",
-    skillIndex(skills.filter((s) => s.source !== "synthesis")),
-  ].join("\n");
+  const system = plannerSystem(maxSubtasks, KNOWLEDGE_BASES, skillIndex(skills.filter((s) => s.source !== "synthesis")));
   const followUp = !!opts.context;
-  const user = followUp
-    ? `${opts.context}\n\nFollow-up: ${query}\n\nFirst decide whether this follow-up needs new research or can be answered from the earlier answers alone. Choose research only if it asks about something the earlier answers do not cover. If research, plan subtasks for the new part only, using the context to resolve what the follow-up refers to.`
-    : query;
+  const user = followUp ? followUpRequest(opts.context!, query) : query;
   const res = await callModel(model, [new SystemMessage(system), new HumanMessage(user)], { schema: followUp ? FOLLOW_UP_SCHEMA : PLAN_SCHEMA, onThought: opts.onThought });
   opts.onUsage?.(res.usage);
   const raw = res.json as { mode?: string; reason?: string; focus: string; subtasks: { question: string; source: string; skills: string[]; why: string }[] };
   if (followUp && raw.mode === "answer") return { focus: raw.focus, subtasks: [], mode: "answer", reason: raw.reason };
   const known = new Set(skills.map((s) => s.name));
-  const kinds = new Set<string>(SOURCES.map((s) => s.kind));
+  const kinds = new Set<string>(KNOWLEDGE_BASES.map((s) => s.kind));
   // Keep the model honest: real sources, real skills, a bounded number of subtasks.
   const subtasks = raw.subtasks
     .filter((t) => kinds.has(t.source) && t.question?.trim())
@@ -105,3 +95,29 @@ export async function plan(model: BaseChatModel, query: string, skills: Skill[],
   if (!subtasks.length) throw new Error("The orchestrator produced no usable subtasks");
   return { focus: raw.focus, subtasks, mode: "research", ...(raw.reason ? { reason: raw.reason } : {}) };
 }
+
+export const plannerNode = (store: RunStore) => async (s: RunState): Promise<Partial<RunState>> => {
+  const started = await store.start(s.reportId);
+  const { sink, tracer, vfs, done } = await nodeContext(store, s.reportId, "plan");
+  const skills = loadSkills();
+
+  sink.emit({ type: "run", id: s.reportId, query: started.query, model: modelName(), mode: isOffline() ? "offline" : "live", at: started.startedAt.toISOString() });
+  sink.emit({ type: "skills", available: skills.map((x) => ({ name: x.name, description: x.description })) });
+  sink.emit({ type: "span", span: { id: "run", kind: "run", name: "research run", start: 0, status: "running", attrs: {} } });
+
+  const context = conversationContext(await store.earlierTurns(s.reportId));
+  const thought = thoughtStream(sink, "orchestrator");
+  const p = await tracer.wrap("agent", "orchestrator", "run", async (span) =>
+    tracer.wrap("llm", "plan subtasks", span.id, async (sp) => {
+      const r = await plan(chatModel(), started.query, skills, MAX_SUBTASKS, { context, onThought: (t) => thought("plan", t, false), onUsage: (u) => tracer.addUsage(u) });
+      tracer.close(sp, { subtasks: r.subtasks.length, input: tracer.usage.input, output: tracer.usage.output, cost: tracer.usage.cost });
+      return r;
+    }),
+  );
+  thought("plan", "", true);
+  vfs.write("/plan.md", ["# Plan", "", p.focus, "", ...(p.mode === "answer" ? [`No new research: ${p.reason ?? "answered from the earlier turns."}`] : []), ...p.subtasks.map((t) => `- **${t.id}** (${t.source}; skills: ${t.skills.join(", ") || "none"}): ${t.question}`)].join("\n"), "orchestrator");
+  sink.emit({ type: "plan", plan: p, loaded: [...new Set(p.subtasks.flatMap((t) => t.skills))] });
+  await done();
+  await store.save(s.reportId, { plan: p });
+  return { plan: p };
+};

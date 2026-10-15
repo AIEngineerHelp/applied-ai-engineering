@@ -3,9 +3,9 @@
 // so a step that is retried overwrites its own events instead of adding more.
 
 import { and, asc, eq, gt, sql } from "drizzle-orm";
-import { db, schema } from "../db";
-import type { RunEvent, Source } from "./types";
-import type { VfsFile } from "./vfs";
+import type { RunEvent, Source } from "../../agent/types.ts";
+import type { VfsFile } from "../../agent/vfs.ts";
+import { db, schema } from "../db/index.ts";
 
 const { reports, reportEvents, reportSources, reportFiles } = schema;
 

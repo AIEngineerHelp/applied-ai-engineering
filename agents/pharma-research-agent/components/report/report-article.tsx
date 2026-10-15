@@ -2,7 +2,7 @@
 import { Fragment } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { blocks, splitCitations } from "@/lib/citations";
-import type { Report, Source } from "@/lib/research/types";
+import type { Report, Source } from "@/agent/types";
 import { KB } from "./kb";
 
 interface Props {

@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "@react-pdf/renderer"],
   // Files read at runtime: skill playbooks, offline fixtures, migrations.
   outputFileTracingIncludes: {
-    "/**": ["./skills/**/*.md", "./tests/fixtures/**/*.json", "./drizzle/**/*"],
+    "/**": ["./agent/skills/**/*.md", "./agent/offline/fixtures/**/*.json", "./drizzle/**/*"],
   },
   turbopack: {
     rules: {

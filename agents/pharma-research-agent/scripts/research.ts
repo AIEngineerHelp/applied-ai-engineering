@@ -26,9 +26,11 @@ async function main() {
 
   const { asc, eq } = await import("drizzle-orm");
   const { db, schema } = await import("../lib/db/index.ts");
-  const { runResearchGraph } = await import("../lib/research/graph.ts");
-  const { renderReport } = await import("../lib/research/agents/synthesis.ts");
-  const { modelName } = await import("../lib/research/runtime.ts");
+  const { runResearchGraph } = await import("../agent/graph.ts");
+  const { renderReport } = await import("../agent/report-format.ts");
+  const { modelName } = await import("../agent/config.ts");
+  const { DrizzleSaver } = await import("../lib/storage/checkpointer.ts");
+  const { postgresRunStore } = await import("../lib/storage/run-store.ts");
   const { reports, reportEvents } = schema;
 
   const id = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z") + "-" + Math.random().toString(36).slice(2, 6);
@@ -36,7 +38,7 @@ async function main() {
   await d.insert(reports).values({ id, threadId: id, workspaceId: "cli", query, model: modelName() });
   console.log(`${live ? "LIVE" : "DRY RUN (offline)"} · ${modelName()}\n${query}\n`);
 
-  const state = await runResearchGraph(id);
+  const state = await runResearchGraph(id, { store: postgresRunStore, checkpointer: new DrizzleSaver() });
   for (const t of state.plan?.subtasks ?? []) console.log(`  plan  ${t.id} [${t.source}] ${t.question}`);
   for (const f of state.findings) console.log(`  found ${f.subtask}: ${f.claims.length} claims`);
   if (state.report) console.log(`\n${renderReport(state.report)}\n`);

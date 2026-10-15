@@ -5,7 +5,7 @@ import { start } from "workflow/api";
 import { z } from "zod";
 import { json } from "@/lib/access";
 import { createReport, markFailed, QUERY_MAX, QUERY_MIN, runsToday, setWorkflowRun } from "@/lib/reports";
-import { modelName } from "@/lib/research/runtime";
+import { modelName } from "@/agent/config";
 import { WORKSPACE_COOKIE } from "@/lib/workspace-cookie";
 import { researchWorkflow } from "@/workflows/research";
 

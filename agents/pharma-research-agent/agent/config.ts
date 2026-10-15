@@ -2,10 +2,10 @@
 // the live public APIs. Without it, outside production: the offline stand-in
 // (scripted model, recorded sources), so the app works end to end locally.
 
-import { fixtureToolsets } from "./offline";
-import { createToolsets } from "./sources";
-import type { Toolset } from "./sources/toolset";
-import type { SourceKind } from "./types";
+import { fixtureToolsets } from "./offline/toolsets.ts";
+import { createToolsets } from "./tools/index.ts";
+import type { Toolset } from "./tools/toolset.ts";
+import type { SourceKind } from "./types.ts";
 
 export function isOffline(): boolean {
   if (process.env.RESEARCH_OFFLINE === "1") return true;

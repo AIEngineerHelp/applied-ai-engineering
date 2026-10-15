@@ -3,7 +3,7 @@
 // ?after=<last seq>. The stream ends when the run is finished.
 import { reportAccess, json } from "@/lib/access";
 import { getReport, loadEvents, sourcesByIds } from "@/lib/reports";
-import type { RunEvent } from "@/lib/research/types";
+import type { RunEvent } from "@/agent/types";
 
 export const maxDuration = 300;
 // Short enough for streamed text to feel live; each poll is one indexed query.

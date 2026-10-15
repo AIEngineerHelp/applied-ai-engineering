@@ -5,6 +5,21 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // The agent stands on its own: it reaches storage only through agent/store.ts,
+  // never the app's database, pages or components.
+  {
+    files: ["agent/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            { group: ["@/*", "**/lib/**", "**/app/**", "**/components/**", "**/hooks/**", "**/workflows/**", "drizzle-orm", "drizzle-orm/*", "next", "next/*", "react"], message: "agent/ must not depend on the web app or its database; add what it needs to agent/store.ts." },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

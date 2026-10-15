@@ -5,18 +5,19 @@ import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { plan } from "../lib/research/agents/orchestrator.ts";
-import { MAX_TURNS, research } from "../lib/research/agents/researcher.ts";
-import { checks, citedSentences } from "../lib/research/evals.ts";
-import { callModel } from "../lib/research/model.ts";
-import { ScriptedChatModel, fixtureToolsets, type ScriptedCallOptions } from "../lib/research/offline.ts";
-import { loadSkills, parseSkill, skillIndex } from "../lib/research/skills.ts";
-import { parsePubmedXml } from "../lib/research/sources/pubmed.ts";
-import { studyToSource } from "../lib/research/sources/trials.ts";
-import { labelToSource } from "../lib/research/sources/fda.ts";
-import { Tracer } from "../lib/research/trace.ts";
-import type { Report, RunEvent, Source, Subtask } from "../lib/research/types.ts";
-import { VirtualFS } from "../lib/research/vfs.ts";
+import { plan } from "../agent/nodes/planner.ts";
+import { MAX_TURNS, research } from "../agent/subgraphs/researcher-loop.ts";
+import { checks, citedSentences } from "../agent/evals/checks.ts";
+import { callModel } from "../agent/model.ts";
+import { ScriptedChatModel, type ScriptedCallOptions } from "../agent/offline/model.ts";
+import { fixtureToolsets } from "../agent/offline/toolsets.ts";
+import { loadSkills, parseSkill, skillIndex } from "../agent/skills/index.ts";
+import { parsePubmedXml } from "../agent/tools/pubmed.ts";
+import { studyToSource } from "../agent/tools/trials.ts";
+import { labelToSource } from "../agent/tools/fda.ts";
+import { Tracer } from "../agent/trace.ts";
+import type { Report, RunEvent, Source, Subtask } from "../agent/types.ts";
+import { VirtualFS } from "../agent/vfs.ts";
 
 afterEach(() => {
   ScriptedChatModel.script = undefined;
@@ -132,7 +133,7 @@ test("source parsers normalise PubMed XML, trial records and FDA labels", () => 
 
 
 test("the judge sees the passages relevant to a claim, not just the start of a long source", async () => {
-  const { relevant } = await import("../lib/research/evals.ts");
+  const { relevant } = await import("../agent/evals/judge.ts");
   const label = `${"Indications and usage text. ".repeat(80)}Warnings 5.1 Ketoacidosis: consider ketone monitoring and discontinue if ketoacidosis is suspected. ${"Adverse reactions text. ".repeat(80)}`;
   const view = relevant(label, "The label advises ketone monitoring and to discontinue if ketoacidosis is suspected.");
   assert.ok(view.length <= 1600);

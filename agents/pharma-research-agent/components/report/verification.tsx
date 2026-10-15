@@ -2,7 +2,7 @@
 import { CircleCheck, CircleAlert, Info } from "lucide-react";
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { EvalResult } from "@/lib/research/types";
+import type { EvalResult } from "@/agent/types";
 import { cn } from "@/lib/utils";
 
 const CONFIDENCE: Record<string, { label: string; tip: string; cls: string }> = {

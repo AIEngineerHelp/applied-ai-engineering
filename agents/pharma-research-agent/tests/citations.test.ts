@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { blocks, citationOrder, numbered, numbering, splitCitations } from "../lib/citations.ts";
-import type { Report } from "../lib/research/types.ts";
+import type { Report } from "../agent/types.ts";
 
 const report: Report = {
   title: "t",
@@ -27,7 +27,7 @@ test("prose splits into paragraphs and bullet lists", () => {
 });
 
 test("the streamed report markdown parses into a report, even half-written", async () => {
-  const { parseReport, draftForDisplay } = await import("../lib/research/report-format.ts");
+  const { parseReport, draftForDisplay } = await import("../agent/report-format.ts");
   const md = "# Title here\n\nAnswer [PMID:1].\n\n## Efficacy\n\nWorks [NCT02].\n\n## Limitations\n\n- Small trials.\n\nConfidence: moderate";
   const r = parseReport(md, "fallback");
   assert.equal(r.title, "Title here");

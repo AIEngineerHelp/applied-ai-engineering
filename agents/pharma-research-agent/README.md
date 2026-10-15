@@ -49,29 +49,43 @@ There are no accounts yet. Each browser gets a private, anonymous workspace thro
 | App | Next.js 16 (App Router, Cache Components, partial prerendering), React 19, TypeScript |
 | UI | Tailwind CSS v4, shadcn/ui (Radix), IBM Plex Sans + Newsreader + IBM Plex Mono, light and dark themes |
 | Orchestration | [LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) (`@langchain/langgraph`): a `StateGraph` of planner → researchers → writer → checker. The planner's conditional edge fans out with `Send`, one researcher per subtask, all in parallel; each researcher is its own model ⇄ tools graph with a turn limit in its state. |
-| Durable runs | LangGraph checkpoints every step to Postgres through a small Drizzle checkpointer (`lib/research/checkpointer.ts`). [Vercel Workflow](https://workflow-sdk.dev) runs the graph as a retried step: if the function dies, the retry resumes from the last checkpoint, and finished researchers are not run again. |
+| Durable runs | LangGraph checkpoints every step to Postgres through a small Drizzle checkpointer (`lib/storage/checkpointer.ts`). [Vercel Workflow](https://workflow-sdk.dev) runs the graph as a retried step: if the function dies, the retry resumes from the last checkpoint, and finished researchers are not run again. |
 | Data | Postgres via Drizzle ORM with versioned migrations (`drizzle/`). Neon in production; embedded [PGlite](https://pglite.dev) locally and in tests (no Docker). |
 | Live updates | Model calls stream through LangChain, including Gemini's thought summaries. Agents write thoughts and the report draft to `report_events` a few times a second, and the browser follows them over server-sent events, resuming from the last sequence number after a disconnect. |
 | Model | Gemini (`gemini-3.8-flash`) through LangChain's `ChatGoogle` (`@langchain/google`). Structured output against a JSON schema, tools defined with LangChain's `tool()`, a forced `finish` on a sub-agent's last turn, Google Search grounding, and thought signatures kept across turns of a tool loop. |
 | Knowledge bases | NCBI E-utilities, ClinicalTrials.gov API v2 and openFDA. All are free, rate-limited client side, with timeouts and bounded retries. |
 | Exports | `@react-pdf/renderer` (PDF), `docx` (Word) |
 
-The parts most worth reading:
+## Project layout
 
-- `lib/research/graph.ts`: the LangGraph graph, its state and its nodes, and `runResearchGraph`, which starts a run or resumes it from its checkpoint.
-- `workflows/research.ts` and `workflows/steps.ts`: the durable wrapper. Every node writes only keyed rows, so work that is redone overwrites its own output instead of duplicating it.
-- `lib/research/`: the agent core.
-  - `agents/orchestrator.ts`: plans the subtasks.
-  - `agents/researcher.ts`: each sub-agent's graph, a bounded model ⇄ tools loop.
-  - `agents/synthesis.ts`: writes the report from the files.
-  - `evals.ts`: the deterministic checks and the judge.
-  - `sources/`: one client per knowledge base.
-  - `model.ts`: the LangChain chat model and `callModel`, which streams one call and returns its text, thoughts, tool calls, grounding and cost.
-  - `checkpointer.ts`: LangGraph checkpoints in the app's own Postgres tables.
-  - `offline.ts`: a scripted LangChain chat model, so the whole graph runs without an API key.
-- `lib/research/persist.ts`: an event sink that writes every agent event to Postgres, in order, without blocking the agent.
-- `skills/*.md`: the five playbooks. The orchestrator sees only their one-line descriptions; a full playbook is loaded into a sub-agent's prompt only when assigned (progressive disclosure).
-- `lib/reports.ts`: the data access layer. Access rules live there: a report is visible to its workspace, or to anyone holding its share link.
+The agent lives in `agent/` and imports nothing from the web app: it reaches storage only through the `RunStore` interface in `agent/store.ts`, and a lint rule (`eslint.config.mjs`) keeps it that way. The app supplies the Postgres implementation, so the agent could move to its own service without changes.
+
+```
+agent/                      the agent (LangGraph + LangChain), no Next.js or database code
+├── graph.ts                the research graph and runResearchGraph (start, or resume from a checkpoint)
+├── state.ts                the graph's state
+├── store.ts                RunStore: everything the agent needs from storage
+├── nodes/                  planner.ts, researcher.ts, writer.ts, checker.ts (+ context.ts, shared by all)
+├── subgraphs/              researcher-loop.ts: each sub-agent's model ⇄ tools graph, with its turn limit
+├── tools/                  PubMed, ClinicalTrials.gov and openFDA clients, as LangChain tools
+├── prompts/                one file per agent's prompt
+├── skills/                 the five markdown playbooks and their loader
+├── evals/                  checks.ts (deterministic) and judge.ts (LLM judge)
+├── offline/                a scripted LangChain model and recorded API responses, for running without a key
+├── model.ts                ChatGoogle and callModel (streaming, thoughts, grounding, cost)
+├── config.ts               live or offline, which model, which tools
+└── types.ts, trace.ts, vfs.ts, report-format.ts, throttle.ts
+lib/
+├── storage/                the Postgres side: run-store.ts (RunStore), checkpointer.ts (LangGraph), events.ts
+├── db/                     Drizzle schema and connection
+└── reports.ts, …           data access and access rules for the app (a report is visible to its workspace or its share link)
+workflows/                  the durable wrapper: runs agent/graph.ts as a retried Vercel Workflow step
+app/, components/, hooks/   the Next.js app
+drizzle/                    migrations
+scripts/, tests/, docs/
+```
+
+Where to start reading: `agent/graph.ts`, then `agent/nodes/planner.ts` and `agent/subgraphs/researcher-loop.ts`. Every node writes only keyed rows, so work that is redone overwrites its own output instead of duplicating it.
 
 ## Run it locally
 
@@ -83,7 +97,7 @@ cp .env.example .env.local     # add GEMINI_API_KEY for real research
 npm run dev                    # http://localhost:4325
 ```
 
-- **Without `GEMINI_API_KEY`**, development uses an offline stand-in: a scripted model plus API responses recorded in `tests/fixtures/`. The whole pipeline runs (plan, parallel steps, database, streaming, report, evals, exports), but the report text is a placeholder. Set `RESEARCH_OFFLINE_DELAY_MS=2500` to slow it down and watch the live progress.
+- **Without `GEMINI_API_KEY`**, development uses an offline stand-in: a scripted model plus API responses recorded in `agent/offline/fixtures/`. The whole pipeline runs (plan, parallel steps, database, streaming, report, evals, exports), but the report text is a placeholder. Set `RESEARCH_OFFLINE_DELAY_MS=2500` to slow it down and watch the live progress.
 - **With a key**, each report makes about 14–19 Gemini calls and costs roughly $0.09–0.14 with `gemini-3.8-flash`. The figure comes from live runs on 2026-10-12; the cost of each run is shown under Run details.
 - **Local data** goes to `.data/pglite` (embedded Postgres, migrated automatically) and `.workflow-data/`. Delete both folders to start fresh.
 

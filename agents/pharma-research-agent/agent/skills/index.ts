@@ -15,7 +15,7 @@ export interface Skill {
 
 // Resolved from the project root, so it works both under tsx and in the Next.js build.
 // Traced explicitly via outputFileTracingIncludes in next.config.ts.
-const DIR = join(/*turbopackIgnore: true*/ process.cwd(), "skills");
+const DIR = join(/*turbopackIgnore: true*/ process.cwd(), "agent", "skills");
 
 /** Parses `---\nkey: value\n---\nbody`. */
 export function parseSkill(text: string): Skill {

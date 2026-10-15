@@ -4,7 +4,7 @@
 
 import { sql } from "drizzle-orm";
 import { bigint, index, integer, jsonb, numeric, pgSequence, pgTable, primaryKey, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import type { Plan, Report, EvalResult } from "../research/types";
+import type { Plan, Report, EvalResult } from "../../agent/types";
 
 export const eventSeq = pgSequence("report_event_seq");
 

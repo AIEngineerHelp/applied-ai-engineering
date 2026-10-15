@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReportStream, type Snapshot } from "@/hooks/use-report-stream";
 import { blocks, numbered, numbering, referenceLine } from "@/lib/citations";
-import { parseReport } from "@/lib/research/report-format";
+import { parseReport } from "@/agent/report-format";
 import { isTerminal, phase, thoughtTitles, type RunState } from "@/lib/run-state";
 import { ActivityTrail } from "./activity-trail";
 import { SourceStrip } from "./source-strip";

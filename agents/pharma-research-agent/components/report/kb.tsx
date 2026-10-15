@@ -1,5 +1,5 @@
 import { BookOpenText, FlaskConical, Globe, ShieldCheck } from "lucide-react";
-import type { SourceKind } from "@/lib/research/types";
+import type { SourceKind } from "@/agent/types";
 import { cn } from "@/lib/utils";
 
 export const KB: Record<SourceKind, { name: string; short: string; Icon: typeof BookOpenText }> = {

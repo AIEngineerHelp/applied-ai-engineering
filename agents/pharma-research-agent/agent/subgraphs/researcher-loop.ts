@@ -1,4 +1,4 @@
-// A research sub-agent: one subtask, one knowledge base, its assigned skills.
+// A research sub-agent's loop: one subtask, one knowledge base, its assigned skills.
 // It is a small LangGraph graph of its own — a model node and a tools node in
 // a loop — that ends when the model calls `finish` with claims tied to source
 // ids. Full documents go to the virtual file system; the model sees only short
@@ -16,8 +16,9 @@ import { AIMessage, HumanMessage, SystemMessage, ToolMessage, type BaseMessage }
 import { tool } from "@langchain/core/tools";
 import { Annotation, END, MessagesAnnotation, START, StateGraph, type LangGraphRunnableConfig } from "@langchain/langgraph";
 import { callModel } from "../model.ts";
-import type { Skill } from "../skills.ts";
-import { asLangChainTools, type Toolset } from "../sources/toolset.ts";
+import { LAST_TURN, NUDGE, WEB_INSTRUCTIONS, researcherSystem, subtaskMessage } from "../prompts/researcher.ts";
+import type { Skill } from "../skills/index.ts";
+import { asLangChainTools, type Toolset } from "../tools/toolset.ts";
 import type { Tracer } from "../trace.ts";
 import type { Finding, Source, Subtask } from "../types.ts";
 import type { VirtualFS } from "../vfs.ts";
@@ -86,12 +87,7 @@ const lastAI = (messages: BaseMessage[]) => [...messages].reverse().find((m): m 
 export async function research(ctx: ResearchContext, task: Subtask, toolset: Toolset, skills: Skill[], parent: string, config?: LangGraphRunnableConfig): Promise<Finding> {
   return ctx.tracer.wrap("agent", `${task.id} · ${toolset.kind}`, parent, async (span) => {
     const playbooks = skills.filter((s) => task.skills.includes(s.name));
-    const system = [
-      `You are a research sub-agent on a pharmaceutical research team. Your knowledge base is ${toolset.kind}.`,
-      "Answer only your subtask, only from what the tools return. Cite source ids exactly as the tools give them.",
-      `You have at most ${MAX_TURNS} turns. Search, read what matters, then call finish.`,
-      ...playbooks.map((p) => `\n## Skill: ${p.name}\n${p.body}`),
-    ].join("\n");
+    const system = researcherSystem(toolset.kind, MAX_TURNS, playbooks);
 
     // Web search has no function tools: one grounded call, sources from the grounding metadata.
     if (toolset.kind === "web") return webResearch(ctx, task, system, span.id);
@@ -115,7 +111,7 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
         return r;
       });
       const messages: BaseMessage[] = [r.message];
-      if (!r.message.tool_calls?.length && !last) messages.push(new HumanMessage("Use a tool, or call finish with what you have."));
+      if (!r.message.tool_calls?.length && !last) messages.push(new HumanMessage(NUDGE));
       return { messages, turn };
     };
 
@@ -142,7 +138,7 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
           body = { result: content };
         }
         body.turns_left = left;
-        if (left === 1) body.note = "Last turn: call finish now, citing the source ids you have.";
+        if (left === 1) body.note = LAST_TURN;
         out.push(new ToolMessage({ content: JSON.stringify(body), tool_call_id: call.id ?? call.name, name: call.name }));
       }
       return { messages: out };
@@ -173,7 +169,7 @@ export async function research(ctx: ResearchContext, task: Subtask, toolset: Too
       .compile({ name: `researcher-${task.id}` });
 
     const out = await graph.invoke(
-      { messages: [new SystemMessage(system), new HumanMessage(`Subtask: ${task.question}\nWhy it matters: ${task.why}`)] },
+      { messages: [new SystemMessage(system), new HumanMessage(subtaskMessage(task))] },
       { ...config, recursionLimit: 4 * MAX_TURNS },
     );
     return out.finding ?? finish(ctx, task, { summary: "The sub-agent stopped without a finding.", claims: [], gaps: [task.question] });
@@ -184,7 +180,7 @@ async function webResearch(ctx: ResearchContext, task: Subtask, system: string, 
   const res = await ctx.tracer.wrap("llm", `${task.id} web search`, parent, async (s) => {
     const r = await callModel(
       ctx.model,
-      [new SystemMessage(`${system}\n\nSearch the web, then answer in plain prose. Do not write citations; the sources you used are recorded automatically.`), new HumanMessage(task.question)],
+      [new SystemMessage(`${system}\n\n${WEB_INSTRUCTIONS}`), new HumanMessage(task.question)],
       { tools: [{ googleSearch: {} }], onThought: ctx.onThought ? (t) => ctx.onThought!(`${task.id}:web`, t, false) : undefined },
     );
     if (ctx.onThought && r.thoughts) ctx.onThought(`${task.id}:web`, r.thoughts, true);

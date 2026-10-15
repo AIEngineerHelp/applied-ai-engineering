@@ -8,8 +8,8 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import type { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { ChatGoogle } from "@langchain/google/node";
-import { ScriptedChatModel } from "./offline.ts";
-import { isOffline, modelName } from "./runtime.ts";
+import { isOffline, modelName } from "./config.ts";
+import { ScriptedChatModel } from "./offline/model.ts";
 import type { Usage } from "./types.ts";
 
 export function chatModel(): BaseChatModel {

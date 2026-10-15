@@ -8,9 +8,14 @@ import { afterEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../lib/db/index.ts";
-import { runResearchGraph } from "../lib/research/graph.ts";
-import { ScriptedChatModel, type Agent } from "../lib/research/offline.ts";
+import { runResearchGraph as run } from "../agent/graph.ts";
+import { ScriptedChatModel, type Agent } from "../agent/offline/model.ts";
+import { DrizzleSaver } from "../lib/storage/checkpointer.ts";
+import { postgresRunStore } from "../lib/storage/run-store.ts";
 import { finalizeStep } from "../workflows/steps.ts";
+
+/** The graph with this app's Postgres storage, as the workflow runs it. */
+const runResearchGraph = (id: string) => run(id, { store: postgresRunStore, checkpointer: new DrizzleSaver() });
 
 const { reports, reportEvents, reportSources, reportFiles, graphCheckpoints } = schema;
 

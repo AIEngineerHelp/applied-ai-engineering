@@ -1,41 +1,13 @@
-// Offline mode: a scripted LangChain chat model, plus knowledge bases that
-// answer from recorded API responses (tests/fixtures/sources.json). The whole
-// graph runs — plan, parallel tool loops, file system, synthesis, evals — with
-// no API key and no network. Its text is canned; its structure is real.
+// Offline mode's model: a scripted LangChain chat model (the recorded
+// knowledge bases are in toolsets.ts). The whole graph runs — plan, parallel
+// tool loops, file system, synthesis, evals — with no API key and no network.
+// Its text is canned; its structure is real.
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import { BaseChatModel, type BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
 import { AIMessageChunk, ToolMessage, type BaseMessage } from "@langchain/core/messages";
 import { ChatGenerationChunk, type ChatResult } from "@langchain/core/outputs";
 import type { Runnable } from "@langchain/core/runnables";
-import type { Toolset, ToolOutput } from "./sources/toolset.ts";
-import type { SourceKind } from "./types.ts";
-
-const FIXTURES = join(/*turbopackIgnore: true*/ process.cwd(), "tests", "fixtures", "sources.json");
-
-type Fixture = { name: string; args: Record<string, unknown>; output: ToolOutput };
-
-export function fixtureToolsets(): Record<SourceKind, Toolset> {
-  const f = JSON.parse(readFileSync(FIXTURES, "utf8")) as Record<"pubmed" | "trials" | "fda", Fixture>;
-  const make = (kind: "pubmed" | "trials" | "fda", tools: Toolset["tools"]): Toolset => ({
-    kind,
-    tools,
-    call: async (name) => {
-      await new Promise((r) => setTimeout(r, 30));
-      if (name !== f[kind].name) return { forModel: { error: `Offline mode only has a recorded ${f[kind].name}` }, sources: [] };
-      return f[kind].output;
-    },
-  });
-  const decl = (name: string) => ({ name, description: `${name} (recorded response)`, parameters: { type: "object", properties: {} } });
-  return {
-    pubmed: make("pubmed", [decl("search_pubmed")]),
-    trials: make("trials", [decl("search_trials")]),
-    fda: make("fda", [decl("get_drug_label")]),
-    web: { kind: "web", tools: [], call: async () => ({ forModel: {}, sources: [] }) },
-  };
-}
 
 const delay = () => Number(process.env.RESEARCH_OFFLINE_DELAY_MS) || 40;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

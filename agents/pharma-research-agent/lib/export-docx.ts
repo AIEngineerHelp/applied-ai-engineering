@@ -2,7 +2,7 @@ import "server-only";
 import { AlignmentType, Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 import { blocks, numbered, numbering, referenceLine } from "./citations";
 import type { SerializedReport } from "./reports";
-import type { Source } from "./research/types";
+import type { Source } from "../agent/types";
 
 /** A Word document: title, question, answer, sections, limitations, numbered references. */
 export async function reportDocx(r: SerializedReport, sources: Source[]): Promise<Buffer> {

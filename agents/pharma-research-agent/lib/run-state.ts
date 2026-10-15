@@ -1,6 +1,6 @@
 // Client-side view of a research run, folded from its event stream. Shared by
 // the report page, the run details page and the shared (read-only) page.
-import type { EvalResult, Finding, Plan, Report, RunEvent, Source, Span, Subtask } from "./research/types";
+import type { EvalResult, Finding, Plan, Report, RunEvent, Source, Span, Subtask } from "../agent/types";
 import type { SerializedReport } from "./reports";
 
 export interface RunState {

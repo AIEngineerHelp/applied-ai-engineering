@@ -1,4 +1,5 @@
-// The workflow's two steps. `graphStep` runs the LangGraph research graph; a
+// The workflow's two steps. `graphStep` runs the LangGraph research graph
+// (agent/graph.ts) with this app's Postgres storage; a
 // retry resumes it from its last checkpoint in Postgres, so finished nodes and
 // finished parallel researchers are not run again. `finalizeStep` records how
 // the run ended.
@@ -6,14 +7,16 @@
 import { eq } from "drizzle-orm";
 import { FatalError } from "workflow";
 import { db, schema } from "@/lib/db";
-import { runResearchGraph } from "@/lib/research/graph";
-import { EventSink } from "@/lib/research/persist";
+import { runResearchGraph } from "@/agent/graph";
+import { DrizzleSaver } from "@/lib/storage/checkpointer";
+import { EventSink } from "@/lib/storage/events";
+import { postgresRunStore } from "@/lib/storage/run-store";
 
 const { reports } = schema;
 
 export async function graphStep(reportId: string): Promise<void> {
   "use step";
-  await runResearchGraph(reportId);
+  await runResearchGraph(reportId, { store: postgresRunStore, checkpointer: new DrizzleSaver() });
 }
 graphStep.maxRetries = 2;
 

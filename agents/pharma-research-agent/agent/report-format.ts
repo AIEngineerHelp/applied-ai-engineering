@@ -30,3 +30,19 @@ export function draftForDisplay(md: string): string {
   return md.replace(/\[[^\]\n]*$/, "");
 }
 
+
+/** A Report back to markdown, for the file system, exports and earlier-turn context. */
+export function renderReport(r: Report): string {
+  return [
+    `# ${r.title}`,
+    "",
+    r.answer,
+    "",
+    ...r.sections.flatMap((s) => [`## ${s.heading}`, "", s.body, ""]),
+    "## Limitations",
+    "",
+    ...r.limitations.map((l) => `- ${l}`),
+    "",
+    `Confidence: **${r.confidence}**`,
+  ].join("\n");
+}

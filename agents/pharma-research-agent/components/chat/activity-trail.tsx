@@ -5,7 +5,7 @@
 import { Brain, Check, ChevronDown, FileSearch, ListChecks, Loader2, PenLine, ShieldCheck, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { KB, KbIcon } from "@/components/report/kb";
-import type { SourceKind, Span } from "@/lib/research/types";
+import type { SourceKind, Span } from "@/agent/types";
 import { agents, isTerminal, phase, thoughtTitles, type RunState } from "@/lib/run-state";
 import { cn } from "@/lib/utils";
 

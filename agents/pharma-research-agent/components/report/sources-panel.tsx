@@ -2,7 +2,7 @@
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { Source, SourceKind } from "@/lib/research/types";
+import type { Source, SourceKind } from "@/agent/types";
 import { cn } from "@/lib/utils";
 import { KB, KbIcon } from "./kb";
 
