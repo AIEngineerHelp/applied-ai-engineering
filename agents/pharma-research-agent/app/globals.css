@@ -189,6 +189,25 @@
   }
 }
 
+/* Placeholder sheen: a highlight moving left to right across muted bars. */
+.shimmer {
+  --sheen: color-mix(in oklab, var(--muted), white 70%);
+  background: linear-gradient(90deg, var(--muted) 30%, var(--sheen) 50%, var(--muted) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+.dark .shimmer {
+  --sheen: color-mix(in oklab, var(--muted), white 7%);
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@keyframes write {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  50% { transform: translate(1.5px, -1px) rotate(-8deg); }
+}
+
 @keyframes progress {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(300%); }

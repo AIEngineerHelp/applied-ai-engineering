@@ -125,21 +125,9 @@ function lines(state: RunState): Line[] {
 
   // 5. Writing and checking.
   const synth = spans.find((s) => s.kind === "agent" && s.name === "synthesis");
-  if (synth || state.draft || state.result) {
-    const at = synth?.start ?? 4;
-    // The writer thinks before its first word; each thought heading is a line, so the wait isn't silent.
-    const steps = thoughtTitles(state.thoughts.get("synthesis")?.text ?? "");
-    const busy = !state.result && !state.draft;
-    steps.forEach((t, i) =>
-      out.push({ key: `write-think-${i}`, at: at + (i + 1) * 0.001, icon: <Brain className="size-3.5" />, text: t, state: busy && i === steps.length - 1 ? "running" : "done" }),
-    );
-    out.push({
-      key: "write",
-      at: at + (state.draft || state.result ? (steps.length + 1) * 0.001 : 0),
-      icon: <PenLine className="size-3.5" />,
-      text: state.result ? "Wrote the report" : state.draft ? "Writing the report" : "Preparing to write the report",
-      state: state.result ? "done" : busy && steps.length ? "done" : "running",
-    });
+  // The writing itself is shown in the answer's place; the list keeps one line for the record.
+  if (state.draft || state.result) {
+    out.push({ key: "write", at: synth?.start ?? 4, icon: <PenLine className="size-3.5" />, text: state.result ? "Wrote the answer" : "Writing the answer", state: state.result ? "done" : "running" });
   }
   const evals = spans.find((s) => s.kind === "eval");
   if (evals || state.evals) {
@@ -172,10 +160,12 @@ function fmtElapsed(ms: number) {
 
 export function ActivityTrail({ state }: { state: RunState }) {
   const running = !isTerminal(state.report.status);
-  const writing = !!state.draft || !!state.result;
+  const p = phase(state);
+  // The list is about research: open while the agents plan and search, folded
+  // once writing starts (the answer's place shows the writing from then on).
+  const researching = p === "queued" || p === "planning" || p === "researching";
   const [open, setOpen] = useState<boolean | null>(null);
-  // Open while the agents work; folds into a summary once the answer starts streaming.
-  const expanded = open ?? (running && !writing);
+  const expanded = open ?? (running && researching);
   const feed = useMemo(() => lines(state), [state]);
   const list = useRef<HTMLOListElement>(null);
   useEffect(() => {
@@ -185,15 +175,21 @@ export function ActivityTrail({ state }: { state: RunState }) {
   const current = [...feed].reverse().find((l) => l.state === "running");
   const searches = [...state.spans.values()].filter((s) => s.kind === "tool").length;
   const elapsed = state.report.durationMs ?? state.doneMs;
-  const p = phase(state);
-  // Open, the list already shows the live step, so the header names the stage instead of repeating it.
-  const summary = running
-    ? expanded
-      ? STAGE[p]
-      : (current?.text ?? STAGE[p])
-    : state.plan?.mode === "answer"
+  const reused = state.plan?.mode === "answer";
+  const done = `${reused ? "Used the earlier research" : `Researched · ${searches} ${searches === 1 ? "search" : "searches"}`} · ${state.sources.size} sources`;
+  // Spinning only while this card is where the work is: research, then checking.
+  const busy = running && (researching || p === "verifying");
+  const summary = !running
+    ? reused
       ? `Answered from the earlier research${elapsed ? ` in ${fmtElapsed(elapsed)}` : ""} · ${state.sources.size} sources`
-      : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`;
+      : `Researched${elapsed ? ` for ${fmtElapsed(elapsed)}` : ""} · ${searches} ${searches === 1 ? "search" : "searches"} · ${state.sources.size} sources`
+    : p === "verifying"
+      ? "Checking every citation against its source"
+      : !researching
+        ? done
+        : expanded
+          ? STAGE[p] // the open list already shows the live step
+          : (current?.text ?? STAGE[p]);
 
   return (
     <section aria-label="Research activity" className="rounded-xl border bg-card">
@@ -203,8 +199,8 @@ export function ActivityTrail({ state }: { state: RunState }) {
         aria-expanded={expanded}
         className="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-[13.5px] transition-colors hover:bg-muted/50"
       >
-        {running ? <Loader2 className="size-4 shrink-0 animate-spin text-primary" aria-hidden="true" /> : <Check className="size-4 shrink-0 text-success" aria-hidden="true" />}
-        <span className={cn("min-w-0 flex-1 truncate", running && "font-medium")} aria-live="polite">
+        {busy ? <Loader2 className="size-4 shrink-0 animate-spin text-primary" aria-hidden="true" /> : <Check className="size-4 shrink-0 text-success" aria-hidden="true" />}
+        <span className={cn("min-w-0 flex-1 truncate", busy && "font-medium")} aria-live="polite">
           {summary}
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform duration-200", expanded && "rotate-180")} aria-hidden="true" />
