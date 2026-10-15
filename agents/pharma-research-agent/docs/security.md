@@ -4,7 +4,7 @@ How the agent defends against the risks in OWASP's two lists for LLM and agentic
 
 ## The guardrails
 
-All of them apply one risk catalogue, `agent/guardrails/risks.ts`. Each risk has a domain and category, the behaviour the agent must follow, what is prohibited, what is allowed instead, and example prompts. The input screen and the output check are both built from these definitions, so a policy change is one edit. This is the method LangChain's *Financial Services Agents in Production* describes for Chime's compliance evals, applied to pharma.
+All of them apply one risk catalogue, `agent/guardrails/risks.ts`. Each risk has a domain and category, the behaviour the agent must follow, what is prohibited, what is allowed instead, and example prompts. The input screen and the output check are both built from these definitions, so a policy change is one edit.
 
 | Risk | Stage | Behaviour |
 |---|---|---|
