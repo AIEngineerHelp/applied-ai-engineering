@@ -6,11 +6,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createGemini } from "../src/gemini.ts";
-import { fixtureToolsets, offlineLLM } from "../src/offline.ts";
-import { runResearch } from "../src/run.ts";
-import { createToolsets } from "../src/sources/index.ts";
-import { renderReport } from "../src/agents/synthesis.ts";
+import { createGemini } from "../lib/research/gemini.ts";
+import { fixtureToolsets, offlineLLM } from "../lib/research/offline.ts";
+import { runResearch } from "../lib/research/run.ts";
+import { createToolsets } from "../lib/research/sources/index.ts";
+import { renderReport } from "../lib/research/agents/synthesis.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -22,7 +22,7 @@ if (live && !process.env.GEMINI_API_KEY) {
   process.exit(1);
 }
 const llm = live ? createGemini() : offlineLLM();
-const toolsets = live ? createToolsets({ llm }) : fixtureToolsets();
+const toolsets = live ? createToolsets() : fixtureToolsets();
 console.log(`${live ? "LIVE" : "DRY RUN (offline)"} · ${llm.model}\n${query}\n`);
 
 const result = await runResearch(query, {

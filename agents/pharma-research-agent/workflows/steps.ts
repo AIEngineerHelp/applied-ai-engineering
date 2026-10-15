@@ -1,0 +1,145 @@
+// The steps of a research run. Each is retried on failure (up to 3 times by
+// default), and each writes only keyed rows, so a retry overwrites its own
+// output instead of duplicating it.
+
+import { eq } from "drizzle-orm";
+import { FatalError } from "workflow";
+import { db, schema } from "@/lib/db";
+import { plan as makePlan } from "@/lib/research/agents/orchestrator";
+import { research } from "@/lib/research/agents/researcher";
+import { renderReport, synthesize } from "@/lib/research/agents/synthesis";
+import { checks, groundedness } from "@/lib/research/evals";
+import type { LLM } from "@/lib/research/llm";
+import { EventSink, addUsage, loadFiles, loadSources } from "@/lib/research/persist";
+import { getRuntime } from "@/lib/research/runtime";
+import { loadSkills } from "@/lib/research/skills";
+import { Tracer } from "@/lib/research/trace";
+import type { Finding, Plan, Report, Source, Subtask } from "@/lib/research/types";
+import { VirtualFS } from "@/lib/research/vfs";
+
+const { reports } = schema;
+const MAX_SUBTASKS = 4;
+
+async function getReport(id: string) {
+  const d = await db();
+  const [row] = await d.select().from(reports).where(eq(reports.id, id));
+  if (!row) throw new FatalError(`Report ${id} not found`);
+  return row;
+}
+
+/** A tracer and file system for one step, writing through to the database. */
+function stepContext(reportId: string, t0: number, prefix: string) {
+  const sink = new EventSink(reportId);
+  const tracer = new Tracer(sink.emit, { t0, prefix });
+  const vfs = new VirtualFS((f) => sink.emit({ type: "file", path: f.path, bytes: f.content.length, by: f.by, content: f.content }));
+  const done = async () => {
+    await sink.flush();
+    await addUsage(reportId, { ...tracer.usage, calls: tracer.calls, toolCalls: tracer.toolCalls, priced: tracer.priced });
+  };
+  return { sink, tracer, vfs, done };
+}
+
+/** Counts a call's usage on the tracer, for calls made outside a tracer span helper. */
+function counted(llm: LLM, tracer: Tracer): LLM {
+  return { model: llm.model, mode: llm.mode, generate: async (req) => { const r = await llm.generate(req); tracer.addUsage(r.usage); return r; } };
+}
+
+export async function planStep(reportId: string): Promise<{ plan: Plan; t0: number }> {
+  "use step";
+  const row = await getReport(reportId);
+  const d = await db();
+  const startedAt = row.startedAt ?? new Date();
+  await d.update(reports).set({ status: "running", startedAt }).where(eq(reports.id, reportId));
+  const t0 = startedAt.getTime();
+  const { sink, tracer, vfs, done } = stepContext(reportId, t0, "plan");
+  const { llm } = getRuntime();
+  const skills = loadSkills();
+
+  sink.emit({ type: "run", id: reportId, query: row.query, model: llm.model, mode: llm.mode, at: startedAt.toISOString() });
+  sink.emit({ type: "skills", available: skills.map((s) => ({ name: s.name, description: s.description })) });
+  sink.emit({ type: "span", span: { id: "run", kind: "run", name: "research run", start: 0, status: "running", attrs: {} } });
+
+  const plan = await tracer.wrap("agent", "orchestrator", "run", async (span) =>
+    tracer.wrap("llm", "plan subtasks", span.id, async (s) => {
+      const p = await makePlan(counted(llm, tracer), row.query, skills, MAX_SUBTASKS);
+      tracer.close(s, { subtasks: p.subtasks.length, input: tracer.usage.input, output: tracer.usage.output, cost: tracer.usage.cost });
+      return p;
+    }),
+  );
+  vfs.write("/plan.md", ["# Plan", "", plan.focus, "", ...plan.subtasks.map((t) => `- **${t.id}** (${t.source}; skills: ${t.skills.join(", ") || "none"}): ${t.question}`)].join("\n"), "orchestrator");
+  sink.emit({ type: "plan", plan, loaded: [...new Set(plan.subtasks.flatMap((t) => t.skills))] });
+  await done();
+  await d.update(reports).set({ plan }).where(eq(reports.id, reportId));
+  return { plan, t0 };
+}
+
+/** One research sub-agent. Never throws: a failed knowledge base becomes an honest empty finding. */
+export async function researchStep(reportId: string, task: Subtask, t0: number): Promise<Finding> {
+  "use step";
+  const { sink, tracer, vfs, done } = stepContext(reportId, t0, task.id);
+  const { llm, toolsets } = getRuntime();
+  const registry = new Map<string, Source>();
+  let finding: Finding;
+  try {
+    finding = await research({ llm, tracer, vfs, registry, onSources: (subtask, sources) => sink.emit({ type: "sources", subtask, sources }) }, task, toolsets[task.source], loadSkills(), "run");
+  } catch (err) {
+    finding = { subtask: task.id, summary: `This sub-agent failed: ${(err as Error).message}`, claims: [], gaps: [task.question] };
+  }
+  sink.emit({ type: "finding", finding });
+  await done();
+  return finding;
+}
+
+export async function synthesisStep(reportId: string, plan: Plan, t0: number): Promise<Report> {
+  "use step";
+  const row = await getReport(reportId);
+  const { sink, tracer, vfs, done } = stepContext(reportId, t0, "synthesis");
+  vfs.load(await loadFiles(reportId));
+  const registry = new Map((await loadSources(reportId)).map((s) => [s.id, s] as const));
+  const { llm } = getRuntime();
+  const skill = loadSkills().find((s) => s.source === "synthesis");
+  const report = await synthesize(llm, tracer, vfs, row.query, plan, registry, skill, "run");
+  sink.emit({ type: "report", report, markdown: renderReport(report) });
+  await done();
+  const d = await db();
+  await d.update(reports).set({ report, title: report.title, confidence: report.confidence }).where(eq(reports.id, reportId));
+  return report;
+}
+synthesisStep.maxRetries = 2;
+
+export async function evalStep(reportId: string, plan: Plan, findings: Finding[], report: Report, t0: number): Promise<void> {
+  "use step";
+  const { sink, tracer, vfs, done } = stepContext(reportId, t0, "evals");
+  const registry = new Map((await loadSources(reportId)).map((s) => [s.id, s] as const));
+  const { llm } = getRuntime();
+  const evals = await tracer.wrap("eval", "evals", "run", async (span) => {
+    const list = checks(report, plan, findings, registry);
+    try {
+      const g = await groundedness(llm, tracer, report, registry, span.id);
+      vfs.write("/evals/groundedness.md", g.verdicts.map((v) => `- **${v.verdict}** — ${v.text}\n  ${v.reason}`).join("\n"), "judge");
+      list.push({ name: g.name, score: g.score, detail: g.detail, method: g.method, items: g.verdicts });
+    } catch (err) {
+      // A failed judge should not lose the report; the checks still stand.
+      list.push({ name: "Groundedness", score: 0, detail: `Not judged: ${(err as Error).message}`, method: "judge" });
+    }
+    return list;
+  });
+  sink.emit({ type: "evals", evals });
+  await done();
+  const d = await db();
+  await d.update(reports).set({ evals }).where(eq(reports.id, reportId));
+}
+
+export async function finalizeStep(reportId: string, status: "completed" | "failed", error?: string): Promise<void> {
+  "use step";
+  const row = await getReport(reportId);
+  const t0 = (row.startedAt ?? row.createdAt).getTime();
+  const sink = new EventSink(reportId);
+  const ms = Date.now() - t0;
+  sink.emit({ type: "span", span: { id: "run", kind: "run", name: "research run", start: 0, end: ms, status: status === "completed" ? "ok" : "error", attrs: error ? { error } : {} } });
+  if (error) sink.emit({ type: "error", message: error });
+  sink.emit({ type: "done", ms });
+  await sink.flush();
+  const d = await db();
+  await d.update(reports).set({ status, error: error ?? null, durationMs: ms, completedAt: new Date() }).where(eq(reports.id, reportId));
+}

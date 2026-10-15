@@ -2,9 +2,9 @@
 // tests and the offline dry run work without a network. Free APIs; no key.
 //   npx tsx scripts/record-fixtures.ts (makes network calls)
 import { writeFileSync } from "node:fs";
-import { fdaToolset } from "../src/sources/fda.ts";
-import { pubmedToolset } from "../src/sources/pubmed.ts";
-import { trialsToolset } from "../src/sources/trials.ts";
+import { fdaToolset } from "../lib/research/sources/fda.ts";
+import { pubmedToolset } from "../lib/research/sources/pubmed.ts";
+import { trialsToolset } from "../lib/research/sources/trials.ts";
 
 const calls = [
   ["pubmed", pubmedToolset(), "search_pubmed", { query: "(semaglutide OR GLP-1 receptor agonist) AND pancreatitis AND (meta-analysis[pt] OR randomized controlled trial[pt])", max: 5 }],

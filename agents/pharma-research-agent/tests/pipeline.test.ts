@@ -1,17 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { checks, citedSentences } from "../src/evals.ts";
-import { createGemini } from "../src/gemini.ts";
-import type { LLM } from "../src/llm.ts";
-import { fixtureToolsets, offlineLLM } from "../src/offline.ts";
-import { runResearch } from "../src/run.ts";
-import { loadSkills, parseSkill, skillIndex } from "../src/skills.ts";
-import { parsePubmedXml } from "../src/sources/pubmed.ts";
-import { studyToSource } from "../src/sources/trials.ts";
-import { labelToSource } from "../src/sources/fda.ts";
-import type { Report } from "../src/types.ts";
-import { VirtualFS } from "../src/vfs.ts";
+import { checks, citedSentences } from "../lib/research/evals.ts";
+import { createGemini } from "../lib/research/gemini.ts";
+import type { LLM } from "../lib/research/llm.ts";
+import { fixtureToolsets, offlineLLM } from "../lib/research/offline.ts";
+import { runResearch } from "../lib/research/run.ts";
+import { loadSkills, parseSkill, skillIndex } from "../lib/research/skills.ts";
+import { parsePubmedXml } from "../lib/research/sources/pubmed.ts";
+import { studyToSource } from "../lib/research/sources/trials.ts";
+import { labelToSource } from "../lib/research/sources/fda.ts";
+import type { Report } from "../lib/research/types.ts";
+import { VirtualFS } from "../lib/research/vfs.ts";
 
 test("an offline run goes through every stage and writes the expected files", async () => {
   const r = await runResearch("What is the evidence on GLP-1 receptor agonists and pancreatitis?", { llm: offlineLLM(), toolsets: fixtureToolsets() });
@@ -109,7 +109,7 @@ test("source parsers normalise PubMed XML, trial records and FDA labels", () => 
 });
 
 test("the Gemini client echoes the model's content back unchanged, so thought signatures survive", async () => {
-  const sent: any[] = [];
+  const sent: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { parametersJsonSchema?: unknown }[] }[]; toolConfig?: unknown }[] = [];
   const real = globalThis.fetch;
   globalThis.fetch = (async (_url: string, init: { body: string }) => {
     sent.push(JSON.parse(init.body));
@@ -135,7 +135,7 @@ test("the Gemini client echoes the model's content back unchanged, so thought si
 });
 
 test("the judge sees the passages relevant to a claim, not just the start of a long source", async () => {
-  const { relevant } = await import("../src/evals.ts");
+  const { relevant } = await import("../lib/research/evals.ts");
   const label = `${"Indications and usage text. ".repeat(80)}Warnings 5.1 Ketoacidosis: consider ketone monitoring and discontinue if ketoacidosis is suspected. ${"Adverse reactions text. ".repeat(80)}`;
   const view = relevant(label, "The label advises ketone monitoring and to discontinue if ketoacidosis is suspected.");
   assert.ok(view.length <= 1600);
