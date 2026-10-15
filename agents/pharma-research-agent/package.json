@@ -1,0 +1,26 @@
+{
+  "name": "pharma-research-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A pharmaceutical research agent: an orchestrator, parallel research sub-agents over PubMed, ClinicalTrials.gov, openFDA and the web, a virtual file system, a synthesis agent, and evals and traces",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify",
+    "start": "npm run build:client && node --env-file-if-exists=.env --import=tsx scripts/serve.ts",
+    "research": "node --env-file-if-exists=.env --import=tsx scripts/research.ts",
+    "check": "tsc --noEmit",
+    "test": "node --import=tsx --test tests/*.test.ts",
+    "export": "npm run build:client && node --import=tsx scripts/export.ts"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

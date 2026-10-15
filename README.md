@@ -46,6 +46,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Anatomy of a harness](agents/harness-anatomy/README.md) draws an agent harness as an animated isometric factory on one full-screen page: the model sealed in the middle, the context window as a tray in front of it, and eleven numbered parts around it for context management (skills, memory, summarization, offloading), the execution environment (REPL, sandbox, file system, write and run code), delegation (planning, subagents) and steering (human in the loop). Watch crates of work move between stations as it fixes a failing test, then pull parts out and run it again: without subagents the run bills about four times the tokens, and without subagents, offloading and summarization it runs out of window. Every number comes from one scripted run; no API keys.
 
+
+[Pharma research agent](agents/pharma-research-agent/README.md) is a working research agent you can watch: an orchestrator reads a skills layer and plans subtasks, parallel research sub-agents search PubMed, ClinicalTrials.gov, openFDA and the web, write what they find to a virtual file system, and a synthesis agent writes a cited report — with four deterministic evals, an LLM-judge groundedness check and a full trace. Four live sample runs with Gemini 3.8 Flash cost $0.09–$0.14 each, cited only retrieved sources (100% citation validity), and scored 67–100% on groundedness. Runs offline with no key; live runs need a Gemini key.
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.
