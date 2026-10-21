@@ -54,6 +54,7 @@ def index() -> FileResponse:
 @app.get("/api/catalog")
 def catalog() -> dict:
     template = resources.files("giskard.scan").joinpath("prompts/scenarios/adversarial.j2").read_text()
+    judge_template = resources.files("giskard.checks").joinpath("prompts/judges/conformity.j2").read_text()
     from riskdemo.live import models
 
     return {
@@ -78,6 +79,7 @@ def catalog() -> dict:
             "busy": any(r["status"] == "running" for r in _live.values()),
         },
         "attacker_template": template,
+        "judge_template": judge_template,
         "review_notes": review_notes(),
     }
 

@@ -1,7 +1,6 @@
-// The demo page: pick a risk, replay or run Giskard's attacks, and read the judge's verdicts.
+// The lab: pick any risk, replay or run Giskard's attacks, and read every verdict.
 "use strict";
 
-const $ = (id) => document.getElementById(id);
 const state = {
   catalog: null,
   agentId: "bank",
@@ -21,77 +20,6 @@ const STATUS = {
   failed: ["Failed", "bad"],
   error: ["Error", "warn"],
 };
-
-// ---------- text helpers ----------
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-
-// Phrases the judge quoted in its reason, so we can mark them in the agent's reply.
-function quotedPhrases(reason) {
-  const out = [];
-  const re = /['‘“"]([^'’”"]{12,}?)['’”"]/g;
-  let m;
-  while ((m = re.exec(reason || ""))) {
-    const p = m[1].replace(/(\.\.\.|…)\s*$/, "").replace(/^\s*(\.\.\.|…)/, "").trim();
-    if (p.length >= 10) out.push(p);
-  }
-  return out;
-}
-
-// Minimal Markdown for model replies, with optional highlighted phrases.
-function render(text, marks = []) {
-  let raw = String(text ?? "");
-  for (const p of marks) {
-    const plain = raw.replace(/\*\*/g, "");
-    const at = plain.toLowerCase().indexOf(p.toLowerCase());
-    if (at < 0) continue;
-    // Map the position in the bold-free text back to the raw text.
-    let i = 0, j = 0, start = -1, end = -1;
-    while (i <= raw.length) {
-      if (j === at && start < 0) start = i;
-      if (j === at + p.length) { end = i; break; }
-      if (raw.startsWith("**", i)) { i += 2; continue; }
-      i++; j++;
-    }
-    if (start >= 0 && end > start) raw = raw.slice(0, start) + "\u0001" + raw.slice(start, end) + "\u0002" + raw.slice(end);
-  }
-  const inline = (s) => esc(s)
-    .replace(/\*\*([^*]+?)\*\*/g, "<b>$1</b>")
-    .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<i>$2</i>")
-    .replace(/\u0001/g, "<mark>").replace(/\u0002/g, "</mark>");
-  const out = [];
-  let para = [], list = [], table = [];
-  const flush = () => {
-    if (para.length) out.push("<p>" + para.map(inline).join("<br>") + "</p>");
-    if (list.length) out.push("<ul>" + list.map((l) => "<li>" + inline(l) + "</li>").join("") + "</ul>");
-    if (table.length) {
-      const rows = table.filter((r) => !/^\|?\s*:?-{2,}/.test(r.replace(/\|/g, "|").trim().replace(/^\|/, "")));
-      out.push("<table class=\"md\">" + rows.map((r, i) => "<tr>" + r.trim().replace(/^\||\|$/g, "").split("|")
-        .map((c) => (i === 0 ? "<th>" : "<td>") + inline(c.trim()) + (i === 0 ? "</th>" : "</td>")).join("") + "</tr>").join("") + "</table>");
-    }
-    para = []; list = []; table = [];
-  };
-  for (const line of raw.trim().split("\n")) {
-    const t = line.trim();
-    if (!t) { flush(); continue; }
-    if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { flush(); out.push("<hr>"); continue; }
-    if (t.startsWith("|")) { if (para.length || list.length) { const keep = table; flush(); table = keep; } table.push(t); continue; }
-    if (table.length) flush();
-    const li = t.match(/^([*-]|\d+\.)\s+(.*)$/);
-    if (li) { if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; } list.push(li[2]); continue; }
-    if (list.length) { out.push("<ul>" + list.map((l) => "<li>" + inline(l) + "</li>").join("") + "</ul>"); list = []; }
-    para.push(t.replace(/^#{1,6}\s+/, ""));
-  }
-  flush();
-  return out.join("");
-}
-
-function toast(msg) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  clearTimeout(toast.t);
-  toast.t = setTimeout(() => (t.style.display = "none"), 4200);
-}
 
 function noteFor(run, i) {
   if (!run || run.mode !== "recorded") return null;
@@ -252,7 +180,7 @@ function replay() {
   if (state.replayTimer) return finishReplay();
   stopActivity();
   const { riskId, version } = state;
-  fetch(`/api/recorded/${riskId}/${version}`).then((r) => r.json()).then((rec) => {
+  loadRecorded(riskId, version).then((rec) => {
     const show = JSON.parse(JSON.stringify(rec));
     show.attacks.forEach((a) => { a.turns = []; a.status = "queued"; a._pending = "queued"; });
     show._source = rec;
@@ -400,7 +328,14 @@ function selectRisk(riskId) {
   stopActivity();
   state.riskId = riskId;
   state.run = null;
+  state.selected = 0;
   renderStep1(); renderStep2(); renderStep3();
+  const version = state.version;
+  if (state.catalog.recorded[riskId]?.[version]) {
+    loadRecorded(riskId, version).then((rec) => {
+      if (!state.run && state.riskId === riskId && state.version === version) setRun(rec);
+    });
+  }
 }
 
 document.addEventListener("click", (e) => {
@@ -419,10 +354,24 @@ document.addEventListener("click", (e) => {
     renderStep2(); renderStep3();
   }
 });
+// Used by the lesson: open one recorded attack in the lab and scroll to it.
+async function openInLab(risk, version, attack, scroll = true) {
+  stopActivity();
+  state.agentId = state.catalog.risks[risk].agent;
+  state.riskId = risk;
+  state.version = version;
+  renderStep1();
+  const rec = await loadRecorded(risk, version);
+  state.selected = Math.max(0, attack - 1);
+  setRun(rec);
+  if (scroll) $("lab-run").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+window.openInLab = openInLab;
+
 $("replayBtn").addEventListener("click", replay);
 $("liveBtn").addEventListener("click", runLive);
 
-fetch("/api/catalog").then((r) => r.json()).then((cat) => {
+catalogPromise.then((cat) => {
   state.catalog = cat;
   // Deep links such as ?risk=emergency-escalation&version=naive&attack=3 open a recorded conversation.
   const q = new URLSearchParams(location.search);
@@ -432,12 +381,10 @@ fetch("/api/catalog").then((r) => r.json()).then((cat) => {
   if (cat.versions[q.get("version")]) state.version = q.get("version");
   renderStep1(); renderStep2(); renderStep3();
   if (q.has("replay") && cat.recorded[state.riskId]?.[state.version]) replay();
-  else if (q.has("attack") && cat.recorded[state.riskId]?.[state.version]) {
-    fetch(`/api/recorded/${state.riskId}/${state.version}`).then((r) => r.json()).then((rec) => {
-      state.selected = Math.max(0, Number(q.get("attack")) - 1) || 0;
-      setRun(rec);
-      $("step2").scrollIntoView();
-    });
+  else if (q.has("attack")) openInLab(state.riskId, state.version, Number(q.get("attack")) || 1);
+  else if (cat.recorded[state.riskId]?.[state.version]) {
+    // Show the recorded run straight away, so the lab is never empty.
+    loadRecorded(state.riskId, state.version).then((rec) => { if (!state.run) setRun(rec); });
   }
   const any = Object.values(cat.recorded).flatMap((v) => Object.values(v))[0];
   const ver = state.catalog.live.models;

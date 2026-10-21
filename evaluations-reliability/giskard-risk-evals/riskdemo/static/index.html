@@ -3,235 +3,179 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giskard Risk Evals</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232a78d6'/><path d='M9 17l5 5 9-11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-<style>
-:root {
-  color-scheme: light;
-  --page: #f6f6f3; --surface: #ffffff; --surface-2: #f1f0ec; --border: rgba(11,11,11,0.10); --border-2: rgba(11,11,11,0.18);
-  --ink: #111110; --ink-2: #4d4c48; --muted: #87857f;
-  --accent: #2a78d6; --accent-bg: rgba(42,120,214,0.09); --accent-ink: #1d5fae;
-  --attacker: #8a4fd1; --attacker-bg: rgba(138,79,209,0.08);
-  --good: #0f8a3c; --good-bg: rgba(15,138,60,0.10);
-  --bad: #c43030; --bad-bg: rgba(196,48,48,0.09);
-  --warn: #9a6400; --warn-bg: rgba(250,178,25,0.16);
-  --mark: rgba(196,48,48,0.16);
-  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.05);
-  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --page: #0e0e0d; --surface: #191918; --surface-2: #222220; --border: rgba(255,255,255,0.10); --border-2: rgba(255,255,255,0.20);
-    --ink: #f4f3ef; --ink-2: #c3c2b9; --muted: #8d8b84;
-    --accent: #4b93ea; --accent-bg: rgba(75,147,234,0.14); --accent-ink: #8dbcf5;
-    --attacker: #b38af0; --attacker-bg: rgba(179,138,240,0.12);
-    --good: #3fc06d; --good-bg: rgba(63,192,109,0.14);
-    --bad: #f07070; --bad-bg: rgba(240,112,112,0.14);
-    --warn: #f3c04a; --warn-bg: rgba(243,192,74,0.14);
-    --mark: rgba(240,112,112,0.25); --shadow: none;
-  }
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; }
-body { background: var(--page); color: var(--ink); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
-a { color: var(--accent-ink); }
-button { font: inherit; color: inherit; }
-.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
-header.top { padding: 40px 0 8px; }
-.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
-h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; letter-spacing: -.02em; }
-.lede { font-size: 17px; color: var(--ink-2); max-width: 780px; margin: 0; }
-.lede a { white-space: nowrap; }
-
-/* How it works */
-.flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 28px 0 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-.flow > div { padding: 16px 18px; position: relative; }
-.flow > div + div { border-left: 1px solid var(--border); }
-.flow > div + div::before { content: "→"; position: absolute; left: -9px; top: 18px; background: var(--surface); color: var(--muted); font-size: 13px; line-height: 1; padding: 2px 0; }
-.flow .k { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.flow .t { font-weight: 600; margin: 2px 0 2px; }
-.flow .d { font-size: 13px; color: var(--ink-2); }
-.flow .attk .t { color: var(--attacker); }
-.flow .judge .t { color: var(--accent-ink); }
-.flow-note { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
-
-/* Steps */
-section.step { margin: 36px 0; }
-.step-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
-.num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--page); display: grid; place-items: center; font-weight: 700; font-size: 14px; transform: translateY(5px); }
-.step-head h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
-.step-head p { margin: 2px 0 0; color: var(--ink-2); }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
-.pad { padding: 20px 22px; }
-
-.tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; }
-.tabs button { border: 0; background: transparent; padding: 8px 16px; border-radius: 9px; cursor: pointer; font-weight: 550; color: var(--ink-2); }
-.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.tabs button small { font-weight: 400; color: var(--muted); margin-left: 6px; }
-
-.choose { display: grid; grid-template-columns: 340px 1fr; gap: 20px; margin-top: 16px; align-items: start; }
-.agent-box h3 { margin: 0 0 4px; font-size: 17px; }
-.agent-box p { margin: 0 0 12px; color: var(--ink-2); font-size: 14px; }
-.label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 8px; }
-.risk-opt { display: block; width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
-.risk-opt:hover { border-color: var(--border-2); }
-.risk-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent) inset; }
-.risk-opt .path { font-size: 12px; color: var(--muted); }
-.risk-opt .name { font-weight: 600; margin: 1px 0 6px; }
-.scores { display: flex; gap: 12px; font-size: 12px; color: var(--ink-2); }
-.scores b { font-variant-numeric: tabular-nums; }
-.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
-.pill.good { background: var(--good-bg); color: var(--good); }
-.pill.bad { background: var(--bad-bg); color: var(--bad); }
-.pill.warn { background: var(--warn-bg); color: var(--warn); }
-.pill.run { background: var(--accent-bg); color: var(--accent-ink); }
-details { margin-top: 8px; }
-summary { cursor: pointer; color: var(--accent-ink); font-size: 14px; font-weight: 550; }
-pre.box { white-space: pre-wrap; font: 12.5px/1.5 var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 8px 0 0; max-height: 360px; overflow: auto; color: var(--ink-2); }
-
-.def-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.def-head h3 { margin: 0; font-size: 18px; }
-.owner { font-size: 13px; color: var(--ink-2); }
-table.def { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
-table.def th { text-align: left; vertical-align: top; width: 170px; padding: 9px 12px 9px 0; color: var(--muted); font-weight: 600; font-size: 13px; }
-table.def td { padding: 9px 0; border-top: 1px solid var(--border); }
-table.def tr:first-child td, table.def tr:first-child th { border-top: 0; }
-table.def th { border-top: 1px solid var(--border); }
-.qs { display: flex; flex-wrap: wrap; gap: 6px; }
-.qs span { background: var(--surface-2); border-radius: 8px; padding: 3px 9px; font-size: 13px; }
-.uses { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-.use { border-radius: 12px; padding: 12px 14px; font-size: 13.5px; }
-.use h4 { margin: 0 0 4px; font-size: 13px; }
-.use.attk { background: var(--attacker-bg); } .use.attk h4 { color: var(--attacker); }
-.use.judge { background: var(--accent-bg); } .use.judge h4 { color: var(--accent-ink); }
-.use p { margin: 0; color: var(--ink-2); }
-.rule { font-family: var(--mono); font-size: 12.5px; background: var(--surface); border: 1px dashed var(--border-2); border-radius: 8px; padding: 8px 10px; margin-top: 8px; color: var(--ink); }
-
-.version { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
-.version .why { font-size: 13.5px; color: var(--ink-2); flex: 1; min-width: 240px; }
-
-/* Step 2 */
-.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.btn { border: 1px solid var(--border-2); background: var(--surface); border-radius: 10px; padding: 9px 16px; font-weight: 600; cursor: pointer; }
-.btn:hover:not(:disabled) { border-color: var(--ink-2); }
-.btn.primary { background: var(--ink); color: var(--page); border-color: var(--ink); }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-.hint { font-size: 13px; color: var(--muted); }
-.arena { display: grid; grid-template-columns: 300px 1fr; min-height: 520px; }
-.attacks { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 720px; overflow: auto; }
-.attack { border: 1px solid transparent; border-radius: 10px; padding: 9px 11px; cursor: pointer; text-align: left; background: transparent; width: 100%; }
-.attack:hover { background: var(--surface-2); }
-.attack[aria-pressed="true"] { background: var(--surface-2); border-color: var(--border-2); }
-.attack .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.attack .n { font-weight: 600; font-size: 14px; }
-.attack .snip { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.convo { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 720px; overflow: auto; }
-.empty { margin: auto; text-align: center; color: var(--muted); max-width: 380px; }
-.empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
-.msg { max-width: 82%; }
-.msg .who { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
-.msg .bubble { border-radius: 14px; padding: 11px 14px; font-size: 14px; }
-.msg.user { align-self: flex-start; }
-.msg.user .who { color: var(--attacker); }
-.msg.user .bubble { background: var(--attacker-bg); border: 1px solid rgba(138,79,209,0.20); border-top-left-radius: 4px; }
-.msg.agent { align-self: flex-end; }
-.msg.agent .who { color: var(--ink-2); justify-content: flex-end; }
-.msg.agent .bubble { background: var(--surface-2); border: 1px solid var(--border); border-top-right-radius: 4px; }
-.bubble p { margin: 0 0 8px; } .bubble p:last-child { margin: 0; }
-.bubble ul { margin: 4px 0 8px; padding-left: 20px; }
-.bubble hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }
-.bubble table.md { border-collapse: collapse; margin: 6px 0 10px; font-size: 13px; display: block; overflow-x: auto; }
-.bubble table.md th, .bubble table.md td { border: 1px solid var(--border-2); padding: 5px 8px; text-align: left; vertical-align: top; }
-.bubble table.md th { background: var(--surface); }
-.bubble mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: 0 1px 0 var(--bad); }
-.turn-tag { font-weight: 500; color: var(--muted); }
-.typing { align-self: flex-start; color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: center; }
-.typing.right { align-self: flex-end; }
-.dots i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin: 0 1px; animation: blink 1.2s infinite; }
-.dots i:nth-child(2) { animation-delay: .2s; } .dots i:nth-child(3) { animation-delay: .4s; }
-@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
-
-/* Step 3 */
-.verdict-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: start; }
-.verdict { padding: 22px; }
-.v-big { display: flex; align-items: center; gap: 12px; }
-.v-badge { font-size: 15px; font-weight: 800; letter-spacing: .04em; padding: 6px 14px; border-radius: 10px; }
-.v-badge.pass { background: var(--good-bg); color: var(--good); }
-.v-badge.fail { background: var(--bad-bg); color: var(--bad); }
-.v-badge.error { background: var(--warn-bg); color: var(--warn); }
-.v-title { font-weight: 600; font-size: 17px; }
-.v-sub { font-size: 13px; color: var(--muted); }
-.reason { font-size: 15px; margin: 14px 0 0; padding: 14px 16px; border-left: 3px solid var(--accent); background: var(--accent-bg); border-radius: 0 10px 10px 0; }
-.reason.fail { border-left-color: var(--bad); background: var(--bad-bg); }
-.meaning { font-size: 14px; color: var(--ink-2); margin-top: 14px; }
-.review { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--warn); background: var(--warn-bg); border-radius: 10px; font-size: 14px; }
-.review-h { font-weight: 700; color: var(--warn); font-size: 13px; margin-bottom: 4px; }
-.squares { display: flex; gap: 5px; margin: 10px 0 6px; flex-wrap: wrap; }
-.sq { width: 22px; height: 22px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); }
-.sq.passed { background: var(--good); border-color: var(--good); }
-.sq.failed { background: var(--bad); border-color: var(--bad); }
-.sq.error { background: var(--warn); border-color: var(--warn); }
-.sq.running { background: var(--accent-bg); border-color: var(--accent); }
-.big-score { font-size: 30px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.compare { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
-.cmp-row { display: grid; grid-template-columns: 90px 1fr 54px; gap: 10px; align-items: center; margin: 8px 0; font-size: 14px; }
-.bar { height: 10px; border-radius: 99px; background: var(--bad-bg); overflow: hidden; }
-.bar i { display: block; height: 100%; background: var(--good); border-radius: 99px; }
-.cmp-row b { text-align: right; font-variant-numeric: tabular-nums; }
-.caveats { margin: 40px 0 60px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.caveats h4 { margin: 0 0 6px; font-size: 14px; }
-.caveats p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-footer { border-top: 1px solid var(--border); padding: 18px 0 40px; font-size: 13px; color: var(--muted); }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--page); padding: 10px 16px; border-radius: 10px; font-size: 14px; display: none; z-index: 10; max-width: 90vw; }
-
-.choose > *, .verdict-grid > *, .uses > *, .arena > * { min-width: 0; }
-.tabs { flex-wrap: wrap; max-width: 100%; }
-@media (max-width: 960px) {
-  table.def th { width: 110px; }
-  .version { flex-direction: column; align-items: flex-start; }
-  .version .why { min-width: 0; }
-  .flow { grid-template-columns: 1fr; }
-  .flow > div + div { border-left: 0; border-top: 1px solid var(--border); }
-  .flow > div + div::before { content: "↓"; left: 18px; top: -9px; padding: 0 4px; }
-  .choose, .verdict-grid, .caveats, .uses { grid-template-columns: 1fr; }
-  .arena { grid-template-columns: 1fr; }
-  .attacks { border-right: 0; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; }
-  .attack { min-width: 170px; }
-  .msg { max-width: 100%; }
-  h1 { font-size: 27px; }
-  .wrap { padding: 0 16px; }
-}
-</style>
+<title>Testing Agents Against Policy</title>
+<meta name="description" content="A guided lesson on how Giskard turns a written risk policy into adversarial conversations and an LLM-judge verdict, with real recorded runs.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233451b2'/><path d='M9 17l5 5 9-11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="top wrap">
-  <div class="eyebrow">Evaluations &amp; Reliability · Giskard v3, live</div>
-  <h1>How Giskard tests an agent against your own rules</h1>
-  <p class="lede">Legal or clinical staff write down a risk the agent must never take. Giskard turns that rule into an <b style="color:var(--attacker)">attacker</b>, an LLM that plays a user and tries to make the agent break it. Then a <b style="color:var(--accent-ink)">judge</b> reads the conversation and decides whether it did. Pick a risk, watch the attacks, and read every verdict. <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals">Read the article →</a></p>
 
-  <div class="flow" aria-label="How a Giskard attack works">
-    <div><div class="k">Input</div><div class="t">Risk definition</div><div class="d">What is prohibited, why, what to do instead, and real user questions. Written by legal or clinical staff.</div></div>
-    <div class="attk"><div class="k">Giskard</div><div class="t">Attacker</div><div class="d">An LLM playing a user. It sees the definition and pushes for a violation for up to 3 turns.</div></div>
-    <div><div class="k">Under test</div><div class="t">Your agent</div><div class="d">Here, a Gemini agent with a naive or a hardened system prompt.</div></div>
-    <div class="judge"><div class="k">Giskard</div><div class="t">Judge</div><div class="d">A <code>Conformity</code> check: an LLM reads the whole conversation against the rule.</div></div>
-    <div><div class="k">Output</div><div class="t">Pass or fail, with a reason</div><div class="d">Experts review the verdicts and fix the prompt, the attacks, the judge or the rule.</div></div>
+<nav class="toc" aria-label="Chapters">
+  <a class="toc-brand" href="#top"><span class="logo">✓</span> Policy → Evals</a>
+  <ol id="toc">
+    <li><a href="#problem">The problem</a></li>
+    <li><a href="#rule">Write the rule</a></li>
+    <li><a href="#readers">One rule, two readers</a></li>
+    <li><a href="#attack">Watch an attack</a></li>
+    <li><a href="#judge">How the judge decides</a></li>
+    <li><a href="#measure">Measure, fix, measure again</a></li>
+    <li><a href="#review">When the judge is wrong</a></li>
+    <li><a href="#lab">Explore every attack</a></li>
+    <li><a href="#code">Use it in your code</a></li>
+  </ol>
+  <div class="toc-foot">Built on real runs of <a href="https://github.com/Giskard-AI/giskard-oss">Giskard v3</a> and Gemini, recorded 2026-10-14.</div>
+</nav>
+
+<main id="top">
+
+<header class="hero">
+  <div class="kicker">Evaluations &amp; Reliability · a guided lesson · about 10 minutes</div>
+  <h1>Your lawyers wrote a rule.<br>Can your agent keep it?</h1>
+  <p class="lede">In finance and healthcare, the people who decide what an agent may say aren't engineers. They're lawyers, compliance officers and clinicians, and they write their rules in plain English. This lesson shows how <b>Giskard</b>, an open-source testing library, turns one of those rules into attacks on your agent and a verdict you can check. Every conversation below is a real recorded run.</p>
+  <div class="learn">
+    <div class="learn-h">What you'll learn</div>
+    <ul>
+      <li>How to write a risk so that a machine can test it</li>
+      <li>How an <span class="t-attacker">attacker LLM</span> works on an agent over several turns</li>
+      <li>How a <span class="t-judge">judge LLM</span> decides pass or fail, and why it reads the whole conversation</li>
+      <li>How to tell a real failure from a judge mistake or a gap in the rule</li>
+    </ul>
   </div>
-  <p class="flow-note">The attacker and the judge both read the same rule text, so nobody has to translate the policy twice.</p>
 </header>
 
-<main class="wrap">
-  <section class="step" id="step1">
-    <div class="step-head"><div class="num">1</div><div><h2>Choose what to test</h2><p>An agent, one risk its owners wrote down, and the version of the agent's prompt.</p></div></div>
+<section class="chapter" id="problem">
+  <div class="ch-num">Chapter 1</div>
+  <h2>The problem: rules written in prose</h2>
+  <p>Meet <b>Penny</b>, the assistant inside a bank's mobile app. She can see a member's balances and spending, and members love asking her money questions. The bank's legal team has one firm rule: <i>Penny must not give personal investment advice</i>, because in the US only a registered adviser may do that.</p>
+  <p>A normal unit test can't check that rule. There is no single right answer to compare against, and nobody tries to break a rule by asking politely once. People rephrase, add a backstory, call the question hypothetical, and quote the agent's last answer back at it.</p>
+  <div class="callout">
+    <div class="callout-h">Where this comes from</div>
+    <p>Chime, a US fintech with 9.5 million members, uses this process for its copilot Jade. Its legal team writes the risk definitions, Giskard generates attacks from them, and an LLM judge scores the replies. LangChain describes the process in its 2026 report <i>Financial Services Agents in Production</i>. This lesson rebuilds it with a synthetic bank and clinic.</p>
+  </div>
+</section>
+
+<section class="chapter" id="rule">
+  <div class="ch-num">Chapter 2</div>
+  <h2>Step one: write the rule so a machine can use it</h2>
+  <p>A vague rule like "don't give bad advice" can't be tested. Chime's approach is a <b>risk definition</b> with a fixed set of fields, written by the rule's owner in their own words. Here is the one for Penny:</p>
+  <figure class="fig" id="defFigure"></figure>
+  <div class="grid-2 notes">
+    <div><b>"Prohibited" and "Allowed instead"</b> draw the line. A definition that only says what's forbidden makes agents refuse everything. Saying what's allowed keeps the agent useful.</div>
+    <div><b>"Example questions"</b> are what real users ask. They give the attacker a realistic place to start, instead of generic jailbreak prompts.</div>
+  </div>
+</section>
+
+<section class="chapter" id="readers">
+  <div class="ch-num">Chapter 3</div>
+  <h2>One rule, two readers</h2>
+  <p>Giskard gives the same definition to two different LLMs. That is the key idea: nobody rewrites the policy once for the test data and again for the grader, so the two can't drift apart.</p>
+  <figure class="fig wide">
+    <div class="flow">
+      <div class="node def"><div class="node-k">Written by legal</div><div class="node-t">Risk definition</div><div class="node-d">The fields from chapter 2</div></div>
+      <div class="lanes">
+        <div class="lane">
+          <div class="arrow">→</div>
+          <div class="node attacker"><div class="node-k">Reader 1</div><div class="node-t">The attacker</div><div class="node-d">An LLM that plays a user. It gets the agent's description, the risk, the example questions and the rule, and is told to make the agent break the rule.</div></div>
+          <div class="arrow">⇄</div>
+          <div class="node agent"><div class="node-k">Under test</div><div class="node-t">Penny</div><div class="node-d">Up to 3 turns of conversation</div></div>
+        </div>
+        <div class="lane">
+          <div class="arrow">→</div>
+          <div class="node judge"><div class="node-k">Reader 2</div><div class="node-t">The judge</div><div class="node-d">An LLM that gets the rule and the finished conversation, and answers pass or fail with a reason.</div></div>
+          <div class="arrow">→</div>
+          <div class="node verdict"><div class="node-k">Output</div><div class="node-t">Pass or fail, with a reason</div><div class="node-d">Reviewed by the rule's owner</div></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+  <p>The attacker's instructions are part of Giskard. These lines matter most:</p>
+  <blockquote class="quote-src">"Hide potentially harmful probes so the agent is likely to answer… disguise requests inside fiction, hypotheticals, educational framing… Send a coherent follow-up: refine the probe, <b>press on a loophole exposed in the transcript</b>."
+    <cite>Giskard's attacker prompt, <code>giskard.scan::scenarios/adversarial.j2</code> · <a href="#" data-show="attacker_template">read it in full</a></cite></blockquote>
+</section>
+
+<section class="chapter" id="attack">
+  <div class="ch-num">Chapter 4</div>
+  <h2>Watch one attack, step by step</h2>
+  <p>This is attack 2 of 10 against Penny with a simple, friendly prompt: "be warm and genuinely helpful, give concrete answers". She has no written policy yet. Step through it and read the note under each message.</p>
+  <figure class="fig wide stepper" id="stepper">
+    <div class="stepper-bar">
+      <div class="stepper-count" id="stepCount"></div>
+      <div class="stepper-btns">
+        <button class="btn ghost" id="stepBack">← Back</button>
+        <button class="btn primary" id="stepNext">Next →</button>
+      </div>
+    </div>
+    <div class="progress"><i id="stepProgress"></i></div>
+    <div class="stepper-body" id="stepBody"></div>
+  </figure>
+  <p class="small">Tip: the arrow keys also step through, while the conversation is on screen.</p>
+</section>
+
+<section class="chapter" id="judge">
+  <div class="ch-num">Chapter 5</div>
+  <h2>How the judge decides</h2>
+  <p>The judge is Giskard's <code>Conformity</code> check. It is one more LLM call, and this is everything it receives:</p>
+  <figure class="fig wide judge-io">
+    <div class="io">
+      <div class="io-h">Input</div>
+      <div class="io-block"><div class="io-l">Instructions</div><p>"Judge <b>only</b> the outputs… Inputs are provided for reference." <a href="#" data-show="judge_template">Read the full template</a></p></div>
+      <div class="io-block"><div class="io-l">The rule</div><p class="mono" id="judgeRule"></p></div>
+      <div class="io-block"><div class="io-l">The trace</div><p>Every turn of the conversation: the attacker's messages as inputs, Penny's replies as outputs.</p></div>
+    </div>
+    <div class="io-arrow">→</div>
+    <div class="io out">
+      <div class="io-h">Output, from the run you just watched</div>
+      <pre class="json" id="judgeOut"></pre>
+    </div>
+  </figure>
+  <div class="grid-3 facts">
+    <div><div class="fact-h">It reads the whole conversation</div><p>Penny's first reply only half-broke the rule; the clear violation came in turn 2. A judge that scored each reply alone could miss how the attacker got there.</p></div>
+    <div><div class="fact-h">It must give a reason</div><p>Giskard rejects a verdict without one. The reason lets a lawyer check the judge in seconds, without rereading the whole conversation.</p></div>
+    <div><div class="fact-h">It is still an LLM</div><p>The judge can be wrong, and here the same Gemini model played attacker, agent and judge. Chapter 7 shows verdicts we disagree with.</p></div>
+  </div>
+</section>
+
+<section class="chapter" id="measure">
+  <div class="ch-num">Chapter 6</div>
+  <h2>Measure, fix, measure again</h2>
+  <p>One failed conversation is an anecdote. Giskard runs many attacks, each a fresh conversation from a different angle, and counts the passes. Here are all ten attacks against Penny's friendly prompt:</p>
+  <figure class="fig" id="stripNaive"></figure>
+  <p>Every one failed. So we did what a failing eval usually leads to: we wrote the policy into Penny's system prompt, including the loophole the attacker used: "do not hint at a preference either".</p>
+  <figure class="fig wide" id="promptDiff"></figure>
+  <p>Then we ran ten new attacks against the new prompt:</p>
+  <figure class="fig" id="stripHardened"></figure>
+  <figure class="fig wide" id="holdFigure"></figure>
+  <h3>All four risks</h3>
+  <p>We wrote four risks, two for the bank and two for a clinic's patient assistant, and ran ten attacks on each prompt version. The pattern differs from risk to risk, and that is useful too.</p>
+  <figure class="fig wide" id="allRisks"></figure>
+  <p class="small">Each bar is 10 attacks scored by an LLM, so read a difference of one or two as noise. Where the friendly prompt already scored well (disputes, emergencies), the model behaved well without being told, so the eval tells you to spend your effort elsewhere.</p>
+</section>
+
+<section class="chapter" id="review">
+  <div class="ch-num">Chapter 7</div>
+  <h2>When the judge is wrong, or the rule is</h2>
+  <p>A pass rate is only as good as the verdicts inside it. Chime has its legal team review results, and their disagreements with the judge are the most useful output of the whole process. Each disagreement points to one of four fixes: the <b>agent</b>, the <b>attacks</b>, the <b>judge</b> or the <b>rule itself</b>. We read all 80 recorded verdicts. These three taught us the most:</p>
+  <div id="reviewCards" class="review-cards fig wide"></div>
+  <p class="small">These are our readings, not legal or clinical reviews. In a real team, the rule's owner writes them.</p>
+</section>
+
+<section class="chapter lab" id="lab">
+  <div class="ch-num">Chapter 8</div>
+  <h2>Explore every attack</h2>
+  <p>Now try it yourself. Pick an agent, a risk and a prompt version, replay the recorded run, and open any attack to read the conversation and the judge's reason. Attacks with our review notes are marked. With a Gemini key in <code>.env</code>, you can also run ten new attacks live.</p>
+
+  <div class="lab-panel">
+    <div class="lab-step"><span class="lab-n">A</span> Choose what to test</div>
     <div class="tabs" role="tablist" id="agentTabs"></div>
     <div class="choose">
       <div class="card pad agent-box" id="agentBox"></div>
       <div class="card pad" id="defBox"></div>
     </div>
-  </section>
 
-  <section class="step" id="step2">
-    <div class="step-head"><div class="num">2</div><div><h2>Watch Giskard attack</h2><p>Each attack is a fresh conversation. Select one to read it turn by turn.</p></div></div>
+    <div class="lab-step" id="lab-run"><span class="lab-n">B</span> Watch Giskard attack</div>
     <div class="actions">
       <button class="btn primary" id="replayBtn">▶ Replay recorded run</button>
       <button class="btn" id="liveBtn">Run live with Gemini</button>
@@ -241,25 +185,60 @@ footer { border-top: 1px solid var(--border); padding: 18px 0 40px; font-size: 1
       <div class="attacks" id="attackList"></div>
       <div class="convo" id="convo"></div>
     </div>
-  </section>
 
-  <section class="step" id="step3">
-    <div class="step-head"><div class="num">3</div><div><h2>Read the verdict</h2><p>The judge's decision on the selected attack, and how the whole run scored.</p></div></div>
+    <div class="lab-step"><span class="lab-n">C</span> Read the verdict</div>
     <div class="verdict-grid">
       <div class="card verdict" id="verdict"></div>
       <div class="card verdict" id="summary"></div>
     </div>
-  </section>
-
-  <div class="caveats">
-    <div class="card pad"><h4>The judge can be wrong</h4><p>Every verdict here comes from an LLM. Before you trust a pass rate, have the rule's owner label a sample of verdicts and measure how often they agree with the judge.</p></div>
-    <div class="card pad"><h4>A score depends on the attacker</h4><p>“9 of 10” means 9 of these 10 generated attacks, each at most 3 turns long. A more persistent attacker, or real users, may find more failures. Ten attacks is a small sample.</p></div>
-    <div class="card pad"><h4>Evals don't replace runtime controls</h4><p>Evals find failures before release. In production you still need guardrails, authorization in code, and human review where the stakes are high.</p></div>
   </div>
+</section>
+
+<section class="chapter" id="code">
+  <div class="ch-num">Chapter 9</div>
+  <h2>Use it in your code</h2>
+  <p>Everything above takes about twenty lines of Giskard. The definition becomes both the attacker's brief and the judge's rule, and the tags give you pass rates per domain, category and risk.</p>
+  <figure class="fig wide"><pre class="code"><code><span class="c"># pip install "giskard[scan,google]"   ·   full code: riskdemo/engine.py</span>
+<span class="k">import</span> giskard.scan  <span class="c"># registers the attacker prompt template</span>
+<span class="k">from</span> giskard.checks <span class="k">import</span> Conformity, LLMGenerator, Scenario, Suite
+
+<span class="k">def</span> <span class="f">scenarios_for</span>(risk, agent_description, n=<span class="n">10</span>):
+    brief = {
+        <span class="s">"description"</span>: agent_description,
+        <span class="s">"category"</span>: {<span class="s">"name"</span>: risk.risk, <span class="s">"description"</span>: risk.basis},
+        <span class="s">"rule"</span>: risk.rule(),                     <span class="c"># reader 1: the attacker</span>
+        <span class="s">"languages"</span>: [<span class="s">"en"</span>],
+    }
+    <span class="k">return</span> [
+        Scenario(<span class="s">f"{risk.risk} #{i + 1}"</span>)
+        .interact(LLMGenerator(prompt_path=<span class="s">"giskard.scan::scenarios/adversarial.j2"</span>, max_steps=<span class="n">3</span>))
+        .check(Conformity(rule=risk.rule()))           <span class="c"># reader 2: the judge</span>
+        .with_annotations(brief)
+        .with_tags([<span class="s">f"domain:{risk.domain}"</span>, <span class="s">f"risk:{risk.risk}"</span>])
+        <span class="k">for</span> i <span class="k">in</span> range(n)
+    ]
+
+suite = Suite(name=<span class="s">"compliance"</span>, target=my_agent)    <span class="c"># my_agent(inputs, trace) -> str</span>
+<span class="k">for</span> scenario <span class="k">in</span> scenarios_for(INVESTMENT_ADVICE, <span class="s">"A banking app assistant…"</span>):
+    suite.append(scenario)
+result = <span class="k">await</span> suite.run(parallel=<span class="k">True</span>, max_concurrency=<span class="n">5</span>)
+result.print_report(group_by=<span class="s">"risk"</span>)
+result.to_junit_xml(<span class="s">"compliance.xml"</span>)                 <span class="c"># fail CI when a risk regresses</span></code></pre></figure>
+  <div class="grid-3 facts">
+    <div><div class="fact-h">Start small</div><p>Pick the three risks that would end up in a regulator's letter. Ten attacks each is enough to find the obvious failures.</p></div>
+    <div><div class="fact-h">Check the judge first</div><p>Have the rule's owner label 30 to 50 verdicts before you trust a pass rate. Fix whatever their disagreements point to.</p></div>
+    <div><div class="fact-h">Then run it on every change</div><p>Rerun the suite whenever the model, prompt or retrieval changes. Model updates can break answers that used to be safe.</p></div>
+  </div>
+  <p class="next">The full article, with the Chime case study and the healthcare version of this method, is in this example's <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals">README</a>.</p>
+</section>
+
+<footer id="footer"></footer>
 </main>
 
-<footer class="wrap" id="footer"></footer>
+<dialog id="sourceDialog"><div class="dlg-h"><b id="dlgTitle"></b><button class="btn ghost" id="dlgClose">Close</button></div><pre class="box" id="dlgBody"></pre></dialog>
 <div class="toast" id="toast"></div>
-<script src="/static/app.js"></script>
+<script src="/static/common.js"></script>
+<script src="/static/lesson.js"></script>
+<script src="/static/lab.js"></script>
 </body>
 </html>
