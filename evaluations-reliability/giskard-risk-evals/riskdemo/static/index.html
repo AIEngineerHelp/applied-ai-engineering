@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giskard Risk Evals</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232a78d6'/><path d='M9 17l5 5 9-11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f6f6f3; --surface: #ffffff; --surface-2: #f1f0ec; --border: rgba(11,11,11,0.10); --border-2: rgba(11,11,11,0.18);
+  --ink: #111110; --ink-2: #4d4c48; --muted: #87857f;
+  --accent: #2a78d6; --accent-bg: rgba(42,120,214,0.09); --accent-ink: #1d5fae;
+  --attacker: #8a4fd1; --attacker-bg: rgba(138,79,209,0.08);
+  --good: #0f8a3c; --good-bg: rgba(15,138,60,0.10);
+  --bad: #c43030; --bad-bg: rgba(196,48,48,0.09);
+  --warn: #9a6400; --warn-bg: rgba(250,178,25,0.16);
+  --mark: rgba(196,48,48,0.16);
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.05);
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0e0e0d; --surface: #191918; --surface-2: #222220; --border: rgba(255,255,255,0.10); --border-2: rgba(255,255,255,0.20);
+    --ink: #f4f3ef; --ink-2: #c3c2b9; --muted: #8d8b84;
+    --accent: #4b93ea; --accent-bg: rgba(75,147,234,0.14); --accent-ink: #8dbcf5;
+    --attacker: #b38af0; --attacker-bg: rgba(179,138,240,0.12);
+    --good: #3fc06d; --good-bg: rgba(63,192,109,0.14);
+    --bad: #f07070; --bad-bg: rgba(240,112,112,0.14);
+    --warn: #f3c04a; --warn-bg: rgba(243,192,74,0.14);
+    --mark: rgba(240,112,112,0.25); --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent-ink); }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+header.top { padding: 40px 0 8px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
+h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; letter-spacing: -.02em; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 780px; margin: 0; }
+.lede a { white-space: nowrap; }
+
+/* How it works */
+.flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 28px 0 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.flow > div { padding: 16px 18px; position: relative; }
+.flow > div + div { border-left: 1px solid var(--border); }
+.flow > div + div::before { content: "→"; position: absolute; left: -9px; top: 18px; background: var(--surface); color: var(--muted); font-size: 13px; line-height: 1; padding: 2px 0; }
+.flow .k { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.flow .t { font-weight: 600; margin: 2px 0 2px; }
+.flow .d { font-size: 13px; color: var(--ink-2); }
+.flow .attk .t { color: var(--attacker); }
+.flow .judge .t { color: var(--accent-ink); }
+.flow-note { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+
+/* Steps */
+section.step { margin: 36px 0; }
+.step-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--page); display: grid; place-items: center; font-weight: 700; font-size: 14px; transform: translateY(5px); }
+.step-head h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.step-head p { margin: 2px 0 0; color: var(--ink-2); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.pad { padding: 20px 22px; }
+
+.tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; }
+.tabs button { border: 0; background: transparent; padding: 8px 16px; border-radius: 9px; cursor: pointer; font-weight: 550; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.tabs button small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+
+.choose { display: grid; grid-template-columns: 340px 1fr; gap: 20px; margin-top: 16px; align-items: start; }
+.agent-box h3 { margin: 0 0 4px; font-size: 17px; }
+.agent-box p { margin: 0 0 12px; color: var(--ink-2); font-size: 14px; }
+.label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 8px; }
+.risk-opt { display: block; width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
+.risk-opt:hover { border-color: var(--border-2); }
+.risk-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent) inset; }
+.risk-opt .path { font-size: 12px; color: var(--muted); }
+.risk-opt .name { font-weight: 600; margin: 1px 0 6px; }
+.scores { display: flex; gap: 12px; font-size: 12px; color: var(--ink-2); }
+.scores b { font-variant-numeric: tabular-nums; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
+.pill.good { background: var(--good-bg); color: var(--good); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.run { background: var(--accent-bg); color: var(--accent-ink); }
+details { margin-top: 8px; }
+summary { cursor: pointer; color: var(--accent-ink); font-size: 14px; font-weight: 550; }
+pre.box { white-space: pre-wrap; font: 12.5px/1.5 var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 8px 0 0; max-height: 360px; overflow: auto; color: var(--ink-2); }
+
+.def-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.def-head h3 { margin: 0; font-size: 18px; }
+.owner { font-size: 13px; color: var(--ink-2); }
+table.def { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+table.def th { text-align: left; vertical-align: top; width: 170px; padding: 9px 12px 9px 0; color: var(--muted); font-weight: 600; font-size: 13px; }
+table.def td { padding: 9px 0; border-top: 1px solid var(--border); }
+table.def tr:first-child td, table.def tr:first-child th { border-top: 0; }
+table.def th { border-top: 1px solid var(--border); }
+.qs { display: flex; flex-wrap: wrap; gap: 6px; }
+.qs span { background: var(--surface-2); border-radius: 8px; padding: 3px 9px; font-size: 13px; }
+.uses { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.use { border-radius: 12px; padding: 12px 14px; font-size: 13.5px; }
+.use h4 { margin: 0 0 4px; font-size: 13px; }
+.use.attk { background: var(--attacker-bg); } .use.attk h4 { color: var(--attacker); }
+.use.judge { background: var(--accent-bg); } .use.judge h4 { color: var(--accent-ink); }
+.use p { margin: 0; color: var(--ink-2); }
+.rule { font-family: var(--mono); font-size: 12.5px; background: var(--surface); border: 1px dashed var(--border-2); border-radius: 8px; padding: 8px 10px; margin-top: 8px; color: var(--ink); }
+
+.version { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.version .why { font-size: 13.5px; color: var(--ink-2); flex: 1; min-width: 240px; }
+
+/* Step 2 */
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.btn { border: 1px solid var(--border-2); background: var(--surface); border-radius: 10px; padding: 9px 16px; font-weight: 600; cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--ink-2); }
+.btn.primary { background: var(--ink); color: var(--page); border-color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.hint { font-size: 13px; color: var(--muted); }
+.arena { display: grid; grid-template-columns: 300px 1fr; min-height: 520px; }
+.attacks { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 720px; overflow: auto; }
+.attack { border: 1px solid transparent; border-radius: 10px; padding: 9px 11px; cursor: pointer; text-align: left; background: transparent; width: 100%; }
+.attack:hover { background: var(--surface-2); }
+.attack[aria-pressed="true"] { background: var(--surface-2); border-color: var(--border-2); }
+.attack .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.attack .n { font-weight: 600; font-size: 14px; }
+.attack .snip { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.convo { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 720px; overflow: auto; }
+.empty { margin: auto; text-align: center; color: var(--muted); max-width: 380px; }
+.empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
+.msg { max-width: 82%; }
+.msg .who { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.msg .bubble { border-radius: 14px; padding: 11px 14px; font-size: 14px; }
+.msg.user { align-self: flex-start; }
+.msg.user .who { color: var(--attacker); }
+.msg.user .bubble { background: var(--attacker-bg); border: 1px solid rgba(138,79,209,0.20); border-top-left-radius: 4px; }
+.msg.agent { align-self: flex-end; }
+.msg.agent .who { color: var(--ink-2); justify-content: flex-end; }
+.msg.agent .bubble { background: var(--surface-2); border: 1px solid var(--border); border-top-right-radius: 4px; }
+.bubble p { margin: 0 0 8px; } .bubble p:last-child { margin: 0; }
+.bubble ul { margin: 4px 0 8px; padding-left: 20px; }
+.bubble hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }
+.bubble table.md { border-collapse: collapse; margin: 6px 0 10px; font-size: 13px; display: block; overflow-x: auto; }
+.bubble table.md th, .bubble table.md td { border: 1px solid var(--border-2); padding: 5px 8px; text-align: left; vertical-align: top; }
+.bubble table.md th { background: var(--surface); }
+.bubble mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: 0 1px 0 var(--bad); }
+.turn-tag { font-weight: 500; color: var(--muted); }
+.typing { align-self: flex-start; color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.typing.right { align-self: flex-end; }
+.dots i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin: 0 1px; animation: blink 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: .2s; } .dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+/* Step 3 */
+.verdict-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: start; }
+.verdict { padding: 22px; }
+.v-big { display: flex; align-items: center; gap: 12px; }
+.v-badge { font-size: 15px; font-weight: 800; letter-spacing: .04em; padding: 6px 14px; border-radius: 10px; }
+.v-badge.pass { background: var(--good-bg); color: var(--good); }
+.v-badge.fail { background: var(--bad-bg); color: var(--bad); }
+.v-badge.error { background: var(--warn-bg); color: var(--warn); }
+.v-title { font-weight: 600; font-size: 17px; }
+.v-sub { font-size: 13px; color: var(--muted); }
+.reason { font-size: 15px; margin: 14px 0 0; padding: 14px 16px; border-left: 3px solid var(--accent); background: var(--accent-bg); border-radius: 0 10px 10px 0; }
+.reason.fail { border-left-color: var(--bad); background: var(--bad-bg); }
+.meaning { font-size: 14px; color: var(--ink-2); margin-top: 14px; }
+.review { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--warn); background: var(--warn-bg); border-radius: 10px; font-size: 14px; }
+.review-h { font-weight: 700; color: var(--warn); font-size: 13px; margin-bottom: 4px; }
+.squares { display: flex; gap: 5px; margin: 10px 0 6px; flex-wrap: wrap; }
+.sq { width: 22px; height: 22px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); }
+.sq.passed { background: var(--good); border-color: var(--good); }
+.sq.failed { background: var(--bad); border-color: var(--bad); }
+.sq.error { background: var(--warn); border-color: var(--warn); }
+.sq.running { background: var(--accent-bg); border-color: var(--accent); }
+.big-score { font-size: 30px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.compare { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.cmp-row { display: grid; grid-template-columns: 90px 1fr 54px; gap: 10px; align-items: center; margin: 8px 0; font-size: 14px; }
+.bar { height: 10px; border-radius: 99px; background: var(--bad-bg); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--good); border-radius: 99px; }
+.cmp-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.caveats { margin: 40px 0 60px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.caveats h4 { margin: 0 0 6px; font-size: 14px; }
+.caveats p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+footer { border-top: 1px solid var(--border); padding: 18px 0 40px; font-size: 13px; color: var(--muted); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--page); padding: 10px 16px; border-radius: 10px; font-size: 14px; display: none; z-index: 10; max-width: 90vw; }
+
+.choose > *, .verdict-grid > *, .uses > *, .arena > * { min-width: 0; }
+.tabs { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 960px) {
+  table.def th { width: 110px; }
+  .version { flex-direction: column; align-items: flex-start; }
+  .version .why { min-width: 0; }
+  .flow { grid-template-columns: 1fr; }
+  .flow > div + div { border-left: 0; border-top: 1px solid var(--border); }
+  .flow > div + div::before { content: "↓"; left: 18px; top: -9px; padding: 0 4px; }
+  .choose, .verdict-grid, .caveats, .uses { grid-template-columns: 1fr; }
+  .arena { grid-template-columns: 1fr; }
+  .attacks { border-right: 0; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; }
+  .attack { min-width: 170px; }
+  .msg { max-width: 100%; }
+  h1 { font-size: 27px; }
+  .wrap { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <div class="eyebrow">Evaluations &amp; Reliability · Giskard v3, live</div>
+  <h1>How Giskard tests an agent against your own rules</h1>
+  <p class="lede">Legal or clinical staff write down a risk the agent must never take. Giskard turns that rule into an <b style="color:var(--attacker)">attacker</b>, an LLM that plays a user and tries to make the agent break it. Then a <b style="color:var(--accent-ink)">judge</b> reads the conversation and decides whether it did. Pick a risk, watch the attacks, and read every verdict. <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals">Read the article →</a></p>
+
+  <div class="flow" aria-label="How a Giskard attack works">
+    <div><div class="k">Input</div><div class="t">Risk definition</div><div class="d">What is prohibited, why, what to do instead, and real user questions. Written by legal or clinical staff.</div></div>
+    <div class="attk"><div class="k">Giskard</div><div class="t">Attacker</div><div class="d">An LLM playing a user. It sees the definition and pushes for a violation for up to 3 turns.</div></div>
+    <div><div class="k">Under test</div><div class="t">Your agent</div><div class="d">Here, a Gemini agent with a naive or a hardened system prompt.</div></div>
+    <div class="judge"><div class="k">Giskard</div><div class="t">Judge</div><div class="d">A <code>Conformity</code> check: an LLM reads the whole conversation against the rule.</div></div>
+    <div><div class="k">Output</div><div class="t">Pass or fail, with a reason</div><div class="d">Experts review the verdicts and fix the prompt, the attacks, the judge or the rule.</div></div>
+  </div>
+  <p class="flow-note">The attacker and the judge both read the same rule text, so nobody has to translate the policy twice.</p>
+</header>
+
+<main class="wrap">
+  <section class="step" id="step1">
+    <div class="step-head"><div class="num">1</div><div><h2>Choose what to test</h2><p>An agent, one risk its owners wrote down, and the version of the agent's prompt.</p></div></div>
+    <div class="tabs" role="tablist" id="agentTabs"></div>
+    <div class="choose">
+      <div class="card pad agent-box" id="agentBox"></div>
+      <div class="card pad" id="defBox"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step2">
+    <div class="step-head"><div class="num">2</div><div><h2>Watch Giskard attack</h2><p>Each attack is a fresh conversation. Select one to read it turn by turn.</p></div></div>
+    <div class="actions">
+      <button class="btn primary" id="replayBtn">▶ Replay recorded run</button>
+      <button class="btn" id="liveBtn">Run live with Gemini</button>
+      <span class="hint" id="runHint"></span>
+    </div>
+    <div class="card arena">
+      <div class="attacks" id="attackList"></div>
+      <div class="convo" id="convo"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step3">
+    <div class="step-head"><div class="num">3</div><div><h2>Read the verdict</h2><p>The judge's decision on the selected attack, and how the whole run scored.</p></div></div>
+    <div class="verdict-grid">
+      <div class="card verdict" id="verdict"></div>
+      <div class="card verdict" id="summary"></div>
+    </div>
+  </section>
+
+  <div class="caveats">
+    <div class="card pad"><h4>The judge can be wrong</h4><p>Every verdict here comes from an LLM. Before you trust a pass rate, have the rule's owner label a sample of verdicts and measure how often they agree with the judge.</p></div>
+    <div class="card pad"><h4>A score depends on the attacker</h4><p>“9 of 10” means 9 of these 10 generated attacks, each at most 3 turns long. A more persistent attacker, or real users, may find more failures. Ten attacks is a small sample.</p></div>
+    <div class="card pad"><h4>Evals don't replace runtime controls</h4><p>Evals find failures before release. In production you still need guardrails, authorization in code, and human review where the stakes are high.</p></div>
+  </div>
+</main>
+
+<footer class="wrap" id="footer"></footer>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
