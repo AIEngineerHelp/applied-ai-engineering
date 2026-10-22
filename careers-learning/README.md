@@ -10,7 +10,9 @@ Use this category for learning paths, foundational exercises, and career resourc
 
 ## Projects and resources
 
-No projects yet. Add a project here when it fits the scope above.
+| Project | What it teaches | Status |
+| --- | --- | --- |
+| [LLM vs RAG vs AI agent vs agentic AI](llm-rag-agent-agentic/README.md) | Four terms as four layers, each the last plus one capability (retrieval, tools in a loop, coordination), with animated figures, minimal code and a table for choosing the lowest level that does the job | Article by Nagaraju Poralla with runnable snippets; offline tests, no API key |
 
 ## Adding a contribution
 
