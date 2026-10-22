@@ -1,0 +1,42 @@
+{
+  "kind": "ingest",
+  "date": "2026-04-20",
+  "title": "Support thread on retention",
+  "focus": "export-retention",
+  "caption": "A chat thread changes the policy: 90 days on Enterprise, 30 on every other plan.",
+  "source": "2026-04-20-support-thread.md",
+  "verdict": "A short chat thread changes a policy: from 1 May, Enterprise exports are kept for 90 days and every other plan stays at 30. The agent replaces the single 30-day claim with one claim per plan.",
+  "lesson": "Decisions often arrive in chat, not in documents. Filing them on the policy page means the next reader finds them without knowing the thread exists.",
+  "links": [
+    {
+      "page": "export-retention",
+      "quotes": [
+        "The lifecycle rule on exports-prod will read a plan tag, so nothing changes for files that already exist."
+      ],
+      "anchors": [
+        "From 1 May 2026 the period depends on the plan"
+      ]
+    },
+    {
+      "page": "export-retention",
+      "quotes": [
+        "From 1 May, export files for Enterprise plans are kept for 90 days. All other plans stay at 30 days."
+      ],
+      "anchors": [
+        "~~`export.retention`: 30",
+        "`export.retention.standard`",
+        "`export.retention.enterprise`"
+      ]
+    }
+  ],
+  "show": "export-retention",
+  "lede": "A short chat thread arrives. A decision made in chat changes the retention policy.",
+  "key": [
+    "From 1 May, export files for Enterprise plans are kept for 90 days. All other plans stay at 30 days."
+  ],
+  "did": [
+    "Marked the single 30-day value as outdated.",
+    "Wrote two values in its place, 30 days for most plans and 90 days for Enterprise, both credited to this thread.",
+    "Noted on Rui's page that he will update the help-centre FAQ."
+  ]
+}

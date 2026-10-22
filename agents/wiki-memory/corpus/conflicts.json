@@ -1,0 +1,23 @@
+{
+  "ranking": [
+    { "rank": 5, "types": ["approved decision"], "note": "A decision stated by the project's owner (Amara owns Ledger Export, per the kickoff)." },
+    { "rank": 4, "types": ["design doc"], "note": "Approved design documents." },
+    { "rank": 3, "types": ["incident report", "runbook"], "note": "Operational documents written by the team that runs the system." },
+    { "rank": 2, "types": ["meeting notes", "chat"], "note": "Notes and messages that don't record a decision." },
+    { "rank": 1, "types": ["draft"], "note": "Unreviewed drafts." }
+  ],
+  "keys": {
+    "export.retention": { "label": "How long export files are kept", "scopes": ["enterprise", "standard"] },
+    "export.max-range": { "label": "Longest date range in one export", "scopes": ["all"] }
+  },
+  "facts": [
+    { "key": "export.retention", "value": "30 days", "scope": "all", "source": "raw/2026-03-02-kickoff-notes.md", "sourceType": "meeting notes", "date": "2026-03-02", "quote": "Finished export files are kept for 30 days, then deleted." },
+    { "key": "export.retention", "value": "30 days", "scope": "all", "source": "raw/2026-03-16-design-doc.md", "sourceType": "design doc", "date": "2026-03-16", "quote": "A lifecycle rule on exports-prod deletes export files 30 days after they are written." },
+    { "key": "export.retention", "value": "90 days", "scope": "enterprise", "source": "raw/2026-04-20-support-thread.md", "sourceType": "approved decision", "date": "2026-04-20", "quote": "From 1 May, export files for Enterprise plans are kept for 90 days." },
+    { "key": "export.retention", "value": "30 days", "scope": "standard", "source": "raw/2026-04-20-support-thread.md", "sourceType": "approved decision", "date": "2026-04-20", "quote": "All other plans stay at 30 days." },
+    { "key": "export.retention", "value": "7 days", "scope": "all", "source": "raw/2026-05-05-faq-draft.md", "sourceType": "draft", "date": "2026-05-05", "quote": "Your export is kept for 7 days." },
+    { "key": "export.max-range", "value": "24 months", "scope": "all", "source": "raw/2026-05-05-faq-draft.md", "sourceType": "draft", "date": "2026-05-05", "quote": "You can export up to 24 months at a time." },
+    { "key": "export.max-range", "value": "24 months", "scope": "all", "source": "review/2026-05-12-support-runbook.md", "sourceType": "runbook", "date": "2026-05-12", "quote": "A customer can export up to 24 months of invoices in one request." },
+    { "key": "export.max-range", "value": "12 months", "scope": "all", "source": "review/2026-05-12-oncall-runbook.md", "sourceType": "runbook", "date": "2026-05-12", "quote": "Each export request covers at most 12 months of invoices, to keep the nightly run under its 06:00 UTC deadline." }
+  ]
+}

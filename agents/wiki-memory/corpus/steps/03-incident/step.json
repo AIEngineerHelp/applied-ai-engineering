@@ -1,0 +1,43 @@
+{
+  "kind": "ingest",
+  "date": "2026-04-07",
+  "title": "Incident report INC-482",
+  "focus": "billing-api",
+  "caption": "The limit was cut from 100 to 50. The old values are struck through, not deleted.",
+  "source": "2026-04-07-incident-inc-482.md",
+  "verdict": "The incident report says the Billing API limit was lowered from 100 to 50. The agent strikes through the old numbers on two pages instead of deleting them, adds the new ones, and records the incident and the lesson it teaches.",
+  "lesson": "This is the step chunk RAG never takes. The March design doc still says 100 and 80; only the wiki now says those numbers are out of date.",
+  "links": [
+    {
+      "page": "billing-api",
+      "quotes": [
+        "Payments will keep the 50 requests per second limit permanently.",
+        "Payments will announce limit changes in the #payments-changes channel at least a week in advance."
+      ],
+      "anchors": [
+        "On 3 April 2026 Payments halved the limit"
+      ]
+    },
+    {
+      "page": "billing-api",
+      "quotes": [
+        "On 3 April the Payments team lowered the Billing API limit from 100 to 50 requests per second per client, to protect the API during a database migration."
+      ],
+      "anchors": [
+        "~~`billing-api.rate-limit`: 100",
+        "`billing-api.rate-limit`: 50"
+      ]
+    }
+  ],
+  "show": "billing-api",
+  "lede": "An incident report arrives. A number the wiki already holds is no longer true.",
+  "key": [
+    "On 3 April the Payments team lowered the Billing API limit from 100 to 50 requests per second per client, to protect the API during a database migration.",
+    "The export job now calls the Billing API at 40 requests per second and backs off when it receives HTTP 429."
+  ],
+  "did": [
+    "Marked 100 requests per second as outdated, and wrote the new limit, 50, below it.",
+    "Changed the export job's rate from 80 to 40 on the project page.",
+    "Created pages for the incident and for the lesson it teaches."
+  ]
+}

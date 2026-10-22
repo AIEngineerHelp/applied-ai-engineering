@@ -1,0 +1,35 @@
+{
+  "kind": "ingest",
+  "date": "2026-03-16",
+  "title": "Pipeline design doc",
+  "focus": "billing-api",
+  "caption": "The design doc mostly rewrites: it answers the kickoff's open question with a limit of 100 requests per second.",
+  "source": "2026-03-16-design-doc.md",
+  "verdict": "The design doc fills in details on pages that already exist: the run time (02:00 UTC), the Billing API limit (100 requests per second) and how files are deleted. It also answers the open question from the kickoff and adds a page for the Payments team.",
+  "lesson": "Most of an ingest is updating, not creating. The open question on the Billing API page is closed here, by the source that answered it.",
+  "links": [
+    {
+      "page": "billing-api",
+      "quotes": [
+        "Jun Park (Payments team) confirmed that the Billing API allows 100 requests per second per client."
+      ],
+      "anchors": [
+        "[[jun-park]] confirmed the limit",
+        "What request rate may Ledger Export use?",
+        "`billing-api.rate-limit`: 100"
+      ]
+    }
+  ],
+  "show": "billing-api",
+  "lede": "A design document arrives. It answers a question the kickoff left open.",
+  "key": [
+    "The export job runs nightly at 02:00 UTC.",
+    "Jun Park (Payments team) confirmed that the Billing API allows 100 requests per second per client.",
+    "The export job will call it at 80 requests per second to leave headroom."
+  ],
+  "did": [
+    "Wrote the Billing API's limit, 100 requests per second, on the Billing API page.",
+    "Crossed out the open question and noted that this document answered it.",
+    "Added pages for the Payments team and for this document, and updated 5 others."
+  ]
+}
