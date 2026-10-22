@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ActGate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="brand">
+      <div>
+        <h1>ActGate</h1>
+        <p id="tagline">Laya and Jev decide with confidence. Gemini writes only after the gate opens. Every step is timed to the goal.</p>
+      </div>
+      <div class="badge" id="healthBadge">checking…</div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <div id="demoNote" class="muted" hidden>Public demo. Pick a test ticket. Results appear on the right.</div>
+        <div class="samples" id="samples"></div>
+        <label for="subject">Subject</label>
+        <input id="subject" value="Charged twice — need help today" />
+        <label for="body">Customer message</label>
+        <textarea id="body">I was charged twice for order #4421 yesterday. Please refund the duplicate charge today. This is urgent.</textarea>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="forceJev" /> Force Jev (skip Laya)</label>
+          <label class="check"><input type="checkbox" id="skipDraft" /> Decision only (no Gemini)</label>
+        </div>
+        <div class="row">
+          <button class="primary" id="runBtn">Run pipeline</button>
+          <button class="ghost" id="sampleBtn" type="button">Load sample</button>
+          <span class="muted" id="statusText"></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="metrics">
+          <div class="metric"><div class="k">Gate</div><div class="v" id="mGate">—</div></div>
+          <div class="metric"><div class="k">Goal</div><div class="v" id="mGoal">—</div></div>
+          <div class="metric"><div class="k">Total time</div><div class="v" id="mTotal">—</div></div>
+          <div class="metric"><div class="k">Confidence</div><div class="v" id="mConf">—</div></div>
+        </div>
+        <div class="muted" id="message">Run a case to see step timings.</div>
+        <ul class="timeline" id="timeline"></ul>
+        <div style="margin-top:0.9rem">
+          <span class="pill" id="pLaya">Laya</span>
+          <span class="pill" id="pJev">Jev</span>
+          <span class="pill" id="pGemini">Gemini</span>
+        </div>
+        <h3 style="font-family:var(--display);font-weight:600;margin:1rem 0 0.4rem">Draft</h3>
+        <div class="draft" id="draft">No draft yet.</div>
+      </section>
+    </div>
+
+    <section class="panel history" style="margin-top:1rem; animation-delay:0.12s">
+      <h3 style="font-family:var(--display); margin:0 0 0.6rem">Recent cases</h3>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Subject</th><th>Intent</th><th>Gate</th><th>Goal</th><th>Total ms</th></tr>
+        </thead>
+        <tbody id="casesBody"></tbody>
+      </table>
+    </section>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

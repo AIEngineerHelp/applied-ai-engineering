@@ -1,0 +1,66 @@
+[
+  {
+    "id": "refund_urgent",
+    "expect_hint": "Often ask_human or auto_draft depending on risk/confidence",
+    "subject": "Charged twice — need help today",
+    "body": "I was charged twice for order #4421 yesterday. Please refund the duplicate charge today. This is urgent.",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "refund_calm",
+    "expect_hint": "Good candidate for auto_draft when risk is low",
+    "subject": "Possible duplicate charge",
+    "body": "Hi, I noticed two charges for order #9901. Could you please check and refund the duplicate if confirmed? No rush, thank you.",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "bug_android",
+    "expect_hint": "Intent should lean bug; may escalate if confidence low",
+    "subject": "App crashes on login",
+    "body": "Whenever I try to sign in on Android the screen goes white. Started after the last update. Not urgent but please look when you can.",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "shipping_delay",
+    "expect_hint": "Intent shipping",
+    "subject": "Where is my package?",
+    "body": "Order #7788 was supposed to arrive last Friday. Tracking has not moved for 4 days. Can you check the shipping status?",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "cancel_plan",
+    "expect_hint": "Intent cancel; often auto_draft",
+    "subject": "Cancel subscription",
+    "body": "Please cancel my subscription at the end of this billing cycle. I do not need any retention offers.",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "high_risk_legal",
+    "expect_hint": "Should prefer ask_human or blocked",
+    "subject": "Lawsuit threat",
+    "body": "If you do not refund me $50,000 by tomorrow I will sue your company and contact the media. Fix this immediately.",
+    "force_jev": false,
+    "skip_draft": false
+  },
+  {
+    "id": "decision_only_jev",
+    "expect_hint": "Uses Jev only; no Gemini draft",
+    "subject": "Billing question",
+    "body": "Why was I charged an extra $5 service fee this month?",
+    "force_jev": true,
+    "skip_draft": true
+  },
+  {
+    "id": "other_thanks",
+    "expect_hint": "Intent other / low urgency",
+    "subject": "Thank you",
+    "body": "Just wanted to say thanks for resolving my earlier ticket. No action needed.",
+    "force_jev": false,
+    "skip_draft": true
+  }
+]
