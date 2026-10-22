@@ -1,115 +1,107 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wiki Memory</title>
-<meta name="description" content="Watch an agent turn five sources into an interlinked markdown wiki, one ingest at a time: pages ignite, links draw themselves, outdated claims are struck out, lint catches a contradiction, and the wiki faces off against chunk RAG.">
-<meta name="theme-color" content="#05060b">
+<meta name="description" content="An agent that keeps a wiki instead of re-reading its sources. Watch five sources become typeset pages, with every edit shown as a tracked change, then compare the pages with chunk RAG.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="build/app.css">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script>
   (() => {
     let t = new URLSearchParams(location.search).get("theme");
     if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("wiki-memory-theme"); } catch {} }
-    document.documentElement.dataset.theme = t || "dark";
+    document.documentElement.dataset.theme = t || "light";
   })();
 </script>
 </head>
 <body>
-<div class="grain" aria-hidden="true"></div>
 
 <header class="topbar">
-  <a class="wordmark" href="#hero" aria-label="Wiki memory, back to the top">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="17.5" r="2.8" fill="currentColor" fill-opacity=".25"/><path d="M8.2 7.9l2.4 7.4M15.9 7.6l-2.6 7.6M8.4 6.8l7.2-.6"/></svg>
-    <span>Wiki memory</span>
-  </a>
-  <nav class="flex items-center gap-1">
-    <a class="navlink hidden sm:inline-flex" href="#theatre">Watch</a>
-    <a class="navlink hidden sm:inline-flex" href="#faceoff">Face-off</a>
-    <a class="navlink" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
-    <button id="theme" type="button" class="navlink" aria-label="Switch between dark and light" title="Switch between dark and light">
-      <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
-    </button>
-  </nav>
+  <div class="wrap flex h-14 items-center justify-between gap-4">
+    <a class="wordmark" href="#hero">Wiki memory</a>
+    <nav class="flex items-center gap-5 text-[13.5px]">
+      <a class="nav hidden sm:inline" href="#theatre">The story</a>
+      <a class="nav hidden sm:inline" href="#faceoff">Face-off</a>
+      <a class="nav" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
+      <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
+    </nav>
+  </div>
 </header>
 
 <main>
-  <!-- Opening shot -->
-  <section id="hero" class="hero" aria-label="Introduction">
-    <canvas id="hero-canvas" class="absolute inset-0 size-full" aria-hidden="true"></canvas>
-    <div class="hero-vignette" aria-hidden="true"></div>
-    <div class="hero-copy">
-      <p class="eyebrow reveal" style="--d:300">Agent memory, explained in one run</p>
-      <h1 class="display reveal" style="--d:450">Wiki <em>memory</em></h1>
-      <p class="hero-sub reveal" style="--d:700">RAG re-reads raw chunks for every question. A wiki agent files each new source into linked pages, strikes out what is outdated and checks itself for contradictions, so what it knows builds up.</p>
-      <div class="mt-8 flex flex-wrap items-center gap-3 reveal" style="--d:950">
-        <button id="cta" type="button" class="btn-hero">
-          <svg viewBox="0 0 16 16" class="size-3.5" fill="currentColor" aria-hidden="true"><path d="M4 2.8v10.4L13 8z"/></svg>
-          Watch the wiki grow
-        </button>
-        <a class="btn-ghost" href="#faceoff">Skip to the face-off</a>
+  <!-- Opening -->
+  <section id="hero" class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow reveal" style="--d:0">Agents &amp; Workflows</p>
+        <h1 class="hero-title reveal" style="--d:100">Wiki memory</h1>
+        <p class="lead reveal" style="--d:220">Retrieval re-reads raw fragments of your documents for every question. A wiki agent does the reading once: it files each new source into pages about the people, systems and policies it mentions, rewrites what changed, and keeps the history.</p>
+        <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 reveal" style="--d:340">
+          <button id="cta" type="button" class="btn">Watch the wiki grow</button>
+          <a class="link-arrow" href="#faceoff">Skip to the face-off</a>
+        </div>
+        <p class="aside reveal" style="--d:460"><span>Not a knowledge graph.</span> A knowledge graph stores typed facts that code traverses. A wiki stores pages of prose that the agent reads and rewrites; the links between them are just references.</p>
       </div>
+      <figure class="hero-figure">
+        <div id="hero-map"></div>
+        <figcaption class="caption">The finished wiki: fifteen pages and the links between them, built from five sources.</figcaption>
+      </figure>
     </div>
-    <p class="hero-caption reveal" style="--d:3000">Five documents become fifteen linked pages.</p>
-    <a class="scroll-cue" href="#theatre" aria-label="Scroll to the story"><span></span></a>
   </section>
 
-  <!-- Acts one and two: ingest and lint -->
+  <!-- Acts one and two -->
   <section id="theatre" class="theatre" aria-label="The wiki grows">
-    <div class="actbar">
-      <div class="min-w-0">
-        <p class="eyebrow">Act <span id="act-num">one</span></p>
+    <div class="wrap theatre-head">
+      <div class="flex items-baseline gap-3">
+        <span class="eyebrow" id="act-num">Act one</span>
         <h2 id="act-title" class="act-title">Ingest</h2>
       </div>
       <ol id="chapters" class="chapters" aria-label="Scenes"></ol>
     </div>
 
-    <div class="stage">
-      <aside class="queue" aria-label="Sources waiting to be ingested">
-        <p class="rail-label">Raw sources</p>
-        <ol id="queue" class="queue-list"></ol>
+    <div class="wrap stage">
+      <aside class="rail" aria-label="Sources">
+        <p class="label">Raw sources</p>
+        <ol id="queue" class="queue"></ol>
       </aside>
 
-      <div class="web-wrap">
-        <canvas id="web" class="absolute inset-0 size-full" aria-label="The wiki's pages and links"></canvas>
-        <div class="web-legend" aria-hidden="true">
-          <span><i style="background:var(--n-overview)"></i>overview</span>
-          <span><i style="background:var(--n-entity)"></i>entity</span>
-          <span><i style="background:var(--n-concept)"></i>concept</span>
-          <span><i style="background:var(--n-source)"></i>source</span>
-        </div>
-        <div id="stats" class="web-stats"></div>
+      <div class="reader">
+        <div id="caption" class="subtitle" aria-live="polite"></div>
+        <div id="doc" class="doc"></div>
+        <p id="doc-note" class="caption mt-3"></p>
       </div>
 
-      <aside id="panel" class="panel" aria-label="What the agent wrote"></aside>
+      <aside class="margin" aria-label="Map, index and log">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" class="tab" data-tab="map">Map</button>
+          <button type="button" role="tab" class="tab" data-tab="index">index.md</button>
+          <button type="button" role="tab" class="tab" data-tab="log">log.md</button>
+        </div>
+        <div id="margin-body" class="margin-body"></div>
+      </aside>
     </div>
 
-    <div class="subtitle-bar">
-      <div id="caption" class="subtitle" aria-live="polite"></div>
-      <div class="controls">
-        <button id="prev" type="button" class="ctl" aria-label="Previous scene" title="Previous scene (←)">
-          <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M11 3v10L4.5 8z"/></svg>
-        </button>
-        <button id="play" type="button" class="ctl ctl-main" aria-label="Play" title="Play or pause (Space)"></button>
-        <button id="next" type="button" class="ctl" aria-label="Next scene" title="Next scene (→)">
-          <svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5 3v10l6.5-5z"/></svg>
-        </button>
-      </div>
+    <div class="wrap transport">
+      <button id="prev" type="button" class="tbtn">← Previous</button>
+      <button id="play" type="button" class="tbtn tbtn-main">Play</button>
+      <button id="next" type="button" class="tbtn">Next →</button>
       <div class="progress" aria-hidden="true"><span id="progress"></span></div>
     </div>
   </section>
 
-  <!-- Act three: the face-off -->
+  <!-- Act three -->
   <section id="faceoff" class="faceoff" aria-label="Wiki memory versus chunk RAG">
-    <div class="mx-auto max-w-[1320px] px-4 sm:px-8">
-      <p class="eyebrow">Act three · Ask</p>
-      <h2 class="section-title">The face-off</h2>
-      <p class="section-sub">One question, two memories. On the left, the agent reads the wiki's topic pages. On the right, plain chunk RAG retrieves paragraphs of the raw sources. Both use the same BM25 ranker over the same five sources.</p>
-      <div id="questions" class="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Questions"></div>
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Act three</p>
+        <h2 class="section-title">The face-off</h2>
+        <p class="lead">The same question, answered from two memories. On the left, the agent reads the wiki's topic pages. On the right, plain chunk RAG retrieves paragraphs of the raw sources. Both use the same BM25 ranker.</p>
+      </div>
+      <div id="questions" class="qtabs" role="tablist" aria-label="Questions"></div>
       <div id="arena" class="arena"></div>
       <div id="verdict" class="verdict" aria-live="polite"></div>
     </div>
@@ -117,26 +109,25 @@
 
   <!-- Notes -->
   <section id="about" class="about">
-    <div class="mx-auto grid max-w-[1320px] gap-12 px-4 sm:px-8 lg:grid-cols-2">
-      <div class="prose-block">
-        <p class="eyebrow">Behind the scenes</p>
-        <h2 class="section-title">What you just watched</h2>
-        <p>The idea comes from Andrej Karpathy's <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">“LLM Wiki”</a> (April 2026). Raw sources are never edited, the wiki belongs to the model, and a schema file tells it how to keep the wiki. Three operations keep it going: <em>ingest</em>, <em>query</em> and <em>lint</em>.</p>
-        <p><span class="tag tag-scripted">Scripted</span> The five sources, the pages the agent writes at each step, the captions and the example answers were written by hand to show what a careful model should produce. No model was called.</p>
-        <p><span class="tag tag-computed">Computed</span> Everything derived from those pages is computed by tested code: the diffs, the links, the index and log, the lint findings, the BM25 rankings and the fact checks.</p>
-        <p>The face-off is one small example: <span id="about-chunks"></span> raw chunks, three questions and a lexical ranker. It shows the mechanism; it is not a benchmark. The <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">article</a> covers the trade-offs, the failure modes and when RAG is the better choice.</p>
+    <div class="wrap about-grid">
+      <div class="prose">
+        <p class="eyebrow">Notes</p>
+        <h2 class="section-title">What you just read</h2>
+        <p>The pattern comes from Andrej Karpathy's <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">“LLM Wiki”</a> (April 2026). Raw sources are never edited, the wiki belongs to the model, and a schema file tells it how to keep the wiki. Three operations keep it going: ingest, query and lint.</p>
+        <p>The five sources, the pages the agent writes, the captions and the example answers were written by hand to show what a careful model should produce; no model was called. Everything derived from those pages is computed by tested code: the tracked changes, the links, the index and log, the lint findings, the BM25 rankings and the fact checks.</p>
+        <p>The face-off is one small example, with <span id="about-chunks"></span> raw chunks, three questions and a lexical ranker. It shows the mechanism; it is not a benchmark. The <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">article</a> covers the trade-offs and when retrieval is the better choice.</p>
       </div>
-      <div class="prose-block">
+      <div class="prose">
         <h3>Sources</h3>
-        <ul class="sources">
+        <ol class="refs">
           <li>Andrej Karpathy, <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a>, GitHub gist, 4 April 2026.</li>
           <li>Anthropic, <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool">Memory tool</a> and <a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>.</li>
           <li>Packer et al., <a href="https://arxiv.org/abs/2310.08560">MemGPT: Towards LLMs as Operating Systems</a>, 2023.</li>
           <li>Rasmussen et al., <a href="https://arxiv.org/abs/2501.13956">Zep: A Temporal Knowledge Graph Architecture for Agent Memory</a>, 2025.</li>
           <li>LangChain, <a href="https://langchain-ai.github.io/langmem/concepts/conceptual_guide/">LangMem core concepts</a>.</li>
           <li>Xu et al., <a href="https://arxiv.org/abs/2502.12110">A-MEM: Agentic Memory for LLM Agents</a>, 2025.</li>
-        </ul>
-        <p class="footnote">Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>. Discuss it in <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a>, or read the <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory">code</a>.</p>
+        </ol>
+        <p class="caption mt-8">Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>. Discuss it in <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a>, or read the <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory">code</a>.</p>
       </div>
     </div>
   </section>

@@ -53,7 +53,7 @@ export const TYPE_LABELS: Record<PageType, string> = {
 const LINK = /\[\[([a-z0-9-]+)\]\]/g;
 // - `key`: value (as of YYYY-MM-DD, [[source]])          a current claim
 // - ~~`key`: value (as of YYYY-MM-DD, [[source]])~~ note  a superseded or disputed claim
-const CLAIM = /^- (~~)?`([a-z0-9.-]+)`: (.+?) \(as of (\d{4}-\d{2}-\d{2}), \[\[([a-z0-9-]+)\]\]\)(?:~~ ?(.*))?$/;
+export const CLAIM = /^- (~~)?`([a-z0-9.-]+)`: (.+?) \(as of (\d{4}-\d{2}-\d{2}), \[\[([a-z0-9-]+)\]\]\)(?:~~ ?(.*))?$/;
 
 export function parsePage(slug: string, text: string): Page {
   const match = /^---\n([\s\S]*?)\n---\n/.exec(text);

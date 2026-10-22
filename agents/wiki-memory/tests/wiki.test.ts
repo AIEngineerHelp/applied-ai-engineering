@@ -171,3 +171,17 @@ test("render helpers escape HTML and fold long unchanged runs", () => {
   const diff = lineDiff(Array.from({ length: 12 }, (_, i) => `l${i}`).join("\n"), [...Array.from({ length: 11 }, (_, i) => `l${i}`), "changed"].join("\n"));
   assert.match(diffHtml(diff), /unchanged lines/);
 });
+
+test("tracked changes: a superseded claim becomes one struck block, edits become word-level changes", async () => {
+  const { trackedBlocks, wordDiff } = await import("../client/doc.ts");
+  const step = run.steps[2];
+  const billing = step.changes.find((c) => c.slug === "billing-api")!;
+  const blocks = trackedBlocks(billing.diff);
+  const strike = blocks.filter((b) => b.change === "strike");
+  assert.equal(strike.length, 1);
+  assert.match(strike[0].html, /100 requests per second per client/);
+  assert.ok(blocks.some((b) => b.change === "ins" && /50 requests per second/.test(b.html)));
+  // Front matter is never shown as a change.
+  assert.ok(!blocks.some((b) => /^sources:|^updated:/.test(b.html)));
+  assert.equal(wordDiff("kept for 30 days", "kept for 90 days"), "kept for <del>30</del><ins>90</ins> days");
+});

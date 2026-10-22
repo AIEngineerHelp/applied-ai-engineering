@@ -289,20 +289,20 @@ Wiki memory fits best where knowledge accumulates and changes: a research topic 
 
 ## The demo app
 
-The app plays the worked example as a short film in three acts, dark by default, with a subtitle line that says in plain words what each moment shows.
+The app tells the worked example in three short acts, set like a typeset paper. Light is the default and a dark theme is available. A one-line subtitle says in plain words what each moment shows.
 
-- **Opening shot.** Five documents drift in and dissolve into the finished web of fifteen linked pages. **Watch the wiki grow** starts the story; **Skip to the face-off** jumps to act three.
-- **Act one: ingest.** Each source is a scene. Its card flies out of the queue into the web, the pages it creates ignite, the pages it rewrites pulse, and new links draw themselves as light trails while the camera moves in. Beside the web, the agent's edit to the most instructive page types itself in, and replaced values are struck through in red. The other pages it touched, and `index.md` and `log.md` with this step's new lines typed in, are one click away.
-- **Act two: lint.** A scan passes over the whole web, then the pages and sources that disagree pulse red and dashed arcs join the conflicting sources. The panel shows the conflicting values side by side. In the fix scene the red settles, Jun Park's page ignites, and lint reports 0 problems.
-- **Act three: the face-off.** For each question, the top wiki pages and the top raw chunks are revealed side by side, then the facts each contains, then the scores, and the computed verdict lands last.
+- **Opening.** A short introduction and a thin-line map of the finished wiki, drawn in link by link. One quiet note explains how this differs from a knowledge graph: the wiki holds pages of prose that the agent reads and rewrites, not typed facts that code traverses.
+- **Act one: ingest.** Each source is a scene. The page it changes most is typeset as a document, and the agent's edit appears as tracked changes, one at a time: added words on a pale green, removed words struck in red, and superseded claims struck through with the source that replaced them. A small map in the margin then shows the pages and links the source added. `index.md` and `log.md`, with this step's new lines shaded, sit behind quiet tabs next to the map, and every other page the source touched is one click away.
+- **Act two: lint.** The document becomes a lint report listing the two contradictions, with the conflicting values side by side, and the missing page. On the map, the pages and sources that disagree are circled in red. In the fix scene, the draft's claims are struck through as disputed and lint finds nothing.
+- **Act three: the face-off.** For each question, excerpts from the top wiki pages and the top raw chunks appear in turn, followed by the facts each side found, and the computed verdict comes last.
 
-Scenes autoplay once you reach them. Pause, step and replay with the transport buttons, the scene chips, the source cards, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Each beat lasts under 1.5 seconds and controls respond at once. With reduced motion set in the operating system, every scene appears in its final state with nothing moving. The web is drawn on a canvas with no libraries, and only the visible section animates.
+Scenes play automatically once you reach them. Pause, step and replay with the controls under the page, the scene names, the source list, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Only one thing moves at a time, each beat takes 1.2 seconds or less, and there are no flashes. With reduced motion turned on, every scene appears in its final state.
 
 Every view can be linked, and any moment can be frozen for review:
 
 - `?scene=3` opens a scene. Scenes 1 to 5 are the ingests, 6 is lint and 7 is the fix.
 - `?ask=rate` opens a face-off question (`retention`, `rate` or `incident`).
-- `&t=1900` freezes the clock at that many milliseconds into the scene, or into the opening shot when no scene is given.
+- `&t=1900` freezes every animation at that many milliseconds into the scene, or into the opening when no scene is given.
 - `&file=@log` (or `@index`, or a page such as `billing-api`) opens that file in the panel.
 - `&solo=1` shows only that section, which helps headless screenshots.
 - `&theme=light` or `&theme=dark` forces a theme.
@@ -320,13 +320,13 @@ npm run data       # rebuilds results/run.json and results/wiki/ from corpus/
 npm run export     # static copy of the app in dist/
 ```
 
-You should see the opening shot assemble itself, with a **Watch the wiki grow** button. `npm test` should report 14 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
+You should see the opening page with a **Watch the wiki grow** button. `npm test` should report 15 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
 
 ### How it is built
 
 - [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes.
 - [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
-- [`client/web.ts`](client/web.ts): the canvas renderer for the web of pages (ignition, light-trail links, lint pulses, camera, parallax), where every frame is a function of the scene clock. [`client/app.ts`](client/app.ts): the hero, the scenes, the subtitles and the face-off. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the sequenced animations. [`site/index.html`](site/index.html): the page.
+- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/app.ts`](client/app.ts): the opening, the scenes, the subtitles and the face-off. [`client/styles.css`](client/styles.css): Tailwind CSS v4, the type scale and the sequenced animations. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
 
 To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, edit `src/questions.ts`, and run `npm run data`.
@@ -343,7 +343,7 @@ To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, 
 - Everything in `results/` is deterministic: `npm run data` rebuilds it from `corpus/` with no network or model calls, and the test suite checks the committed copy is current.
 - What is **scripted**: the five sources, every wiki page in `corpus/steps/`, the step verdicts and lessons, and the three example answers in `src/questions.ts`.
 - What is **computed**: the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
-- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (14 passing), `npm run check`, `npm start` and `npm run export`.
+- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (15 passing), `npm run check`, `npm start` and `npm run export`.
 - The corpus is original and synthetic, written for this example; any resemblance to a real company or person is unintended.
 
 ## Sources
