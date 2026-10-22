@@ -90,6 +90,7 @@ function enter(i: number) {
   const { beats, len } = renderScene();
   timeline = { len };
   renderCaption(beats);
+  scheduleFollow();
   tick();
 }
 
@@ -236,36 +237,68 @@ function pageHtml(step: Step, change: PageChange, docAt: number, from: number): 
 }
 
 /**
- * Keeps the latest revealed edit (or source highlight) in view. Panes start at the top; when the
- * newest item at scene time t is out of view, the pane scrolls so that item's block starts at the
- * top edge, at a block boundary, so no line is ever cut in half.
+ * Auto-scroll. The panes follow the edits only at discrete moments: once when each edit (or source
+ * highlight) is revealed, scheduled when the scene starts. Never per frame, never from hover or from
+ * a scroll event. As soon as the reader wheels, touches, drags or uses the keyboard in either pane,
+ * auto-scroll stops for the rest of the scene; it resumes on the next scene or on Play.
  */
-function follow(t: number, smooth: boolean) {
-  for (const pane of [$("src"), $("doc")]) {
-    const at = (el: HTMLElement) => Number(el.style.getPropertyValue("--d") || 0);
-    const items = [...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].filter((el) => at(el) <= t);
-    // The most recently revealed item; on a tie, the last in reading order (the scroll below keeps
-    // as much as possible above it in view).
-    const el = items.reduce<HTMLElement | undefined>((best, x) => (!best || at(x) >= at(best) ? x : best), undefined);
-    if (!el) continue;
-    const pr = pane.getBoundingClientRect();
-    const y = (r: DOMRect) => r.top - pr.top + pane.scrollTop;
-    const blocks = [...pane.querySelectorAll<HTMLElement>(".page > *")];
-    const block = blocks.find((b) => b.contains(el)) ?? el;
-    const want = y(block.getBoundingClientRect()) + block.offsetHeight + 8;
-    const view = pane.clientHeight;
-    if (y(block.getBoundingClientRect()) >= pane.scrollTop && want <= pane.scrollTop + view) continue;
-    // The smallest scroll that starts at a block boundary and shows the whole block.
-    let target = 0;
-    for (let i = 0; i < blocks.length; i++) {
-      const top = y(blocks[i].getBoundingClientRect());
-      const prevBottom = i > 0 ? y(blocks[i - 1].getBoundingClientRect()) + blocks[i - 1].offsetHeight : 0;
-      const candidate = i === 0 ? 0 : Math.max(prevBottom, top - 14);
-      target = candidate;
-      if (candidate + view >= want || blocks[i] === block) break;
-    }
-    if (Math.abs(pane.scrollTop - target) > 2) pane.scrollTo({ top: target, behavior: smooth && !REDUCED && FROZEN === null ? "smooth" : "auto" });
+let autoScroll = true;
+let followTimers: number[] = [];
+
+function scheduleFollow() {
+  followTimers.forEach((h) => clearTimeout(h));
+  followTimers = [];
+  autoScroll = true;
+  const now = sceneTime();
+  if (FROZEN !== null || REDUCED) {
+    // One placement for the frame being shown.
+    for (const pane of [$("src"), $("doc")]) followOnce(pane, now, false);
+    return;
   }
+  for (const pane of [$("src"), $("doc")]) {
+    const times = [...new Set([...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].map(revealAt))].sort((a, b) => a - b);
+    for (const at of times) followTimers.push(window.setTimeout(() => followOnce(pane, at, true), Math.max(0, at - now + 60)));
+  }
+}
+
+const revealAt = (el: HTMLElement) => Number(el.style.getPropertyValue("--d") || 0);
+
+/** Brings the newest item revealed by time t into view, starting at a block boundary. One call. */
+function followOnce(pane: HTMLElement, t: number, smooth: boolean) {
+  if (!autoScroll) return;
+  const items = [...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].filter((el) => revealAt(el) <= t);
+  // The most recently revealed item; on a tie, the last in reading order.
+  const el = items.reduce<HTMLElement | undefined>((best, x) => (!best || revealAt(x) >= revealAt(best) ? x : best), undefined);
+  if (!el) return;
+  const pr = pane.getBoundingClientRect();
+  const y = (r: DOMRect) => r.top - pr.top + pane.scrollTop;
+  const blocks = [...pane.querySelectorAll<HTMLElement>(".page > *")];
+  const block = blocks.find((b) => b.contains(el)) ?? el;
+  const blockTop = y(block.getBoundingClientRect());
+  const want = blockTop + block.offsetHeight + 8;
+  const view = pane.clientHeight;
+  if (blockTop >= pane.scrollTop && want <= pane.scrollTop + view) return;
+  // The smallest scroll that starts at a block boundary and shows the whole block.
+  let target = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    const top = y(blocks[i].getBoundingClientRect());
+    const prevBottom = i > 0 ? y(blocks[i - 1].getBoundingClientRect()) + blocks[i - 1].offsetHeight : 0;
+    target = i === 0 ? 0 : Math.max(prevBottom, top - 14);
+    if (target + view >= want || blocks[i] === block) break;
+  }
+  if (Math.abs(pane.scrollTop - target) > 2) pane.scrollTo({ top: target, behavior: smooth && !REDUCED ? "smooth" : "auto" });
+}
+
+/** Any direct input in a pane hands scrolling to the reader for the rest of the scene. */
+function takeControl() {
+  autoScroll = false;
+  followTimers.forEach((h) => clearTimeout(h));
+  followTimers = [];
+}
+for (const id of ["src", "doc"]) {
+  const pane = $(id);
+  pane.tabIndex = 0;
+  for (const type of ["wheel", "touchstart", "pointerdown", "keydown"] as const) pane.addEventListener(type, takeControl, { passive: true });
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -430,7 +463,6 @@ function renderCaption(beats: Beat[]) {
 
 function tick() {
   const t = sceneTime();
-  if (docFile === null) follow(t, true);
   $("progress").style.width = Number.isFinite(timeline.len) ? `${clamp(t / timeline.len) * 100}%` : "0%";
   if (playing && FROZEN === null && t > timeline.len) {
     if (scene >= FIX_SCENE) {
@@ -455,6 +487,7 @@ function prev() {
 function togglePlay() {
   playing = !playing;
   started = true;
+  if (playing) autoScroll = true;
   if (playing && (scene === 0 || (scene === FIX_SCENE && sceneTime() > timeline.len))) enter(1);
   renderPlay();
 }
@@ -642,6 +675,8 @@ document.addEventListener("keydown", (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const r = $("theatre").getBoundingClientRect();
   if (r.bottom < innerHeight * 0.3 || r.top > innerHeight * 0.7) return;
+  // Keys inside a focused pane scroll that pane; they never step scenes or toggle play.
+  if ((e.target as HTMLElement).closest(".doc")) return;
   if (e.key === "ArrowRight") {
     playing = false;
     next();
@@ -659,7 +694,11 @@ function linkOf(el: EventTarget | null): string | null {
   const host = (el as HTMLElement | null)?.closest?.<HTMLElement>("[data-link]");
   return host?.dataset.link?.split(" ")[0] ?? null;
 }
+let hotLink: string | null = null;
+/** Highlights both ends of a link by toggling a class on existing nodes. Never scrolls. */
 function highlightLink(n: string | null) {
+  if (n === hotLink) return;
+  hotLink = n;
   document.querySelectorAll(".hot").forEach((el) => el.classList.remove("hot"));
   if (n) document.querySelectorAll(`[data-link~="${n}"]`).forEach((el) => el.classList.add("hot"));
 }
@@ -668,7 +707,9 @@ document.addEventListener("click", (e) => {
   const n = linkOf(e.target);
   if (!n) return;
   highlightLink(n);
-  // On tap, bring the other end into view inside its pane.
+  // On tap, bring the other end into view inside the other pane, once. This is reader input, so
+  // auto-scroll stops; the scrolled pane does nothing in response.
+  takeControl();
   const from = (e.target as HTMLElement).closest(".doc");
   for (const pane of [$("src"), $("doc")]) {
     if (pane === from) continue;
