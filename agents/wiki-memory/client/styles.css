@@ -329,3 +329,16 @@
 .pane .doc::after { content: ""; display: block; height: 55%; }
 .src-hl .lnum, .chg .gutter { animation: fadeIn 400ms var(--ease) calc((var(--d, 0) - var(--t)) * 1ms) both; }
 @media (prefers-reduced-motion: reduce) { .src-hl .lnum, .chg .gutter { animation: none !important; } }
+
+@layer components {
+  /* Playback speed: a quiet segmented control. */
+  .speed { display: inline-flex; margin-left: 8px; border: 1px solid var(--rule-2); border-radius: 99px; padding: 2px; }
+  .speed-opt { min-width: 44px; padding: 3px 9px; border-radius: 99px; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--muted); transition: color 150ms var(--ease), background-color 150ms var(--ease); }
+  .speed-opt:hover { color: var(--ink); }
+  .speed-opt[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  @media (max-width: 600px) {
+    .transport { flex-wrap: wrap; row-gap: 10px; }
+    .speed { margin-left: 0; }
+    .speed-opt { min-width: 40px; padding: 4px 8px; }
+  }
+}

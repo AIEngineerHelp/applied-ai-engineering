@@ -218,3 +218,35 @@ test("an answered open question is struck through with a note, not deleted", asy
   assert.match(q.html, /Answered by/);
   assert.ok(!blocks.some((b) => b.change === "del" && b.raw.includes("What request rate")));
 });
+
+test("scene clock: one speed multiplier scales every scheduled time and keeps position on change", async () => {
+  const { SceneClock, parseSpeed } = await import("../client/clock.ts");
+  let wall = 1000;
+  const now = () => wall;
+  // An edit scheduled at script time 2300 ms (for example "highlight at 1800, edit 500 ms later").
+  const editAt = 2300;
+  const normal = new SceneClock(now, 1);
+  const slow = new SceneClock(now, 0.5);
+  assert.equal(normal.wallUntil(editAt), 2300);
+  assert.equal(slow.wallUntil(editAt), 4600);
+  // The highlight-to-edit gap (500 ms of script time) also doubles.
+  assert.equal(slow.wallUntil(editAt) - slow.wallUntil(1800), 2 * (normal.wallUntil(editAt) - normal.wallUntil(1800)));
+
+  // Mid-scene change: no jump in position, then the new rate applies.
+  const c = new SceneClock(now, 1);
+  wall += 1200;
+  assert.equal(c.time(), 1200);
+  c.setSpeed(0.5);
+  assert.equal(c.time(), 1200);
+  wall += 1000;
+  assert.equal(c.time(), 1700);
+  c.setSpeed(1.5);
+  wall += 200;
+  assert.equal(c.time(), 2000);
+  c.restart();
+  assert.equal(c.time(), 0);
+
+  assert.equal(parseSpeed("0.75"), 0.75);
+  assert.equal(parseSpeed("2"), null);
+  assert.equal(parseSpeed(null), null);
+});

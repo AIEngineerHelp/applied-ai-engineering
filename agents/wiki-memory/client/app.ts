@@ -12,6 +12,7 @@ import type { FactResult } from "../src/retrieve.ts";
 import { inline, pageMeta, parseClaim, sourceHtml, trackedBlocks, type Block, type SourceMark } from "./doc.ts";
 import { edgeKey, mapSvg } from "./map.ts";
 import { esc } from "./render.ts";
+import { parseSpeed, SceneClock, SPEEDS } from "./clock.ts";
 
 const RUN = runJson as unknown as Run;
 const INGESTS = RUN.steps.filter((s) => s.kind === "ingest");
@@ -61,12 +62,22 @@ function renderHero() {
 let scene = 0;
 let playing = false;
 let started = false;
-let sceneStart = performance.now();
+// One clock for everything time-based in the story. Speed comes from ?speed=, then the saved choice.
+function initialSpeed(): number {
+  const fromUrl = parseSpeed(params.get("speed"));
+  if (fromUrl) return fromUrl;
+  try {
+    return parseSpeed(localStorage.getItem("wiki-memory-speed")) ?? 1;
+  } catch {
+    return 1;
+  }
+}
+const clock = new SceneClock(() => performance.now(), initialSpeed());
 let docFile: string | null = null;
 let marginTab: "map" | "index" | "log" = "map";
 let timeline = { len: Infinity };
 
-const sceneTime = () => (FROZEN !== null ? FROZEN : REDUCED ? 1e7 : performance.now() - sceneStart);
+const sceneTime = () => (FROZEN !== null ? FROZEN : REDUCED ? 1e7 : clock.time());
 
 function stepFor(i: number): Step | null {
   if (i >= 1 && i <= INGESTS.length) return INGESTS[i - 1];
@@ -84,12 +95,13 @@ interface Beat {
 
 function enter(i: number) {
   scene = Math.max(0, Math.min(SCENES - 1, i));
-  sceneStart = performance.now();
+  clock.restart();
   docFile = null;
   renderChrome();
   const { beats, len } = renderScene();
   timeline = { len };
   renderCaption(beats);
+  applyRate();
   scheduleFollow();
   tick();
 }
@@ -246,18 +258,26 @@ let autoScroll = true;
 let followTimers: number[] = [];
 
 function scheduleFollow() {
-  followTimers.forEach((h) => clearTimeout(h));
-  followTimers = [];
   autoScroll = true;
-  const now = sceneTime();
   if (FROZEN !== null || REDUCED) {
     // One placement for the frame being shown.
-    for (const pane of [$("src"), $("doc")]) followOnce(pane, now, false);
+    followTimers.forEach((h) => clearTimeout(h));
+    followTimers = [];
+    for (const pane of [$("src"), $("doc")]) followOnce(pane, sceneTime(), false);
     return;
   }
+  rescheduleFollow();
+}
+
+/** (Re)schedules the auto-scrolls still ahead in this scene, in wall time at the current speed. */
+function rescheduleFollow() {
+  followTimers.forEach((h) => clearTimeout(h));
+  followTimers = [];
+  if (!autoScroll || FROZEN !== null || REDUCED) return;
+  const now = sceneTime();
   for (const pane of [$("src"), $("doc")]) {
-    const times = [...new Set([...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].map(revealAt))].sort((a, b) => a - b);
-    for (const at of times) followTimers.push(window.setTimeout(() => followOnce(pane, at, true), Math.max(0, at - now + 60)));
+    const times = [...new Set([...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].map(revealAt))].filter((at) => at >= now - 1).sort((a, b) => a - b);
+    for (const at of times) followTimers.push(window.setTimeout(() => followOnce(pane, at, true), clock.wallUntil(at) + 60));
   }
 }
 
@@ -446,6 +466,31 @@ function renderChrome() {
   renderPlay();
 }
 
+/** Runs every CSS animation on the page at the clock's speed. playbackRate keeps each one's position. */
+function applyRate() {
+  if (FROZEN !== null || REDUCED || !document.getAnimations) return;
+  for (const a of document.getAnimations()) a.playbackRate = clock.speed;
+}
+
+function setSpeed(speed: number) {
+  if (speed === clock.speed) return;
+  clock.setSpeed(speed);
+  applyRate();
+  rescheduleFollow();
+  renderSpeed();
+  try {
+    localStorage.setItem("wiki-memory-speed", String(speed));
+  } catch {
+    // Storage may be unavailable; the speed still applies for this visit.
+  }
+}
+
+function renderSpeed() {
+  $("speed").innerHTML = SPEEDS.map(
+    (s) => `<button type="button" class="speed-opt" data-speed="${s}" aria-pressed="${s === clock.speed}" aria-label="${s}× speed">${s}×</button>`,
+  ).join("");
+}
+
 function renderPlay() {
   $("play").textContent = playing ? "Pause" : "Play";
 }
@@ -544,6 +589,7 @@ function renderFaceoff() {
   const tallyAt = 250 + order.length * 260 + 150;
   $("arena").innerHTML = side(q, "wiki", at, tallyAt) + side(q, "rag", at, tallyAt + 200);
   $("verdict").innerHTML = verdictHtml(q, tallyAt + 900);
+  applyRate();
 }
 
 function side(q: QuestionResult, which: "wiki" | "rag", at: (id: string) => number, tallyAt: number): string {
@@ -626,8 +672,12 @@ function verdictHtml(q: QuestionResult, at: number): string {
 // ---------------------------------------------------------------- wiring
 
 document.addEventListener("click", (e) => {
-  const el = (e.target as HTMLElement).closest<HTMLElement>("[data-scene], [data-file], [data-q], [data-tab], #play, #next, #prev, #cta, #theme");
+  const el = (e.target as HTMLElement).closest<HTMLElement>("[data-scene], [data-file], [data-q], [data-tab], [data-speed], #play, #next, #prev, #cta, #theme");
   if (!el) return;
+  if (el.dataset.speed) {
+    setSpeed(Number(el.dataset.speed));
+    return;
+  }
   if (el.id === "play") togglePlay();
   else if (el.id === "next") next();
   else if (el.id === "prev") prev();
@@ -661,6 +711,7 @@ function openFile(slug: string) {
   docFile = slug;
   const { html, marks } = pageHtml(step, change, 0, 100);
   $("doc").innerHTML = html;
+  applyRate();
   $("doc-path").textContent = `wiki/${change.path}`;
   $("doc-label").textContent = change.status === "created" ? "New wiki page" : "Wiki page · tracked changes";
   if (scene !== FIX_SCENE) {
@@ -754,6 +805,7 @@ const io = new IntersectionObserver(
 // ---------------------------------------------------------------- start
 
 $("about-chunks").textContent = String(RUN.chunkCount);
+renderSpeed();
 renderThemeLabel();
 renderHero();
 renderQuestions();
@@ -774,4 +826,5 @@ if (jump && !params.has("solo")) {
   $(jump).scrollIntoView();
   root.style.scrollBehavior = "";
 }
+applyRate();
 if (FROZEN === null && !REDUCED) setInterval(tick, 100);

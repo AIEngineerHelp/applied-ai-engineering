@@ -298,7 +298,7 @@ The app tells the worked example in three short acts, set like a typeset paper. 
 - **Act two: lint.** The left pane becomes a lint report listing the two contradictions, with the conflicting values side by side, and the missing page. The right pane shows the retention page with the claims that disagree marked. On the map, the pages and sources that disagree are circled in red. In the fix scene, the draft's claims are struck through as disputed and lint finds nothing.
 - **Act three: the face-off.** For each question, excerpts from the top wiki pages and the top raw chunks appear in turn, followed by the facts each side found, and the computed verdict comes last.
 
-Scenes play automatically once you reach them. Pause, step and replay with the controls under the page, the scene names, the source list, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Only one thing moves at a time, each beat takes 1.2 seconds or less, and there are no flashes. With reduced motion turned on, every scene appears in its final state.
+Scenes play automatically once you reach them. A speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser) scales every beat, highlight, edit and auto-scroll through one clock, and changing it mid-scene continues from where you are. Pause, step and replay with the controls under the page, the scene names, the source list, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Only one thing moves at a time, each beat takes 1.2 seconds or less, and there are no flashes. With reduced motion turned on, every scene appears in its final state.
 
 Every view can be linked, and any moment can be frozen for review:
 
