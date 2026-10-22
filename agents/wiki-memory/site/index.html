@@ -26,6 +26,7 @@
     <nav class="flex items-center gap-5 text-[13.5px]">
       <a class="nav hidden sm:inline" href="#idea">The idea</a>
       <a class="nav hidden sm:inline" href="#theatre">Walkthrough</a>
+      <a class="nav hidden sm:inline" href="#conflicts">Conflicts</a>
       <a class="nav hidden sm:inline" href="#recap">Recap</a>
       <a class="nav" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
       <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
@@ -158,22 +159,69 @@
     </div>
   </section>
 
-  <!-- 6. Recap -->
+  <!-- 5. Conflicts -->
+  <section id="conflicts" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">5 · How conflicts are resolved</p>
+        <h2 class="title">A rule decides most conflicts. A person decides the rest.</h2>
+        <p class="lede">Real documents disagree all the time. The agent writes each fact down with its scope, source and date; code then applies one ranking rule, and anything the rule can't decide goes to a person.</p>
+      </div>
+      <div id="conflicts-body" class="mt-10"></div>
+      <p class="caption mt-6">Computed by <code>src/resolve.ts</code> from the facts above, which come from the five documents plus two extra runbooks added for this example. The rule is a design choice you would set for your own organisation.</p>
+    </div>
+  </section>
+
+  <!-- 6. Who does what -->
+  <section id="roles" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">6 · Who does what</p>
+        <h2 class="title">The model, the code and a person</h2>
+        <p class="lede">Wiki memory is not just a prompt. The model does the reading and writing; plain code keeps the wiki honest; a person settles what neither can.</p>
+      </div>
+      <div class="roles">
+        <div><h3 class="sub">The model</h3><ul>
+          <li>Reads each new document.</li>
+          <li>Decides which pages it affects.</li>
+          <li>Writes and rewrites page text.</li>
+          <li>Crosses out old facts, with the reason.</li>
+          <li>Spots contradictions that need understanding.</li>
+          <li>At question time, picks the pages and writes the answer.</li></ul></div>
+        <div><h3 class="sub">Code</h3><ul>
+          <li>Stores the files, with Git history.</li>
+          <li>Rebuilds the index and the log.</li>
+          <li>Checks that links point to real pages.</li>
+          <li>Compares structured fact values (lint).</li>
+          <li>Applies the source-ranking rule.</li>
+          <li>Checks that every quote exists verbatim in its source.</li>
+          <li>Enforces rules: the agent edits only wiki files; pages stay under a size limit.</li></ul></div>
+        <div><h3 class="sub">A person</h3><ul>
+          <li>Approves sensitive edits.</li>
+          <li>Decides disputed facts from the review queue.</li>
+          <li>Owns the ranking rule and the schema.</li></ul></div>
+      </div>
+      <p class="caption mt-6">In this demo the model's part is written by hand: the page edits and plain-language notes are scripted. The code's part is real and tested: tracked changes, index and log, link and fact checks, the ranking rule and the quote checks.</p>
+    </div>
+  </section>
+
+  <!-- 7. Recap -->
   <section id="recap" class="sec">
     <div class="wrap narrow">
-      <p class="eyebrow">5 · Recap</p>
+      <p class="eyebrow">7 · Recap</p>
       <h2 class="title">So what is wiki memory?</h2>
       <ul class="takeaways">
         <li><strong>The agent keeps its own notebook of pages</strong> and updates it as each new document arrives, instead of re-searching the raw documents for every question.</li>
         <li><strong>Old values are crossed out, not deleted,</strong> with the document that replaced them. The pages say what is true now and how it changed.</li>
-        <li><strong>A periodic check (lint) catches disagreements</strong> that no single update could see. A person decides which value wins.</li>
+        <li><strong>A periodic check (lint) catches disagreements</strong> that no single update could see. A ranking rule in code settles most of them; a person decides the rest.</li>
       </ul>
       <div class="when">
         <div><h3 class="sub">Use it when</h3><p>Knowledge builds up and changes over weeks: a project, a research topic, an agent's notes about a codebase or a customer. Questions are asked far more often than documents arrive.</p></div>
         <div><h3 class="sub">Plain retrieval is enough when</h3><p>The documents are many and rarely change, each answer sits in one passage, or nobody will review what the agent writes. The third question under “Two more questions” is one such case.</p></div>
       </div>
       <p class="kg"><strong>Not a knowledge graph.</strong> A knowledge graph stores typed facts that code traverses. A wiki stores pages of prose that the agent reads and rewrites.</p>
-      <p class="mt-8"><a class="link-arrow" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Read the full article: the pattern, its trade-offs and failure modes</a></p>
+      <p class="kg"><strong>This is a small demo, not a production system.</strong> Five short documents and hand-written edits. Real deployments have many large documents and need routing, page splitting, search over the wiki, a review queue, provenance and access control. The article covers these under “Taking it to production”.</p>
+      <p class="mt-8"><a class="link-arrow" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#taking-it-to-production">Read the full article: the pattern, its trade-offs and how to run it in production</a></p>
     </div>
   </section>
 

@@ -464,3 +464,53 @@
   .seq, .seq-wipe .pl-text, .chg, .chg-mod ins, .chg-strike .cn, .src-hl, .src-hl .lnum, .chg .gutter, .map .me-new { animation: none !important; }
   .chg del, .chg-strike .cv-s { animation: none !important; background-size: 100% 1px; }
 }
+
+/* ---------------------------------------------------------------- conflicts and roles */
+@layer components {
+  .cf-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 40px; }
+  .cf-table-wrap { margin-top: 12px; overflow-x: auto; }
+  .cf-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .cf-table th { text-align: left; font-weight: 500; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--rule-2); }
+  .cf-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); }
+  .cf-table td.v { font-family: var(--font-serif); font-size: 16px; color: var(--ink); white-space: nowrap; }
+  .cf-table td.d { white-space: nowrap; }
+  .cf-table .q { display: block; margin-top: 2px; font-family: var(--font-serif); font-size: 13.5px; color: var(--muted); }
+  .cf-table tr.kh th { padding-top: 18px; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--ink); border-bottom: 1px solid var(--rule); }
+  .cf-table tr.kh th code { margin-left: 6px; color: var(--muted); }
+  .rank { margin-top: 12px; counter-reset: r; }
+  .rank li { counter-increment: r; position: relative; padding: 8px 0 8px 28px; border-top: 1px solid var(--rule); font-size: 14px; }
+  .rank li::before { content: counter(r); position: absolute; left: 0; top: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .rank li strong { font-weight: 600; }
+  .rank li span { display: block; color: var(--muted); font-size: 13px; }
+  .res-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .res { padding: 16px 18px; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); }
+  .res[data-status="disputed"] { border-color: color-mix(in srgb, var(--del) 45%, transparent); }
+  .res-h { font-size: 13px; color: var(--muted); }
+  .res-v { margin-top: 4px; font-family: var(--font-serif); font-size: 22px; }
+  .tag-ok, .tag-bad { margin-left: 6px; vertical-align: 4px; font-family: var(--font-sans); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+  .tag-ok { color: var(--add); background: var(--add-bg); }
+  .tag-bad { color: var(--del); background: var(--del-bg); }
+  .res-src { margin-top: 4px; font-size: 13px; color: var(--ink-2); }
+  .lost { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--rule); display: grid; gap: 6px; font-size: 13px; }
+  .lost s { text-decoration-color: var(--del); color: var(--muted); }
+  .lost .src { color: var(--ink-2); }
+  .lost .why { display: block; color: var(--muted); }
+  .review { margin-top: 28px; padding: 20px 22px; border: 1px solid var(--rule-2); border-left: 2px solid var(--del); border-radius: 4px; background: var(--sheet); }
+  .review-q { margin-top: 6px; font-family: var(--font-serif); font-size: 21px; }
+  .review-sides { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .review-v { font-family: var(--font-serif); font-size: 26px; }
+  .review-s { font-size: 13px; color: var(--muted); }
+  .review-quote { margin-top: 6px; font-family: var(--font-serif); font-size: 15px; color: var(--ink-2); }
+  .review-note { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); }
+  .roles { margin-top: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--ink); }
+  .roles > div { padding: 18px 24px 0 0; }
+  .roles > div + div { padding-left: 24px; border-left: 1px solid var(--rule); }
+  .roles ul { margin-top: 10px; display: grid; gap: 6px; }
+  .roles li { position: relative; padding-left: 14px; font-size: 14.5px; color: var(--ink-2); }
+  .roles li::before { content: "–"; position: absolute; left: 0; color: var(--muted); }
+  @media (max-width: 860px) {
+    .cf-grid, .res-grid, .roles, .review-sides { grid-template-columns: 1fr; }
+    .roles > div, .roles > div + div { padding: 18px 0 0; border-left: 0; }
+    .roles > div + div { margin-top: 18px; border-top: 1px solid var(--rule); }
+  }
+}

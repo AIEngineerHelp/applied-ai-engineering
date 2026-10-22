@@ -263,3 +263,60 @@ test("walkthrough text: key sentences are verbatim, every step says what the age
     }
   }
 });
+
+test("resolver: rank wins, newer wins within a rank, scopes are separate, ties are disputed", async () => {
+  const { resolveScope, resolveAll } = await import("../src/resolve.ts");
+  const ranking = [
+    { rank: 3, types: ["policy"], note: "" },
+    { rank: 2, types: ["design doc", "runbook"], note: "" },
+    { rank: 1, types: ["draft"], note: "" },
+  ];
+  const f = (value: string, sourceType: string, date: string, scope = "all", source = `${sourceType}-${date}`) => ({ key: "k", value, scope, source, sourceType, date, quote: "" });
+  // Ranking order beats recency.
+  let r = resolveScope([f("7", "draft", "2026-05-05"), f("30", "policy", "2026-01-01")], ranking, "k", "all");
+  assert.equal(r.status, "current");
+  assert.equal(r.current!.value, "30");
+  assert.equal(r.lost[0].kind, "outranked");
+  // Newer beats older at the same rank.
+  r = resolveScope([f("100", "design doc", "2026-03-16"), f("50", "runbook", "2026-04-07")], ranking, "k", "all");
+  assert.equal(r.current!.value, "50");
+  assert.equal(r.lost[0].kind, "older");
+  // Scope separation: a scoped fact doesn't touch other scopes; an "all" fact touches every scope.
+  const scoped = [f("90", "policy", "2026-04-20", "enterprise"), f("30", "policy", "2026-04-20", "standard"), f("7", "draft", "2026-05-05")];
+  const all = resolveAll(scoped, ranking, { k: { scopes: ["enterprise", "standard"] } });
+  assert.deepEqual(all.map((x) => [x.scope, x.current?.value]), [["enterprise", "90"], ["standard", "30"]]);
+  // Same rank, same date, different values: disputed, never picked silently.
+  r = resolveScope([f("24", "runbook", "2026-05-12", "all", "a"), f("12", "design doc", "2026-05-12", "all", "b"), f("24", "draft", "2026-05-05")], ranking, "k", "all");
+  assert.equal(r.status, "disputed");
+  assert.deepEqual(r.contenders.map((c) => c.value), ["24", "12"]);
+  assert.equal(r.current, null);
+  // Same rank, same date, same value: not a dispute.
+  r = resolveScope([f("24", "runbook", "2026-05-12", "all", "a"), f("24", "runbook", "2026-05-12", "all", "b")], ranking, "k", "all");
+  assert.equal(r.status, "current");
+  assert.throws(() => resolveScope([f("1", "tweet", "2026-01-01")], ranking, "k", "all"), /Unknown source type/);
+});
+
+test("resolver on the corpus: retention resolves by scope and authority; the max range is disputed", async () => {
+  const { renderConflictsHtml } = await import("../client/conflicts.ts");
+  const c = run.conflicts;
+  const byScope = Object.fromEntries(c.results.map((x) => [`${x.key}/${x.scope}`, x]));
+  assert.equal(byScope["export.retention/enterprise"].current!.value, "90 days");
+  assert.equal(byScope["export.retention/standard"].current!.value, "30 days");
+  for (const s of ["enterprise", "standard"]) {
+    const draft = byScope[`export.retention/${s}`].lost.find((l) => l.fact.sourceType === "draft")!;
+    assert.equal(draft.kind, "outranked");
+  }
+  const range = byScope["export.max-range/all"];
+  assert.equal(range.status, "disputed");
+  assert.deepEqual(range.contenders.map((x) => x.value).sort(), ["12 months", "24 months"]);
+  // Every quoted sentence exists verbatim in its source (raw/ or review/).
+  const texts = new Map<string, string>([...loadSources().map((s) => [`raw/${s.file}`, s.text] as const), ...c.reviewSources.map((s) => [`review/${s.file}`, s.text] as const)]);
+  for (const f of c.facts) assert.ok(texts.get(f.source)?.split("\n").some((l) => l.includes(f.quote)), `quote not verbatim in ${f.source}: ${f.quote}`);
+  // What the app displays agrees with the resolver.
+  const html = renderConflictsHtml(c);
+  assert.match(html, /90 days/);
+  assert.match(html, /Needs a person/);
+  assert.match(html, /12 months/);
+  assert.equal((html.match(/data-status="disputed"/g) ?? []).length, 1);
+  assert.equal((html.match(/data-status="current"/g) ?? []).length, 2);
+});

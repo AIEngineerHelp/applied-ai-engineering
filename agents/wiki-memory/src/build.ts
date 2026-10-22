@@ -9,6 +9,7 @@ import { diffStats, lineDiff, type DiffLine } from "./diff.ts";
 import { forceLayout, type Layout } from "./layout.ts";
 import { lint, type LintResult } from "./lint.ts";
 import { QUESTIONS } from "./questions.ts";
+import { resolveAll, type Fact, type RankTier, type Resolution } from "./resolve.ts";
 import { chunkSources, checkFacts, retrieveChunks, retrievePages, type FactResult, type RawSource } from "./retrieve.ts";
 import { applyEdits, buildGraph, buildIndex, currentLines, formatLog, type Claim, type Graph, type LogEntry, type PageType, type Wiki } from "./wiki.ts";
 
@@ -72,6 +73,28 @@ export interface QuestionResult {
   ragFacts: FactResult[];
 }
 
+export interface Conflicts {
+  ranking: RankTier[];
+  keys: Record<string, { label: string; scopes: string[] }>;
+  facts: Fact[];
+  results: Resolution[];
+  /** Two extra synthetic sources, used only by the conflict example (not by the walkthrough). */
+  reviewSources: { file: string; title: string; date: string; text: string }[];
+}
+
+export function loadConflicts(): Conflicts {
+  const data = JSON.parse(readFileSync(join(CORPUS, "conflicts.json"), "utf8")) as Omit<Conflicts, "results" | "reviewSources">;
+  const dir = join(CORPUS, "review");
+  const reviewSources = readdirSync(dir)
+    .filter((f) => f.endsWith(".md"))
+    .sort()
+    .map((file) => {
+      const text = readFileSync(join(dir, file), "utf8");
+      return { file, date: file.slice(0, 10), title: /^# (.+)$/m.exec(text)?.[1] ?? file, text };
+    });
+  return { ...data, results: resolveAll(data.facts, data.ranking, data.keys), reviewSources };
+}
+
 export interface Run {
   note: string;
   schema: string;
@@ -83,6 +106,7 @@ export interface Run {
   layout: Layout;
   questions: QuestionResult[];
   k: { chunks: number; pages: number };
+  conflicts: Conflicts;
 }
 
 export const K_CHUNKS = 3;
@@ -214,6 +238,7 @@ export function buildRun(): Run {
     layout: forceLayout(buildGraph(final)),
     questions,
     k: { chunks: K_CHUNKS, pages: K_PAGES },
+    conflicts: loadConflicts(),
   };
 }
 
