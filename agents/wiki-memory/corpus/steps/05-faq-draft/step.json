@@ -1,0 +1,9 @@
+{
+  "kind": "ingest",
+  "date": "2026-05-05",
+  "title": "Draft help-centre FAQ",
+  "focus": "export-retention",
+  "source": "2026-05-05-faq-draft.md",
+  "verdict": "The draft FAQ says exports run every hour and are kept for 7 days. Neither statement says it replaces the old value, so the schema tells the agent to record both values side by side rather than guess. The wiki now holds two conflicting pairs of claims.",
+  "lesson": "An ingest only sees the pages it opens. Deciding between sources is left to the lint pass, which compares every claim in the wiki at once."
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "lint",
+  "date": "2026-05-06",
+  "title": "Lint pass and fixes",
+  "focus": "export-retention",
+  "verdict": "After a person approved the proposed fixes, the two claims from the draft FAQ are marked disputed rather than deleted, the FAQ page says what needs correcting, and Jun Park gets the page that four pages already linked to.",
+  "lesson": "Lint finds the problem; a person picks the answer. The approved design and Amara's decision outrank a contractor's draft, but the draft's claims stay visible with the reason they were set aside."
+}

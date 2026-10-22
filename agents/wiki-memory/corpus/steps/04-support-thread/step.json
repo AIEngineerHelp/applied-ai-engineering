@@ -1,0 +1,9 @@
+{
+  "kind": "ingest",
+  "date": "2026-04-20",
+  "title": "Support thread on retention",
+  "focus": "export-retention",
+  "source": "2026-04-20-support-thread.md",
+  "verdict": "A short chat thread changes a policy: from 1 May, Enterprise exports are kept for 90 days and every other plan stays at 30. The agent replaces the single 30-day claim with one claim per plan.",
+  "lesson": "Decisions often arrive in chat, not in documents. Filing them on the policy page means the next reader finds them without knowing the thread exists."
+}

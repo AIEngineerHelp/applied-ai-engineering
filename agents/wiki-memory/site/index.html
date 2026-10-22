@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiki Memory</title>
+<meta name="description" content="Watch an agent turn five sources into an interlinked markdown wiki, one ingest at a time: page diffs, the link graph, the index and log, a lint pass that flags contradictions, and a comparison with plain chunk RAG.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  (() => {
+    let t = new URLSearchParams(location.search).get("theme");
+    if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("wiki-memory-theme"); } catch {} }
+    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>
+</head>
+<body class="bg-ground font-sans text-[14px] text-ink antialiased">
+
+<header class="sticky top-0 z-20 border-b border-rule bg-ground/90 backdrop-blur">
+  <div class="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-4 sm:px-6">
+    <svg class="size-6 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="currentColor" fill-opacity=".18"/><path d="M10.5 7h3M17 10.5v3M10.5 10.5l3 3"/>
+    </svg>
+    <h1 class="font-serif text-[20px] leading-none tracking-tight whitespace-nowrap">Wiki memory</h1>
+    <span class="hidden truncate text-[13px] text-muted md:block">An agent that keeps a wiki instead of re-reading its sources</span>
+    <nav class="ml-auto flex shrink-0 items-center gap-1 text-[13px] text-muted">
+      <a class="navlink" href="#about">About</a>
+      <a class="navlink hidden sm:block" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory">Code</a>
+      <button id="theme" type="button" class="navlink grid place-items-center" aria-label="Switch color theme" title="Switch color theme">
+        <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-[1440px] px-4 pb-16 sm:px-6">
+
+  <!-- Guided flow -->
+  <ol id="stepper" class="mt-5 grid grid-cols-3 gap-2" aria-label="Steps"></ol>
+
+  <!-- Plain-language verdict for what is on screen -->
+  <section id="verdict" class="verdict mt-4" aria-live="polite"></section>
+
+  <!-- The stage for the current step -->
+  <section id="stage" class="mt-4"></section>
+
+  <!-- About -->
+  <section id="about" class="mt-16 scroll-mt-20 border-t border-rule pt-10">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div class="prose-block">
+        <p class="kicker">About this demo</p>
+        <h2 class="mt-2 font-serif text-[26px] leading-tight">What wiki memory is</h2>
+        <p>Plain retrieval (RAG) re-reads raw chunks of your documents for every question. With wiki memory, an agent instead <strong>maintains a set of markdown pages</strong>: when a source arrives it updates the pages about each person, system and policy the source mentions, links them, and records what changed. Questions are answered from those pages, which already reflect every source read so far.</p>
+        <p>The pattern was written up by Andrej Karpathy as <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">“LLM Wiki”</a> (April 2026): raw sources that are never edited, a wiki the model owns, and a schema file that tells it how to keep the wiki. Three operations keep it going: <em>ingest</em>, <em>query</em> and <em>lint</em>.</p>
+        <h3>What is scripted and what is computed</h3>
+        <ul>
+          <li><span class="tag tag-scripted">Scripted</span> The five sources, the pages the agent writes at each step, the step notes and the example answers were written by hand to show what a careful LLM maintainer would produce. No model was called.</li>
+          <li><span class="tag tag-computed">Computed</span> Everything derived from those pages is computed by code and covered by tests: the diffs, the link graph, <code>index.md</code>, <code>log.md</code>, the lint findings, the BM25 rankings and the fact checks.</li>
+        </ul>
+      </div>
+      <div class="prose-block">
+        <h3 class="!mt-0">How step 3 compares the two</h3>
+        <p>Both sides use the same BM25 ranker. Chunk RAG ranks <span id="about-chunks"></span> paragraph chunks of the raw sources and keeps the top <span id="about-k-chunks"></span>. The wiki side ranks the wiki's topic pages (entities, concepts and the overview) and keeps the top <span id="about-k-pages"></span>, standing in for an agent that reads <code>index.md</code> and opens the most relevant pages. Struck-through claims are shown but don't count as current.</p>
+        <p>The fact checks look for whole statements, so “lowered from 100 to 50” isn't counted as stating 100. With an embedding retriever, or a larger corpus, the rankings would differ; this is one small example, not a benchmark.</p>
+        <h3>Sources</h3>
+        <ul class="sources">
+          <li>Andrej Karpathy, <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a>, GitHub gist, 4 April 2026.</li>
+          <li>Anthropic, <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool">Memory tool</a> and <a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>.</li>
+          <li>Packer et al., <a href="https://arxiv.org/abs/2310.08560">MemGPT: Towards LLMs as Operating Systems</a>, 2023.</li>
+          <li>Rasmussen et al., <a href="https://arxiv.org/abs/2501.13956">Zep: A Temporal Knowledge Graph Architecture for Agent Memory</a>, 2025.</li>
+          <li>LangChain, <a href="https://langchain-ai.github.io/langmem/concepts/conceptual_guide/">LangMem core concepts</a>.</li>
+        </ul>
+        <p class="text-[13px] text-muted">Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>. Discuss it in <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="build/app.js"></script>
+</body>
+</html>

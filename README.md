@@ -48,6 +48,9 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 
 [Pharma research agent](agents/pharma-research-agent/README.md) is a production-shaped research workspace for drug and clinical-evidence questions. An orchestrator reads a skills layer and plans the research, parallel sub-agents search PubMed, ClinicalTrials.gov, FDA labels and the web, and a synthesis agent writes a report with every claim cited and checked. It's a Next.js 16 app with durable Vercel Workflow runs, Postgres, live progress, PDF and Word export and share links. It runs offline with no key; live research needs a Gemini key.
+
+[Wiki memory for agents](agents/wiki-memory/README.md) explains the pattern Andrej Karpathy calls an "LLM Wiki": instead of re-retrieving raw chunks for every question, an agent keeps interlinked markdown pages, updating them as each source arrives, striking out values a newer source replaces, and linting the whole wiki for contradictions. A guided app ingests five short sources one at a time, showing every page change as a diff, the link graph, the index and the log, then lints the wiki and compares its pages with chunk RAG on three questions. The agent's pages are scripted; everything derived from them is computed. No API keys.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.
