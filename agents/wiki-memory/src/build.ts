@@ -45,6 +45,12 @@ export interface Step {
   /** One short sentence for the app's subtitle. */
   caption: string;
   links?: SourceLink[];
+  /** For the walkthrough: the page to show, a one-sentence lede, the source sentences that matter
+   * (verbatim), and what the agent did, in plain words. Written by hand. */
+  show: string;
+  lede: string;
+  key: string[];
+  did: string[];
   source?: string;
   verdict: string;
   lesson: string;
@@ -94,7 +100,7 @@ export function loadSources(): RawSource[] {
 }
 
 interface StepFiles {
-  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; caption: string; source?: string; verdict: string; lesson: string; links?: SourceLink[] };
+  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; caption: string; source?: string; verdict: string; lesson: string; links?: SourceLink[]; show: string; lede: string; key: string[]; did: string[] };
   files: { slug: string; text: string }[];
 }
 

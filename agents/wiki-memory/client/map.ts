@@ -26,12 +26,14 @@ export interface MapOptions {
   /** Total time for each sequence; items are spread across it. */
   span?: number;
   fontSize?: number;
+  /** Draw the final state with no animation. */
+  still?: boolean;
 }
 
 export const edgeKey = (a: string, b: string) => [a, b].sort().join("|");
 
 export function mapSvg(graph: Graph, layout: Layout, o: MapOptions): string {
-  const { width: W, height: H, created = new Set(), touched = new Set(), appear = new Set(), labelAll = false, newEdges = new Set(), flagged = new Set(), pairs = [], nodeAt = 0, edgeAt = 0, flagAt = 0, span = 900, fontSize = 10 } = o;
+  const { width: W, height: H, created = new Set(), touched = new Set(), appear = new Set(), labelAll = false, newEdges = new Set(), flagged = new Set(), pairs = [], nodeAt = 0, edgeAt = 0, flagAt = 0, span = 900, fontSize = 10, still = false } = o;
   const pad = { x: W * 0.02, y: H * 0.02 };
   const at = (id: string) => {
     const p = layout[id] ?? { x: 0.5, y: 0.5 };
@@ -47,7 +49,7 @@ export function mapSvg(graph: Graph, layout: Layout, o: MapOptions): string {
       const a = at(e.from);
       const b = at(e.to);
       const k = newList.indexOf(e);
-      const attrs = k >= 0 ? `class="me me-new" pathLength="1" style="--d:${Math.round(edgeAt + k * edgeStep)}"` : `class="me"`;
+      const attrs = k < 0 ? `class="me"` : still ? `class="me me-hl"` : `class="me me-new" pathLength="1" style="--d:${Math.round(edgeAt + k * edgeStep)}"`;
       return `<line ${attrs} x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>`;
     })
     .join("");
@@ -58,7 +60,7 @@ export function mapSvg(graph: Graph, layout: Layout, o: MapOptions): string {
       const b = at(y);
       const mx = (a.x + b.x) / 2;
       const my = (a.y + b.y) / 2 - Math.hypot(b.x - a.x, b.y - a.y) * 0.2;
-      return `<path class="mc seq" style="--d:${flagAt}" d="M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}"/>`;
+      return `<path class="mc${still ? "" : " seq"}" style="--d:${flagAt}" d="M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}"/>`;
     })
     .join("");
 
@@ -94,12 +96,12 @@ export function mapSvg(graph: Graph, layout: Layout, o: MapOptions): string {
       ]
         .filter(Boolean)
         .join(" ");
-      const anim = k >= 0 ? ` seq" style="--d:${Math.round(nodeAt + k * nodeStep)}` : "";
+      const anim = k >= 0 && !still ? ` seq" style="--d:${Math.round(nodeAt + k * nodeStep)}` : "";
       const below = p.y < H - fontSize * 2.2;
       const ly = below ? p.y + r + fontSize + 2 : p.y - r - 5;
       const anchor = p.x < W * 0.12 ? "start" : p.x > W * 0.88 ? "end" : "middle";
       const lx = anchor === "start" ? p.x - r : anchor === "end" ? p.x + r : p.x;
-      const ring = flagged.has(n.id) ? `<circle class="mf seq" style="--d:${flagAt}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r + 4}"/>` : "";
+      const ring = flagged.has(n.id) ? `<circle class="mf${still ? "" : " seq"}" style="--d:${flagAt}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r + 4}"/>` : "";
       const label = labelOk.has(n.id) ? `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="${fontSize}">${esc(n.id)}</text>` : "";
       return `<g class="${cls}${anim}"><title>${esc(n.id)}</title>${ring}<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}"/>${label}</g>`;
     })

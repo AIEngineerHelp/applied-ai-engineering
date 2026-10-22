@@ -55,5 +55,17 @@
         "How long files are kept"
       ]
     }
+  ],
+  "show": "export-retention",
+  "lede": "The first document arrives: notes from the project kickoff. The agent starts its notebook.",
+  "key": [
+    "Build a self-serve export: a customer picks a date range and receives one CSV of their invoices.",
+    "Finished export files are kept for 30 days, then deleted.",
+    "What request rate may we use against the Billing API? Amara will ask Payments."
+  ],
+  "did": [
+    "Created 7 pages: the project, Amara and Rui, the Billing API, the retention policy, a summary of these notes, and an overview.",
+    "Wrote down that files are kept for 30 days, with the date and the document it came from.",
+    "Noted the open question about the Billing API's request rate."
   ]
 }

@@ -5,5 +5,13 @@
   "focus": "export-retention",
   "caption": "A person approves the fixes: the draft's claims are marked disputed, and Jun Park gets a page.",
   "verdict": "After a person approved the proposed fixes, the two claims from the draft FAQ are marked disputed rather than deleted, the FAQ page says what needs correcting, and Jun Park gets the page that four pages already linked to.",
-  "lesson": "Lint finds the problem; a person picks the answer. The approved design and Amara's decision outrank a contractor's draft, but the draft's claims stay visible with the reason they were set aside."
+  "lesson": "Lint finds the problem; a person picks the answer. The approved design and Amara's decision outrank a contractor's draft, but the draft's claims stay visible with the reason they were set aside.",
+  "show": "export-retention",
+  "lede": "The agent checks its whole wiki at once and finds values that disagree.",
+  "key": [],
+  "did": [
+    "Keep 30 and 90 days: they come from an approved decision.",
+    "Mark the draft's 7 days and “every hour” as disputed. They stay visible, with the reason.",
+    "Write the missing page for Jun Park, whom four pages already mention."
+  ]
 }

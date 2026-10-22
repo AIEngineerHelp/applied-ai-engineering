@@ -19,5 +19,17 @@
         "`billing-api.rate-limit`: 100"
       ]
     }
+  ],
+  "show": "billing-api",
+  "lede": "A design document arrives. It answers a question the kickoff left open.",
+  "key": [
+    "The export job runs nightly at 02:00 UTC.",
+    "Jun Park (Payments team) confirmed that the Billing API allows 100 requests per second per client.",
+    "The export job will call it at 80 requests per second to leave headroom."
+  ],
+  "did": [
+    "Wrote the Billing API's limit, 100 requests per second, on the Billing API page.",
+    "Crossed out the open question and noted that this document answered it.",
+    "Added pages for the Payments team and for this document, and updated 5 others."
   ]
 }

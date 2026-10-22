@@ -4,7 +4,7 @@ Most agents forget everything between sessions, or remember it in the least usef
 
 Andrej Karpathy described this pattern in April 2026 as the [“LLM Wiki”](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). This article explains how it works, compares it with retrieval (RAG) and with other kinds of agent memory, and walks through a complete example: five short sources about a fictional project, ingested one at a time, with the real wiki pages before and after each step.
 
-**Try it:** this folder contains a small web app that plays the example. You ingest the sources one by one and watch pages being created and rewritten (as diffs), links appearing in the page graph, and the index and log growing. A lint pass then flags two contradictions, and you can ask three questions to see which wiki pages answer each one, next to what plain chunk RAG retrieves. It runs offline, with no API key. See [The demo app](#the-demo-app).
+**Try it:** this folder contains a small web app that teaches the idea with one question. It shows what plain retrieval returns, explains wiki memory, and then lets you step through five documents. For each one you see what the document says, what the agent did, and the page change that matters most. A check then catches the values that disagree, and the same question is answered again from one page. It runs offline, with no API key. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
@@ -291,23 +291,21 @@ Wiki memory fits best where knowledge accumulates and changes: a research topic 
 
 ## The demo app
 
-The app tells the worked example in three short acts, set like a typeset paper. Light is the default and a dark theme is available. A one-line subtitle says in plain words what each moment shows.
+The app teaches the idea in five short sections, read top to bottom. Nothing moves or scrolls unless you click.
 
-- **Opening.** A short introduction and a thin-line map of the finished wiki, drawn in link by link. One quiet note explains how this differs from a knowledge graph: the wiki holds pages of prose that the agent reads and rewrites, not typed facts that code traverses.
-- **Act one: ingest.** Each source is a scene. The source document is typeset on the left and the wiki page it changes most on the right. Each passage that drives an edit is highlighted with a number, and the edit it caused carries the same number. Hover or tap either one to highlight both. The sequence reads the passage first, then applies the edit. Each pane scrolls to follow, once per edit, until you scroll, wheel, touch or use the keyboard in either pane; from then on scrolling is yours until the next scene or Play. Edits appear as tracked changes: added words on a pale green, removed words struck in red, and superseded claims (and answered questions) struck through with the source that replaced them. Which passage drives which edit is written by hand in each step's `step.json` (`links`), and a test checks that every quoted passage appears verbatim in its source and every link points to a real edit. A small map in the margin then shows the pages and links the source added. `index.md` and `log.md`, with this step's new lines shaded, sit behind quiet tabs next to the map, and every other page the source touched is one click away.
-- **Act two: lint.** The left pane becomes a lint report listing the two contradictions, with the conflicting values side by side, and the missing page. The right pane shows the retention page with the claims that disagree marked. On the map, the pages and sources that disagree are circled in red. In the fix scene, the draft's claims are struck through as disputed and lint finds nothing.
-- **Act three: the face-off.** For each question, excerpts from the top wiki pages and the top raw chunks appear in turn, followed by the facts each side found, and the computed verdict comes last.
+1. **The problem.** One question, "How long are customer exports kept?", and the three passages plain retrieval returns from the five raw documents: 7, 30 and 90 days, with nothing to say which is current. *Retrieval finds text; it doesn't know which text is still true.*
+2. **The idea.** What wiki memory is, in three sentences. A static diagram compares the two flows: without (question → search five raw documents → conflicting passages) and with (each document read once → the agent updates its pages; question → read one or two up-to-date pages). Then one-line definitions of the five words used later: page, link, index, log and lint.
+3. **The walkthrough.** You click through six steps: the five documents, then the check. Each step has the same three parts:
+   - the one to three sentences from the new document that matter (the full document is one click away);
+   - what the agent did, in plain bullets, with a computed count of pages created and revised;
+   - the one page change that matters most, typeset as a static before → after with tracked changes (added text shaded green, crossed-out values kept with the reason).
+   A map of the pages and links, and `index.md` and `log.md`, sit in collapsed sections. The check step shows the values that disagree, what the agent proposes, and the page after the approved fix. An optional **Play** button steps through on a slow timer, and a speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser) scales it.
+4. **The payoff.** The same question again. The wiki answers from one page, next to the same three retrieval passages, now labelled with which ones are outdated. "Two more questions" shows one case where the wiki helps for the same reason, and one where plain retrieval does just as well.
+5. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, and how it differs from a knowledge graph.
 
-Scenes play automatically once you reach them. A speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser) scales every beat, highlight, edit and auto-scroll through one clock, and changing it mid-scene continues from where you are. Pause, step and replay with the controls under the page, the scene names, the source list, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Only one thing moves at a time, each beat takes 1.2 seconds or less, and there are no flashes. With reduced motion turned on, every scene appears in its final state.
+The plain-language text in each step (`lede`, `key` sentences, `did` bullets) is written by hand in `corpus/steps/*/step.json`. Tests check that every key sentence appears word for word in its source and that every step shows a page it really changed.
 
-Every view can be linked, and any moment can be frozen for review:
-
-- `?scene=3` opens a scene. Scenes 1 to 5 are the ingests, 6 is lint and 7 is the fix.
-- `?ask=rate` opens a face-off question (`retention`, `rate` or `incident`).
-- `&t=1900` freezes every animation at that many milliseconds into the scene, or into the opening when no scene is given.
-- `&file=@log` (or `@index`, or a page such as `billing-api`) opens that file in the panel.
-- `&solo=1` shows only that section, which helps headless screenshots.
-- `&theme=light` or `&theme=dark` forces a theme.
+Links for review: `?step=3` opens a walkthrough step, `?only=payoff` shows a single section (`problem`, `idea`, `walk`, `payoff`, `recap`), `?play=1` starts Play mode, and `&theme=dark` or `&theme=light` forces a theme.
 
 ### Run it
 
@@ -322,13 +320,13 @@ npm run data       # rebuilds results/run.json and results/wiki/ from corpus/
 npm run export     # static copy of the app in dist/
 ```
 
-You should see the opening page with a **Watch the wiki grow** button. `npm test` should report 17 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
+You should see the opening question and the three passages plain retrieval returns. `npm test` should report 19 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
 
 ### How it is built
 
 - [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
 - [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
-- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/app.ts`](client/app.ts): the opening, the scenes, the subtitles and the face-off. [`client/styles.css`](client/styles.css): Tailwind CSS v4, the type scale and the sequenced animations. [`site/index.html`](site/index.html): the page.
+- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/app.ts`](client/app.ts): the five sections and the walkthrough. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
 
 To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, edit `src/questions.ts`, and run `npm run data`.
@@ -345,7 +343,7 @@ To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, 
 - Everything in `results/` is deterministic: `npm run data` rebuilds it from `corpus/` with no network or model calls, and the test suite checks the committed copy is current.
 - What is **scripted**: the five sources, every wiki page in `corpus/steps/`, the step verdicts and lessons, and the three example answers in `src/questions.ts`.
 - What is **computed**: the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
-- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (17 passing), `npm run check`, `npm start` and `npm run export`.
+- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (19 passing), `npm run check`, `npm start` and `npm run export`.
 - The corpus is original and synthetic, written for this example; any resemblance to a real company or person is unintended.
 
 ## Sources

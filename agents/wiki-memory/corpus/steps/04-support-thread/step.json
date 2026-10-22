@@ -28,5 +28,15 @@
         "`export.retention.enterprise`"
       ]
     }
+  ],
+  "show": "export-retention",
+  "lede": "A short chat thread arrives. A decision made in chat changes the retention policy.",
+  "key": [
+    "From 1 May, export files for Enterprise plans are kept for 90 days. All other plans stay at 30 days."
+  ],
+  "did": [
+    "Marked the single 30-day value as outdated.",
+    "Wrote two values in its place, 30 days for most plans and 90 days for Enterprise, both credited to this thread.",
+    "Noted on Rui's page that he will update the help-centre FAQ."
   ]
 }

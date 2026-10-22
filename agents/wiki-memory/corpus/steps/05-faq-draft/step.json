@@ -17,5 +17,16 @@
         "`export.retention`: 7 days"
       ]
     }
+  ],
+  "show": "export-retention",
+  "lede": "A draft FAQ arrives. It disagrees with what the wiki already says.",
+  "key": [
+    "Exports are generated every hour.",
+    "Your export is kept for 7 days."
+  ],
+  "did": [
+    "Wrote the draft's 7 days next to the existing values, without choosing between them.",
+    "Did the same for “every hour” on the project page.",
+    "Left the disagreement for the wiki check (lint)."
   ]
 }

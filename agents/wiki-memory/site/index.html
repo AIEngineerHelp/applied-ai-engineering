@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wiki Memory</title>
-<meta name="description" content="An agent that keeps a wiki instead of re-reading its sources. Watch five sources become typeset pages, with every edit shown as a tracked change, then compare the pages with chunk RAG.">
+<meta name="description" content="What wiki memory is, explained with one question: an agent keeps its own notebook of pages and updates it as each new document arrives, instead of re-searching raw documents for every question.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
@@ -22,10 +22,11 @@
 
 <header class="topbar">
   <div class="wrap flex h-14 items-center justify-between gap-4">
-    <a class="wordmark" href="#hero">Wiki memory</a>
+    <a class="wordmark" href="#problem">Wiki memory</a>
     <nav class="flex items-center gap-5 text-[13.5px]">
-      <a class="nav hidden sm:inline" href="#theatre">The story</a>
-      <a class="nav hidden sm:inline" href="#faceoff">Face-off</a>
+      <a class="nav hidden sm:inline" href="#idea">The idea</a>
+      <a class="nav hidden sm:inline" href="#walk">Walkthrough</a>
+      <a class="nav hidden sm:inline" href="#recap">Recap</a>
       <a class="nav" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
       <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
     </nav>
@@ -33,107 +34,128 @@
 </header>
 
 <main>
-  <!-- Opening -->
-  <section id="hero" class="hero">
-    <div class="wrap hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow reveal" style="--d:0">Agents &amp; Workflows</p>
-        <h1 class="hero-title reveal" style="--d:100">Wiki memory</h1>
-        <p class="lead reveal" style="--d:220">Retrieval re-reads raw fragments of your documents for every question. A wiki agent does the reading once: it files each new source into pages about the people, systems and policies it mentions, rewrites what changed, and keeps the history.</p>
-        <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 reveal" style="--d:340">
-          <button id="cta" type="button" class="btn">Watch the wiki grow</button>
-          <a class="link-arrow" href="#faceoff">Skip to the face-off</a>
-        </div>
-        <p class="aside reveal" style="--d:460"><span>Not a knowledge graph.</span> A knowledge graph stores typed facts that code traverses. A wiki stores pages of prose that the agent reads and rewrites; the links between them are just references.</p>
+  <!-- 1. The problem -->
+  <section id="problem" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">1 · The problem</p>
+      <h1 class="title">Wiki memory, explained with one question</h1>
+      <p class="lede">An agent has five documents about one project. Here is what plain retrieval hands it when someone asks one simple question.</p>
+
+      <div class="question"><span class="label">The question</span><p id="q-text"></p></div>
+      <p class="caption mt-6">Plain retrieval searches the five raw documents and returns the best-matching passages:</p>
+      <div id="problem-hits" class="hits"></div>
+      <p class="punch">Retrieval finds text; it doesn't know which text is still true.</p>
+      <p class="caption">Three numbers, from three documents written at different times. Nothing in the passages says which one is current, so the model has to guess every time it is asked. Passages ranked with BM25 over the raw documents (computed).</p>
+    </div>
+  </section>
+
+  <!-- 2. The idea -->
+  <section id="idea" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">2 · The idea</p>
+      <h2 class="title">What is wiki memory?</h2>
+      <p class="lede">Instead of searching the raw documents every time, the agent keeps its own notebook.</p>
+      <div class="prose">
+        <p>Wiki memory is a way for an AI agent to remember what it has read. Each time a new document arrives, the agent reads it once and updates a small set of pages, one per project, person, system or policy: it writes down what is new, rewrites what changed, and crosses out what is no longer true. When a question comes in, the agent reads the one or two pages that cover it, not the raw documents.</p>
       </div>
-      <figure class="hero-figure">
-        <div id="hero-map"></div>
-        <figcaption class="caption">The finished wiki: fifteen pages and the links between them, built from five sources.</figcaption>
+
+      <figure class="diagram" aria-label="Without and with wiki memory">
+        <div class="lane">
+          <div class="lane-name">Without</div>
+          <div class="flow">
+            <span class="box">Question</span><span class="arr">→</span>
+            <span class="box">Search 5 raw documents</span><span class="arr">→</span>
+            <span class="box bad">Conflicting passages: 7, 30 or 90 days?</span>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="lane-name">With</div>
+          <div class="flow">
+            <span class="box">Each document, read once</span><span class="arr">→</span>
+            <span class="box">Agent updates its wiki pages</span>
+          </div>
+          <div class="flow mt-2">
+            <span class="box">Question</span><span class="arr">→</span>
+            <span class="box">Read 1–2 up-to-date pages</span><span class="arr">→</span>
+            <span class="box good">One current answer, with its history</span>
+          </div>
+        </div>
+        <figcaption class="caption">The work moves from question time to the moment a document arrives, and it is done once.</figcaption>
       </figure>
+
+      <h3 class="sub">Five words used below</h3>
+      <dl class="terms">
+        <div><dt>Page</dt><dd>A short markdown file about one thing (the project, a person, a policy) that the agent writes and rewrites. Facts that can change sit one per line, with the document and date they came from.</dd></div>
+        <div><dt>Link</dt><dd>A reference from one page to another, such as <code>[[billing-api]]</code>.</dd></div>
+        <div><dt>Index</dt><dd>A list of every page with a one-line summary. The agent reads it first to find the right pages.</dd></div>
+        <div><dt>Log</dt><dd>A dated list of what the agent changed, one entry per document.</dd></div>
+        <div><dt>Lint</dt><dd>A check across all pages for values that disagree and links to pages that don't exist.</dd></div>
+      </dl>
     </div>
   </section>
 
-  <!-- Acts one and two -->
-  <section id="theatre" class="theatre" aria-label="The wiki grows">
-    <div class="wrap theatre-head">
-      <div class="flex items-baseline gap-3">
-        <span class="eyebrow" id="act-num">Act one</span>
-        <h2 id="act-title" class="act-title">Ingest</h2>
-      </div>
-      <ol id="chapters" class="chapters" aria-label="Scenes"></ol>
-    </div>
+  <!-- 3–4. The walkthrough -->
+  <section id="walk" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">3 · The walkthrough</p>
+      <h2 class="title">Five documents arrive, one at a time</h2>
+      <p class="lede">Step through them. For each one you see what the document says, what the agent did, and the one page change that matters most.</p>
 
-    <div class="wrap stage">
-      <div class="reader">
-        <div id="caption" class="subtitle" aria-live="polite"></div>
-        <div class="panes">
-          <section class="pane" aria-label="Source">
-            <div class="pane-label"><span id="src-label">Raw sources</span><span id="src-path" class="mono"></span></div>
-            <div id="src" class="doc"></div>
-          </section>
-          <section class="pane" aria-label="Wiki page">
-            <div class="pane-label"><span id="doc-label">Wiki page</span><span id="doc-path" class="mono"></span></div>
-            <div id="doc" class="doc"></div>
-          </section>
+      <div class="stepbar">
+        <ol id="steps" class="steps" aria-label="Steps"></ol>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button id="play" type="button" class="tbtn" aria-pressed="false">Play</button>
+          <div id="speed" class="speed" role="group" aria-label="Playback speed"></div>
         </div>
-        <p id="doc-note" class="caption mt-3"></p>
       </div>
-
-      <aside class="margin" aria-label="Map, index and log">
-        <div class="tabs" role="tablist">
-          <button type="button" role="tab" class="tab" data-tab="map">Map</button>
-          <button type="button" role="tab" class="tab" data-tab="index">index.md</button>
-          <button type="button" role="tab" class="tab" data-tab="log">log.md</button>
-        </div>
-        <div id="margin-body" class="margin-body"></div>
-      </aside>
-    </div>
-
-    <div class="wrap transport">
-      <button id="prev" type="button" class="tbtn">← Previous</button>
-      <button id="play" type="button" class="tbtn tbtn-main">Play</button>
-      <button id="next" type="button" class="tbtn">Next →</button>
-      <div id="speed" class="speed" role="group" aria-label="Playback speed"></div>
-      <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+      <div id="step" class="step" aria-live="polite"></div>
+      <div class="stepnav">
+        <button id="prev" type="button" class="tbtn">← Previous</button>
+        <button id="next" type="button" class="btn">Next →</button>
+      </div>
     </div>
   </section>
 
-  <!-- Act three -->
-  <section id="faceoff" class="faceoff" aria-label="Wiki memory versus chunk RAG">
+  <!-- 5. Payoff -->
+  <section id="payoff" class="sec">
     <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">Act three</p>
-        <h2 class="section-title">The face-off</h2>
-        <p class="lead">The same question, answered from two memories. On the left, the agent reads the wiki's topic pages. On the right, plain chunk RAG retrieves paragraphs of the raw sources. Both use the same BM25 ranker.</p>
+      <div class="narrow-l">
+        <p class="eyebrow">4 · The payoff</p>
+        <h2 class="title">Ask the same question again</h2>
+        <p class="lede">After five documents and one check, the wiki answers from one page. Plain retrieval still returns the same three passages.</p>
       </div>
-      <div id="questions" class="qtabs" role="tablist" aria-label="Questions"></div>
-      <div id="arena" class="arena"></div>
-      <div id="verdict" class="verdict" aria-live="polite"></div>
+      <div id="payoff-body" class="compare"></div>
+      <details class="more">
+        <summary>Two more questions</summary>
+        <div id="more-questions"></div>
+      </details>
     </div>
   </section>
 
-  <!-- Notes -->
-  <section id="about" class="about">
-    <div class="wrap about-grid">
-      <div class="prose">
-        <p class="eyebrow">Notes</p>
-        <h2 class="section-title">What you just read</h2>
-        <p>The pattern comes from Andrej Karpathy's <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">“LLM Wiki”</a> (April 2026). Raw sources are never edited, the wiki belongs to the model, and a schema file tells it how to keep the wiki. Three operations keep it going: ingest, query and lint.</p>
-        <p>The five sources, the pages the agent writes, the captions and the example answers were written by hand to show what a careful model should produce; no model was called. Everything derived from those pages is computed by tested code: the tracked changes, the links, the index and log, the lint findings, the BM25 rankings and the fact checks.</p>
-        <p>The face-off is one small example, with <span id="about-chunks"></span> raw chunks, three questions and a lexical ranker. It shows the mechanism; it is not a benchmark. The <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">article</a> covers the trade-offs and when retrieval is the better choice.</p>
+  <!-- 6. Recap -->
+  <section id="recap" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">5 · Recap</p>
+      <h2 class="title">So what is wiki memory?</h2>
+      <ul class="takeaways">
+        <li><strong>The agent keeps its own notebook of pages</strong> and updates it as each new document arrives, instead of re-searching the raw documents for every question.</li>
+        <li><strong>Old values are crossed out, not deleted,</strong> with the document that replaced them. The pages say what is true now and how it changed.</li>
+        <li><strong>A periodic check (lint) catches disagreements</strong> that no single update could see. A person decides which value wins.</li>
+      </ul>
+      <div class="when">
+        <div><h3 class="sub">Use it when</h3><p>Knowledge builds up and changes over weeks: a project, a research topic, an agent's notes about a codebase or a customer. Questions are asked far more often than documents arrive.</p></div>
+        <div><h3 class="sub">Plain retrieval is enough when</h3><p>The documents are many and rarely change, each answer sits in one passage, or nobody will review what the agent writes. The third question under “Two more questions” is one such case.</p></div>
       </div>
-      <div class="prose">
-        <h3>Sources</h3>
-        <ol class="refs">
-          <li>Andrej Karpathy, <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a>, GitHub gist, 4 April 2026.</li>
-          <li>Anthropic, <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool">Memory tool</a> and <a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>.</li>
-          <li>Packer et al., <a href="https://arxiv.org/abs/2310.08560">MemGPT: Towards LLMs as Operating Systems</a>, 2023.</li>
-          <li>Rasmussen et al., <a href="https://arxiv.org/abs/2501.13956">Zep: A Temporal Knowledge Graph Architecture for Agent Memory</a>, 2025.</li>
-          <li>LangChain, <a href="https://langchain-ai.github.io/langmem/concepts/conceptual_guide/">LangMem core concepts</a>.</li>
-          <li>Xu et al., <a href="https://arxiv.org/abs/2502.12110">A-MEM: Agentic Memory for LLM Agents</a>, 2025.</li>
-        </ol>
-        <p class="caption mt-8">Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>. Discuss it in <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a>, or read the <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory">code</a>.</p>
-      </div>
+      <p class="kg"><strong>Not a knowledge graph.</strong> A knowledge graph stores typed facts that code traverses. A wiki stores pages of prose that the agent reads and rewrites.</p>
+      <p class="mt-8"><a class="link-arrow" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Read the full article: the pattern, its trade-offs and failure modes</a></p>
+    </div>
+  </section>
+
+  <section id="about" class="sec about">
+    <div class="wrap narrow prose">
+      <h3 class="sub">About this demo</h3>
+      <p>The pattern comes from Andrej Karpathy's <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">“LLM Wiki”</a> (April 2026). The five documents, the pages the agent writes and the plain-language notes were written by hand to show what a careful model should produce; no model was called. The page changes, links, index, log, lint findings and retrieval rankings are computed by tested code from those pages. It is one small example, not a benchmark.</p>
+      <p class="caption mt-6">Sources: <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">Karpathy, LLM Wiki</a> · <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool">Anthropic, Memory tool</a> · <a href="https://code.claude.com/docs/en/memory">Claude Code memory</a> · <a href="https://arxiv.org/abs/2310.08560">MemGPT</a> · <a href="https://arxiv.org/abs/2501.13956">Zep</a> · <a href="https://langchain-ai.github.io/langmem/concepts/conceptual_guide/">LangMem</a> · <a href="https://arxiv.org/abs/2502.12110">A-MEM</a>. Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>; discuss it in <a href="https://aiengineer.help/c/agents-workflows/7">Agents &amp; Workflows</a>.</p>
     </div>
   </section>
 </main>

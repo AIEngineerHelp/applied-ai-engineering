@@ -250,3 +250,16 @@ test("scene clock: one speed multiplier scales every scheduled time and keeps po
   assert.equal(parseSpeed("2"), null);
   assert.equal(parseSpeed(null), null);
 });
+
+test("walkthrough text: key sentences are verbatim, every step says what the agent did, and shows a changed page", () => {
+  const sources = new Map(loadSources().map((s) => [s.file, s.text]));
+  for (const step of run.steps) {
+    assert.ok(step.lede.length > 20, `step ${step.n} has no lede`);
+    assert.ok(step.did.length >= 1 && step.did.length <= 3, `step ${step.n}: 1 to 3 bullets`);
+    assert.ok(step.changes.some((c) => c.slug === step.show), `step ${step.n}: ${step.show} is not changed in this step`);
+    if (step.kind === "ingest") {
+      assert.ok(step.key.length >= 1 && step.key.length <= 3, `step ${step.n}: 1 to 3 key sentences`);
+      for (const q of step.key) assert.ok(sources.get(step.source!)!.split("\n").some((l) => l.includes(q)), `step ${step.n}: "${q}" is not verbatim in raw/${step.source}`);
+    }
+  }
+});
