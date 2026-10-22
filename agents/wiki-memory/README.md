@@ -4,6 +4,8 @@ Most agents forget everything between sessions, or remember it in the least usef
 
 Andrej Karpathy described this pattern in April 2026 as the [“LLM Wiki”](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). This article explains how it works, compares it with retrieval (RAG) and with other kinds of agent memory, and walks through a complete example: five short sources about a fictional project, ingested one at a time, with the real wiki pages before and after each step.
 
+**Live:** [wiki-memory.vercel.app](https://wiki-memory.vercel.app).
+
 **Try it:** this folder contains a small web app that teaches the idea with one question. It shows what plain retrieval returns, explains wiki memory, and then lets you step through five documents. For each one you see what the document says, what the agent did, and the page change that matters most. A check then catches the values that disagree, and the same question is answered again from one page. It runs offline, with no API key. See [The demo app](#the-demo-app).
 
 ## Key takeaways
