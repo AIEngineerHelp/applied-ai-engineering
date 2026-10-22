@@ -51,6 +51,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Wiki memory for agents](agents/wiki-memory/README.md) ([try it](https://wiki-memory.vercel.app)) explains the pattern Andrej Karpathy calls an "LLM Wiki". Instead of re-searching raw documents for every question, an agent keeps its own notebook of markdown pages and updates it as each new document arrives. The app starts from one question that plain retrieval answers with three conflicting passages. It then explains the idea and lets you step through five documents: for each one, what it says, what the agent did, and the page change that matters most. A check catches values that disagree, and the same question is answered again from one page. The pages are scripted; everything derived from them is computed. No API keys.
 
+[ActGate: a confidence gate between decide and act](evaluations-reliability/actgate-confidence-gate/README.md) separates deciding from writing in a support assistant. A decision model (local Laya or TypeSafe Jev) answers structured questions about a ticket, and a gate in plain code chooses auto_draft, a second opinion, ask_human or blocked; Gemini drafts a reply only when the gate opens. Every step is timed. The gate tests need no API key; the FastAPI app needs Jev and Gemini keys. Contributed by Nagaraju Poralla.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

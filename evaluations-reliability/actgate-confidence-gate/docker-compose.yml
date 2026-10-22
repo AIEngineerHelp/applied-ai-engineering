@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: act
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5433:5432"
+    volumes:
+      - actgate_pg:/var/lib/postgresql/data
+
+  api:
+    build: .
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-changeme}@db:5432/act
+      LAYA_ENABLED: "false"
+      LAYA_PRELOAD: "false"
+    depends_on:
+      - db
+
+volumes:
+  actgate_pg:
