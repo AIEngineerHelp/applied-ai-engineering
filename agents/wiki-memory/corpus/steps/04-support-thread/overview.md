@@ -17,4 +17,5 @@ This wiki tracks [[ledger-export]], a self-serve invoice export, from its kickof
 - 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.
 
 ## Open questions
+- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].
 - The help-centre FAQ still has to be updated for the new retention periods ([[rui-costa]]).

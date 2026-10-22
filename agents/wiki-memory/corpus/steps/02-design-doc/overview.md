@@ -14,4 +14,4 @@ This wiki tracks [[ledger-export]], a self-serve invoice export, from its kickof
 - Files are kept for 30 days; download links expire after 7 ([[export-retention]]).
 
 ## Open questions
-- None.
+- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].

@@ -15,5 +15,5 @@ Raw file: `raw/2026-03-02-kickoff-notes.md`
 - Invoice totals come from the [[billing-api]], owned by the Payments team.
 - [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.
 
-## Open questions
+## Open at the kickoff
 - The request rate the job may use against the Billing API.

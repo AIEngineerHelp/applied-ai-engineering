@@ -11,6 +11,8 @@ export interface Block {
   kind: "h1" | "h2" | "p" | "li" | "claim";
   html: string;
   change: Change;
+  /** The markdown line this block shows (the new version for edits). */
+  raw: string;
 }
 
 // Wiki links, code spans, struck spans and bold are single tokens; then whitespace, words, punctuation.
@@ -97,7 +99,7 @@ const body = (line: string) => line.replace(/^#{1,2} |^- /, "");
 function plainBlock(line: string, change: Change): Block {
   const kind = kindOf(line);
   const c = kind === "claim" ? parseClaim(line) : null;
-  return { kind, change, html: c ? claimHtml(c) : inline(body(line)) };
+  return { kind, change, raw: line, html: c ? claimHtml(c) : inline(body(line)) };
 }
 
 /**
@@ -145,6 +147,12 @@ export function trackedBlocks(diff: DiffLine[]): Block[] {
           bestScore = 2;
           return;
         }
+        const res = /^- ~~(.+)~~/.exec(add);
+        if (!ca && res && del === `- ${res[1]}`) {
+          best = di;
+          bestScore = 2;
+          return;
+        }
         if (kindOf(add) !== kindOf(del) || (ca && cd && ca.key !== cd.key)) return;
         const s = similarity(add, del);
         if (s > bestScore) {
@@ -169,10 +177,14 @@ export function trackedBlocks(diff: DiffLine[]): Block[] {
       const del = dels[di];
       const ca = parseClaim(add);
       const cd = parseClaim(del);
+      const resolved = /^- ~~(.+)~~ ?(.*)$/.exec(add);
       if (ca && cd && ca.struck && !cd.struck) {
-        blocks.push({ kind: "claim", change: "strike", html: claimHtml(ca, true) });
+        blocks.push({ kind: "claim", change: "strike", raw: add, html: claimHtml(ca, true) });
+      } else if (!ca && resolved && del === `- ${resolved[1]}`) {
+        // A list item struck through with a note, such as an open question that a source answered.
+        blocks.push({ kind: "li", change: "strike", raw: add, html: `<s class="cv-s">${inline(resolved[1])}</s> <span class="cn">${inline(resolved[2])}</span>` });
       } else {
-        blocks.push({ kind: kindOf(add), change: "mod", html: kindOf(add) === "claim" ? claimHtml(ca!) : wordDiff(body(del), body(add)) });
+        blocks.push({ kind: kindOf(add), change: "mod", raw: add, html: kindOf(add) === "claim" ? claimHtml(ca!) : wordDiff(body(del), body(add)) });
       }
     });
   }
@@ -185,4 +197,47 @@ export function pageMeta(text: string): { type: string; updated: string; sources
   const get = (k: string) => new RegExp(`^${k}: (.*)$`, "m").exec(m)?.[1] ?? "";
   const sources = get("sources").replace(/^\[|\]$/g, "").split(",").filter((s) => s.trim()).length;
   return { type: get("type"), updated: get("updated"), sources };
+}
+
+export interface SourceMark {
+  n: number;
+  quote: string;
+  /** When the highlight appears (ms). */
+  at: number;
+}
+
+/**
+ * Typesets a raw source document and highlights the given quotes, each with its link number.
+ * Quotes are matched verbatim within a single line.
+ */
+export function sourceHtml(text: string, marks: SourceMark[]): string {
+  const out: string[] = [];
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const m = /^(#{1,2}) (.*)$/.exec(line);
+    const li = /^(?:- |\d+\. )(.*)$/.exec(line);
+    const content = m ? m[2] : li ? li[1] : line;
+    const html = markQuotes(content, marks);
+    if (m) out.push(m[1] === "#" ? `<h1>${html}</h1>` : `<div class="b-h2">${html}</div>`);
+    else if (li) out.push(`<div class="b-li${/^\d/.test(line) ? " b-ol" : ""}"${/^\d/.test(line) ? ` data-n="${line.split(".")[0]}"` : ""}>${html}</div>`);
+    else out.push(`<div class="b-p">${html}</div>`);
+  }
+  return out.join("");
+}
+
+function markQuotes(text: string, marks: SourceMark[]): string {
+  let out = "";
+  let rest = text;
+  for (;;) {
+    let best: { i: number; m: SourceMark } | null = null;
+    for (const m of marks) {
+      const i = rest.indexOf(m.quote);
+      if (i >= 0 && (!best || i < best.i)) best = { i, m };
+    }
+    if (!best) break;
+    const { i, m } = best;
+    out += inline(rest.slice(0, i)) + `<mark class="src-hl" data-link="${m.n}" style="--d:${m.at}"><span class="lnum">${m.n}</span>${inline(m.quote)}</mark>`;
+    rest = rest.slice(i + m.quote.length);
+  }
+  return out + inline(rest);
 }

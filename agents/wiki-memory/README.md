@@ -141,18 +141,20 @@ A customer picks a date range and receives one CSV of their invoices. It replace
 - `export.schedule`: nightly (as of 2026-03-02, [[src-kickoff]])
 ```
 
-The Billing API page ends with an open question from the meeting: *What request rate may Ledger Export use?*
+The Billing API page ends with an open question from the meeting: *What request rate may Ledger Export use?* The overview lists it too.
 
 ### Ingest 2: the design doc mostly updates
 
-Two pages are new (the source summary and the Payments team); five are edited. The design doc answers the kickoff's open question, so the agent removes it from the Billing API page and adds the claim in its place:
+Two pages are new (the source summary and the Payments team); five are edited. The design doc answers the kickoff's open question, so the agent strikes the question through and says what answered it, rather than deleting it, and adds the claim:
 
 ```diff
 -Owned by the Payments team. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]).
 +Owned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).
 
--## Open questions
+ ## Open questions
 -- What request rate may Ledger Export use? Raised at the kickoff.
++- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].
++
 +## Claims
 +- `billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])
 ```
@@ -175,7 +177,7 @@ This is the step that RAG has no equivalent for. The incident report says the li
 +- `export.billing-api-rate`: 40 requests per second (as of 2026-04-07, [[src-inc-482]])
 ```
 
-It also creates a page for the incident and a concept page, `api-rate-limits`, for the general lesson (leave headroom, back off on HTTP 429, alert on the outcome). One source touched eight pages, and the graph went from 21 to 37 links.
+It also creates a page for the incident and a concept page, `api-rate-limits`, for the general lesson (leave headroom, back off on HTTP 429, alert on the outcome). One source touched eight pages, and the graph went from 22 to 38 links.
 
 ### Ingest 4: a decision made in chat
 
@@ -224,10 +226,10 @@ After five ingests the log reads:
 | After ingest | Pages | Links | Current claims | Struck through | Pages touched | Lines added / removed |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 Kickoff | 7 | 12 | 2 | 0 | 7 | +95 / −0 |
-| 2 Design doc | 9 | 21 | 5 | 0 | 7 | +51 / −21 |
-| 3 Incident | 12 | 37 | 5 | 2 | 8 | +70 / −17 |
-| 4 Chat thread | 13 | 43 | 6 | 3 | 5 | +35 / −12 |
-| 5 FAQ draft | 14 | 47 | 8 | 3 | 5 | +28 / −10 |
+| 2 Design doc | 9 | 22 | 5 | 0 | 7 | +53 / −20 |
+| 3 Incident | 12 | 38 | 5 | 2 | 8 | +70 / −17 |
+| 4 Chat thread | 13 | 44 | 6 | 3 | 5 | +35 / −11 |
+| 5 FAQ draft | 14 | 48 | 8 | 3 | 5 | +28 / −10 |
 
 ### Lint: what no single ingest could see
 
@@ -263,7 +265,7 @@ This is one small example, not a benchmark. With an embedding retriever, a diffe
 - **Contradictions are easy to miss.** An ingest only sees the pages it opens; in our example, ingest 5 recorded two wrong values without noticing they were wrong. Run lint regularly, and make facts that can change machine-checkable (our claims) so at least those contradictions are caught exactly.
 - **Recency is not truth.** “Keep the newest value” would have kept the draft FAQ's 7 days. Superseding should need the source to say it supersedes; otherwise, flag it for a person.
 - **Scale.** An index file works up to roughly hundreds of pages, by Karpathy's account. After that you need search over the wiki itself; the gist suggests [qmd](https://github.com/tobi/qmd), a local search engine for markdown with BM25, vector search and reranking. At that point you have RAG over the wiki, which is fine: you are retrieving reconciled pages instead of raw fragments.
-- **Cost moves to write time.** Each ingest reads the source, the index and every page it updates, then writes several pages. In our run one source touched 5 to 8 pages. The wiki also grows: its final 15 pages hold about 10,900 characters, nearly three times the 3,800 characters of the five sources, because of front matter, links, summaries and history. You pay for that once per source rather than once per question, which favors wikis that are read much more often than they are written.
+- **Cost moves to write time.** Each ingest reads the source, the index and every page it updates, then writes several pages. In our run one source touched 5 to 8 pages. The wiki also grows: its final 15 pages hold about 11,100 characters, nearly three times the 3,800 characters of the five sources, because of front matter, links, summaries and history. You pay for that once per source rather than once per question, which favors wikis that are read much more often than they are written.
 - **Provenance and permissions.** A page that merges five sources is harder to permission than five documents. If different users may see different sources, a shared wiki can leak across that boundary; keep separate wikis or keep restricted sources out.
 - **Concurrency.** Two agents ingesting at once can overwrite each other's edits to the same page. Serialize ingests, or use git branches and merge.
 
@@ -292,8 +294,8 @@ Wiki memory fits best where knowledge accumulates and changes: a research topic 
 The app tells the worked example in three short acts, set like a typeset paper. Light is the default and a dark theme is available. A one-line subtitle says in plain words what each moment shows.
 
 - **Opening.** A short introduction and a thin-line map of the finished wiki, drawn in link by link. One quiet note explains how this differs from a knowledge graph: the wiki holds pages of prose that the agent reads and rewrites, not typed facts that code traverses.
-- **Act one: ingest.** Each source is a scene. The page it changes most is typeset as a document, and the agent's edit appears as tracked changes, one at a time: added words on a pale green, removed words struck in red, and superseded claims struck through with the source that replaced them. A small map in the margin then shows the pages and links the source added. `index.md` and `log.md`, with this step's new lines shaded, sit behind quiet tabs next to the map, and every other page the source touched is one click away.
-- **Act two: lint.** The document becomes a lint report listing the two contradictions, with the conflicting values side by side, and the missing page. On the map, the pages and sources that disagree are circled in red. In the fix scene, the draft's claims are struck through as disputed and lint finds nothing.
+- **Act one: ingest.** Each source is a scene. The source document is typeset on the left and the wiki page it changes most on the right. Each passage that drives an edit is highlighted with a number, and the edit it caused carries the same number. Hover or tap either one to highlight both. The sequence reads the passage first, then applies the edit, and each pane scrolls to follow. Edits appear as tracked changes: added words on a pale green, removed words struck in red, and superseded claims (and answered questions) struck through with the source that replaced them. Which passage drives which edit is written by hand in each step's `step.json` (`links`), and a test checks that every quoted passage appears verbatim in its source and every link points to a real edit. A small map in the margin then shows the pages and links the source added. `index.md` and `log.md`, with this step's new lines shaded, sit behind quiet tabs next to the map, and every other page the source touched is one click away.
+- **Act two: lint.** The left pane becomes a lint report listing the two contradictions, with the conflicting values side by side, and the missing page. The right pane shows the retention page with the claims that disagree marked. On the map, the pages and sources that disagree are circled in red. In the fix scene, the draft's claims are struck through as disputed and lint finds nothing.
 - **Act three: the face-off.** For each question, excerpts from the top wiki pages and the top raw chunks appear in turn, followed by the facts each side found, and the computed verdict comes last.
 
 Scenes play automatically once you reach them. Pause, step and replay with the controls under the page, the scene names, the source list, or <kbd>←</kbd>, <kbd>→</kbd> and <kbd>Space</kbd>. Only one thing moves at a time, each beat takes 1.2 seconds or less, and there are no flashes. With reduced motion turned on, every scene appears in its final state.
@@ -320,11 +322,11 @@ npm run data       # rebuilds results/run.json and results/wiki/ from corpus/
 npm run export     # static copy of the app in dist/
 ```
 
-You should see the opening page with a **Watch the wiki grow** button. `npm test` should report 15 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
+You should see the opening page with a **Watch the wiki grow** button. `npm test` should report 17 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
 
 ### How it is built
 
-- [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes.
+- [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
 - [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
 - [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/app.ts`](client/app.ts): the opening, the scenes, the subtitles and the face-off. [`client/styles.css`](client/styles.css): Tailwind CSS v4, the type scale and the sequenced animations. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
@@ -343,7 +345,7 @@ To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, 
 - Everything in `results/` is deterministic: `npm run data` rebuilds it from `corpus/` with no network or model calls, and the test suite checks the committed copy is current.
 - What is **scripted**: the five sources, every wiki page in `corpus/steps/`, the step verdicts and lessons, and the three example answers in `src/questions.ts`.
 - What is **computed**: the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
-- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (15 passing), `npm run check`, `npm start` and `npm run export`.
+- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (17 passing), `npm run check`, `npm start` and `npm run export`.
 - The corpus is original and synthetic, written for this example; any resemblance to a real company or person is unintended.
 
 ## Sources

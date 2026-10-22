@@ -45,6 +45,55 @@
    "source": "2026-03-02-kickoff-notes.md",
    "verdict": "The first source creates the wiki: a page for the source, pages for the project, two people and the Billing API, a page for the retention policy, and an overview. Nothing existed before, so every line is new.",
    "lesson": "One source fans out into several pages. Each fact is filed where someone will look for it later, not left inside the meeting notes.",
+   "links": [
+    {
+     "page": "ledger-export",
+     "quotes": [
+      "Support exports them by hand from the admin console, about 40 tickets a week.",
+      "Build a self-serve export: a customer picks a date range and receives one CSV of their invoices."
+     ],
+     "anchors": [
+      "It replaces manual exports by support"
+     ]
+    },
+    {
+     "page": "ledger-export",
+     "quotes": [
+      "Amara owns the project. Rui owns the customer-facing copy."
+     ],
+     "anchors": [
+      "Owner: [[amara-osei]]"
+     ]
+    },
+    {
+     "page": "ledger-export",
+     "quotes": [
+      "Exports run as a nightly batch job, not on demand, so the job can read from the Postgres read replica while traffic is low."
+     ],
+     "anchors": [
+      "Runs as a nightly batch job",
+      "`export.schedule`: nightly"
+     ]
+    },
+    {
+     "page": "ledger-export",
+     "quotes": [
+      "Invoice totals come from the Billing API, which the Payments team owns."
+     ],
+     "anchors": [
+      "Reads invoice totals from the [[billing-api]]"
+     ]
+    },
+    {
+     "page": "ledger-export",
+     "quotes": [
+      "Finished export files are kept for 30 days, then deleted."
+     ],
+     "anchors": [
+      "How long files are kept"
+     ]
+    }
+   ],
    "changes": [
     {
      "slug": "amara-osei",
@@ -488,7 +537,7 @@
       },
       {
        "op": "add",
-       "text": "## Open questions"
+       "text": "## Open at the kickoff"
       },
       {
        "op": "add",
@@ -545,7 +594,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     }
    ],
    "index": "# Index\n\n## Overview\n\n- [[overview]] What this wiki covers and where Ledger Export stands. (1 source)\n\n## Sources\n\n- [[src-kickoff]] Kickoff notes that set up Ledger Export, a self-serve invoice export.\n\n## Entities\n\n- [[amara-osei]] Engineering lead who owns Ledger Export. (1 source)\n- [[billing-api]] Payments-owned API that Ledger Export calls for invoice totals. (1 source)\n- [[ledger-export]] The self-serve invoice CSV export project. (1 source)\n- [[rui-costa]] Product manager who owns the export's customer-facing copy. (1 source)\n\n## Concepts\n\n- [[export-retention]] How long finished export files are kept before deletion. (1 source)\n",
@@ -648,6 +697,19 @@
    "source": "2026-03-16-design-doc.md",
    "verdict": "The design doc fills in details on pages that already exist: the run time (02:00 UTC), the Billing API limit (100 requests per second) and how files are deleted. It also answers the open question from the kickoff and adds a page for the Payments team.",
    "lesson": "Most of an ingest is updating, not creating. The open question on the Billing API page is closed here, by the source that answered it.",
+   "links": [
+    {
+     "page": "billing-api",
+     "quotes": [
+      "Jun Park (Payments team) confirmed that the Billing API allows 100 requests per second per client."
+     ],
+     "anchors": [
+      "[[jun-park]] confirmed the limit",
+      "What request rate may Ledger Export use?",
+      "`billing-api.rate-limit`: 100"
+     ]
+    }
+   ],
    "changes": [
     {
      "slug": "payments-team",
@@ -828,8 +890,8 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "status": "updated",
-     "added": 5,
-     "removed": 5,
+     "added": 7,
+     "removed": 4,
      "diff": [
       {
        "op": "same",
@@ -884,12 +946,20 @@
        "text": ""
       },
       {
-       "op": "del",
+       "op": "same",
        "text": "## Open questions"
       },
       {
        "op": "del",
        "text": "- What request rate may Ledger Export use? Raised at the kickoff."
+      },
+      {
+       "op": "add",
+       "text": "- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]]."
+      },
+      {
+       "op": "add",
+       "text": ""
       },
       {
        "op": "add",
@@ -1187,7 +1257,7 @@
       },
       {
        "op": "add",
-       "text": "- None."
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]]."
       }
      ]
     }
@@ -1205,7 +1275,7 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "title": "Billing API",
-     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc]\nupdated: 2026-03-16\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\n## Claims\n- `billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])\n"
+     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc]\nupdated: 2026-03-16\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\n## Open questions\n- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].\n\n## Claims\n- `billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])\n"
     },
     {
      "slug": "export-retention",
@@ -1226,7 +1296,7 @@
      "path": "overview.md",
      "type": "overview",
      "title": "Overview",
-     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc]\nupdated: 2026-03-16\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Design approved on 16 March: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 80 requests per second, under its limit of 100.\n- Files are kept for 30 days; download links expire after 7 ([[export-retention]]).\n\n## Open questions\n- None.\n"
+     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc]\nupdated: 2026-03-16\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Design approved on 16 March: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 80 requests per second, under its limit of 100.\n- Files are kept for 30 days; download links expire after 7 ([[export-retention]]).\n\n## Open questions\n- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].\n"
     },
     {
      "slug": "rui-costa",
@@ -1240,7 +1310,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     },
     {
      "slug": "payments-team",
@@ -1372,6 +1442,10 @@
       "to": "export-retention"
      },
      {
+      "from": "overview",
+      "to": "src-design-doc"
+     },
+     {
       "from": "rui-costa",
       "to": "src-kickoff"
      },
@@ -1405,6 +1479,28 @@
    "source": "2026-04-07-incident-inc-482.md",
    "verdict": "The incident report says the Billing API limit was lowered from 100 to 50. The agent strikes through the old numbers on two pages instead of deleting them, adds the new ones, and records the incident and the lesson it teaches.",
    "lesson": "This is the step chunk RAG never takes. The March design doc still says 100 and 80; only the wiki now says those numbers are out of date.",
+   "links": [
+    {
+     "page": "billing-api",
+     "quotes": [
+      "Payments will keep the 50 requests per second limit permanently.",
+      "Payments will announce limit changes in the #payments-changes channel at least a week in advance."
+     ],
+     "anchors": [
+      "On 3 April 2026 Payments halved the limit"
+     ]
+    },
+    {
+     "page": "billing-api",
+     "quotes": [
+      "On 3 April the Payments team lowered the Billing API limit from 100 to 50 requests per second per client, to protect the API during a database migration."
+     ],
+     "anchors": [
+      "~~`billing-api.rate-limit`: 100",
+      "`billing-api.rate-limit`: 50"
+     ]
+    }
+   ],
    "changes": [
     {
      "slug": "api-rate-limits",
@@ -1732,6 +1828,18 @@
       },
       {
        "op": "same",
+       "text": "## Open questions"
+      },
+      {
+       "op": "same",
+       "text": "- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]]."
+      },
+      {
+       "op": "same",
+       "text": ""
+      },
+      {
+       "op": "same",
        "text": "## Claims"
       },
       {
@@ -1968,7 +2076,7 @@
       },
       {
        "op": "same",
-       "text": "- None."
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]]."
       }
      ]
     },
@@ -2048,7 +2156,7 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "title": "Billing API",
-     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
+     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Open questions\n- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
     },
     {
      "slug": "export-retention",
@@ -2069,7 +2177,7 @@
      "path": "overview.md",
      "type": "overview",
      "title": "Overview",
-     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- Files are kept for 30 days; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- None.\n"
+     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- Files are kept for 30 days; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].\n"
     },
     {
      "slug": "rui-costa",
@@ -2083,7 +2191,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     },
     {
      "slug": "payments-team",
@@ -2276,6 +2384,10 @@
       "to": "inc-482"
      },
      {
+      "from": "overview",
+      "to": "src-design-doc"
+     },
+     {
       "from": "rui-costa",
       "to": "src-kickoff"
      },
@@ -2345,6 +2457,28 @@
    "source": "2026-04-20-support-thread.md",
    "verdict": "A short chat thread changes a policy: from 1 May, Enterprise exports are kept for 90 days and every other plan stays at 30. The agent replaces the single 30-day claim with one claim per plan.",
    "lesson": "Decisions often arrive in chat, not in documents. Filing them on the policy page means the next reader finds them without knowing the thread exists.",
+   "links": [
+    {
+     "page": "export-retention",
+     "quotes": [
+      "The lifecycle rule on exports-prod will read a plan tag, so nothing changes for files that already exist."
+     ],
+     "anchors": [
+      "From 1 May 2026 the period depends on the plan"
+     ]
+    },
+    {
+     "page": "export-retention",
+     "quotes": [
+      "From 1 May, export files for Enterprise plans are kept for 90 days. All other plans stay at 30 days."
+     ],
+     "anchors": [
+      "~~`export.retention`: 30",
+      "`export.retention.standard`",
+      "`export.retention.enterprise`"
+     ]
+    }
+   ],
    "changes": [
     {
      "slug": "src-support-thread",
@@ -2586,7 +2720,7 @@
      "type": "overview",
      "status": "updated",
      "added": 4,
-     "removed": 4,
+     "removed": 3,
      "diff": [
       {
        "op": "same",
@@ -2677,8 +2811,8 @@
        "text": "## Open questions"
       },
       {
-       "op": "del",
-       "text": "- None."
+       "op": "same",
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]]."
       },
       {
        "op": "add",
@@ -2762,7 +2896,7 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "title": "Billing API",
-     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
+     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Open questions\n- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
     },
     {
      "slug": "export-retention",
@@ -2783,7 +2917,7 @@
      "path": "overview.md",
      "type": "overview",
      "title": "Overview",
-     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread]\nupdated: 2026-04-20\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- The help-centre FAQ still has to be updated for the new retention periods ([[rui-costa]]).\n"
+     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread]\nupdated: 2026-04-20\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].\n- The help-centre FAQ still has to be updated for the new retention periods ([[rui-costa]]).\n"
     },
     {
      "slug": "rui-costa",
@@ -2797,7 +2931,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     },
     {
      "slug": "payments-team",
@@ -3014,6 +3148,10 @@
      },
      {
       "from": "overview",
+      "to": "src-design-doc"
+     },
+     {
+      "from": "overview",
       "to": "rui-costa"
      },
      {
@@ -3094,6 +3232,17 @@
    "source": "2026-05-05-faq-draft.md",
    "verdict": "The draft FAQ says exports run every hour and are kept for 7 days. Neither statement says it replaces the old value, so the schema tells the agent to record both values side by side rather than guess. The wiki now holds two conflicting pairs of claims.",
    "lesson": "An ingest only sees the pages it opens. Deciding between sources is left to the lint pass, which compares every claim in the wiki at once.",
+   "links": [
+    {
+     "page": "export-retention",
+     "quotes": [
+      "Your export is kept for 7 days."
+     ],
+     "anchors": [
+      "`export.retention`: 7 days"
+     ]
+    }
+   ],
    "changes": [
     {
      "slug": "src-faq-draft",
@@ -3470,6 +3619,10 @@
        "text": "## Open questions"
       },
       {
+       "op": "same",
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]]."
+      },
+      {
        "op": "del",
        "text": "- The help-centre FAQ still has to be updated for the new retention periods ([[rui-costa]])."
       },
@@ -3559,7 +3712,7 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "title": "Billing API",
-     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
+     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Open questions\n- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
     },
     {
      "slug": "export-retention",
@@ -3580,7 +3733,7 @@
      "path": "overview.md",
      "type": "overview",
      "title": "Overview",
-     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread, src-faq-draft]\nupdated: 2026-05-05\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- A draft help-centre FAQ arrived on 5 May and is waiting for review by [[rui-costa]] ([[src-faq-draft]]).\n"
+     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread, src-faq-draft]\nupdated: 2026-05-05\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].\n- A draft help-centre FAQ arrived on 5 May and is waiting for review by [[rui-costa]] ([[src-faq-draft]]).\n"
     },
     {
      "slug": "rui-costa",
@@ -3594,7 +3747,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     },
     {
      "slug": "payments-team",
@@ -3827,6 +3980,10 @@
      {
       "from": "overview",
       "to": "inc-482"
+     },
+     {
+      "from": "overview",
+      "to": "src-design-doc"
      },
      {
       "from": "overview",
@@ -4273,6 +4430,10 @@
        "text": "## Open questions"
       },
       {
+       "op": "same",
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]]."
+      },
+      {
        "op": "del",
        "text": "- A draft help-centre FAQ arrived on 5 May and is waiting for review by [[rui-costa]] ([[src-faq-draft]])."
       },
@@ -4390,7 +4551,7 @@
      "path": "entities/billing-api.md",
      "type": "entity",
      "title": "Billing API",
-     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
+     "text": "---\ntype: entity\nsummary: Payments-owned API that Ledger Export calls for invoice totals.\nsources: [src-kickoff, src-design-doc, src-inc-482]\nupdated: 2026-04-07\n---\n# Billing API\n\nOwned by the [[payments-team]]. [[ledger-export]] reads each invoice's final total from it ([[src-kickoff]]). [[jun-park]] confirmed the limit ([[src-design-doc]]).\n\nOn 3 April 2026 Payments halved the limit during a database migration and kept it; this caused [[inc-482]]. Limit changes are now announced in #payments-changes at least a week ahead ([[src-inc-482]]).\n\n## Open questions\n- ~~What request rate may Ledger Export use? Raised at the kickoff.~~ Answered by [[src-design-doc]].\n\n## Claims\n- ~~`billing-api.rate-limit`: 100 requests per second per client (as of 2026-03-16, [[src-design-doc]])~~ superseded by [[src-inc-482]]\n- `billing-api.rate-limit`: 50 requests per second per client (as of 2026-04-03, [[src-inc-482]])\n"
     },
     {
      "slug": "export-retention",
@@ -4411,7 +4572,7 @@
      "path": "overview.md",
      "type": "overview",
      "title": "Overview",
-     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread, src-faq-draft]\nupdated: 2026-05-06\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- The draft help-centre FAQ gives the wrong schedule and retention period; [[rui-costa]] to correct it before it is published ([[src-faq-draft]]).\n"
+     "text": "---\ntype: overview\nsummary: What this wiki covers and where Ledger Export stands.\nsources: [src-kickoff, src-design-doc, src-inc-482, src-support-thread, src-faq-draft]\nupdated: 2026-05-06\n---\n# Overview\n\nThis wiki tracks [[ledger-export]], a self-serve invoice export, from its kickoff on 2 March 2026.\n\n## Current state\n- Live: a nightly run at 02:00 UTC that writes one CSV per request.\n- Calls the [[billing-api]] at 40 requests per second, under its limit of 50 since 3 April.\n- From 1 May, files are kept for 90 days on Enterprise plans and 30 days on others; download links expire after 7 ([[export-retention]]).\n\n## History\n- 4 to 6 April: [[inc-482]], three failed runs after the Billing API limit was halved.\n\n## Open questions\n- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].\n- The draft help-centre FAQ gives the wrong schedule and retention period; [[rui-costa]] to correct it before it is published ([[src-faq-draft]]).\n"
     },
     {
      "slug": "rui-costa",
@@ -4425,7 +4586,7 @@
      "path": "sources/src-kickoff.md",
      "type": "source",
      "title": "Source: Ledger Export kickoff (2 March 2026)",
-     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open questions\n- The request rate the job may use against the Billing API.\n"
+     "text": "---\ntype: source\nsummary: Kickoff notes that set up Ledger Export, a self-serve invoice export.\nsources: []\nupdated: 2026-03-02\n---\n# Source: Ledger Export kickoff (2 March 2026)\n\nRaw file: `raw/2026-03-02-kickoff-notes.md`\n\n## Key points\n- Support exports invoices by hand, about 40 tickets a week. This is why [[ledger-export]] exists.\n- Exports run as a nightly batch job on the Postgres read replica.\n- Finished files are kept for 30 days ([[export-retention]]).\n- Invoice totals come from the [[billing-api]], owned by the Payments team.\n- [[amara-osei]] owns the project; [[rui-costa]] owns the customer-facing copy.\n\n## Open at the kickoff\n- The request rate the job may use against the Billing API.\n"
     },
     {
      "slug": "payments-team",
@@ -4668,6 +4829,10 @@
      },
      {
       "from": "overview",
+      "to": "src-design-doc"
+     },
+     {
+      "from": "overview",
       "to": "rui-costa"
      },
      {
@@ -4901,63 +5066,63 @@
  },
  "layout": {
   "amara-osei": {
-   "x": 0.595,
-   "y": 0.525
+   "x": 0.61,
+   "y": 0.484
   },
   "billing-api": {
-   "x": 0.273,
-   "y": 0.506
+   "x": 0.228,
+   "y": 0.537
   },
   "export-retention": {
-   "x": 0.677,
-   "y": 0.71
+   "x": 0.661,
+   "y": 0.715
   },
   "ledger-export": {
-   "x": 0.431,
-   "y": 0.584
+   "x": 0.429,
+   "y": 0.556
   },
   "overview": {
-   "x": 0.517,
-   "y": 0.723
+   "x": 0.504,
+   "y": 0.709
   },
   "rui-costa": {
-   "x": 0.687,
+   "x": 0.689,
    "y": 0.9
   },
   "src-kickoff": {
-   "x": 0.429,
-   "y": 0.859
+   "x": 0.439,
+   "y": 0.871
   },
   "payments-team": {
-   "x": 0.176,
-   "y": 0.163
+   "x": 0.08,
+   "y": 0.225
   },
   "src-design-doc": {
-   "x": 0.538,
-   "y": 0.337
+   "x": 0.468,
+   "y": 0.376
   },
   "api-rate-limits": {
-   "x": 0.08,
-   "y": 0.43
+   "x": 0.128,
+   "y": 0.401
   },
   "inc-482": {
-   "x": 0.37,
-   "y": 0.367
+   "x": 0.305,
+   "y": 0.386
   },
   "src-inc-482": {
-   "x": 0.247,
-   "y": 0.32
+   "x": 0.337,
+   "y": 0.202
   },
   "src-support-thread": {
    "x": 0.92,
-   "y": 0.77
+   "y": 0.743
   },
   "src-faq-draft": {
-   "x": 0.78,
-   "y": 0.599
+   "x": 0.76,
+   "y": 0.596
   },
   "jun-park": {
-   "x": 0.347,
+   "x": 0.221,
    "y": 0.1
   }
  },
@@ -4970,7 +5135,7 @@
     {
      "slug": "ledger-export",
      "path": "entities/ledger-export.md",
-     "score": 3.73,
+     "score": 3.734,
      "lines": [
       {
        "text": "# Ledger Export",
@@ -5037,7 +5202,7 @@
     {
      "slug": "export-retention",
      "path": "concepts/export-retention.md",
-     "score": 3.34,
+     "score": 3.344,
      "lines": [
       {
        "text": "# Export retention",
@@ -5200,7 +5365,7 @@
     {
      "slug": "inc-482",
      "path": "entities/inc-482.md",
-     "score": 5.295,
+     "score": 5.299,
      "lines": [
       {
        "text": "# INC-482: nightly exports failed",
@@ -5231,7 +5396,7 @@
     {
      "slug": "ledger-export",
      "path": "entities/ledger-export.md",
-     "score": 4.229,
+     "score": 4.234,
      "lines": [
       {
        "text": "# Ledger Export",
@@ -5411,7 +5576,7 @@
     {
      "slug": "inc-482",
      "path": "entities/inc-482.md",
-     "score": 3.316,
+     "score": 3.318,
      "lines": [
       {
        "text": "# INC-482: nightly exports failed",
@@ -5442,7 +5607,7 @@
     {
      "slug": "overview",
      "path": "overview.md",
-     "score": 2.312,
+     "score": 2.314,
      "lines": [
       {
        "text": "# Overview",
@@ -5479,6 +5644,10 @@
       {
        "text": "## Open questions",
        "struck": false
+      },
+      {
+       "text": "- ~~The Billing API request rate for the export job.~~ Answered by [[src-design-doc]].",
+       "struck": true
       },
       {
        "text": "- The draft help-centre FAQ gives the wrong schedule and retention period; [[rui-costa]] to correct it before it is published ([[src-faq-draft]]).",

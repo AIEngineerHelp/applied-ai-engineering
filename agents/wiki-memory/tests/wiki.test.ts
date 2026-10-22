@@ -185,3 +185,36 @@ test("tracked changes: a superseded claim becomes one struck block, edits become
   assert.ok(!blocks.some((b) => /^sources:|^updated:/.test(b.html)));
   assert.equal(wordDiff("kept for 30 days", "kept for 90 days"), "kept for <del>30</del><ins>90</ins> days");
 });
+
+test("source links: every quote is verbatim in the step's raw source, and every anchor finds an edit", async () => {
+  const { trackedBlocks } = await import("../client/doc.ts");
+  const sources = new Map(loadSources().map((s) => [s.file, s.text]));
+  let count = 0;
+  for (const step of run.steps) {
+    for (const link of step.links ?? []) {
+      const raw = sources.get(step.source ?? "");
+      assert.ok(raw, `step ${step.n} has links but no source`);
+      for (const q of link.quotes) {
+        assert.ok(raw!.split("\n").some((line) => line.includes(q)), `step ${step.n}: quote not found verbatim on one line of raw/${step.source}: "${q}"`);
+        count++;
+      }
+      const change = step.changes.find((c) => c.slug === link.page);
+      assert.ok(change, `step ${step.n}: ${link.page} is not changed in this step`);
+      const blocks = trackedBlocks(change!.diff).filter((b) => b.change !== "same");
+      for (const a of link.anchors) assert.ok(blocks.some((b) => b.raw.includes(a)), `step ${step.n}: anchor "${a}" matches no edit on ${link.page}`);
+    }
+  }
+  assert.ok(count >= 10);
+  // Every ingest step explains its focus page's edits.
+  for (const step of run.steps.filter((s) => s.kind === "ingest")) assert.ok((step.links ?? []).some((l) => l.page === step.focus), `step ${step.n} has no links for ${step.focus}`);
+});
+
+test("an answered open question is struck through with a note, not deleted", async () => {
+  const { trackedBlocks } = await import("../client/doc.ts");
+  const billing = run.steps[1].changes.find((c) => c.slug === "billing-api")!;
+  const blocks = trackedBlocks(billing.diff);
+  const q = blocks.find((b) => b.raw.includes("What request rate may Ledger Export use?"))!;
+  assert.equal(q.change, "strike");
+  assert.match(q.html, /Answered by/);
+  assert.ok(!blocks.some((b) => b.change === "del" && b.raw.includes("What request rate")));
+});

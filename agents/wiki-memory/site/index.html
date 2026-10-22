@@ -64,14 +64,18 @@
     </div>
 
     <div class="wrap stage">
-      <aside class="rail" aria-label="Sources">
-        <p class="label">Raw sources</p>
-        <ol id="queue" class="queue"></ol>
-      </aside>
-
       <div class="reader">
         <div id="caption" class="subtitle" aria-live="polite"></div>
-        <div id="doc" class="doc"></div>
+        <div class="panes">
+          <section class="pane" aria-label="Source">
+            <div class="pane-label"><span id="src-label">Raw sources</span><span id="src-path" class="mono"></span></div>
+            <div id="src" class="doc"></div>
+          </section>
+          <section class="pane" aria-label="Wiki page">
+            <div class="pane-label"><span id="doc-label">Wiki page</span><span id="doc-path" class="mono"></span></div>
+            <div id="doc" class="doc"></div>
+          </section>
+        </div>
         <p id="doc-note" class="caption mt-3"></p>
       </div>
 

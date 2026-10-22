@@ -7,9 +7,9 @@
 // Motion is CSS with per-element delays (--d, ms). ?t=<ms> freezes every animation at that moment.
 
 import runJson from "../results/run.json" with { type: "json" };
-import type { Change as PageChange, QuestionResult, Run, Step } from "../src/build.ts";
+import type { Change as PageChange, QuestionResult, Run, SourceLink, Step } from "../src/build.ts";
 import type { FactResult } from "../src/retrieve.ts";
-import { inline, pageMeta, parseClaim, trackedBlocks, type Block } from "./doc.ts";
+import { inline, pageMeta, parseClaim, sourceHtml, trackedBlocks, type Block, type SourceMark } from "./doc.ts";
 import { edgeKey, mapSvg } from "./map.ts";
 import { esc } from "./render.ts";
 
@@ -93,16 +93,21 @@ function enter(i: number) {
   tick();
 }
 
-/** Renders the document and the map for the scene, and returns its subtitles and length. */
+/** Renders the two panes and the map for the scene, and returns its subtitles and length. */
 function renderScene(): { beats: Beat[]; len: number } {
   const doc = $("doc");
+  const src = $("src");
   const note = $("doc-note");
   if (scene === 0) {
-    doc.innerHTML = `<article class="page seq" style="--d:0">
-        <div class="page-path">wiki/</div>
+    setLabels("Raw sources", "", "Wiki page", "wiki/");
+    src.innerHTML = `<div class="page seq" style="--d:0"><h1>Five sources</h1><div class="page-sub">Never edited. The agent only reads them.</div>
+      <ol class="src-index mt-4">${RUN.sources
+        .map((s, k) => `<li><button type="button" data-scene="${k + 1}">${esc(INGESTS[k].title)}<span class="d">${s.date} · raw/${esc(s.file)}</span></button></li>`)
+        .join("")}</ol></div>`;
+    doc.innerHTML = `<article class="page seq" style="--d:150">
         <h1>An empty wiki</h1>
-        <div class="b-p">Five raw sources about one small project are waiting: kickoff notes, a design document, an incident report, a chat thread and a draft FAQ.</div>
-        <div class="b-p">Press play. For each source, the agent writes a page about it and revises the pages about every person, system and policy it mentions. Each revision appears here as tracked changes: <ins>added words</ins>, <del>removed words</del>, and old values struck through rather than deleted.</div>
+        <div class="b-p">Press play. Each source opens on the left, and the agent's edits appear here on the right as tracked changes: <ins>added words</ins>, <del>removed words</del>, and old values struck through rather than deleted.</div>
+        <div class="b-p">A number such as <span class="lnum">1</span> joins a highlighted passage in the source to the edit it caused. Hover or tap either one to see both.</div>
       </article>`;
     note.textContent = "";
     renderMargin(null, {});
@@ -110,9 +115,10 @@ function renderScene(): { beats: Beat[]; len: number } {
   }
 
   if (scene === LINT_SCENE) {
-    const d0 = 300;
-    doc.innerHTML = lintReport(d0);
-    note.textContent = "Findings computed by src/lint.ts from the pages above.";
+    setLabels("Lint report", "computed by src/lint.ts", "Wiki page", "wiki/concepts/export-retention.md");
+    src.innerHTML = lintReport(300, true);
+    doc.innerHTML = conflictPage(1700);
+    note.textContent = "Lint compares the claims on every page. The page on the right is unchanged; it simply holds both values.";
     const flagAt = 2500;
     renderMargin(LAST, { flagAt });
     const c = RUN.lintBefore.checks.find((x) => x.kind === "contradiction")!.count;
@@ -129,10 +135,19 @@ function renderScene(): { beats: Beat[]; len: number } {
 
   const step = stepFor(scene)!;
   const change = step.changes.find((c) => c.slug === (docFile ?? step.focus)) ?? step.changes[0];
-  const { html, end } = pageHtml(step, change, 300, 900);
+  const { html, end, marks } = pageHtml(step, change, 300, 900);
   doc.innerHTML = html;
-  scrollToChanges();
-  note.textContent = "Page text written by hand. Tracked changes, links and counts computed from it.";
+  setLabels(scene === FIX_SCENE ? "Lint report" : "Source", scene === FIX_SCENE ? "approved fixes" : `raw/${step.source}`, change.status === "created" ? "New wiki page" : "Wiki page · tracked changes", `wiki/${change.path}`);
+  if (scene === FIX_SCENE) {
+    src.innerHTML = lintReport(0, false);
+    note.textContent = "Page text written by hand. Tracked changes and counts computed from it.";
+  } else {
+    const raw = RUN.sources.find((s) => s.file === step.source)!;
+    src.innerHTML = `<div class="page seq" style="--d:0">${sourceHtml(raw.text, marks)}</div>`;
+    note.textContent = "Source and page text written by hand; numbered links stored with the step. Tracked changes and counts computed.";
+  }
+  doc.scrollTop = 0;
+  src.scrollTop = 0;
   const created = step.changes.filter((c) => c.status === "created").length;
   const revised = step.changes.length - created;
   const mapAt = end + 300;
@@ -153,7 +168,7 @@ function renderScene(): { beats: Beat[]; len: number } {
   }
   return {
     beats: [
-      { at: 0, kicker: `Source ${scene} of ${INGESTS.length} · ${longDate(RUN.sources[scene - 1].date)}`, line: `<em>${esc(step.title)}</em> arrives. The agent reads it and starts editing.` },
+      { at: 0, kicker: `Source ${scene} of ${INGESTS.length} · ${longDate(RUN.sources[scene - 1].date)}`, line: `<em>${esc(step.title)}</em> arrives. Each numbered passage on the left becomes the edit with the same number.` },
       { at: mapAt, kicker: "Ingest · computed", line: countLine },
       { at: last, kicker: "What changed", line: esc(step.caption) },
     ],
@@ -161,76 +176,141 @@ function renderScene(): { beats: Beat[]; len: number } {
   };
 }
 
-/** A wiki page typeset with tracked changes. Changed blocks reveal one at a time from `from`. */
-function pageHtml(step: Step, change: PageChange, docAt: number, from: number): { html: string; end: number } {
+function setLabels(srcLabel: string, srcPath: string, docLabel: string, docPath: string) {
+  $("src-label").textContent = srcLabel;
+  $("src-path").textContent = srcPath;
+  $("doc-label").textContent = docLabel;
+  $("doc-path").textContent = docPath;
+}
+
+/**
+ * A wiki page typeset with tracked changes. Changes reveal one at a time from `from`. When a change has
+ * a linked source passage, the passage is highlighted first and the edit follows half a second later.
+ */
+function pageHtml(step: Step, change: PageChange, docAt: number, from: number): { html: string; end: number; marks: SourceMark[] } {
   const page = step.pages.find((p) => p.slug === change.slug)!;
   const meta = pageMeta(page.text);
   const isNew = change.status === "created";
   const blocks = trackedBlocks(change.diff);
-  const changed = blocks.filter((b) => b.change !== "same").length;
-  const stagger = isNew ? Math.min(110, 1100 / Math.max(changed, 1)) : Math.min(420, 1200 / Math.max(changed, 1));
-  let k = 0;
+  const links = (step.links ?? []).filter((l) => l.page === change.slug);
+  // Number links in the order their first edit appears on the page.
+  const linksOf = (b: Block) => links.filter((l) => b.change !== "same" && l.anchors.some((a) => b.raw.includes(a)));
+  const order: SourceLink[] = [];
+  for (const b of blocks) for (const l of linksOf(b)) if (!order.includes(l)) order.push(l);
+  const number = (l: SourceLink) => order.indexOf(l) + 1;
+  const hlAt = new Map<SourceLink, number>();
+  let cursor = from;
   const render = (b: Block) => {
-    const at = b.change === "same" ? 0 : Math.round(from + k++ * stagger);
-    const change = isNew && b.change === "ins" ? "new" : b.change;
-    const cls = `b-${b.kind}${b.change === "same" ? "" : ` chg chg-${change}`}`;
-    const style = b.change === "same" ? "" : ` style="--d:${at}"`;
-    if (b.kind === "h1") {
-      return `<h1 class="${cls}"${style}>${b.html}</h1><div class="page-sub${b.change === "same" ? "" : " chg"}"${style}>${cap(meta.type)} · ${isNew ? "new page" : `revised ${longDate(meta.updated)}`} · ${plural(meta.sources || 1, "source")}</div>`;
+    let at = 0;
+    const ls = linksOf(b);
+    if (b.change !== "same") {
+      const fresh = ls.filter((l) => !hlAt.has(l));
+      if (fresh.length) {
+        fresh.forEach((l) => hlAt.set(l, cursor));
+        at = cursor + 500;
+        cursor += 1000;
+      } else {
+        at = cursor;
+        cursor += ls.length ? 400 : isNew ? 90 : 300;
+      }
     }
-    return `<div class="${cls}"${style}>${b.html}</div>`;
+    const kind = isNew && b.change === "ins" ? "new" : b.change;
+    const cls = `b-${b.kind}${b.change === "same" ? "" : ` chg chg-${kind}`}`;
+    const attrs = `${b.change === "same" ? "" : ` style="--d:${Math.round(at)}"`}${ls.length ? ` data-link="${ls.map(number).join(" ")}"` : ""}`;
+    const gutter = ls.length ? `<span class="gutter">${ls.map((l) => `<span class="lnum">${number(l)}</span>`).join("")}</span>` : "";
+    if (b.kind === "h1") {
+      return `<h1 class="${cls}"${attrs}>${b.html}</h1><div class="page-sub${b.change === "same" ? "" : " chg"}"${b.change === "same" ? "" : ` style="--d:${Math.round(at)}"`}>${cap(meta.type)} · ${isNew ? "new page" : `revised ${longDate(meta.updated)}`} · ${plural(meta.sources || 1, "source")}</div>`;
+    }
+    return `<div class="${cls}"${attrs}>${gutter}${b.html}</div>`;
   };
+  const body = blocks.map(render).join("");
   const others = step.changes
     .map((c) => `<button type="button" data-file="${c.slug}" ${c.slug === change.slug ? 'aria-current="true"' : ""}>${esc(c.slug)}</button>`)
     .join(", ");
   const html = `<article class="page seq" style="--d:${docFile === null ? docAt : 0}">
-      <div class="page-path">wiki/${esc(change.path)}</div>
-      ${blocks.map(render).join("")}
+      ${body}
       <div class="page-foot">This ${scene === FIX_SCENE ? "fix" : "source"} changed ${plural(step.changes.length, "page")}: ${others}.</div>
     </article>`;
-  return { html, end: from + Math.max(0, k - 1) * stagger + 600 };
+  const marks: SourceMark[] = order.flatMap((l) => l.quotes.map((quote) => ({ n: number(l), quote, at: Math.round(hlAt.get(l) ?? from) })));
+  return { html, end: cursor + 300, marks };
 }
 
-/** Scrolls the page so its tracked changes are in view. */
-function scrollToChanges() {
-  const doc = $("doc");
-  const changed = doc.querySelectorAll<HTMLElement>(".chg");
-  if (!changed.length) return;
-  const top = (el: HTMLElement) => el.getBoundingClientRect().top - doc.getBoundingClientRect().top + doc.scrollTop;
-  const first = top(changed[0]);
-  const lastEl = changed[changed.length - 1];
-  const lastBottom = top(lastEl) + lastEl.offsetHeight;
-  // Prefer the last change (often the struck-through value); keep the first in view when both fit.
-  const toLast = lastBottom - doc.clientHeight + 40;
-  doc.scrollTop = Math.max(0, toLast <= first - 60 ? first - 60 : toLast);
+/**
+ * Keeps the latest revealed edit (or source highlight) in view. Panes start at the top; when the
+ * newest item at scene time t is out of view, the pane scrolls so that item's block starts at the
+ * top edge, at a block boundary, so no line is ever cut in half.
+ */
+function follow(t: number, smooth: boolean) {
+  for (const pane of [$("src"), $("doc")]) {
+    const at = (el: HTMLElement) => Number(el.style.getPropertyValue("--d") || 0);
+    const items = [...pane.querySelectorAll<HTMLElement>(".chg, .src-hl, .conflict")].filter((el) => at(el) <= t);
+    // The most recently revealed item; on a tie, the last in reading order (the scroll below keeps
+    // as much as possible above it in view).
+    const el = items.reduce<HTMLElement | undefined>((best, x) => (!best || at(x) >= at(best) ? x : best), undefined);
+    if (!el) continue;
+    const pr = pane.getBoundingClientRect();
+    const y = (r: DOMRect) => r.top - pr.top + pane.scrollTop;
+    const blocks = [...pane.querySelectorAll<HTMLElement>(".page > *")];
+    const block = blocks.find((b) => b.contains(el)) ?? el;
+    const want = y(block.getBoundingClientRect()) + block.offsetHeight + 8;
+    const view = pane.clientHeight;
+    if (y(block.getBoundingClientRect()) >= pane.scrollTop && want <= pane.scrollTop + view) continue;
+    // The smallest scroll that starts at a block boundary and shows the whole block.
+    let target = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      const top = y(blocks[i].getBoundingClientRect());
+      const prevBottom = i > 0 ? y(blocks[i - 1].getBoundingClientRect()) + blocks[i - 1].offsetHeight : 0;
+      const candidate = i === 0 ? 0 : Math.max(prevBottom, top - 14);
+      target = candidate;
+      if (candidate + view >= want || blocks[i] === block) break;
+    }
+    if (Math.abs(pane.scrollTop - target) > 2) pane.scrollTo({ top: target, behavior: smooth && !REDUCED && FROZEN === null ? "smooth" : "auto" });
+  }
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-function lintReport(d0: number): string {
+function lintReport(d0: number, animate: boolean): string {
   let d = d0 + 500;
+  const seq = (at: number) => (animate ? ` seq" style="--d:${at}` : "");
   const items = RUN.lintBefore.findings.map((f, idx) => {
     const at = d;
     d += 500;
     if (f.kind === "contradiction") {
       const key = f.claims.map((c) => c.key).sort((a, b) => a.length - b.length)[0];
+      const onPage = f.claims.some((c) => c.page === "export-retention");
       const rows = f.claims
         .map((c) => `<tr class="${c.source === "src-faq-draft" ? "bad" : ""}"><td>${esc(c.value)}</td><td class="src">${esc(c.source)} · ${c.asOf}</td></tr>`)
         .join("");
-      return `<div class="report-item seq" style="--d:${at}"><h3><span class="n">${idx + 1}.</span>Contradiction in <code>${esc(key)}</code></h3>
+      return `<div class="report-item${seq(at)}"${onPage ? ' data-link="1"' : ""}><h3>${onPage ? '<span class="lnum">1</span>' : `<span class="n">${idx + 1}.</span>`}Contradiction in <code>${esc(key)}</code></h3>
         <table class="report-table">${rows}</table>
-        <p class="report-note">The draft FAQ disagrees with ${f.claims.length > 2 ? "the 20 April decision" : "the approved design"}. Don't keep the newest value by default: the newest here is the draft's.</p></div>`;
+        <p class="report-note">The draft FAQ disagrees with ${f.claims.length > 2 ? "the 20 April decision" : "the approved design"}${onPage ? "" : `, on <button type="button" data-file="ledger-export" class="text-[var(--accent)]">ledger-export</button>`}. Don't keep the newest value by default: the newest here is the draft's.</p></div>`;
     }
     const target = /\[\[([a-z0-9-]+)\]\]/.exec(f.title)?.[1] ?? "";
-    return `<div class="report-item seq" style="--d:${at}"><h3><span class="n">${idx + 1}.</span>Missing page: <code>${esc(target)}</code></h3>
+    return `<div class="report-item${seq(at)}"><h3><span class="n">${idx + 1}.</span>Missing page: <code>${esc(target)}</code></h3>
       <p class="report-note">${esc(f.detail)} Proposed fix: write the page from what those pages already say.</p></div>`;
   });
-  return `<article class="page seq" style="--d:${d0}">
-      <div class="page-path">lint report</div>
+  return `<article class="page${animate ? ` seq" style="--d:${d0}` : ""}">
       <h1>Lint report</h1>
       <div class="page-sub">${longDate(FIX.date)} · ${LAST.pages.length} pages · ${LAST.claims.current} current claims</div>
       ${items.join("")}
     </article>`;
+}
+
+/** The export-retention page as lint sees it, with the claims that disagree marked. */
+function conflictPage(at: number): string {
+  const page = LAST.pages.find((p) => p.slug === "export-retention")!;
+  const meta = pageMeta(page.text);
+  const blocks = trackedBlocks(page.text.split("\n").map((text) => ({ op: "same" as const, text })));
+  const conflicting = new Set(RUN.lintBefore.findings.flatMap((f) => f.claims).filter((c) => c.page === "export-retention").map((c) => c.line));
+  const body = blocks
+    .map((b) => {
+      if (b.kind === "h1") return `<h1>${b.html}</h1><div class="page-sub">${cap(meta.type)} · as of ${longDate(meta.updated)} · ${plural(meta.sources, "source")}</div>`;
+      const hit = conflicting.has(b.raw);
+      return `<div class="b-${b.kind}${hit ? ` conflict seq" style="--d:${at}" data-link="1` : ""}">${hit ? '<span class="gutter"><span class="lnum">1</span></span>' : ""}${b.html}</div>`;
+    })
+    .join("");
+  return `<article class="page seq" style="--d:300">${body}</article>`;
 }
 
 /** Pages to flag in lint: pages with conflicting claims, their sources, and the missing page. */
@@ -328,13 +408,6 @@ function renderChrome() {
     `<li class="chap-sep" aria-hidden="true">/</li>`,
     `<li><a class="chap" href="#faceoff">Face-off</a></li>`,
   ].join("");
-  $("queue").innerHTML = RUN.sources
-    .map((s, k) => {
-      const n = k + 1;
-      const state = scene > INGESTS.length || n < scene ? "done" : n === scene ? "now" : "todo";
-      return `<li><button type="button" class="qitem" data-scene="${n}" data-state="${state}"><span class="qt">${esc(INGESTS[k].title)}</span><span class="qd">${s.date}</span></button></li>`;
-    })
-    .join("");
   ($("prev") as HTMLButtonElement).disabled = scene === 0;
   $("next").textContent = scene === FIX_SCENE ? "Face-off →" : "Next →";
   renderPlay();
@@ -357,6 +430,7 @@ function renderCaption(beats: Beat[]) {
 
 function tick() {
   const t = sceneTime();
+  if (docFile === null) follow(t, true);
   $("progress").style.width = Number.isFinite(timeline.len) ? `${clamp(t / timeline.len) * 100}%` : "0%";
   if (playing && FROZEN === null && t > timeline.len) {
     if (scene >= FIX_SCENE) {
@@ -552,8 +626,16 @@ function openFile(slug: string) {
   const change = step.changes.find((c) => c.slug === slug);
   if (!change) return;
   docFile = slug;
-  $("doc").innerHTML = pageHtml(step, change, 0, 100).html;
-  scrollToChanges();
+  const { html, marks } = pageHtml(step, change, 0, 100);
+  $("doc").innerHTML = html;
+  $("doc-path").textContent = `wiki/${change.path}`;
+  $("doc-label").textContent = change.status === "created" ? "New wiki page" : "Wiki page · tracked changes";
+  if (scene !== FIX_SCENE) {
+    const raw = RUN.sources.find((s) => s.file === step.source)!;
+    $("src").innerHTML = `<div class="page">${sourceHtml(raw.text, marks)}</div>`;
+  }
+  $("src").scrollTop = 0;
+  $("doc").scrollTop = 0;
 }
 
 document.addEventListener("keydown", (e) => {
@@ -569,6 +651,29 @@ document.addEventListener("keydown", (e) => {
   } else if (e.key === " " && !(e.target as HTMLElement).closest("button, a")) {
     e.preventDefault();
     togglePlay();
+  }
+});
+
+// Hover or tap a numbered passage or edit to highlight both ends of the link.
+function linkOf(el: EventTarget | null): string | null {
+  const host = (el as HTMLElement | null)?.closest?.<HTMLElement>("[data-link]");
+  return host?.dataset.link?.split(" ")[0] ?? null;
+}
+function highlightLink(n: string | null) {
+  document.querySelectorAll(".hot").forEach((el) => el.classList.remove("hot"));
+  if (n) document.querySelectorAll(`[data-link~="${n}"]`).forEach((el) => el.classList.add("hot"));
+}
+document.addEventListener("pointerover", (e) => highlightLink(linkOf(e.target)));
+document.addEventListener("click", (e) => {
+  const n = linkOf(e.target);
+  if (!n) return;
+  highlightLink(n);
+  // On tap, bring the other end into view inside its pane.
+  const from = (e.target as HTMLElement).closest(".doc");
+  for (const pane of [$("src"), $("doc")]) {
+    if (pane === from) continue;
+    const el = pane.querySelector<HTMLElement>(`[data-link~="${n}"]`);
+    if (el) pane.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 40), behavior: REDUCED ? "auto" : "smooth" });
   }
 });
 

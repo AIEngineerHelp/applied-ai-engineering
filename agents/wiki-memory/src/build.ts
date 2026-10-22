@@ -25,6 +25,16 @@ export interface Change {
   diff: DiffLine[];
 }
 
+/**
+ * Which source passages drive which edits. Each quote is verbatim text from the step's raw source;
+ * each anchor is a substring of a changed line on `page`. Written by hand with the pages.
+ */
+export interface SourceLink {
+  page: string;
+  quotes: string[];
+  anchors: string[];
+}
+
 export interface Step {
   n: number;
   kind: "ingest" | "lint";
@@ -34,6 +44,7 @@ export interface Step {
   focus: string;
   /** One short sentence for the app's subtitle. */
   caption: string;
+  links?: SourceLink[];
   source?: string;
   verdict: string;
   lesson: string;
@@ -83,7 +94,7 @@ export function loadSources(): RawSource[] {
 }
 
 interface StepFiles {
-  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; caption: string; source?: string; verdict: string; lesson: string };
+  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; caption: string; source?: string; verdict: string; lesson: string; links?: SourceLink[] };
   files: { slug: string; text: string }[];
 }
 

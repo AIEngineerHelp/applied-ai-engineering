@@ -6,5 +6,54 @@
   "caption": "Seven pages from one meeting: the project, two people, an API, a policy and an overview.",
   "source": "2026-03-02-kickoff-notes.md",
   "verdict": "The first source creates the wiki: a page for the source, pages for the project, two people and the Billing API, a page for the retention policy, and an overview. Nothing existed before, so every line is new.",
-  "lesson": "One source fans out into several pages. Each fact is filed where someone will look for it later, not left inside the meeting notes."
+  "lesson": "One source fans out into several pages. Each fact is filed where someone will look for it later, not left inside the meeting notes.",
+  "links": [
+    {
+      "page": "ledger-export",
+      "quotes": [
+        "Support exports them by hand from the admin console, about 40 tickets a week.",
+        "Build a self-serve export: a customer picks a date range and receives one CSV of their invoices."
+      ],
+      "anchors": [
+        "It replaces manual exports by support"
+      ]
+    },
+    {
+      "page": "ledger-export",
+      "quotes": [
+        "Amara owns the project. Rui owns the customer-facing copy."
+      ],
+      "anchors": [
+        "Owner: [[amara-osei]]"
+      ]
+    },
+    {
+      "page": "ledger-export",
+      "quotes": [
+        "Exports run as a nightly batch job, not on demand, so the job can read from the Postgres read replica while traffic is low."
+      ],
+      "anchors": [
+        "Runs as a nightly batch job",
+        "`export.schedule`: nightly"
+      ]
+    },
+    {
+      "page": "ledger-export",
+      "quotes": [
+        "Invoice totals come from the Billing API, which the Payments team owns."
+      ],
+      "anchors": [
+        "Reads invoice totals from the [[billing-api]]"
+      ]
+    },
+    {
+      "page": "ledger-export",
+      "quotes": [
+        "Finished export files are kept for 30 days, then deleted."
+      ],
+      "anchors": [
+        "How long files are kept"
+      ]
+    }
+  ]
 }
