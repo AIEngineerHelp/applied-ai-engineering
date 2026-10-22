@@ -289,9 +289,65 @@ Wiki memory fits best where knowledge accumulates and changes: a research topic 
 7. **File good answers back.** If a question took real synthesis, save the answer as a page and link it.
 8. **Add search when the index stops fitting in context**, and search the wiki, not just the raw sources.
 
+## Who does what: the model, code and a person
+
+Wiki memory is often described as "the LLM maintains a wiki", but a working system splits the work three ways. The model does what needs language understanding. Plain code does everything that can be checked exactly, so the model's mistakes are caught rather than compounded. A person decides what neither can.
+
+| | The model | Code | A person |
+| --- | --- | --- | --- |
+| **Ingest** | Reads the new document; decides which pages it affects; writes and rewrites page text; crosses out old facts with a reason | Stores the files and their Git history; rebuilds the index and the log; enforces that the agent edits only wiki files and that pages stay under a size limit | Approves sensitive edits |
+| **Checking** | Spots contradictions written in prose, which need understanding | Checks links; compares structured fact values (lint); checks that every quoted sentence exists verbatim in its source; applies the source-ranking rule | Decides disputed facts from a review queue |
+| **Question time** | Picks the pages to read and writes the answer, with citations | Searches the wiki when the index no longer fits in context | Owns the ranking rule and the schema |
+
+In this demo, the model's column is written by hand: the page edits and the plain-language notes are scripted. The code's column is real and tested: the tracked changes, index and log, link and fact checks, the ranking rule ([`src/resolve.ts`](src/resolve.ts)) and the quote checks.
+
+## Taking it to production
+
+> **Design guidance, not tested here.** The demo has five short documents and hand-written edits. This section describes how we would build the same pattern for many large, conflicting documents. Where a claim comes from a source, it is cited; the rest is our own engineering judgement, and the demo does not test it.
+
+### The pipeline
+
+```mermaid
+flowchart LR
+    NEW["New or changed document"] --> HASH{"Content hash<br/>seen before?"}
+    HASH -->|yes| SKIP[Skip]
+    HASH -->|no| Q[Ingest queue]
+    Q --> ROUTE["Route (cheap model)<br/>index + search over the wiki<br/>→ pages likely affected"]
+    ROUTE --> SECT["Per section (strong model)<br/>extract facts: value · scope · source · date"]
+    SECT --> MERGE["Merge into pages<br/>(single writer or per-page lock)"]
+    MERGE --> CHECK["Code checks<br/>quotes verbatim · links · page size<br/>source-ranking rule"]
+    CHECK -->|decided| COMMIT["One Git commit per ingest<br/>index and log rebuilt"]
+    CHECK -->|disputed or sensitive| REVIEW[Human review queue]
+    REVIEW --> COMMIT
+    COMMIT --> LINT["Scheduled lint<br/>+ regression questions"]
+```
+
+| Problem | What to do |
+| --- | --- |
+| **Big documents** | Don't hand a whole document and the whole wiki to one prompt. Route first: use the index and a search over wiki pages to find the pages a document is likely to affect. Then process it section by section: extract facts from each section, then merge them into pages. Split a page when it grows past a size limit, and leave a short hub page that links to the parts. |
+| **A wiki too big for the context window** | Karpathy reports that an index file is enough "at moderate scale (~100 sources, ~hundreds of pages)" and suggests [qmd](https://github.com/tobi/qmd), a local search engine with "hybrid BM25/vector search and LLM re-ranking", once it isn't. Add hub pages per area, so the index stays short, and search the wiki pages (not the raw chunks) at question time. Claude Code does something similar for its own memory: only the first 200 lines or 25 KB of the `MEMORY.md` index load at the start of a session, and detail moves into topic files read on demand ([docs](https://code.claude.com/docs/en/memory)). |
+| **Conflicting facts** | Store each fact as structured data: value, scope, source, date and status. Many apparent conflicts are scopes: 90 days and 30 days are both right, for Enterprise and for other plans. For real conflicts, use an explicit source-authority ranking, applied by code: approved decision or policy > design doc > incident report or runbook > meeting notes or chat > draft, with the newer document winning within the same rank. Never overwrite silently: cross out the losing value with the reason. When the rule can't decide (same rank, same date, different values), mark the fact *disputed*, send it to a human review queue, and have answers state the dispute and both sources. The demo implements this rule; see [How conflicts are resolved](#how-conflicts-are-resolved). |
+| **Mistakes and drift** | Treat the raw sources as the truth and the wiki as a cache you can rebuild from them. Require a citation for every fact and check by code that the quoted sentence exists verbatim in its source. Keep a regression set of questions with known answers, and run it with lint on a schedule. |
+| **Concurrency** | Put ingests on a queue. Use a single writer, or per-page locks, so two ingests never rewrite the same page at once. Make one Git commit per ingest, so any ingest can be reviewed or reverted. Skip documents whose content hash has already been ingested, so retries are idempotent. |
+| **Cost** | Ingest cost grows with documents × pages touched per document, not with questions. Use a cheap model for routing and a strong model for the edits. Reprocess only documents that changed (by content hash). Running maintenance in the background, between conversations, is also an option: LangMem calls this "background" memory formation ([concepts](https://langchain-ai.github.io/langmem/concepts/conceptual_guide/)) and Letta runs "sleep-time" agents that reorganize memory asynchronously ([blog](https://letta.com/blog/sleep-time-compute)). |
+| **Deletions, permissions and personal data** | Keep provenance on every fact, so deleting a source can retract exactly the facts it supported. Let a page inherit the access rules of its most restricted source, or keep separate wikis per audience. Strip personal data before it reaches a page. Anthropic's memory-tool documentation gives similar advice for any file-based memory: validate paths, cap file sizes and periodically delete files that haven't been accessed ([docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)). |
+| **Combining with RAG and knowledge graphs** | Keep plain retrieval over the raw sources as a fallback, for questions the wiki doesn't cover yet and for exact quotations. Where code needs to traverse typed relationships (who owns what, which service calls which), a knowledge graph complements the pages. Zep, for example, keeps facts in a temporal knowledge graph, records both when an event happened and when it was ingested, and invalidates contradicted edges while keeping their history ([paper](https://arxiv.org/abs/2501.13956)). Unlike our ranking rule, Zep's paper says it "consistently prioritizes new information" when invalidating, which is a different design choice. |
+
+### How conflicts are resolved
+
+[`src/resolve.ts`](src/resolve.ts) implements the conflict rule above, and the app shows its output. It takes structured facts (value, scope, source, source type and date) and a ranking of source types ([`corpus/conflicts.json`](corpus/conflicts.json)). For each fact and scope, it returns either the current value plus every losing value with its reason, or *disputed* when the rule can't decide. On the demo's facts:
+
+| Fact, scope | Result | Why |
+| --- | --- | --- |
+| Retention, Enterprise | **90 days**, from Amara's decision on 20 April | The design doc's and kickoff's 30 days and the draft's 7 days all rank below an approved decision |
+| Retention, other plans | **30 days**, from the same decision | The design doc and kickoff agree (kept as support); the draft's 7 days ranks below |
+| Longest date range in one export | **Disputed**: 24 or 12 months | Two runbooks, both dated 12 May, disagree. The FAQ draft's 24 months ranks lower and can't settle it, so the question goes to a person |
+
+The two runbooks are extra synthetic sources in [`corpus/review/`](corpus/review/), added only for this example; they are not part of the walkthrough. Tests check the ranking order, recency within a rank, scope separation, dispute detection, that every quoted sentence exists verbatim in its source, and that the app shows what the resolver returns.
+
 ## The demo app
 
-The app teaches the idea in five short sections, read top to bottom. The problem, the idea, the payoff and the recap are static; only the walkthrough plays.
+The app teaches the idea in seven short sections, read top to bottom. Only the walkthrough plays; everything else is static.
 
 1. **The problem.** One question, "How long are customer exports kept?", and the three passages plain retrieval returns from the five raw documents: 7, 30 and 90 days, with nothing to say which is current. *Retrieval finds text; it doesn't know which text is still true.*
 2. **The idea.** What wiki memory is, in three sentences. A static diagram compares the two flows: without (question → search five raw documents → conflicting passages) and with (each document read once → the agent updates its pages; question → read one or two up-to-date pages). Then one-line definitions of the five words used later: page, link, index, log and lint.
@@ -302,11 +358,13 @@ The app teaches the idea in five short sections, read top to bottom. The problem
    The passage lights up first and the edit follows, one thing at a time, and each pane scrolls to follow the edits. A small map of pages and links, `index.md` and `log.md` sit in tabs beside the panes, and the other pages a step changed are one click away.
    The large **Play/Pause** button sits next to Previous, Next and the speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser). Any Previous/Next, step-name or tab click pauses autoplay until you press Play again. Scrolling, wheeling or touching a pane stops its auto-scroll for that step. With reduced motion there is no autoplay: every step shows its final state, and the button steps forward.
 4. **The payoff.** The same question again. The wiki answers from one page, next to the same three retrieval passages, now labelled with which ones are outdated. "Two more questions" shows one case where the wiki helps for the same reason, and one where plain retrieval does just as well.
-5. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, and how it differs from a knowledge graph.
+5. **How conflicts are resolved.** The facts the agent extracted (value, scope, source with the quoted sentence, source type, date), the ranking rule in plain words, the resolver's output for each fact and scope (current, with every losing value and its reason, or disputed), and a "Needs a person" review card for the one conflict the rule can't decide.
+6. **Who does what.** What the model does, what code does and what a person does, with a note on which parts this demo scripts.
+7. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, how it differs from a knowledge graph, and a reminder that this is a small demo, not a production system.
 
 The plain-language text in each step (`lede`, `key` sentences, `did` bullets) is written by hand in `corpus/steps/*/step.json`. Tests check that every key sentence appears word for word in its source and that every step shows a page it really changed.
 
-Links for review: `?scene=3` opens a walkthrough step (0 is the empty wiki, 1 to 5 the documents, 6 lint, 7 the fix), `&t=2000` freezes it that many milliseconds in, `&file=@log` opens a file in the panel, `?only=payoff` shows a single section (`problem`, `idea`, `theatre`, `payoff`, `recap`), `&solo=1` with `?scene=` shows only the walkthrough, `?play=1` starts autoplay, and `&theme=dark` or `&theme=light` forces a theme.
+Links for review: `?scene=3` opens a walkthrough step (0 is the empty wiki, 1 to 5 the documents, 6 lint, 7 the fix), `&t=2000` freezes it that many milliseconds in, `&file=@log` opens a file in the panel, `?only=payoff` shows a single section (`problem`, `idea`, `theatre`, `payoff`, `conflicts`, `roles`, `recap`), `&solo=1` with `?scene=` shows only the walkthrough, `?play=1` starts autoplay, and `&theme=dark` or `&theme=light` forces a theme.
 
 ### Run it
 
@@ -321,19 +379,21 @@ npm run data       # rebuilds results/run.json and results/wiki/ from corpus/
 npm run export     # static copy of the app in dist/
 ```
 
-You should see the opening question and the three passages plain retrieval returns. `npm test` should report 19 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
+You should see the opening question and the three passages plain retrieval returns. `npm test` should report 21 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
 
 ### How it is built
 
-- [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
-- [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
-- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/intro.ts`](client/intro.ts): the problem and the payoff. [`client/app.ts`](client/app.ts): the walkthrough player. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
+- [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/conflicts.json`](corpus/conflicts.json) and [`corpus/review/`](corpus/review/): the structured facts, the ranking and two extra runbooks for the conflict example. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
+- [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/resolve.ts`](src/resolve.ts): conflict resolution by scope, source ranking and date. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
+- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/intro.ts`](client/intro.ts): the problem and the payoff. [`client/conflicts.ts`](client/conflicts.ts): the conflict section. [`client/app.ts`](client/app.ts): the walkthrough player. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
 
 To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, edit `src/questions.ts`, and run `npm run data`.
 
 ## Limitations
 
+- **This is a teaching demo, not a production system.** Five short documents, one wiki of 15 pages, and edits written by hand. Nothing here routes large documents, splits pages, searches the wiki, queues ingests, locks pages, controls access or handles deletions. [Taking it to production](#taking-it-to-production) describes how we would, and none of it is tested by this example.
+- **The conflict rule is one design choice.** The ranking of source types is ours, set in `corpus/conflicts.json`. Your organisation's authority order will differ, and some systems prefer the newest fact regardless of source. The facts were extracted by hand; in production a model would extract them and make extraction mistakes.
 - **The agent is scripted.** We wrote the pages by hand to show the pattern working as intended. A real model will make mistakes this example doesn't show: missing a page it should update, merging two entities, or paraphrasing a number wrongly. Treat the example as a description of the target behavior, not evidence that models achieve it.
 - **The retrieval comparison is small and lexical.** Five sources, 25 chunks, three questions, BM25 only. The wiki side ranks pages with the same BM25 scorer instead of letting a model read the index. The fact checks match specific sentences we chose. These results illustrate the mechanism; they don't measure answer quality.
 - **Lint only checks structured claims exactly.** Contradictions written in prose need a model, which can miss them or invent them.
@@ -343,8 +403,8 @@ To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, 
 
 - Everything in `results/` is deterministic: `npm run data` rebuilds it from `corpus/` with no network or model calls, and the test suite checks the committed copy is current.
 - What is **scripted**: the five sources, every wiki page in `corpus/steps/`, the step verdicts and lessons, and the three example answers in `src/questions.ts`.
-- What is **computed**: the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
-- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (19 passing), `npm run check`, `npm start` and `npm run export`.
+- What is **computed**: the conflict resolution, the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
+- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (21 passing), `npm run check`, `npm start` and `npm run export`.
 - The corpus is original and synthetic, written for this example; any resemblance to a real company or person is unintended.
 
 ## Sources

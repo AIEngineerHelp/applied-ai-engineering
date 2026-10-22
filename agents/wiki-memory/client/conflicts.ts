@@ -55,7 +55,7 @@ export function renderConflictsHtml(c: Conflicts): string {
       <div class="review-sides">${r.contenders
         .map((x) => `<div><p class="review-v">${esc(x.value)}</p><p class="review-s">${esc(srcName(x))} · ${shortDate(x.date)}</p><p class="review-quote">“${esc(x.quote)}”</p></div>`)
         .join("")}</div>
-      <p class="review-note">Until someone decides, the wiki page keeps both values marked <em>disputed</em>, and any answer about the date range says so and names both sources. A good reviewer here is Amara, who owns Ledger Export and wrote the on-call runbook's reason (the 06:00 UTC deadline).</p></div>`,
+      <p class="review-note">Until someone decides, the wiki page keeps both values marked <em>disputed</em>, and any answer about the date range says so and names both sources. The reviewer should be able to decide for both teams: here, Amara (who owns Ledger Export) together with Rui (who owns the customer-facing copy).</p></div>`,
     )
     .join("");
 
