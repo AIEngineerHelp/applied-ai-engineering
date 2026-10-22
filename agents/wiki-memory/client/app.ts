@@ -13,6 +13,7 @@ import { edgeKey, mapSvg } from "./map.ts";
 import { esc } from "./render.ts";
 import { renderPayoff, renderProblem } from "./intro.ts";
 import { renderConflictsHtml } from "./conflicts.ts";
+import { renderProductionHtml } from "./production.ts";
 import { parseSpeed, SceneClock, SPEEDS } from "./clock.ts";
 
 const RUN = runJson as unknown as Run;
@@ -689,6 +690,7 @@ io.observe($("theatre"));
 renderProblem();
 renderPayoff();
 $("conflicts-body").innerHTML = renderConflictsHtml(RUN.conflicts);
+$("production-body").innerHTML = renderProductionHtml();
 renderSpeed();
 renderThemeLabel();
 if (params.has("scene")) started = true;

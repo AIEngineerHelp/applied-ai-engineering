@@ -320,3 +320,24 @@ test("resolver on the corpus: retention resolves by scope and authority; the max
   assert.equal((html.match(/data-status="disputed"/g) ?? []).length, 1);
   assert.equal((html.match(/data-status="current"/g) ?? []).length, 2);
 });
+
+test("production section covers all eight areas, and every in-page link resolves", async () => {
+  const { PRODUCTION, renderProductionHtml } = await import("../client/production.ts");
+  const { renderConflictsHtml } = await import("../client/conflicts.ts");
+  const areas = ["Big documents", "A wiki too big to read", "Conflicting facts", "Mistakes and drift", "Many documents at once", "Cost", "Deleted documents and permissions", "Combining with RAG and knowledge graphs"];
+  assert.deepEqual(PRODUCTION.map((r) => r.problem), areas);
+  for (const r of PRODUCTION) assert.ok(r.wrong.length > 20 && r.handle.length > 40, r.problem);
+  // Every #anchor in the page and in generated sections points to an id that exists in the page.
+  const page = readFileSync(join(ROOT, "site", "index.html"), "utf8");
+  const ids = new Set([...page.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+  const html = page + renderProductionHtml() + renderConflictsHtml(run.conflicts);
+  const anchors = [...html.matchAll(/href="#([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(anchors.includes("production") && anchors.includes("conflicts"));
+  for (const a of anchors) assert.ok(ids.has(a), `#${a} has no target`);
+  // The article page renders the README with heading ids for the anchors it links to.
+  const { renderArticle } = await import("../scripts/article.ts");
+  const article = renderArticle(readFileSync(join(ROOT, "README.md"), "utf8"));
+  const articleIds = new Set([...article.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+  for (const m of article.matchAll(/href="#([^"]+)"/g)) assert.ok(articleIds.has(m[1]), `article #${m[1]} has no target`);
+  assert.ok(articleIds.has("taking-it-to-production"));
+});

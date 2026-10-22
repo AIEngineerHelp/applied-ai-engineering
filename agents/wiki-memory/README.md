@@ -347,7 +347,7 @@ The two runbooks are extra synthetic sources in [`corpus/review/`](corpus/review
 
 ## The demo app
 
-The app teaches the idea in seven short sections, read top to bottom. Only the walkthrough plays; everything else is static.
+The app teaches the idea in eight short sections, read top to bottom. Only the walkthrough plays; everything else is static.
 
 1. **The problem.** One question, "How long are customer exports kept?", and the three passages plain retrieval returns from the five raw documents: 7, 30 and 90 days, with nothing to say which is current. *Retrieval finds text; it doesn't know which text is still true.*
 2. **The idea.** What wiki memory is, in three sentences. A static diagram compares the two flows: without (question → search five raw documents → conflicting passages) and with (each document read once → the agent updates its pages; question → read one or two up-to-date pages). Then one-line definitions of the five words used later: page, link, index, log and lint.
@@ -360,11 +360,12 @@ The app teaches the idea in seven short sections, read top to bottom. Only the w
 4. **The payoff.** The same question again. The wiki answers from one page, next to the same three retrieval passages, now labelled with which ones are outdated. "Two more questions" shows one case where the wiki helps for the same reason, and one where plain retrieval does just as well.
 5. **How conflicts are resolved.** The facts the agent extracted (value, scope, source with the quoted sentence, source type, date), the ranking rule in plain words, the resolver's output for each fact and scope (current, with every losing value and its reason, or disputed), and a "Needs a person" review card for the one conflict the rule can't decide.
 6. **Who does what.** What the model does, what code does and what a person does, with a note on which parts this demo scripts.
-7. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, how it differs from a knowledge graph, and a reminder that this is a small demo, not a production system.
+7. **Taking it to production.** The production pipeline as a static diagram, and a table of the eight problems at scale (big documents, a wiki too big to read, conflicting facts, mistakes and drift, many documents at once, cost, deleted documents and permissions, combining with RAG and knowledge graphs): what goes wrong and how to handle it, with links to the parts the demo shows. Design guidance, shortened from [Taking it to production](#taking-it-to-production); the demo does not test it.
+8. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, how it differs from a knowledge graph, and a reminder that this is a small demo, not a production system.
 
 The plain-language text in each step (`lede`, `key` sentences, `did` bullets) is written by hand in `corpus/steps/*/step.json`. Tests check that every key sentence appears word for word in its source and that every step shows a page it really changed.
 
-Links for review: `?scene=3` opens a walkthrough step (0 is the empty wiki, 1 to 5 the documents, 6 lint, 7 the fix), `&t=2000` freezes it that many milliseconds in, `&file=@log` opens a file in the panel, `?only=payoff` shows a single section (`problem`, `idea`, `theatre`, `payoff`, `conflicts`, `roles`, `recap`), `&solo=1` with `?scene=` shows only the walkthrough, `?play=1` starts autoplay, and `&theme=dark` or `&theme=light` forces a theme.
+Links for review: `?scene=3` opens a walkthrough step (0 is the empty wiki, 1 to 5 the documents, 6 lint, 7 the fix), `&t=2000` freezes it that many milliseconds in, `&file=@log` opens a file in the panel, `?only=payoff` shows a single section (`problem`, `idea`, `theatre`, `payoff`, `conflicts`, `roles`, `production`, `recap`), `&solo=1` with `?scene=` shows only the walkthrough, `?play=1` starts autoplay, and `&theme=dark` or `&theme=light` forces a theme.
 
 ### Run it
 
@@ -379,13 +380,13 @@ npm run data       # rebuilds results/run.json and results/wiki/ from corpus/
 npm run export     # static copy of the app in dist/
 ```
 
-You should see the opening question and the three passages plain retrieval returns. `npm test` should report 21 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
+You should see the opening question and the three passages plain retrieval returns. `/article` serves this README as a page (built into `site/article.html` by `scripts/article.ts` with [marked](https://marked.js.org/), pinned; Mermaid diagrams appear as source), so the article reads locally and in the static export. `npm test` should report 22 passing tests; one of them fails if `results/run.json` is out of date with `corpus/` or `src/`, so run `npm run data` after editing either.
 
 ### How it is built
 
 - [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/conflicts.json`](corpus/conflicts.json) and [`corpus/review/`](corpus/review/): the structured facts, the ranking and two extra runbooks for the conflict example. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
 - [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/resolve.ts`](src/resolve.ts): conflict resolution by scope, source ranking and date. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
-- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/intro.ts`](client/intro.ts): the problem and the payoff. [`client/conflicts.ts`](client/conflicts.ts): the conflict section. [`client/app.ts`](client/app.ts): the walkthrough player. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
+- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/intro.ts`](client/intro.ts): the problem and the payoff. [`client/conflicts.ts`](client/conflicts.ts): the conflict section. [`client/production.ts`](client/production.ts): the production section. [`client/app.ts`](client/app.ts): the walkthrough player. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
 
 To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, edit `src/questions.ts`, and run `npm run data`.
@@ -404,7 +405,7 @@ To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, 
 - Everything in `results/` is deterministic: `npm run data` rebuilds it from `corpus/` with no network or model calls, and the test suite checks the committed copy is current.
 - What is **scripted**: the five sources, every wiki page in `corpus/steps/`, the step verdicts and lessons, and the three example answers in `src/questions.ts`.
 - What is **computed**: the conflict resolution, the diffs, `index.md`, `log.md`, the link graph and its layout, the lint findings, the chunking, the BM25 rankings and the fact checks.
-- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (21 passing), `npm run check`, `npm start` and `npm run export`.
+- Verified with Node.js 26.6 on macOS, on 2026-10-21: `npm ci`, `npm test` (22 passing), `npm run check`, `npm start` and `npm run export`.
 - The corpus is original and synthetic, written for this example; any resemblance to a real company or person is unintended.
 
 ## Sources

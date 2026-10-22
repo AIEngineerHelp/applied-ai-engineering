@@ -27,8 +27,9 @@
       <a class="nav hidden sm:inline" href="#idea">The idea</a>
       <a class="nav hidden sm:inline" href="#theatre">Walkthrough</a>
       <a class="nav hidden sm:inline" href="#conflicts">Conflicts</a>
+      <a class="nav hidden sm:inline" href="#production">Production</a>
       <a class="nav hidden sm:inline" href="#recap">Recap</a>
-      <a class="nav" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
+      <a class="nav" href="article">Article</a>
       <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
     </nav>
   </div>
@@ -205,10 +206,23 @@
     </div>
   </section>
 
-  <!-- 7. Recap -->
+  <!-- 7. Production -->
+  <section id="production" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">7 · Taking it to production</p>
+        <h2 class="title">From five documents to thousands</h2>
+        <p class="lede">This demo has five short documents. Real systems have thousands of large documents that change and conflict, so the same idea needs a pipeline around it.</p>
+        <p class="caption mt-3">Design guidance. This demo does not test it.</p>
+      </div>
+      <div id="production-body" class="mt-8"></div>
+    </div>
+  </section>
+
+  <!-- 8. Recap -->
   <section id="recap" class="sec">
     <div class="wrap narrow">
-      <p class="eyebrow">7 · Recap</p>
+      <p class="eyebrow">8 · Recap</p>
       <h2 class="title">So what is wiki memory?</h2>
       <ul class="takeaways">
         <li><strong>The agent keeps its own notebook of pages</strong> and updates it as each new document arrives, instead of re-searching the raw documents for every question.</li>
@@ -220,8 +234,9 @@
         <div><h3 class="sub">Plain retrieval is enough when</h3><p>The documents are many and rarely change, each answer sits in one passage, or nobody will review what the agent writes. The third question under “Two more questions” is one such case.</p></div>
       </div>
       <p class="kg"><strong>Not a knowledge graph.</strong> A knowledge graph stores typed facts that code traverses. A wiki stores pages of prose that the agent reads and rewrites.</p>
-      <p class="kg"><strong>This is a small demo, not a production system.</strong> Five short documents and hand-written edits. Real deployments have many large documents and need routing, page splitting, search over the wiki, a review queue, provenance and access control. The article covers these under “Taking it to production”.</p>
-      <p class="mt-8"><a class="link-arrow" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#taking-it-to-production">Read the full article: the pattern, its trade-offs and how to run it in production</a></p>
+      <p class="kg"><strong>This is a small demo, not a production system.</strong> Five short documents and hand-written edits. Real deployments have many large documents and need routing, page splitting, search over the wiki, a review queue, provenance and access control: see <a href="#production">Taking it to production</a>.</p>
+      <p class="mt-8"><a class="link-arrow" href="article">Read the full article: the pattern, its trade-offs and how to run it in production</a></p>
+      <p class="caption mt-2">Also on GitHub: <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Full article on GitHub</a></p>
     </div>
   </section>
 

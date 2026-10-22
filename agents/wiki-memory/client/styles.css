@@ -514,3 +514,21 @@
     .roles > div + div { margin-top: 18px; border-top: 1px solid var(--rule); }
   }
 }
+
+/* ---------------------------------------------------------------- production */
+@layer components {
+  #production .flow { row-gap: 10px; }
+  .pbox { padding: 7px 11px; border: 1px solid var(--rule-2); border-radius: 4px; font-size: 13.5px; background: var(--paper); }
+  .pbox.muted { color: var(--muted); border-style: dashed; }
+  .ptable { margin-top: 36px; border-top: 1px solid var(--ink); }
+  .prow { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1.6fr); gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+  .phead { font-size: 11.5px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 0; }
+  .p-problem { font-family: var(--font-serif); font-size: 18px; line-height: 1.35; color: var(--ink); }
+  .p-k { display: none; }
+  .p-demo { font-size: 13.5px; color: var(--accent); white-space: nowrap; }
+  @media (max-width: 760px) {
+    .phead { display: none; }
+    .prow { grid-template-columns: 1fr; gap: 8px; padding: 18px 0; }
+    .p-k { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  }
+}

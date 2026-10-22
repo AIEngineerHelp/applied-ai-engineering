@@ -9,7 +9,7 @@
   },
   "scripts": {
     "data": "node --import=tsx scripts/build-data.ts",
-    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify",
+    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify && node --import=tsx scripts/article.ts",
     "build": "npm run check && npm run build:client",
     "start": "npm run build:client && node --import=tsx scripts/serve.ts",
     "check": "tsc --noEmit",
@@ -20,6 +20,7 @@
     "@tailwindcss/cli": "^4.3.3",
     "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
+    "marked": "17.0.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
