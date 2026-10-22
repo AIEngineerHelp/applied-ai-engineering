@@ -25,7 +25,7 @@
     <a class="wordmark" href="#problem">Wiki memory</a>
     <nav class="flex items-center gap-5 text-[13.5px]">
       <a class="nav hidden sm:inline" href="#idea">The idea</a>
-      <a class="nav hidden sm:inline" href="#walk">Walkthrough</a>
+      <a class="nav hidden sm:inline" href="#theatre">Walkthrough</a>
       <a class="nav hidden sm:inline" href="#recap">Recap</a>
       <a class="nav" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/agents/wiki-memory#readme">Article</a>
       <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
@@ -94,27 +94,53 @@
     </div>
   </section>
 
-  <!-- 3–4. The walkthrough -->
-  <section id="walk" class="sec">
-    <div class="wrap narrow">
-      <p class="eyebrow">3 · The walkthrough</p>
-      <h2 class="title">Five documents arrive, one at a time</h2>
-      <p class="lede">Step through them. For each one you see what the document says, what the agent did, and the one page change that matters most.</p>
+  <!-- 3. The walkthrough: the source next to the page it changes -->
+  <section id="theatre" class="theatre" aria-label="The walkthrough">
+    <div class="wrap theatre-intro"><p class="eyebrow">3 · The walkthrough</p><p class="theatre-lede">Five documents arrive, one at a time. On the left, the new document; on the right, the wiki page the agent rewrites. A number joins each highlighted passage to the edit it caused. It plays by itself; pause or step through at any time.</p></div>
+    <div class="wrap theatre-head">
+      <div class="flex items-baseline gap-3">
+        <span class="eyebrow" id="act-num">Act one</span>
+        <h2 id="act-title" class="act-title">Ingest</h2>
+      </div>
+      <ol id="chapters" class="chapters" aria-label="Scenes"></ol>
+    </div>
 
-      <div class="stepbar">
-        <ol id="steps" class="steps" aria-label="Steps"></ol>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button id="play" type="button" class="tbtn" aria-pressed="false">Play</button>
-          <div id="speed" class="speed" role="group" aria-label="Playback speed"></div>
+    <div class="wrap stage">
+      <div class="reader">
+        <div id="caption" class="subtitle" aria-live="polite"></div>
+        <div id="did" class="didstrip"></div>
+        <div class="panes">
+          <section class="pane" aria-label="Source">
+            <div class="pane-label"><span id="src-label">Raw sources</span><span id="src-path" class="mono"></span></div>
+            <div id="src" class="doc"></div>
+          </section>
+          <section class="pane" aria-label="Wiki page">
+            <div class="pane-label"><span id="doc-label">Wiki page</span><span id="doc-path" class="mono"></span></div>
+            <div id="doc" class="doc"></div>
+          </section>
         </div>
+        <p id="doc-note" class="caption mt-3"></p>
       </div>
-      <div id="step" class="step" aria-live="polite"></div>
-      <div class="stepnav">
-        <button id="prev" type="button" class="tbtn">← Previous</button>
-        <button id="next" type="button" class="btn">Next →</button>
-      </div>
+
+      <aside class="margin" aria-label="Map, index and log">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" class="tab" data-tab="map">Map</button>
+          <button type="button" role="tab" class="tab" data-tab="index">index.md</button>
+          <button type="button" role="tab" class="tab" data-tab="log">log.md</button>
+        </div>
+        <div id="margin-body" class="margin-body"></div>
+      </aside>
+    </div>
+
+    <div class="wrap transport">
+      <button id="play" type="button" class="playbtn" aria-pressed="false"></button>
+      <button id="prev" type="button" class="tbtn">← Previous</button>
+      <button id="next" type="button" class="tbtn">Next →</button>
+      <div id="speed" class="speed" role="group" aria-label="Playback speed"></div>
+      <div class="progress" aria-hidden="true"><span id="progress"></span></div>
     </div>
   </section>
+
 
   <!-- 5. Payoff -->
   <section id="payoff" class="sec">

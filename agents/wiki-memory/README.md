@@ -291,21 +291,22 @@ Wiki memory fits best where knowledge accumulates and changes: a research topic 
 
 ## The demo app
 
-The app teaches the idea in five short sections, read top to bottom. Nothing moves or scrolls unless you click.
+The app teaches the idea in five short sections, read top to bottom. The problem, the idea, the payoff and the recap are static; only the walkthrough plays.
 
 1. **The problem.** One question, "How long are customer exports kept?", and the three passages plain retrieval returns from the five raw documents: 7, 30 and 90 days, with nothing to say which is current. *Retrieval finds text; it doesn't know which text is still true.*
 2. **The idea.** What wiki memory is, in three sentences. A static diagram compares the two flows: without (question → search five raw documents → conflicting passages) and with (each document read once → the agent updates its pages; question → read one or two up-to-date pages). Then one-line definitions of the five words used later: page, link, index, log and lint.
-3. **The walkthrough.** You click through six steps: the five documents, then the check. Each step has the same three parts:
-   - the one to three sentences from the new document that matter (the full document is one click away);
-   - what the agent did, in plain bullets, with a computed count of pages created and revised;
-   - the one page change that matters most, typeset as a static before → after with tracked changes (added text shaded green, crossed-out values kept with the reason).
-   A map of the pages and links, and `index.md` and `log.md`, sit in collapsed sections. The check step shows the values that disagree, what the agent proposes, and the page after the approved fix. An optional **Play** button steps through on a slow timer, and a speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser) scales it.
+3. **The walkthrough.** It plays by itself once it scrolls into view, at a calm pace, and moves through seven steps: an empty wiki, the five documents, the check (lint) and the approved fix. Each step shows:
+   - a one-line caption and the "What the agent did" bullets;
+   - the new document, typeset on the left. Each passage that drives an edit is highlighted with a number;
+   - the wiki page it changes, on the right, with tracked changes: added text shaded green, and replaced values struck through with the source that replaced them. Each edit carries the same number as its passage. Hovering or tapping either side highlights both.
+   The passage lights up first and the edit follows, one thing at a time, and each pane scrolls to follow the edits. A small map of pages and links, `index.md` and `log.md` sit in tabs beside the panes, and the other pages a step changed are one click away.
+   The large **Play/Pause** button sits next to Previous, Next and the speed control (0.5×, 0.75×, 1×, 1.5×; also `?speed=`, remembered in your browser). Any Previous/Next, step-name or tab click pauses autoplay until you press Play again. Scrolling, wheeling or touching a pane stops its auto-scroll for that step. With reduced motion there is no autoplay: every step shows its final state, and the button steps forward.
 4. **The payoff.** The same question again. The wiki answers from one page, next to the same three retrieval passages, now labelled with which ones are outdated. "Two more questions" shows one case where the wiki helps for the same reason, and one where plain retrieval does just as well.
 5. **Recap.** Three takeaways, when to use wiki memory, when plain retrieval is enough, and how it differs from a knowledge graph.
 
 The plain-language text in each step (`lede`, `key` sentences, `did` bullets) is written by hand in `corpus/steps/*/step.json`. Tests check that every key sentence appears word for word in its source and that every step shows a page it really changed.
 
-Links for review: `?step=3` opens a walkthrough step, `?only=payoff` shows a single section (`problem`, `idea`, `walk`, `payoff`, `recap`), `?play=1` starts Play mode, and `&theme=dark` or `&theme=light` forces a theme.
+Links for review: `?scene=3` opens a walkthrough step (0 is the empty wiki, 1 to 5 the documents, 6 lint, 7 the fix), `&t=2000` freezes it that many milliseconds in, `&file=@log` opens a file in the panel, `?only=payoff` shows a single section (`problem`, `idea`, `theatre`, `payoff`, `recap`), `&solo=1` with `?scene=` shows only the walkthrough, `?play=1` starts autoplay, and `&theme=dark` or `&theme=light` forces a theme.
 
 ### Run it
 
@@ -326,7 +327,7 @@ You should see the opening question and the three passages plain retrieval retur
 
 - [`corpus/raw/`](corpus/raw/): the five sources. [`corpus/schema.md`](corpus/schema.md): the wiki's rules. [`corpus/steps/`](corpus/steps/): for each step, the full text of every page the agent writes, plus a `step.json` with the step's notes and its `links` from source passages to edits.
 - [`src/wiki.ts`](src/wiki.ts): parses pages (front matter, links, claims) and builds the index, log and link graph. [`src/diff.ts`](src/diff.ts): a line diff. [`src/lint.ts`](src/lint.ts): the four checks. [`src/retrieve.ts`](src/retrieve.ts): chunking, BM25 and the fact checks. [`src/questions.ts`](src/questions.ts): the three questions. [`src/layout.ts`](src/layout.ts): a deterministic graph layout. [`src/build.ts`](src/build.ts): plays the steps and writes the run.
-- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/app.ts`](client/app.ts): the five sections and the walkthrough. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
+- [`client/doc.ts`](client/doc.ts): typesets a wiki page and turns a page diff into tracked changes (word-level edits, struck claims). [`client/map.ts`](client/map.ts): the small thin-line map, as SVG. [`client/clock.ts`](client/clock.ts): the one clock that Play mode and the speed control use. [`client/intro.ts`](client/intro.ts): the problem and the payoff. [`client/app.ts`](client/app.ts): the walkthrough player. [`client/styles.css`](client/styles.css): Tailwind CSS v4 and the type scale. [`site/index.html`](site/index.html): the page.
 - [`results/run.json`](results/run.json): the recorded run the app reads. [`results/wiki/`](results/wiki/): the final wiki as files you can open in any markdown editor.
 
 To try your own corpus, replace the files in `corpus/raw/` and `corpus/steps/`, edit `src/questions.ts`, and run `npm run data`.
