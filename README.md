@@ -51,6 +51,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Wiki memory for agents](agents/wiki-memory/README.md) ([try it](https://wiki-memory.vercel.app)) explains the pattern Andrej Karpathy calls an "LLM Wiki". Instead of re-searching raw documents for every question, an agent keeps its own notebook of markdown pages and updates it as each new document arrives. The app starts from one question that plain retrieval answers with three conflicting passages. It then explains the idea and lets you step through five documents: for each one, what it says, what the agent did, and the page change that matters most. A check catches values that disagree, and the same question is answered again from one page. The pages are scripted; everything derived from them is computed. No API keys.
 
+[LLM vs RAG vs AI agent vs agentic AI](careers-learning/llm-rag-agent-agentic/README.md) explains the four terms as layers, each the previous one plus one capability: retrieval, tools in a loop, then coordination of several agents. Animated figures show each level as a bench, short Python snippets show RAG and an agent loop, and a table helps you pick the lowest level that does the job. The snippets' tests use a mocked model and need no API key. Written by Nagaraju Poralla.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.
