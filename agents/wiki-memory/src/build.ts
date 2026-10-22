@@ -32,6 +32,8 @@ export interface Step {
   title: string;
   /** The page the app opens first for this step: the most instructive change. */
   focus: string;
+  /** One short sentence for the app's subtitle. */
+  caption: string;
   source?: string;
   verdict: string;
   lesson: string;
@@ -81,7 +83,7 @@ export function loadSources(): RawSource[] {
 }
 
 interface StepFiles {
-  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; source?: string; verdict: string; lesson: string };
+  meta: { kind: "ingest" | "lint"; date: string; title: string; focus: string; caption: string; source?: string; verdict: string; lesson: string };
   files: { slug: string; text: string }[];
 }
 

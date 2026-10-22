@@ -3,6 +3,7 @@
   "date": "2026-03-02",
   "title": "Kickoff notes",
   "focus": "ledger-export",
+  "caption": "Seven pages from one meeting: the project, two people, an API, a policy and an overview.",
   "source": "2026-03-02-kickoff-notes.md",
   "verdict": "The first source creates the wiki: a page for the source, pages for the project, two people and the Billing API, a page for the retention policy, and an overview. Nothing existed before, so every line is new.",
   "lesson": "One source fans out into several pages. Each fact is filed where someone will look for it later, not left inside the meeting notes."

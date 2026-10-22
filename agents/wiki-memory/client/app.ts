@@ -1,586 +1,733 @@
-// The guided app: 1. ingest five sources, 2. lint the wiki, 3. ask a question.
-// All data comes from results/run.json, built by `npm run data`; this file only presents it.
+// The cinematic app. Three acts over one recorded run (results/run.json, built by `npm run data`):
+//   hero    - five documents drift in and dissolve into the finished web of pages
+//   act 1-2 - each source plays as a scene: it flies into the web, pages ignite, links draw,
+//             the agent's edits type themselves in; then lint finds the contradiction and the fix resolves it
+//   act 3   - the face-off: wiki pages against chunk RAG, revealed in sequence, verdict last
+// Every animated state is a function of a scene clock, so `?t=<ms>` freezes any frame for review.
 
 import runJson from "../results/run.json" with { type: "json" };
-import type { Change, QuestionResult, Run, Step } from "../src/build.ts";
-import type { Finding } from "../src/lint.ts";
+import type { QuestionResult, Run, Step } from "../src/build.ts";
+import type { DiffLine } from "../src/diff.ts";
 import type { FactResult } from "../src/retrieve.ts";
-import { edgeKey, graphSvg, LEGEND, type GraphMarks } from "./graph.ts";
-import { diffHtml, esc, linesHtml, mdLine, type Highlight } from "./render.ts";
+import { esc, mdLine, type Highlight } from "./render.ts";
+import { Web, type Camera } from "./web.ts";
 
 const RUN = runJson as unknown as Run;
 const INGESTS = RUN.steps.filter((s) => s.kind === "ingest");
 const FIX = RUN.steps.find((s) => s.kind === "lint")!;
-const LAST_INGEST = INGESTS[INGESTS.length - 1];
-
-type View = 1 | 2 | 3;
-type Tab = "index" | "log" | "schema";
-
-interface State {
-  view: View;
-  /** Sources ingested so far, 0 to 5. */
-  n: number;
-  file: string | null;
-  tab: Tab;
-  fixed: boolean;
-  finding: number;
-  q: string;
-}
+const LAST = INGESTS[INGESTS.length - 1];
+const LINT_SCENE = INGESTS.length + 1;
+const FIX_SCENE = INGESTS.length + 2;
+const SCENES = FIX_SCENE + 1;
 
 const params = new URLSearchParams(location.search);
-const state: State = {
-  view: clampView(Number(params.get("step") ?? 1)),
-  n: Math.max(0, Math.min(INGESTS.length, Number(params.get("n") ?? 0) || 0)),
-  file: null,
-  tab: "index",
-  fixed: params.get("fixed") === "1",
-  finding: 0,
-  q: RUN.questions.some((q) => q.id === params.get("q")) ? params.get("q")! : RUN.questions[0].id,
+const FROZEN = params.has("t") ? Math.max(0, Number(params.get("t")) || 0) : null;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const root = document.documentElement;
+if (FROZEN !== null) {
+  root.classList.add("frozen");
+  root.style.setProperty("--t", String(FROZEN));
+}
+
+const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const edgeKey = (a: string, b: string) => [a, b].sort().join("|");
+const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const narrow = () => innerWidth < 760;
+
+// ---------------------------------------------------------------- timing (ms, scene clock)
+
+const T = {
+  fly: 0,
+  flyDur: 1100,
+  ignite: 1000,
+  cam: 650,
+  camDur: 1400,
+  panel: 1450,
+  beats: [0, 1150, 2750],
+  ingestLen: 8600,
+  lintLen: 8200,
+  fixLen: 8200,
 };
-if (state.view > 1 && !params.has("n")) state.n = INGESTS.length;
 
-function clampView(v: number): View {
-  return v === 2 || v === 3 ? v : 1;
+// ---------------------------------------------------------------- clocks
+
+let sceneStart = performance.now();
+const heroStart = performance.now();
+const sceneTime = () => (FROZEN !== null ? FROZEN : REDUCED ? 1e7 : performance.now() - sceneStart);
+const heroTime = () => (FROZEN !== null ? FROZEN : REDUCED ? 1e7 : performance.now() - heroStart);
+const wallTime = () => (FROZEN !== null || REDUCED ? 0 : performance.now());
+
+// ---------------------------------------------------------------- hero
+
+const heroCanvas = $<HTMLCanvasElement>("hero-canvas");
+const hero = new Web(heroCanvas, RUN.layout);
+
+function setupHero() {
+  hero.view = narrow() ? { cx: 0.5, cy: 0.3, fill: 0.98 } : { cx: 0.66, cy: 0.46, fill: 0.74 };
+  hero.resize();
+  const graph = FIX.graph;
+  const sources = graph.nodes.filter((n) => n.type === "source").map((n) => n.id);
+  const others = graph.nodes.filter((n) => n.type !== "source").map((n) => n.id);
+  const born = 1500;
+  const stagger = 90;
+  hero.setGraph(graph, {
+    created: new Set(graph.nodes.map((n) => n.id)),
+    newEdges: new Set(graph.edges.map((e) => edgeKey(e.from, e.to))),
+    at: born,
+    stagger,
+    order: [...sources, ...others],
+  });
+  const h = heroCanvas.getBoundingClientRect().height || innerHeight;
+  hero.setDocs(
+    sources.map((id, i) => ({
+      to: id,
+      from: narrow() ? { x: (i + 0.5) * (innerWidth / sources.length), y: h + 80 } : { x: innerWidth + 90 + (i % 2) * 60, y: h * (0.12 + i * 0.19) },
+      size: narrow() ? 0.9 : 1.25,
+      label: RUN.sources[i]?.date ?? "",
+      at: born + i * stagger - 1300,
+      dur: 1300,
+    })),
+  );
 }
 
-const $ = (id: string) => document.getElementById(id)!;
+// ---------------------------------------------------------------- theatre
 
-// ---------------------------------------------------------------- shell
+const webCanvas = $<HTMLCanvasElement>("web");
+const web = new Web(webCanvas, RUN.layout);
+let scene = 0;
+let playing = false;
+let started = false;
+let panelFile: string | null = null;
 
-function render() {
-  renderStepper();
-  const stage = $("stage");
-  if (state.view === 1) stage.innerHTML = ingestView();
-  else if (state.view === 2) stage.innerHTML = lintView();
-  else stage.innerHTML = askView();
-  $("verdict").innerHTML = verdictHtml();
-  $("verdict").dataset.tone = verdictTone();
-  const log = document.querySelector<HTMLElement>("[data-scroll-end]");
-  if (log) log.scrollTop = log.scrollHeight;
-  syncUrl();
+const sceneLen = (i: number) => (i === 0 ? Infinity : i === LINT_SCENE ? T.lintLen : i === FIX_SCENE ? T.fixLen : T.ingestLen);
+
+function stepFor(i: number): Step | null {
+  if (i >= 1 && i <= INGESTS.length) return INGESTS[i - 1];
+  if (i === FIX_SCENE) return FIX;
+  return null;
 }
 
-function syncUrl() {
-  const p = new URLSearchParams();
-  p.set("step", String(state.view));
-  if (state.view === 1) p.set("n", String(state.n));
-  if (state.view === 2 && state.fixed) p.set("fixed", "1");
-  if (state.view === 3) p.set("q", state.q);
-  const theme = params.get("theme");
-  if (theme) p.set("theme", theme);
-  history.replaceState(null, "", `?${p}`);
-}
+function enter(i: number) {
+  const fromCam = web.cameraNow(sceneTime());
+  scene = Math.max(0, Math.min(SCENES - 1, i));
+  sceneStart = performance.now();
+  panelFile = null;
+  web.view = { cx: 0.5, cy: 0.5, fill: narrow() ? 0.96 : 0.86 };
+  web.resize();
+  web.highlight = new Set();
+  const rest: Camera = { x: 0.5, y: 0.5, zoom: 1 };
+  const startCam = FROZEN !== null ? rest : fromCam;
 
-function renderStepper() {
-  const steps: { v: View; title: string; sub: string }[] = [
-    { v: 1, title: "Ingest", sub: "Five sources, one at a time" },
-    { v: 2, title: "Lint", sub: "Check the whole wiki" },
-    { v: 3, title: "Ask", sub: "Wiki pages vs chunk RAG" },
-  ];
-  const done = (v: View) => (v === 1 ? state.n === INGESTS.length : v === 2 ? state.fixed || state.view === 3 : false);
-  $("stepper").innerHTML = steps
-    .map(
-      (s) => `<li><button type="button" class="step w-full" data-view="${s.v}" ${state.view === s.v ? 'aria-current="step"' : ""} data-done="${done(s.v) && state.view !== s.v}">
-        <span class="step-num">${done(s.v) && state.view !== s.v ? "✓" : s.v}</span>
-        <span class="min-w-0"><span class="block text-[14px] font-semibold leading-tight">${s.title}</span><span class="hidden truncate text-[12px] text-muted sm:block">${s.sub}</span></span>
-      </button></li>`,
-    )
-    .join("");
-}
-
-// ---------------------------------------------------------------- verdicts
-
-function verdictTone(): string {
-  if (state.view === 2) return state.fixed ? "good" : "warn";
-  if (state.view === 3) {
-    const q = currentQuestion();
-    return wrongCount(q.ragFacts) > 0 ? "warn" : "good";
-  }
-  return "accent";
-}
-
-function verdictHtml(): string {
-  let kicker = "";
-  let text = "";
-  let lesson = "";
-  let actions = "";
-  let tags = "";
-  if (state.view === 1) {
-    const step = state.n > 0 ? INGESTS[state.n - 1] : null;
-    kicker = state.n === 0 ? "Step 1 · Ingest" : `Step 1 · Ingested source ${state.n} of ${INGESTS.length}`;
-    text = step
-      ? step.verdict
-      : `The wiki is empty. Five sources about one small project are waiting: kickoff notes, a design doc, an incident report, a chat thread and a draft FAQ. Ingest them one at a time and watch the agent write and rewrite its pages.`;
-    lesson = step?.lesson ?? "Each ingest shows the pages the agent wrote as a diff, the links it added, and the new lines in the index and log.";
-    tags = step ? `<span class="tag tag-scripted">Scripted pages</span><span class="tag tag-computed">Computed diffs, links, index, log</span>` : "";
-    const next =
-      state.n < INGESTS.length
-        ? `<button type="button" class="btn btn-primary" data-act="next">${state.n === 0 ? "Ingest the first source" : `Ingest source ${state.n + 1}`} <span aria-hidden="true">→</span></button>`
-        : `<button type="button" class="btn btn-primary" data-act="to-lint">Next: lint the wiki <span aria-hidden="true">→</span></button>`;
-    actions = `<button type="button" class="btn" data-act="prev" ${state.n === 0 ? "disabled" : ""} aria-label="Previous source"><span aria-hidden="true">←</span> Back</button>${next}`;
-  } else if (state.view === 2) {
-    const before = RUN.lintBefore;
-    const claims = LAST_INGEST.claims.current;
-    if (!state.fixed) {
-      kicker = "Step 2 · Lint";
-      const c = before.checks.find((x) => x.kind === "contradiction")!.count;
-      const m = before.checks.find((x) => x.kind === "missing-page")!.count;
-      text = `Lint compared all ${claims} current claims across ${LAST_INGEST.pages.length} pages and found ${plural(c, "contradiction")} and ${plural(m, "link")} to a page that doesn't exist. The draft FAQ disagrees with the approved design and with Amara's decision.`;
-      lesson = "No single ingest could see this: each one only opened the pages its source was about. Lint reads every claim at once, then proposes fixes for a person to approve.";
-      tags = `<span class="tag tag-computed">Computed lint</span>`;
-      actions = `<button type="button" class="btn" data-act="to-ingest"><span aria-hidden="true">←</span> Ingest</button><button type="button" class="btn btn-primary" data-act="fix">Apply the approved fixes</button>`;
-    } else {
-      kicker = "Step 2 · Fixed";
-      text = `${FIX.verdict} Lint now finds ${RUN.lintAfter.findings.length} problems.`;
-      lesson = FIX.lesson;
-      tags = `<span class="tag tag-scripted">Scripted fix</span><span class="tag tag-computed">Computed re-lint</span>`;
-      actions = `<button type="button" class="btn" data-act="unfix">Undo fixes</button><button type="button" class="btn btn-primary" data-act="to-ask">Next: ask a question <span aria-hidden="true">→</span></button>`;
-    }
+  if (scene === 0) {
+    web.setGraph(null);
+    web.setCamera(rest);
+  } else if (scene === LINT_SCENE) {
+    web.setGraph(LAST.graph);
+    const { nodes, pairs } = lintFlags();
+    web.setFlags({ nodes, pairs, at: 1500, resolve: Infinity });
+    web.scan(150);
+    web.moveCamera({ x: 0.5, y: 0.5, zoom: 0.96 }, 0, 1200, startCam);
   } else {
-    const q = currentQuestion();
-    kicker = "Step 3 · Ask";
-    const wNeed = neededFound(q.wikiFacts);
-    const rNeed = neededFound(q.ragFacts);
-    const rWrong = wrongCount(q.ragFacts);
-    const wWrong = wrongCount(q.wikiFacts);
-    const total = q.wikiFacts.filter((f) => f.kind === "needed").length;
-    if (rWrong > 0 && wWrong === 0) {
-      text = `Both found the current answer (${wNeed} of ${total} facts in the wiki pages, ${rNeed} of ${total} in the chunks). But chunk RAG also returned ${plural(rWrong, "outdated or wrong statement")}, and nothing in the chunks says which version is current. The wiki pages had already settled that when the sources were ingested.`;
-      lesson = "RAG leaves reconciling sources to the model at question time, every time. The wiki does it once, at ingest and lint, and keeps the result.";
-    } else if (rNeed < total && wNeed === total) {
-      text = `The wiki pages contain all ${total} facts the answer needs; the top chunks contain ${rNeed}.`;
-      lesson = "A compiled page gathers facts that are spread across several sources.";
+    const step = stepFor(scene)!;
+    const prev = scene === FIX_SCENE ? LAST : scene > 1 ? INGESTS[scene - 2] : null;
+    const created = new Set(step.changes.filter((c) => c.status === "created").map((c) => c.slug));
+    const touched = new Set(step.changes.filter((c) => c.status === "updated").map((c) => c.slug));
+    const before = new Set((prev?.graph.edges ?? []).map((e) => edgeKey(e.from, e.to)));
+    const newEdges = new Set(step.graph.edges.map((e) => edgeKey(e.from, e.to)).filter((k) => !before.has(k)));
+    web.setGraph(step.graph, { created, touched, newEdges, at: T.ignite });
+    if (scene === FIX_SCENE) {
+      const { nodes, pairs } = lintFlags();
+      web.setFlags({ nodes, pairs, at: -5000, resolve: 400 });
     } else {
-      text = `Both approaches found everything the answer needs (${wNeed} of ${total}) and nothing misleading. When one source holds the whole answer and nothing has changed since, plain chunk RAG does as well as the wiki.`;
-      lesson = "Wiki memory pays off when sources update or contradict each other; for single-source lookups it adds upkeep without a better answer.";
+      const src = step.changes.find((c) => c.type === "source" && c.status === "created")!;
+      web.setDocs([{ to: src.slug, from: queueOrigin(scene - 1), label: step.source?.slice(0, 10) ?? "", at: T.fly, dur: T.flyDur }]);
     }
-    tags = `<span class="tag tag-computed">Computed BM25 and fact checks</span>`;
-    actions = `<button type="button" class="btn" data-act="to-lint"><span aria-hidden="true">←</span> Lint</button><button type="button" class="btn" data-act="restart">Start over</button>`;
+    // On narrow screens the whole web barely fits, so the camera stays centred.
+    const target = narrow() ? rest : web.frame([...created, ...touched], scene === FIX_SCENE ? 1 : 1.07);
+    web.moveCamera(target, T.cam, T.camDur, startCam);
   }
-  return `<div class="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
-    <div class="min-w-0 flex-1 fade-in">
-      <div class="flex flex-wrap items-center gap-2"><span class="kicker">${kicker}</span>${tags}</div>
-      <p class="mt-1.5 text-[15.5px] leading-[1.55] text-ink">${esc(text)}</p>
-      <p class="mt-1 text-[13.5px] leading-[1.55] text-muted">${esc(lesson)}</p>
-    </div>
-    <div class="flex shrink-0 flex-wrap gap-2">${actions}</div>
-  </div>`;
+
+  renderChrome();
+  renderPanel();
+  renderCaption();
+  drawTheatre();
 }
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-const neededFound = (facts: FactResult[]) => facts.filter((f) => f.kind === "needed" && f.found).length;
-const wrongCount = (facts: FactResult[]) => facts.filter((f) => f.kind === "wrong" && f.found).length;
-const currentQuestion = () => RUN.questions.find((q) => q.id === state.q)!;
-
-// ---------------------------------------------------------------- step 1: ingest
-
-function ingestView(): string {
-  const step = state.n > 0 ? INGESTS[state.n - 1] : null;
-  const prev = state.n > 1 ? INGESTS[state.n - 2] : null;
-  return `<div class="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_minmax(0,430px)]">
-    ${sourcesCard()}
-    ${changesCard(step?.changes ?? [], step ? "Pages written by this ingest" : "Pages", step?.focus)}
-    <div class="grid gap-4 lg:col-span-2 lg:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:content-start">
-      ${graphCard(step, marksForStep(step, prev))}
-      ${filesCard(step, prev)}
-    </div>
-  </div>`;
+/** Pages to flag in lint: the pages holding conflicting claims, their sources, and the missing page. */
+function lintFlags() {
+  const nodes = new Set<string>();
+  const pairs: [string, string][] = [];
+  for (const f of RUN.lintBefore.findings) {
+    if (f.kind === "contradiction") {
+      f.claims.forEach((c) => {
+        nodes.add(c.page);
+        nodes.add(c.source);
+      });
+      const newest = [...f.claims].sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
+      for (const c of f.claims) {
+        if (c.source !== newest.source && !pairs.some((p) => p[0] === newest.source && p[1] === c.source)) pairs.push([newest.source, c.source]);
+      }
+    } else if (f.kind === "missing-page") {
+      const target = /\[\[([a-z0-9-]+)\]\]/.exec(f.title)?.[1];
+      if (target) nodes.add(target);
+    }
+  }
+  return { nodes, pairs };
 }
 
-function sourcesCard(): string {
-  const current = state.n > 0 ? RUN.sources[state.n - 1] : null;
-  const rows = RUN.sources
-    .map((s, i) => {
-      const st = i < state.n - 1 ? "done" : i === state.n - 1 ? "now" : "todo";
-      return `<li><button type="button" class="src-row" data-goto="${i + 1}" data-state="${st}" ${st === "now" ? 'aria-current="true"' : ""}>
-        <span class="src-dot"></span>
-        <span class="min-w-0 flex-1"><span class="block truncate text-[13px] font-medium">${esc(INGESTS[i].title)}</span><span class="mono block text-[11px] text-muted">${s.date}</span></span>
-      </button></li>`;
+function queueOrigin(index: number): { x: number; y: number } {
+  const card = document.querySelectorAll<HTMLElement>(".qcard")[index];
+  const c = webCanvas.getBoundingClientRect();
+  if (!card) return { x: -80, y: c.height / 2 };
+  const r = card.getBoundingClientRect();
+  return { x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top };
+}
+
+// ---------------------------------------------------------------- chrome: chapters, queue, stats, controls
+
+const CHAPTERS = ["Kickoff", "Design doc", "Incident", "Chat thread", "Draft FAQ"];
+const PLAY_ICON = `<svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M4.5 2.8v10.4L13 8z"/></svg>`;
+const PAUSE_ICON = `<svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><rect x="4" y="3" width="3" height="10" rx="1"/><rect x="9" y="3" width="3" height="10" rx="1"/></svg>`;
+const NEXT_ICON = `<svg viewBox="0 0 16 16" class="size-4" fill="currentColor"><path d="M5 3v10l6.5-5z"/></svg>`;
+
+function renderChrome() {
+  const actOne = scene <= INGESTS.length;
+  $("act-num").textContent = actOne ? "one" : "two";
+  $("act-title").textContent = actOne ? "Ingest" : scene === LINT_SCENE ? "Lint" : "Fix";
+
+  const chap = (i: number, label: string, tone = "") => {
+    const state = i < scene ? "done" : i === scene ? "now" : "todo";
+    return `<li><button type="button" class="chap" data-scene="${i}" data-state="${state}" ${tone ? `data-tone="${tone}"` : ""} ${i === scene ? 'aria-current="step"' : ""}><i></i>${label}</button></li>`;
+  };
+  $("chapters").innerHTML = [
+    ...CHAPTERS.map((l, k) => chap(k + 1, l)),
+    `<li class="chap-sep" aria-hidden="true"></li>`,
+    chap(LINT_SCENE, "Lint", "bad"),
+    chap(FIX_SCENE, "Fix"),
+    `<li class="chap-sep" aria-hidden="true"></li>`,
+    `<li><a class="chap" href="#faceoff"><i></i>Face-off</a></li>`,
+  ].join("");
+
+  $("queue").innerHTML = RUN.sources
+    .map((s, k) => {
+      const n = k + 1;
+      const state = scene > INGESTS.length || n < scene ? "done" : n === scene ? "now" : n === scene + 1 ? "next" : "todo";
+      return `<li><button type="button" class="qcard" data-scene="${n}" data-state="${state}"><span class="qt">${esc(INGESTS[k].title)}</span><span class="qd">${s.date}</span></button></li>`;
     })
     .join("");
-  const raw = current
-    ? `<div class="border-t border-rule">
-        <div class="px-4 pt-3 pb-1"><span class="card-title">Raw source</span><span class="mono block truncate text-[11px] text-muted">raw/${esc(current.file)}</span></div>
-        <div class="code max-h-[220px] overflow-auto pb-3 fade-in lg:max-h-[340px]">${linesHtml(current.text)}</div>
-      </div>`
-    : `<div class="border-t border-rule px-4 py-4 text-[13px] leading-relaxed text-muted">Raw sources are never edited. The agent reads each one and writes only to the wiki.</div>`;
-  return `<section class="card self-start overflow-hidden" aria-label="Sources">
-    <div class="card-head"><span class="card-title">Sources</span><span class="mono text-[11px] text-muted">${state.n} of ${RUN.sources.length} ingested</span></div>
-    <ol class="p-1.5">${rows}</ol>
-    ${raw}
-  </section>`;
-}
 
-function changesCard(changes: Change[], title: string, focus?: string): string {
-  if (changes.length === 0) {
-    return `<section class="card self-start" aria-label="${title}">
-      <div class="card-head"><span class="card-title">${title}</span></div>
-      <div class="grid min-h-[280px] place-items-center px-6 py-10 text-center">
-        <div class="max-w-sm">
-          <p class="font-serif text-[19px]">No pages yet</p>
-          <p class="mt-2 text-[13.5px] leading-relaxed text-muted">The first ingest will create a page for the source, one for each person, system and policy it mentions, and an overview. Later ingests mostly rewrite those pages.</p>
-        </div>
-      </div>
-    </section>`;
+  const step = scene === LINT_SCENE ? LAST : stepFor(scene);
+  const stats: [number, string][] = step
+    ? [
+        [step.pages.length, "pages"],
+        [step.graph.edges.length, "links"],
+        [step.claims.current, "claims"],
+      ]
+    : [
+        [0, "pages"],
+        [0, "links"],
+        [0, "claims"],
+      ];
+  $("stats").innerHTML = stats.map(([n, l]) => `<div class="seq" style="--d:${scene ? T.ignite : 0}"><b>${n}</b><span>${l}</span></div>`).join("");
+
+  ($("prev") as HTMLButtonElement).disabled = scene === 0;
+  const nextBtn = $("next");
+  if (scene === FIX_SCENE) {
+    nextBtn.className = "ctl ctl-cta";
+    nextBtn.innerHTML = `Face-off ${NEXT_ICON}`;
+    nextBtn.setAttribute("aria-label", "Go to the face-off");
+  } else {
+    nextBtn.className = "ctl";
+    nextBtn.innerHTML = NEXT_ICON;
+    nextBtn.setAttribute("aria-label", "Next scene");
   }
-  const selected = changes.find((c) => c.slug === state.file) ?? changes.find((c) => c.slug === focus) ?? changes[0];
-  const created = changes.filter((c) => c.status === "created").length;
-  const updated = changes.length - created;
-  const chips = changes
-    .map(
-      (c) => `<button type="button" class="chip" data-file="${c.slug}" aria-pressed="${c.slug === selected.slug}">
-        <span class="tag tag-${c.status}">${c.status === "created" ? "new" : "edit"}</span>
-        <span class="mono truncate text-[12px]">${esc(c.path)}</span>
-        <span class="mono shrink-0 text-[11px]"><span class="text-add">+${c.added}</span>${c.removed ? ` <span class="text-del">−${c.removed}</span>` : ""}</span>
-      </button>`,
-    )
-    .join("");
-  return `<section class="card self-start overflow-hidden" aria-label="${title}">
-    <div class="card-head"><span class="card-title">${title}</span><span class="text-[12px] text-muted">${created} created · ${updated} updated</span></div>
-    <div class="flex flex-wrap gap-1.5 border-b border-rule px-3 py-3">${chips}</div>
-    <div class="flex items-center justify-between gap-3 px-4 pt-3 pb-1">
-      <span class="mono truncate text-[12px] font-medium">wiki/${esc(selected.path)}</span>
-      <span class="shrink-0 text-[11.5px] text-muted">${selected.status === "created" ? "new page" : "diff against the previous version"}</span>
-    </div>
-    <div class="code max-h-[560px] overflow-auto pb-3 fade-in" data-diff>${diffHtml(selected.diff)}</div>
-  </section>`;
+  renderPlay();
 }
 
-function marksForStep(step: Step | null, prev: Step | null): GraphMarks {
-  if (!step) return {};
-  const before = new Set((prev?.graph.edges ?? []).map((e) => edgeKey(e.from, e.to)));
-  return {
-    created: new Set(step.changes.filter((c) => c.status === "created").map((c) => c.slug)),
-    touched: new Set(step.changes.filter((c) => c.status === "updated").map((c) => c.slug)),
-    newEdges: new Set(step.graph.edges.map((e) => edgeKey(e.from, e.to)).filter((k) => !before.has(k))),
-  };
+function renderPlay() {
+  const btn = $("play");
+  btn.setAttribute("aria-label", playing ? "Pause" : "Play");
+  btn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
 }
 
-function graphCard(step: Step | null, marks: GraphMarks): string {
-  const pages = step?.pages.length ?? 0;
-  const links = step?.graph.edges.length ?? 0;
-  const claims = step?.claims ?? { current: 0, superseded: 0, disputed: 0 };
-  const newLinks = marks.newEdges?.size ?? 0;
-  const body = step
-    ? graphSvg(step.graph, RUN.layout, marks)
-    : `<div class="grid aspect-[3/2] place-items-center text-[13px] text-muted">The link graph appears with the first page.</div>`;
-  return `<section class="card overflow-hidden" aria-label="Link graph">
-    <div class="card-head"><span class="card-title">Link graph</span>${newLinks ? `<span class="text-[12px] text-accent">+${plural(newLinks, "new link")}</span>` : ""}</div>
-    <div class="grid grid-cols-4 gap-2 border-b border-rule px-4 py-3">
-      <div class="stat"><span class="stat-num">${pages}</span><span class="stat-label">pages</span></div>
-      <div class="stat"><span class="stat-num">${links}</span><span class="stat-label">links</span></div>
-      <div class="stat"><span class="stat-num">${claims.current}</span><span class="stat-label">current claims</span></div>
-      <div class="stat"><span class="stat-num">${claims.superseded + claims.disputed}</span><span class="stat-label">struck through</span></div>
-    </div>
-    <div class="px-2 pt-1">${body}</div>
-    <div class="border-t border-rule px-4 py-2.5">${LEGEND}</div>
-  </section>`;
+// ---------------------------------------------------------------- subtitles
+
+interface Beat {
+  kicker: string;
+  line: string;
+  at: number;
 }
 
-function filesCard(step: Step | null, prev: Step | null): string {
-  const tabs: [Tab, string][] = [
-    ["index", "index.md"],
-    ["log", "log.md"],
-    ["schema", "schema.md"],
+function beats(): Beat[] {
+  if (scene === 0) {
+    return [{ at: 0, kicker: "Before the first source", line: "The wiki is empty. <b>Five raw sources</b> are waiting to be filed." }];
+  }
+  if (scene === LINT_SCENE) {
+    const c = RUN.lintBefore.checks.find((x) => x.kind === "contradiction")!.count;
+    const m = RUN.lintBefore.checks.find((x) => x.kind === "missing-page")!.count;
+    return [
+      { at: 0, kicker: "Lint · reads every claim at once", line: `Lint compares all ${LAST.claims.current} current claims across ${LAST.pages.length} pages.` },
+      { at: 1500, kicker: "Lint · computed", line: `<span class="bad">${plural(c, "contradiction")}</span> and ${plural(m, "link")} to a page that doesn't exist.` },
+      { at: 3300, kicker: "Lint · why no ingest caught it", line: "Each ingest only saw the pages it opened. The draft FAQ disagrees with the approved design and Amara's decision." },
+    ];
+  }
+  const step = stepFor(scene)!;
+  const created = step.changes.filter((c) => c.status === "created").length;
+  const updated = step.changes.length - created;
+  const prev = scene === FIX_SCENE ? LAST : scene > 1 ? INGESTS[scene - 2] : null;
+  const newLinks = step.graph.edges.length - (prev?.graph.edges.length ?? 0);
+  if (scene === FIX_SCENE) {
+    return [
+      { at: 0, kicker: "Fix · approved by a person", line: "The proposed fixes are approved." },
+      { at: T.beats[1], kicker: "Fix · scripted edits", line: esc(step.caption) },
+      {
+        at: T.beats[2] + 400,
+        kicker: "Lint again · computed",
+        line: `<span class="good">${plural(RUN.lintAfter.findings.length, "problem")}</span>. The draft's claims stay visible, marked disputed.`,
+      },
+    ];
+  }
+  return [
+    { at: T.beats[0], kicker: `Source ${scene} of ${INGESTS.length} · ${RUN.sources[scene - 1].date}`, line: `<b>${esc(step.title)}</b> arrives.` },
+    {
+      at: T.beats[1],
+      kicker: "Ingest · computed from the agent's edits",
+      line: `${created ? `It creates ${plural(created, "page")}` : "No new pages"}${updated ? ` and rewrites ${updated}` : ""}. <b>${plural(newLinks, "new link")}</b>.`,
+    },
+    { at: T.beats[2], kicker: "Ingest · what changed", line: esc(step.caption) },
   ];
-  let content: string;
-  let note: string;
-  if (state.tab === "schema") {
-    content = linesHtml(RUN.schema);
-    note = "How the agent is told to keep the wiki";
-  } else if (!step) {
-    content = `<div class="px-4 py-6 text-[13px] text-muted">Empty until the first ingest.</div>`;
-    note = "";
-  } else {
-    const text = state.tab === "index" ? step.index : step.log;
-    const old = new Set(((state.tab === "index" ? prev?.index : prev?.log) ?? "").split("\n"));
-    const fresh = new Set(text.split("\n").filter((l) => !old.has(l)));
-    content = linesHtml(text, fresh);
-    note = state.tab === "index" ? "Rebuilt after every change" : "Append-only";
-  }
-  return `<section class="card overflow-hidden" aria-label="Index, log and schema">
-    <div class="card-head"><div class="tabs" role="tablist">${tabs
-      .map(([id, label]) => `<button type="button" role="tab" class="tab" data-tab="${id}" aria-selected="${state.tab === id}">${label}</button>`)
-      .join("")}</div><span class="hidden truncate text-[11.5px] text-muted sm:block">${note}</span></div>
-    <div class="code max-h-[300px] overflow-auto py-2" ${state.tab === "log" ? "data-scroll-end" : ""}>${content}</div>
-  </section>`;
 }
 
-// ---------------------------------------------------------------- step 2: lint
+function renderCaption() {
+  const list = beats();
+  $("caption").innerHTML = list
+    .map((b, i) => {
+      const end = list[i + 1]?.at;
+      return `<div class="beat" style="--d:${b.at};${end !== undefined ? `--e:${end - 250}` : ""}"><div class="beat-kicker">${b.kicker}</div><div class="beat-line">${b.line}</div></div>`;
+    })
+    .join("");
+}
 
-function lintView(): string {
-  const result = state.fixed ? RUN.lintAfter : RUN.lintBefore;
-  const findings = RUN.lintBefore.findings;
-  const finding = findings[Math.min(state.finding, findings.length - 1)];
-  const checks = result.checks
+// ---------------------------------------------------------------- the panel: what the agent wrote
+
+function renderPanel() {
+  const panel = $("panel");
+  if (scene === 0) {
+    panel.innerHTML = `<div class="panel-head"><div class="panel-kicker">How to watch</div></div>
+      <div class="panel-body px-4 py-3 text-[14px] leading-relaxed text-[var(--ink-2)]">
+        <p>Press play. Each source flies into the web and the agent files it: it <span style="color:var(--new)">creates</span> pages for new people, systems and policies, <span style="color:var(--edit)">rewrites</span> the pages that already exist, and links them.</p>
+        <p class="mt-3">Its edits appear here as they happen. Old values are <span class="md-struck">struck through</span>, never deleted.</p>
+        <p class="mt-3 text-[13px] text-[var(--muted)]"><span class="tag tag-scripted">Scripted</span> pages, written by hand. <span class="tag tag-computed">Computed</span> diffs, links, lint and retrieval.</p>
+      </div>`;
+    return;
+  }
+  if (scene === LINT_SCENE) {
+    panel.innerHTML = lintPanel();
+    return;
+  }
+  const step = stepFor(scene)!;
+  const special = `<button type="button" class="touch-chip" data-file="@index" aria-pressed="${panelFile === "@index"}"><i style="background:var(--accent)"></i>index.md</button><button type="button" class="touch-chip" data-file="@log" aria-pressed="${panelFile === "@log"}"><i style="background:var(--accent)"></i>log.md</button>`;
+  const chips = step.changes
     .map(
-      (c) => `<li class="flex items-center justify-between gap-3 px-4 py-2">
-        <span class="text-[13px]">${c.label}</span>
-        ${c.count > 0 ? `<span class="tag ${c.kind === "contradiction" ? "tag-warn" : "tag-bad"}">${c.count} found</span>` : `<span class="tag tag-good">✓ none</span>`}
-      </li>`,
+      (c) =>
+        `<button type="button" class="touch-chip" data-file="${c.slug}" aria-pressed="${c.slug === panelFile || (panelFile === null && c.slug === step.focus)}"><i style="background:${c.status === "created" ? "var(--new)" : "var(--edit)"}"></i>${esc(c.slug)}</button>`,
     )
     .join("");
-  const list = findings
-    .map(
-      (f, i) => `<li><button type="button" class="chip w-full flex-col !items-start !gap-1 !px-3 !py-2.5" data-finding="${i}" aria-pressed="${!state.fixed && i === state.finding}">
-        <span class="flex items-center gap-2">${kindTag(f)}${state.fixed ? '<span class="tag tag-good">resolved</span>' : ""}</span>
-        <span class="text-[13px] font-medium ${state.fixed ? "text-muted line-through decoration-faint" : ""}">${inlineMd(f.title)}</span>
-      </button></li>`,
-    )
-    .join("");
-  const flagged = new Set(state.fixed ? [] : finding.pages);
-  const graphStep = state.fixed ? FIX : LAST_INGEST;
-  const marks: GraphMarks = state.fixed
-    ? marksForStep(FIX, LAST_INGEST)
-    : { flagged, focus: new Set([...finding.pages, ...finding.claims.map((c) => c.page)]) };
-  if (!state.fixed && finding.kind === "missing-page") {
-    const target = /\[\[([a-z0-9-]+)\]\]/.exec(finding.title)?.[1];
-    if (target) {
-      marks.flagged!.add(target);
-      marks.focus!.add(target);
-    }
-  }
-  return `<div class="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_minmax(0,430px)]">
-    <section class="card self-start overflow-hidden" aria-label="Lint checks">
-      <div class="card-head"><span class="card-title">${state.fixed ? "Lint again, after fixes" : "Lint checks"}</span><span class="mono text-[11px] text-muted">${LAST_INGEST.pages.length} pages</span></div>
-      <ul class="divide-y divide-rule border-b border-rule">${checks}</ul>
-      <div class="px-4 pt-3 pb-1 card-title">Findings</div>
-      <ul class="space-y-1.5 px-3 pb-3">${list}</ul>
-    </section>
-    ${state.fixed ? changesCard(FIX.changes, "Pages changed by the fixes", FIX.focus) : findingCard(finding)}
-    <div class="lg:col-span-2 xl:col-span-1">${graphCard(graphStep, marks)}</div>
-  </div>`;
-}
-
-function kindTag(f: Finding): string {
-  const label = { contradiction: "Contradiction", "missing-page": "Missing page", orphan: "Orphan", "uncited-claim": "Uncited claim" }[f.kind];
-  return `<span class="tag ${f.kind === "contradiction" ? "tag-warn" : "tag-bad"}">${label}</span>`;
-}
-
-/** Inline markdown for short labels: code spans and wiki links only. */
-function inlineMd(s: string): string {
-  return esc(s)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\[\[([a-z0-9-]+)\]\]/g, '<span class="md-link mono text-[0.92em]">[[$1]]</span>');
-}
-
-function findingCard(f: Finding): string {
-  let body = "";
-  if (f.kind === "contradiction") {
-    body = `<p class="px-4 pt-3 text-[13px] leading-relaxed text-muted">These claims describe the same fact and are all marked current. The agent recorded each one when its source was ingested.</p>
-      <ul class="grid gap-2 p-4 sm:grid-cols-2">${f.claims
-        .map((c) => {
-          const page = LAST_INGEST.pages.find((p) => p.slug === c.page)!;
-          const draft = c.source === "src-faq-draft";
-          return `<li class="rounded-lg border ${draft ? "border-warn bg-warn-soft" : "border-rule"} p-3">
-            <div class="mono text-[11px] text-muted">wiki/${esc(page.path)}</div>
-            <div class="mono mt-1 text-[12px]">${esc(c.key)}</div>
-            <div class="mt-1 font-serif text-[22px] leading-tight">${esc(c.value)}</div>
-            <div class="mt-1.5 text-[12px] text-muted">from <span class="md-link mono">[[${esc(c.source)}]]</span> · as of ${c.asOf}</div>
-            ${draft ? `<div class="mt-1.5 text-[12px] font-medium text-warn">An unreviewed draft</div>` : ""}
-          </li>`;
-        })
-        .join("")}</ul>`;
-  } else {
-    const target = /\[\[([a-z0-9-]+)\]\]/.exec(f.title)?.[1] ?? "";
-    const rows = f.pages
-      .map((slug) => {
-        const page = LAST_INGEST.pages.find((p) => p.slug === slug)!;
-        const lines = page.text.split("\n").filter((l) => l.includes(`[[${target}]]`));
-        return `<li class="rounded-lg border border-rule">
-          <div class="mono border-b border-rule px-3 py-1.5 text-[11px] text-muted">wiki/${esc(page.path)}</div>
-          <div class="code py-1.5">${lines.map((l) => `<div class="ln"><span class="ln-text">${mdLine(l)}</span></div>`).join("")}</div>
-        </li>`;
+  if (panelFile === "@index" || panelFile === "@log") {
+    // index.md and log.md as they stand after this step, with the lines this step added typed in.
+    const prevStep = scene === FIX_SCENE ? LAST : scene > 1 ? INGESTS[scene - 2] : null;
+    const isIndex = panelFile === "@index";
+    const text = isIndex ? step.index : step.log;
+    const old = new Set(((isIndex ? prevStep?.index : prevStep?.log) ?? "").split("\n"));
+    let d = 0;
+    const rows = text
+      .replace(/\n$/, "")
+      .split("\n")
+      .map((line) => {
+        const html = mdLine(line) || "&nbsp;";
+        if (old.has(line) || !line.trim()) return `<div class="pl" data-op="same"><span class="pl-sign"> </span><span class="pl-text">${html}</span></div>`;
+        const at = d;
+        d += 90;
+        return `<div class="pl seq-wipe" data-op="add" style="--d:${at};--dur:${Math.round(clamp(line.length * 6, 160, 420))}ms"><span class="pl-sign">+</span><span class="pl-text">${html}</span></div>`;
       })
       .join("");
-    body = `<p class="px-4 pt-3 text-[13px] leading-relaxed text-muted">${esc(f.detail)} A reader who follows any of these links finds nothing.</p><ul class="grid gap-2 p-4">${rows}</ul>`;
+    panel.innerHTML = `<div class="panel-head"><div class="flex items-center justify-between gap-3"><span class="panel-kicker">${isIndex ? "Rebuilt after every change" : "Append-only"}</span><span class="tag tag-computed">computed</span></div>
+        <div class="panel-path"><span>wiki/${isIndex ? "index.md" : "log.md"}</span></div></div>
+      <div class="panel-body code">${rows}</div>
+      <div class="panel-foot">${special}${chips}</div>`;
+    const body = panel.querySelector<HTMLElement>(".panel-body")!;
+    const added = panel.querySelectorAll<HTMLElement>(".pl[data-op='add']");
+    const lastAdded = added[added.length - 1];
+    if (lastAdded) body.scrollTop = Math.max(0, lastAdded.offsetTop + lastAdded.offsetHeight - body.clientHeight + 24);
+    return;
   }
-  return `<section class="card self-start overflow-hidden" aria-label="Finding">
-    <div class="card-head"><span class="flex min-w-0 items-center gap-2">${kindTag(f)}<span class="truncate text-[13px] font-medium">${inlineMd(f.title)}</span></span></div>
-    <div class="fade-in">${body}
-      <div class="mx-4 mb-4 rounded-lg bg-well px-3.5 py-3 text-[13px] leading-relaxed"><span class="font-semibold">Proposed fix.</span> ${esc(f.suggestion)}</div>
+  const change = step.changes.find((c) => c.slug === (panelFile ?? step.focus)) ?? step.changes[0];
+  const animated = panelFile === null;
+  const base = animated ? T.panel : 0;
+  panel.innerHTML = `<div class="panel-head seq" style="--d:${animated ? T.panel - 300 : 0}">
+      <div class="flex items-center justify-between gap-3"><span class="panel-kicker">${scene === FIX_SCENE ? "The fix rewrites" : "The agent writes"}</span><span class="tag ${change.status === "created" ? "tag-new" : "tag-edit"}">${change.status === "created" ? "new page" : "edited"}</span></div>
+      <div class="panel-path"><span>wiki/${esc(change.path)}</span><span class="ml-auto shrink-0 text-[11px] text-[var(--muted)]"><span style="color:var(--new)">+${change.added}</span> <span style="color:var(--bad)">−${change.removed}</span></span></div>
     </div>
-  </section>`;
+    <div class="panel-body code ${animated ? "seq" : ""}" style="--d:${T.panel - 300}">${diffRows(change.diff, base, change.status === "created")}</div>
+    <div class="panel-foot seq" style="--d:${animated ? T.panel : 0}">${special}${chips}</div>`;
+  // Keep the last edit in view: that is where the old value gets struck through.
+  const body = panel.querySelector<HTMLElement>(".panel-body");
+  const changedRows = panel.querySelectorAll<HTMLElement>(".pl[data-op='add'], .pl[data-op='del']");
+  const last = changedRows[changedRows.length - 1];
+  if (body && last) body.scrollTop = Math.max(0, last.offsetTop + last.offsetHeight - body.clientHeight + 24);
 }
 
-// ---------------------------------------------------------------- step 3: ask
+/** Diff rows with typed-in additions and struck-through removals, folding long unchanged runs. */
+function diffRows(full: DiffLine[], base: number, created: boolean): string {
+  // Front matter (between the first two "---" lines) is bookkeeping: fold it into one row.
+  const fences = full.map((x, k) => (x.text === "---" && x.op !== "del" ? k : -1)).filter((k) => k >= 0);
+  let diff = full;
+  let front = "";
+  if (fences.length >= 2) {
+    const meta = full.slice(fences[0] + 1, fences[1]);
+    const changedKeys = [...new Set(meta.filter((x) => x.op !== "same").map((x) => x.text.split(":")[0]))];
+    front = `<div class="pl-fold">⋯ front matter${changedKeys.length ? ` ${created ? "written" : "updated"}: ${changedKeys.join(", ")}` : ""}</div>`;
+    diff = full.slice(fences[1] + 1);
+  }
+  const rows: string[] = front ? [front] : [];
+  let d = base;
+  const ctx = 2;
+  const changed = diff.filter((x) => x.op !== "same").length;
+  const pace = created ? Math.min(90, 1300 / Math.max(changed, 1)) : Math.min(260, 1400 / Math.max(changed, 1));
+  const row = (x: DiffLine) => {
+    const html = mdLine(x.text) || "&nbsp;";
+    if (x.op === "same") return `<div class="pl" data-op="same"><span class="pl-sign"> </span><span class="pl-text">${html}</span></div>`;
+    const dur = Math.round(clamp(x.text.length * 8, 200, 560));
+    const at = Math.round(d);
+    d += pace;
+    if (x.op === "add") return `<div class="pl seq-wipe" data-op="add" style="--d:${at};--dur:${dur}ms"><span class="pl-sign">+</span><span class="pl-text">${html}</span></div>`;
+    return `<div class="pl strike" data-op="del" style="--d:${at}"><span class="pl-sign">−</span><span class="pl-text">${html}</span></div>`;
+  };
+  let i = 0;
+  while (i < diff.length) {
+    if (diff[i].op !== "same") {
+      rows.push(row(diff[i++]));
+      continue;
+    }
+    let j = i;
+    while (j < diff.length && diff[j].op === "same") j++;
+    const run = diff.slice(i, j);
+    const head = i === 0 ? 0 : ctx;
+    const tail = j === diff.length ? 0 : ctx;
+    if (run.length > head + tail + 1) {
+      run.slice(0, head).forEach((x) => rows.push(row(x)));
+      rows.push(`<div class="pl-fold">⋯ ${run.length - head - tail} unchanged lines</div>`);
+      run.slice(run.length - tail).forEach((x) => rows.push(row(x)));
+    } else run.forEach((x) => rows.push(row(x)));
+    i = j;
+  }
+  return rows.join("");
+}
 
-function askView(): string {
-  const q = currentQuestion();
-  const chips = RUN.questions
-    .map((x) => `<button type="button" class="chip !px-3 !py-2 !text-[13.5px]" data-q="${x.id}" aria-pressed="${x.id === q.id}">${esc(x.text)}</button>`)
+function lintPanel(): string {
+  const cards: string[] = [];
+  let d = 1700;
+  for (const f of RUN.lintBefore.findings) {
+    if (f.kind === "contradiction") {
+      const key = f.claims.map((c) => c.key).sort((a, b) => a.length - b.length)[0];
+      cards.push(`<div class="claim-card seq" data-tone="bad" style="--d:${d}">
+        <div class="flex items-center justify-between gap-2"><span class="tag tag-bad">Contradiction</span><span class="font-mono text-[11px] text-[var(--muted)]">${esc(key)}</span></div>
+        <div class="mt-2 grid gap-2" style="grid-template-columns:repeat(${f.claims.length},minmax(0,1fr))">${f.claims
+          .map(
+            (c) =>
+              `<div><div class="claim-value" style="${c.source === "src-faq-draft" ? "color:var(--bad)" : ""}">${esc(c.value.replace(" at 02:00 UTC", ""))}</div><div class="claim-meta">${esc(c.source.replace("src-", ""))}</div></div>`,
+          )
+          .join("")}</div>
+      </div>`);
+    } else {
+      cards.push(`<div class="claim-card seq" style="--d:${d}">
+        <span class="tag tag-bad">Missing page</span>
+        <div class="mt-2 text-[14px]">${esc(f.title.replace(/\[\[|\]\]/g, ""))}</div>
+        <div class="claim-meta">${esc(f.detail)}</div>
+      </div>`);
+    }
+    d += 260;
+  }
+  return `<div class="panel-head"><div class="panel-kicker">Lint · all pages, all claims</div>
+      <div class="panel-path"><span>${RUN.lintBefore.findings.length} findings in ${LAST.pages.length} pages</span></div></div>
+    <div class="panel-body">${cards.join("")}
+      <p class="seq mx-4 mt-4 text-[13px] leading-relaxed text-[var(--ink-2)]" style="--d:${d + 200}">Lint doesn't keep the newest value: the newest here is the draft's, and it is wrong. It proposes fixes and a person decides.</p>
+    </div>
+    <div class="panel-foot seq" style="--d:${d + 200}"><span class="tag tag-computed">Computed by src/lint.ts</span></div>`;
+}
+
+// ---------------------------------------------------------------- playback
+
+function goFaceoff() {
+  playing = false;
+  renderPlay();
+  document.getElementById("faceoff")!.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
+}
+
+function next() {
+  if (scene >= FIX_SCENE) goFaceoff();
+  else enter(scene + 1);
+}
+
+function prev() {
+  if (scene > 0) enter(scene - 1);
+}
+
+function togglePlay() {
+  playing = !playing;
+  started = true;
+  if (playing && (scene === 0 || (scene === FIX_SCENE && sceneTime() > sceneLen(scene)))) enter(1);
+  renderPlay();
+}
+
+function drawTheatre() {
+  const t = sceneTime();
+  web.render(t, wallTime(), FROZEN !== null || REDUCED);
+  const len = sceneLen(scene);
+  $("progress").style.width = Number.isFinite(len) ? `${clamp(t / len) * 100}%` : "0%";
+  if (playing && FROZEN === null && t > len) {
+    if (scene >= FIX_SCENE) {
+      playing = false;
+      renderPlay();
+    } else enter(scene + 1);
+  }
+}
+
+// ---------------------------------------------------------------- the face-off
+
+let question = RUN.questions.some((q) => q.id === params.get("ask")) ? params.get("ask")! : RUN.questions[0].id;
+
+function renderQuestions() {
+  $("questions").innerHTML = RUN.questions
+    .map((q) => `<button type="button" role="tab" class="qtab" data-q="${q.id}" aria-selected="${q.id === question}">${esc(q.text)}</button>`)
     .join("");
-  return `<div class="card mb-4 px-4 py-3">
-      <div class="card-title mb-2">Pick a question</div>
-      <div class="flex flex-wrap gap-2">${chips}</div>
-    </div>
-    <div class="grid gap-4 lg:grid-cols-2">
-      ${wikiCard(q)}
-      ${ragCard(q)}
-    </div>`;
 }
 
-function highlightsFor(facts: FactResult[]): Highlight[] {
-  return facts.map((f) => ({ pattern: f.pattern, tone: f.kind === "needed" ? "good" : "bad" }));
+const highlights = (facts: FactResult[]): Highlight[] => facts.map((f) => ({ pattern: f.pattern, tone: f.kind === "needed" ? "good" : "bad" }));
+const neededOf = (f: FactResult[]) => f.filter((x) => x.kind === "needed");
+const wrongFound = (f: FactResult[]) => f.filter((x) => x.kind === "wrong" && x.found).length;
+
+function renderFaceoff() {
+  const q = RUN.questions.find((x) => x.id === question)!;
+  $("arena").innerHTML = fighter(q, "wiki") + fighter(q, "rag");
+  $("verdict").innerHTML = verdictHtml(q);
 }
 
-function scoreboard(facts: FactResult[]): string {
-  const need = facts.filter((f) => f.kind === "needed");
-  const wrong = facts.filter((f) => f.kind === "wrong");
+function fighter(q: QuestionResult, side: "wiki" | "rag"): string {
+  const facts = side === "wiki" ? q.wikiFacts : q.ragFacts;
+  const hl = highlights(facts);
+  const need = neededOf(facts);
   const found = need.filter((f) => f.found).length;
-  const bad = wrong.filter((f) => f.found).length;
-  const rows = facts
+  const bad = wrongFound(facts);
+  const hitAt = (i: number) => 450 + i * 260;
+  const hits =
+    side === "wiki"
+      ? q.wiki
+          .map((p, i) => {
+            const lines = p.lines.filter((l) => l.struck || hl.some((h) => new RegExp(h.pattern, "i").test(l.text)));
+            const shown = (lines.length ? lines : p.lines.filter((l) => !l.text.startsWith("#")).slice(0, 3)).slice(0, 7);
+            return `<div class="hit seq" style="--d:${hitAt(i)}">
+              <div class="hit-head"><div><div class="hit-path">wiki/${esc(p.path)}</div><div class="hit-sub">${esc(p.lines.find((l) => l.text.startsWith("# "))?.text.slice(2) ?? "")}</div></div><span class="hit-score">BM25 ${p.score.toFixed(2)}</span></div>
+              <div class="hit-body code">${shown.map((l) => `<div class="pl"><span class="pl-text">${mdLine(l.text, l.struck ? [] : hl)}</span></div>`).join("")}</div>
+            </div>`;
+          })
+          .join("")
+      : q.rag
+          .map((c, i) => {
+            const wrong = q.ragFacts.filter((f) => f.kind === "wrong" && f.where.includes(c.id));
+            const title = RUN.sources.find((s) => s.file === c.file)?.title ?? "";
+            return `<div class="hit seq" style="--d:${hitAt(i)}" ${wrong.length ? 'data-tone="bad"' : ""}>
+              <div class="hit-head"><div><div class="hit-path">raw/${esc(c.file)}</div><div class="hit-sub">${esc(title)}${c.heading ? ` › ${esc(c.heading)}` : ""}</div></div><span class="flex flex-col items-end gap-1"><span class="hit-score">BM25 ${c.score.toFixed(2)}</span>${wrong.length ? '<span class="tag tag-bad">outdated</span>' : ""}</span></div>
+              <div class="hit-body code">${c.text
+                .split("\n")
+                .map((l) => `<div class="pl"><span class="pl-text">${mdLine(l, hl)}</span></div>`)
+                .join("")}</div>
+              ${wrong.length ? `<div class="hit-note">${wrong.map((w) => esc(w.why ?? "")).join(" · ")}</div>` : ""}
+            </div>`;
+          })
+          .join("");
+  const factRows = facts
     .filter((f) => f.kind === "needed" || f.found)
-    .map((f) => {
-      const ok = f.kind === "needed" ? f.found : !f.found;
-      const icon = ok ? `<span class="text-add">✓</span>` : `<span class="${f.kind === "wrong" ? "text-del" : "text-warn"}">${f.kind === "wrong" ? "!" : "✗"}</span>`;
-      const label = f.kind === "needed" ? (f.found ? f.label : `${f.label} (missing)`) : `${f.label}`;
-      return `<li class="flex gap-2.5 text-[13px] leading-snug"><span class="mono w-3 shrink-0 font-semibold">${icon}</span><span>${esc(label)}${f.kind === "wrong" && f.why ? `<span class="block text-[12px] text-muted">${esc(f.why)}</span>` : ""}</span></li>`;
+    .map((f, i) => {
+      const ok = f.kind === "needed" && f.found;
+      return `<div class="fact seq" data-ok="${ok}" style="--d:${1350 + i * 140}"><i>${ok ? "✓" : "!"}</i><span>${esc(f.kind === "needed" && !f.found ? `${f.label} (missing)` : f.label)}${f.kind === "wrong" && f.why ? `<small>${esc(f.why)}</small>` : ""}</span></div>`;
     })
     .join("");
-  return `<div class="grid grid-cols-2 gap-3 border-b border-rule px-4 py-3">
-      <div class="stat"><span class="stat-num ${found === need.length ? "text-add" : "text-warn"}">${found}/${need.length}</span><span class="stat-label">facts the answer needs</span></div>
-      <div class="stat"><span class="stat-num ${bad ? "text-del" : "text-add"}">${bad}</span><span class="stat-label">outdated or wrong statements</span></div>
-    </div>
-    <ul class="space-y-1.5 border-b border-rule px-4 py-3">${rows}</ul>`;
+  const scores = `<div class="scores">
+      <div class="score seq" data-tone="${found === need.length ? "good" : "bad"}" style="--d:2000"><b>${found}/${need.length}</b><span>facts the answer needs</span></div>
+      <div class="score seq" data-tone="${bad ? "bad" : "good"}" style="--d:2150"><b>${bad}</b><span>outdated or wrong statements</span></div>
+    </div>`;
+  const answer =
+    side === "wiki"
+      ? `<div class="answer seq" style="--d:2400"><div class="mb-1 flex items-center gap-2"><span class="panel-kicker">Example answer</span><span class="tag tag-scripted">Scripted</span></div>${esc(q.wikiAnswer)}</div>`
+      : "";
+  return `<article class="fighter seq" data-side="${side}" style="--d:${side === "wiki" ? 0 : 120}">
+    <div class="fighter-name">${side === "wiki" ? "Wiki memory" : "Chunk RAG"}</div>
+    <div class="fighter-how">${side === "wiki" ? `Top ${RUN.k.pages} topic pages, ranked by BM25` : `Top ${RUN.k.chunks} of ${RUN.chunkCount} raw paragraph chunks, ranked by BM25`}</div>
+    <div class="hit-list">${hits}</div>
+    <div class="facts">${factRows}</div>
+    ${scores}
+    ${answer}
+  </article>`;
 }
 
-function wikiCard(q: QuestionResult): string {
-  const hl = highlightsFor(q.wikiFacts);
-  const pages = q.wiki
-    .map(
-      (p, i) => `<li class="rounded-lg border border-rule">
-        <div class="flex items-center justify-between gap-2 border-b border-rule px-3 py-1.5"><span class="mono truncate text-[11.5px]">${i + 1}. wiki/${esc(p.path)}</span><span class="mono shrink-0 text-[11px] text-muted">BM25 ${p.score.toFixed(2)}</span></div>
-        <div class="code max-h-[300px] overflow-auto py-1.5">${p.lines
-          .map((l) => `<div class="ln"><span class="ln-text">${mdLine(l.text, l.struck ? [] : hl)}</span></div>`)
-          .join("")}</div>
-      </li>`,
-    )
-    .join("");
-  return `<section class="card self-start overflow-hidden" aria-label="Wiki memory">
-    <div class="card-head"><span class="flex items-center gap-2"><span class="legend-dot" style="background:var(--n-entity)"></span><span class="text-[14px] font-semibold">Wiki memory</span></span><span class="text-[12px] text-muted">top ${RUN.k.pages} topic pages</span></div>
-    ${scoreboard(q.wikiFacts)}
-    <ul class="space-y-2 p-3 fade-in">${pages}</ul>
-    <div class="mx-3 mb-3 rounded-lg bg-well px-3.5 py-3">
-      <div class="flex items-center gap-2"><span class="card-title">Example answer</span><span class="tag tag-scripted">Scripted</span></div>
-      <p class="mt-1.5 text-[13.5px] leading-relaxed">${esc(q.wikiAnswer)}</p>
-    </div>
-  </section>`;
+function verdictHtml(q: QuestionResult): string {
+  const total = neededOf(q.wikiFacts).length;
+  const rNeed = neededOf(q.ragFacts).filter((f) => f.found).length;
+  const rWrong = wrongFound(q.ragFacts);
+  let line: string;
+  let sub: string;
+  if (rWrong > 0) {
+    line = `Both found the answer. Only chunk RAG <em>also brought back ${plural(rWrong, "outdated statement")}</em>.`;
+    sub = "Nothing in the chunks says which version is current, so the model has to work it out on every question. The wiki settled it once, when the sources were ingested.";
+  } else if (rNeed < total) {
+    line = `The wiki pages hold <em>all ${total} facts</em>; the top chunks hold ${rNeed}.`;
+    sub = "A compiled page gathers facts that are spread across several sources.";
+  } else {
+    line = `A draw. When one source holds the whole answer, <em>chunk RAG is enough</em>.`;
+    sub = "Wiki memory pays off when sources change or disagree. For a single-source lookup it adds upkeep without a better answer.";
+  }
+  return `<p class="eyebrow seq" style="--d:2700">Verdict · computed</p><p class="verdict-line seq mt-3" style="--d:2800">${line}</p><p class="verdict-sub seq" style="--d:3050">${sub}</p>`;
 }
 
-function ragCard(q: QuestionResult): string {
-  const hl = highlightsFor(q.ragFacts);
-  const chunks = q.rag
-    .map((c, i) => {
-      const wrong = q.ragFacts.filter((f) => f.kind === "wrong" && f.where.includes(c.id));
-      const source = RUN.sources.find((s) => s.file === c.file)!;
-      return `<li class="rounded-lg border ${wrong.length ? "border-del" : "border-rule"}">
-        <div class="flex items-center justify-between gap-2 border-b border-rule px-3 py-1.5">
-          <span class="min-w-0"><span class="mono block truncate text-[11.5px]">${i + 1}. raw/${esc(c.file)}</span><span class="block truncate text-[11.5px] text-muted">${esc(source.title)}${c.heading ? ` › ${esc(c.heading)}` : ""}</span></span>
-          <span class="flex shrink-0 flex-col items-end gap-1"><span class="mono text-[11px] text-muted">BM25 ${c.score.toFixed(2)}</span>${wrong.length ? `<span class="tag tag-bad">outdated</span>` : ""}</span>
-        </div>
-        <div class="code py-1.5">${c.text
-          .split("\n")
-          .map((l) => `<div class="ln"><span class="ln-text">${mdLine(l, hl)}</span></div>`)
-          .join("")}</div>
-        ${wrong.length ? `<div class="border-t border-rule px-3 py-1.5 text-[12px] text-del">${wrong.map((w) => esc(w.why ?? "")).join(" · ")}</div>` : ""}
-      </li>`;
-    })
-    .join("");
-  return `<section class="card self-start overflow-hidden" aria-label="Chunk RAG">
-    <div class="card-head"><span class="flex items-center gap-2"><span class="legend-dot" style="background:var(--n-source)"></span><span class="text-[14px] font-semibold">Chunk RAG</span></span><span class="text-[12px] text-muted">top ${RUN.k.chunks} of ${RUN.chunkCount} raw chunks</span></div>
-    ${scoreboard(q.ragFacts)}
-    <ul class="space-y-2 p-3 fade-in">${chunks}</ul>
-  </section>`;
-}
-
-// ---------------------------------------------------------------- events
-
-function go(view: View) {
-  state.view = view;
-  if (view > 1) state.n = INGESTS.length;
-  state.file = null;
-  render();
-  window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-}
+// ---------------------------------------------------------------- wiring
 
 document.addEventListener("click", (e) => {
-  const el = (e.target as HTMLElement).closest<HTMLElement>("button, [data-goto]");
+  const el = (e.target as HTMLElement).closest<HTMLElement>("[data-scene], [data-file], [data-q], #play, #next, #prev, #cta, #theme");
   if (!el) return;
-  const d = el.dataset;
-  if (d.view) go(Number(d.view) as View);
-  else if (d.goto) {
-    state.n = Number(d.goto);
-    state.file = null;
-    render();
-  } else if (d.file) {
-    state.file = d.file;
-    render();
-  } else if (d.tab) {
-    state.tab = d.tab as Tab;
-    render();
-  } else if (d.finding) {
-    state.finding = Number(d.finding);
-    if (state.fixed) state.fixed = false;
-    render();
-  } else if (d.q) {
-    state.q = d.q;
-    render();
-  } else if (d.act) {
-    act(d.act);
+  if (el.id === "play") togglePlay();
+  else if (el.id === "next") next();
+  else if (el.id === "prev") prev();
+  else if (el.id === "cta") {
+    document.getElementById("theatre")!.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
+    started = true;
+    playing = true;
+    setTimeout(() => enter(1), REDUCED ? 0 : 450);
+  } else if (el.id === "theme") toggleTheme();
+  else if (el.dataset.scene) {
+    playing = false;
+    started = true;
+    enter(Number(el.dataset.scene));
+  } else if (el.dataset.file) {
+    panelFile = el.dataset.file;
+    renderPanel();
+  } else if (el.dataset.q) {
+    question = el.dataset.q;
+    renderQuestions();
+    renderFaceoff();
   }
 });
-
-function act(a: string) {
-  if (a === "next" && state.n < INGESTS.length) {
-    state.n += 1;
-    state.file = null;
-    render();
-  } else if (a === "prev" && state.n > 0) {
-    state.n -= 1;
-    state.file = null;
-    render();
-  } else if (a === "to-lint") go(2);
-  else if (a === "to-ask") {
-    state.fixed = true;
-    go(3);
-  } else if (a === "to-ingest") go(1);
-  else if (a === "fix") {
-    state.fixed = true;
-    state.file = null;
-    render();
-  } else if (a === "unfix") {
-    state.fixed = false;
-    render();
-  } else if (a === "restart") {
-    state.n = 0;
-    state.fixed = false;
-    state.finding = 0;
-    state.view = 1;
-    render();
-    window.scrollTo({ top: 0 });
-  }
-}
 
 document.addEventListener("keydown", (e) => {
-  if (state.view !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
-  if ((e.target as HTMLElement).closest("input, textarea")) return;
-  if (e.key === "ArrowRight") act("next");
-  if (e.key === "ArrowLeft") act("prev");
-});
-
-$("theme").addEventListener("click", () => {
-  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  try {
-    localStorage.setItem("wiki-memory-theme", next);
-  } catch {
-    // Storage can be unavailable; the theme still switches for this visit.
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const r = document.getElementById("theatre")!.getBoundingClientRect();
+  if (r.bottom < innerHeight * 0.3 || r.top > innerHeight * 0.7) return;
+  if (e.key === "ArrowRight") {
+    playing = false;
+    next();
+  } else if (e.key === "ArrowLeft") {
+    playing = false;
+    prev();
+  } else if (e.key === " " && !(e.target as HTMLElement).closest("button, a")) {
+    e.preventDefault();
+    togglePlay();
   }
 });
 
-$("about-chunks").textContent = String(RUN.chunkCount);
-$("about-k-chunks").textContent = String(RUN.k.chunks);
-$("about-k-pages").textContent = String(RUN.k.pages);
+function toggleTheme() {
+  const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+  root.dataset.theme = nextTheme;
+  try {
+    localStorage.setItem("wiki-memory-theme", nextTheme);
+  } catch {
+    // Storage may be unavailable; the theme still applies for this visit.
+  }
+  hero.refreshPalette();
+  web.refreshPalette();
+  drawAll();
+}
 
-render();
+const visible = { hero: true, theatre: false, faceoff: false };
+let faceoffShown = false;
+const io = new IntersectionObserver(
+  (entries) => {
+    for (const en of entries) {
+      const id = en.target.id as keyof typeof visible;
+      visible[id] = en.isIntersecting;
+      if (id === "theatre" && en.intersectionRatio >= 0.5 && !started && FROZEN === null) {
+        started = true;
+        playing = true;
+        enter(1);
+      }
+      if (id === "faceoff" && en.isIntersecting && !faceoffShown) {
+        faceoffShown = true;
+        renderFaceoff();
+      }
+    }
+  },
+  { threshold: [0, 0.5] },
+);
+["hero", "theatre", "faceoff"].forEach((id) => io.observe(document.getElementById(id)!));
+
+function drawAll() {
+  hero.render(heroTime(), wallTime(), FROZEN !== null || REDUCED);
+  drawTheatre();
+}
+
+function loop() {
+  if (visible.hero) hero.render(heroTime(), wallTime());
+  if (visible.theatre) drawTheatre();
+  requestAnimationFrame(loop);
+}
+
+let resizeTimer = 0;
+addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    setupHero();
+    web.view.fill = narrow() ? 0.96 : 0.86;
+    web.resize();
+    drawAll();
+  }, 120);
+});
+
+// ---------------------------------------------------------------- start
+
+$("about-chunks").textContent = String(RUN.chunkCount);
+renderQuestions();
+setupHero();
+if (params.has("scene")) started = true;
+enter(params.has("scene") ? Number(params.get("scene")) || 0 : 0);
+if (params.has("file") && scene > 0) {
+  panelFile = params.get("file");
+  renderPanel();
+}
+if (params.has("ask")) {
+  faceoffShown = true;
+  renderFaceoff();
+}
+const jump = params.has("ask") ? "faceoff" : params.has("scene") ? "theatre" : null;
+// Review hook: ?solo shows only the section being reviewed, so headless screenshots start at its top.
+if (jump && params.has("solo")) {
+  for (const id of ["hero", "theatre", "faceoff", "about"]) if (id !== jump) document.getElementById(id)!.hidden = true;
+  if (jump === "theatre") {
+    enter(scene);
+    if (params.has("file")) {
+      panelFile = params.get("file");
+      renderPanel();
+    }
+  }
+}
+if (jump) {
+  root.style.scrollBehavior = "auto";
+  document.getElementById(jump)!.scrollIntoView();
+  root.style.scrollBehavior = "";
+}
+document.fonts?.ready.then(() => {
+  setupHero();
+  web.resize();
+  drawAll();
+});
+if (FROZEN !== null || REDUCED) drawAll();
+else requestAnimationFrame(loop);
