@@ -72,3 +72,19 @@ export function summarize(questions: Question[], results: QuestionResult[]) {
   });
   return { rows, totals };
 }
+
+/**
+ * Facts the hand-written query could not return, because extraction never made
+ * them edges. `scored` are the misses inside the gold total (the table's 34/37);
+ * `judged` are misses on the global question, whose gold query is not scored.
+ */
+export function goldMisses(questions: Question[], results: QuestionResult[]) {
+  const scored: { question: string; kind: string; label: string }[] = [];
+  const judged: { question: string; kind: string; label: string }[] = [];
+  for (const q of questions) {
+    const gold = results.find((r) => r.id === q.id)?.methods.find((m) => m.method === "gold");
+    if (!gold) continue;
+    for (const it of gold.context.items) if (!it.found) (q.judge ? judged : scored).push({ question: q.question, kind: q.kind, label: it.label });
+  }
+  return { scored, judged };
+}

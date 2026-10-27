@@ -586,6 +586,53 @@
   .rows { margin-top: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); white-space: pre-wrap; max-height: 220px; overflow: auto; }
 
   /* Results tables */
+
+  /* Who writes the query / when extraction goes wrong */
+  .prose-p { margin-top: 10px; max-width: 46rem; font-size: 15.5px; line-height: 1.7; color: var(--ink-2); }
+  .parts { margin-top: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--ink); }
+  .parts li { display: flex; gap: 10px; padding: 14px 18px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+  .parts li + li { padding-left: 18px; border-left: 1px solid var(--rule); }
+  .parts strong { color: var(--ink); font-weight: 600; }
+  .part-n { flex: none; font-family: var(--font-serif); font-size: 20px; line-height: 1; color: var(--muted); }
+  details.prompt { margin-top: 20px; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); }
+  details.prompt summary { cursor: pointer; padding: 12px 16px; font-size: 14px; color: var(--ink); }
+  details.prompt[open] summary { border-bottom: 1px solid var(--rule); }
+  .prompt-part { padding: 14px 16px 4px; }
+  .prompt-part .cypher { background: var(--paper); }
+  .p-hit, .q-hit { background: color-mix(in srgb, var(--accent) 11%, transparent); border-radius: 2px; padding: 1px 0; -webkit-box-decoration-break: clone; box-decoration-break: clone; cursor: pointer; transition: background-color 150ms var(--ease); }
+  .p-hit.hot, .q-hit.hot, .key-lines li.hot { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  .link-grid { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 32px; }
+  .key-lines { margin-top: 10px; display: grid; gap: 10px; }
+  .key-lines li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 3px; background: var(--sheet); cursor: pointer; transition: background-color 150ms var(--ease); }
+  .key-lines .lnum { flex: none; margin-top: 3px; }
+  .key-lines code { display: block; font-size: 12px; line-height: 1.55; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .key-lines .caption { margin-top: 4px; }
+  .ways > div p { margin-top: 8px; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+  .ways .way-stat { margin-top: 6px; font-size: 13.5px; color: var(--muted); }
+  .ways .way-stat b { font-size: 18px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .roles.ways { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.45fr); }
+  .ways .cypher { font-size: 11.5px; white-space: pre; }
+  @media (max-width: 860px) { .roles.ways { grid-template-columns: 1fr; } }
+  .fails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--ink); }
+  .fail { padding: 18px 24px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+  .fail + .fail { padding-left: 24px; border-left: 1px solid var(--rule); }
+  .fail-n { font-family: var(--font-serif); font-size: 26px; line-height: 1; color: var(--muted); }
+  .fail .sub { margin-top: 8px; }
+  .fail p, .fail ul { margin-top: 8px; }
+  .fail ul { display: grid; gap: 6px; }
+  .fail li { position: relative; padding-left: 14px; }
+  .fail li::before { content: "–"; position: absolute; left: 0; color: var(--muted); }
+  .fail code { font-size: 12px; overflow-wrap: anywhere; }
+  .defences { margin-top: 12px; max-width: 46rem; display: grid; gap: 10px; counter-reset: d; }
+  .defences li { position: relative; padding-left: 30px; font-size: 15px; line-height: 1.65; color: var(--ink-2); counter-increment: d; }
+  .defences li::before { content: counter(d); position: absolute; left: 0; top: 1px; font-family: var(--font-serif); font-size: 17px; color: var(--muted); }
+  .defences strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 860px) {
+    .parts, .fails, .link-grid { grid-template-columns: 1fr; }
+    .parts li, .parts li + li { padding: 12px 0 0; border-left: 0; }
+    .fail, .fail + .fail { padding: 18px 0 0; border-left: 0; }
+    .fail + .fail { margin-top: 18px; border-top: 1px solid var(--rule); }
+  }
   .rtable { width: 100%; border-collapse: collapse; font-size: 14px; }
   .rtable th { text-align: left; font-weight: 500; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule-2); vertical-align: bottom; }
   .rtable td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); }

@@ -5,6 +5,7 @@
 
 import { renderAskPanel, renderLoses, renderPayoff, renderProblem, renderProduction, renderRoles } from "./sections.ts";
 import { initWalkthrough } from "./walkthrough.ts";
+import { renderExtraction, renderQuery } from "./explain.ts";
 
 const root = document.documentElement;
 const $ = (id: string) => document.getElementById(id)!;
@@ -25,6 +26,8 @@ $("theme").addEventListener("click", () => {
 renderProblem();
 renderPayoff();
 renderAskPanel();
+renderQuery();
+renderExtraction();
 renderLoses();
 renderRoles();
 renderProduction();

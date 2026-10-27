@@ -14,7 +14,7 @@
 import type { Doc } from "../corpus.ts";
 import type { Graph } from "../graph.ts";
 import { chunkDocuments, TfIdfIndex, type Chunk } from "../retrieve.ts";
-import { schemaText } from "../schema.ts";
+import { cypherSystem } from "../cypher-prompt.ts";
 import { scoreEither, scorePassages, scoreText, type Question, type Score } from "../score.ts";
 import { cosine, embed, generateJson, generateText } from "./gemini.ts";
 import { runReadOnly, type QueryRun } from "./neo4j.ts";
@@ -56,23 +56,8 @@ export interface QuestionResult {
 const ANSWER_SYSTEM =
   "You answer questions about Corvane Instruments using only the context given. Be brief: one to three sentences. If the context does not contain the answer, say what is missing. Do not use outside knowledge.";
 
-export function cypherSystem(graph: Graph) {
-  const names: Record<string, string[]> = {};
-  for (const n of graph.nodes) (names[n.type] ??= []).push(n.name);
-  return `You translate questions into one read-only Cypher query for a Neo4j knowledge graph about Corvane Instruments.
-
-${schemaText()}
-
-How the graph is stored:
-- Every node has the label Entity and one type label from the list above, and the properties name (the canonical name) and aliases (a list of other names).
-- Relationships have the types above, and these properties: quotes (the source sentences), docs, doc_dates (ascending dates of the documents that stated it), first_seen, last_seen. When stated: since, until, units, role, date hold the latest value; <key>_values and <key>_dates hold every value with its date.
-- Facts can change over time: prefer the most recent statement (since, last_seen) when the question asks about "today", "now" or a current value.
-
-Entity names in the graph, by type:
-${Object.entries(names).map(([t, ns]) => `- ${t}: ${ns.join(", ")}`).join("\n")}
-
-Rules: match names case-insensitively with toLower(...) CONTAINS on name or aliases; return names and values, not whole nodes; at most 5 hops; only MATCH, OPTIONAL MATCH, WITH, UNWIND, WHERE, RETURN, ORDER BY, LIMIT.`;
-}
+// The text-to-Cypher prompt lives in src/cypher-prompt.ts so the page can show exactly what Gemini was given.
+export { cypherSystem };
 
 const CYPHER_SCHEMA = {
   type: "object",

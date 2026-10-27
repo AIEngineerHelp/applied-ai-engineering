@@ -10,6 +10,7 @@ import GRAPH from "../results/graph.json" with { type: "json" };
 import LAYOUT from "../results/layout.json" with { type: "json" };
 import ANSWERS from "../results/answers.json" with { type: "json" };
 import COSTS from "../results/costs.json" with { type: "json" };
+import QUERY_EXAMPLE from "../results/query-example.json" with { type: "json" };
 import QUESTIONS from "../data/questions.json" with { type: "json" };
 import REVIEW from "../data/extraction-review.json" with { type: "json" };
 import type { Doc } from "../src/corpus.ts";
@@ -40,6 +41,15 @@ export const graph = GRAPH as unknown as Graph;
 export const layout = LAYOUT as unknown as Record<string, [number, number]>;
 export const answers = ANSWERS as unknown as { model: string; embeddingModel: string; k: number; at: string; summaries: { members: string[]; summary: string }[]; results: QuestionResult[] };
 export const costs = COSTS as unknown as { steps: { step: string; calls: number; input: number; output: number; thought: number; cost: number }[]; total: { calls: number; cost: number; input: number; output: number } };
+export const queryExample = QUERY_EXAMPLE as unknown as {
+  question: string;
+  at: string;
+  model: string;
+  attempts: { cypher: string; explanation: string; ok: boolean; error: string | null; rows: Record<string, unknown>[]; ms: number }[];
+  answer: string;
+  calls: { step: string; input: number; output: number; thought: number; cost: number }[];
+  cost: number;
+};
 export const questions = QUESTIONS as unknown as Question[];
 export const review = REVIEW as unknown as {
   wrong: { doc: string; source: string; relation: string; target: string; why: string }[];

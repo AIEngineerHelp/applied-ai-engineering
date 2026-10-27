@@ -27,7 +27,8 @@
       <a class="nav hidden sm:inline" href="#idea">The idea</a>
       <a class="nav hidden sm:inline" href="#theatre">Walkthrough</a>
       <a class="nav hidden md:inline" href="#payoff">Results</a>
-      <a class="nav hidden md:inline" href="#loses">When it loses</a>
+      <a class="nav hidden lg:inline" href="#query">The query</a>
+      <a class="nav hidden lg:inline" href="#loses">When it loses</a>
       <a class="nav hidden lg:inline" href="#production">Production</a>
       <a class="nav hidden sm:inline" href="#recap">Recap</a>
       <a class="nav" href="article">Article</a>
@@ -163,12 +164,24 @@
     </div>
   </section>
 
-  <!-- 5. When the graph loses -->
+  <!-- 5. Who writes the query -->
+  <section id="query" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">5 · Who writes the query?</p>
+        <h2 class="title">Neo4j runs Cypher, not questions</h2>
+        <p class="lede">The database can't read “who manages the Pellham Labs account?”. Something outside it has to turn the question into a query. Here that is Gemini, and what it knows about the graph is exactly what the prompt tells it.</p>
+      </div>
+      <div id="query-body"></div>
+    </div>
+  </section>
+
+  <!-- 6. When the graph loses -->
   <section id="loses" class="sec">
     <div class="wrap">
       <div class="narrow-l">
-        <p class="eyebrow">5 · When the graph loses</p>
-        <h2 class="title">The graph only knows what extraction captured</h2>
+        <p class="eyebrow">6 · When the graph loses</p>
+        <h2 class="title">Some answers never become edges</h2>
         <p class="lede">Ask what the QX-7 incident review recommended. The answer is a sentence of prose, not a relation between two entities, so it never became an edge.</p>
       </div>
       <div id="loses-body" class="compare"></div>
@@ -183,11 +196,23 @@
     </div>
   </section>
 
-  <!-- 6. Who does what -->
+  <!-- 7. When extraction goes wrong -->
+  <section id="extraction" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">7 · When extraction goes wrong</p>
+        <h2 class="title">The graph only knows what extraction put in</h2>
+        <p class="lede">Every answer the graph gives is built from extracted facts. When extraction misses a fact, misreads one or merges the wrong names, the graph doesn't know, and its answers look just as sure.</p>
+      </div>
+      <div id="extraction-body" class="mt-8"></div>
+    </div>
+  </section>
+
+  <!-- 8. Who does what -->
   <section id="roles" class="sec">
     <div class="wrap">
       <div class="narrow-l">
-        <p class="eyebrow">6 · Who does what</p>
+        <p class="eyebrow">8 · Who does what</p>
         <h2 class="title">The LLM, the code and a person</h2>
         <p class="lede">A knowledge graph is not just a prompt. The LLM turns text into facts and questions into queries; code checks the facts and runs the queries; a person decides what the graph may hold and settles what neither can.</p>
       </div>
@@ -214,11 +239,11 @@
     </div>
   </section>
 
-  <!-- 7. Production -->
+  <!-- 9. Production -->
   <section id="production" class="sec">
     <div class="wrap">
       <div class="narrow-l">
-        <p class="eyebrow">7 · Taking it to production</p>
+        <p class="eyebrow">9 · Taking it to production</p>
         <h2 class="title">From 25 documents to millions of facts</h2>
         <p class="lede">This demo extracts 25 short documents once. Real systems extract continuously from large documents, keep the graph current, and let people query it safely, so the same idea needs a pipeline around it.</p>
         <p class="caption mt-3"><span class="tag-scripted">guidance</span> Design guidance with sources. This demo does not test it.</p>
@@ -227,15 +252,15 @@
     </div>
   </section>
 
-  <!-- 8. Recap -->
+  <!-- 10. Recap -->
   <section id="recap" class="sec">
     <div class="wrap narrow">
-      <p class="eyebrow">8 · Recap</p>
+      <p class="eyebrow">10 · Recap</p>
       <h2 class="title">So what is a knowledge graph?</h2>
       <ul class="takeaways">
         <li><strong>It stores facts as entity → relation → entity,</strong> each with the sentence it came from, instead of storing passages.</li>
-        <li><strong>An LLM extracts the facts once; code follows them.</strong> A traversal joins facts from documents that never mention each other, which chunk search can't do.</li>
-        <li><strong>It only knows what extraction captured, and extraction makes mistakes.</strong> Reasons and recommendations stay in the text, so most systems combine the graph with chunk search, and a person reviews what the model is unsure about.</li>
+        <li><strong>An LLM extracts the facts once and writes the queries; code checks and follows them.</strong> A traversal joins facts from documents that never mention each other, which chunk search can't do. Neo4j only runs Cypher, so what the model knows about the graph is <a href="#query">what its prompt tells it</a>.</li>
+        <li><strong>It only knows what extraction captured, and <a href="#extraction">extraction makes mistakes</a>.</strong> Reasons and recommendations stay in the text, so most systems combine the graph with chunk search, and a person reviews what the model is unsure about.</li>
       </ul>
       <p class="kg"><strong>Not wiki memory.</strong> A knowledge graph stores typed facts that code traverses. <a href="https://wiki-memory.vercel.app">Wiki memory</a> stores pages of prose that an agent reads and rewrites.</p>
       <p class="kg"><strong>This is a teaching demo, not a production system.</strong> Twenty-five short synthetic documents, one recorded extraction, and a person's review written by the author. See <a href="#production">Taking it to production</a>.</p>

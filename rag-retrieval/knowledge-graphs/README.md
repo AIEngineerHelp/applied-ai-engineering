@@ -255,6 +255,108 @@ Every call's tokens were logged to `runs/ledger.jsonl` (Git-ignored); [`results/
 | Judge | 5 | $0.005 |
 | **Total** | **300** | **$0.32** |
 
+The recorded query example in [Who writes the query?](#who-writes-the-query) added 2 calls ($0.0015) on 2026-10-27, logged in the ledger and in its own result file.
+
+## Who writes the query?
+
+Neo4j runs Cypher, not questions. It cannot read "Who manages the Pellham Labs account?". Something outside the database has to turn the question into a query, and here that is Gemini:
+
+```text
+question → Gemini (schema + entity names) → Cypher → guard → Neo4j, read-only → rows → Gemini writes the answer from the query and the rows
+```
+
+### What Gemini is given
+
+What the model knows about the graph is exactly what its prompt tells it. [`cypherSystem(graph)`](src/cypher-prompt.ts) writes one system prompt (52 lines here) from the schema file and the graph, and the app renders the same text in full. It has four parts:
+
+1. **The schema**, from [`data/schema.json`](data/schema.json): every entity type, and every relation with its direction, meaning and properties.
+2. **How the graph is stored**: the labels, the properties on nodes and edges, and how changing facts are kept, ending with "prefer the most recent statement".
+3. **The entity names**, all 47, by type, so the query uses the graph's spelling. Extraction mistakes reach the prompt too: "Meridian" is listed both as a Customer and as a Product.
+4. **The rules**: how to match names, what to return, which clauses are allowed.
+
+Gemini answers with structured output, `{cypher, explanation}`, at temperature 0. If the query fails or returns no rows, it gets one repair try with its query and the error. That happened on 1 of the 15 questions: the outage query returned 0 rows and the repair returned 6, one of them wrong.
+
+### Where each piece of a query comes from
+
+Asked "Who manages the Pellham Labs account?", Gemini wrote this query (recorded in [`results/query-example.json`](results/query-example.json); 2 calls, $0.0015):
+
+```cypher
+MATCH (p:Person)-[r:MANAGES_ACCOUNT]->(c:Customer)
+WHERE toLower(c.name) CONTAINS 'pellham labs' OR any(a IN c.aliases WHERE toLower(a) CONTAINS 'pellham labs')
+RETURN p.name AS manager, r.since AS since
+ORDER BY r.since DESC
+LIMIT 1
+```
+
+Neo4j returned `[{"manager": "Jonas Lind", "since": null}]`, and the answer was "Jonas Lind manages the Pellham Labs account." Each piece comes from a line of the prompt:
+
+| Piece of the query | Prompt line |
+| --- | --- |
+| `MANAGES_ACCOUNT`, from Person to Customer | `- MANAGES_ACCOUNT: (Person) -> (Customer). The person is the account manager for the customer. Properties: since.` |
+| `toLower(...) CONTAINS` on the name or the aliases | `Rules: match names case-insensitively with toLower(...) CONTAINS on name or aliases; ...` |
+| `ORDER BY r.since DESC LIMIT 1` | `- Facts can change over time: prefer the most recent statement (since, last_seen) when the question asks about "today", "now" or a current value.` |
+
+**A pitfall in this exact query.** No document gives a start date for this account manager, so `since` is null. In Cypher, a descending sort puts nulls first ([`ORDER BY`](https://neo4j.com/docs/cypher-manual/current/clauses/order-by/)), so with one undated and one dated manager, `LIMIT 1` would pick the undated one. The fix is a prompt rule to order by `coalesce(r.since, r.last_seen)`, or a template that does it. The recorded prompt is unchanged, so the recorded runs stay valid.
+
+**The answer step needs the query beside the rows.** Given only the rows for "which accounts does Lena Vik manage?", Gemini answered "The provided context does not mention Lena Vik", although the rows were her three accounts.
+
+### Three ways to get the query
+
+| | The LLM writes it | A person writes it | Templates, chosen by the LLM |
+| --- | --- | --- | --- |
+| How | Gemini writes Cypher from the prompt | The gold queries in `data/questions.json` | A person writes parameterised queries; the LLM picks one and fills in the values |
+| Here | 30/41 facts, 11 of 15 questions complete | 34/37 facts, 12 of 14 complete | Not built in this example |
+| Strength | Any question the schema can express | Accurate, reviewable | No model-written Cypher runs |
+| Weakness | Confidently wrong at times (both owners of the gateway for "today"; a customer who signed after the outage); every query needs the guard | One query per question shape; new questions have none | Only the question shapes someone anticipated |
+
+A template, and what the LLM would return for it:
+
+```cypher
+// account_manager
+MATCH (p:Person)-[r:MANAGES_ACCOUNT]->(c:Customer)
+WHERE toLower(c.name) = toLower($customer)
+   OR toLower($customer) IN [a IN c.aliases | toLower(a)]
+RETURN p.name AS manager, r.since AS since
+ORDER BY coalesce(r.since, r.last_seen) DESC
+LIMIT 1
+```
+
+```json
+{"template": "account_manager", "params": {"customer": "Pellham Labs"}}
+```
+
+Teams usually combine them: templates for the common questions, an LLM-written query behind a guard as the fallback, and text search when the graph returns nothing.
+
+### What to pass as context
+
+| Give the model | Why | Here |
+| --- | --- | --- |
+| The schema, with directions and meanings | So it picks the right relation and points it the right way | 13 relation types, each with "(from) -> (to)" and a sentence |
+| How time is stored | "Today" questions need the latest value | `since`, `until`, `<key>_values`, `last_seen` |
+| Entity names, or only the ones the question links to | So it matches the graph's spelling and aliases | All 47 names |
+| Rules | Matching, what to return, allowed clauses, a hop limit | One line |
+| A few example questions with their queries | Shows the patterns the graph uses | Not used |
+
+Listing every name only works at 47 entities. At scale, find the names in the question first with a full-text or vector index over entity names (entity linking), and pass only those.
+
+## When extraction goes wrong
+
+The graph only knows what extraction put in, and its errors are silent and confident: a wrong edge returns rows like a right one, and a missing edge returns nothing, which reads as "no". Extraction fails in three ways here, each with recorded evidence.
+
+1. **Facts the schema has no place for.** Even the hand-written queries missed 3 of 37 facts, because extraction never made them edges: "qualify a second radio-chip supplier by the end of Q3" and "keep eight weeks of chip stock" (the QX-7 recommendations), and "the LX-4 lost a third of its capacity in the cold" (the battery reason). On the global question, "QX-7 shipments already slipped six weeks" is missing too.
+2. **Wrong or unstated facts.** `LX-4 PART_OF Atlas-3` (a misreading), `Varnell Semiconductor SUPPLIES QX-7` from a sentence that doesn't say so, and two type errors ("QX-7" as a Product, "Meridian" as a Customer). Every quote was verbatim and every type allowed, so validation passed them all. Run again, the same prompt gives slightly different facts: 52 of 58 appeared in all three runs, 5 in only one.
+3. **Bad merges and splits.** "A3" stayed apart from Atlas-3 until a person merged it; until then every Atlas-3 question would have missed Brightwater Aquaculture's order. Without the rule that only names of the same type merge, "Telemetry Gateway outage" (an incident) would have merged into the Telemetry Gateway (the service).
+
+Defences, in order:
+
+1. **Keep the source text and search it too.** On the two prose questions, the hybrid found 3 of 3 facts and the graph 0; overall the hybrid was complete on 12 of 15 questions.
+2. **Measure extraction on its own** by running hand-written queries on the graph. What they miss (3 of 37 here) is an extraction or schema problem, not a query problem.
+3. **Validate in code**: the schema, a verbatim quote for every fact, well-formed dates. This catches invented quotes and impossible relations; it cannot catch a misreading like the LX-4.
+4. **Design the schema around the questions you expect.** If people will ask why, a reason needs somewhere to go, or the question goes to text search.
+5. **Send unsure merges to a person.** Here 11 pairs went to review, and the graph ended with 0 false merges and 0 false splits.
+6. **Store time on every relation**, so "today" questions can pick the latest fact.
+7. **Extract more than once** and review the facts that appear in only one run (5 here).
+
 ## Who does what
 
 | | Does | In this demo |
@@ -305,8 +407,10 @@ A single page, in this order:
 2. **What a knowledge graph is.** Plain prose, a with-and-without diagram, and the six terms above.
 3. **The walkthrough.** Six documents, one at a time, on one clock: the document on the left with each quote numbered and linked to the fact Gemini extracted from it on the right, a "What happened" strip, and the graph growing in the margin. Then the merge (rules, LLM, person) and the question asked again. It plays by itself; a black Play/Pause button, Previous and Next, and speeds of 0.5×, 0.75×, 1× and 1.5× control it, and any manual click pauses it. With reduced motion it doesn't autoplay and every scene opens on its final frame.
 4. **The payoff.** The generated Cypher, the path it followed, 4 of 4 against 0 of 4, and the table of all 15 questions.
-5. **When the graph loses.** The prose question side by side, when to use which, the hybrid, and the model's real mistakes from every stage.
-6. **Who does what**, 7. **Taking it to production**, 8. **Recap**, and a link to this article, rendered locally at `/article`.
+5. **Who writes the query?** The prompt Gemini gets, rendered from the code, one recorded query with each piece linked to the prompt line behind it, and three ways to get a query.
+6. **When the graph loses.** The prose question side by side, when to use which, the hybrid, and the model's real mistakes from every stage.
+7. **When extraction goes wrong.** The three ways extraction fails, with recorded evidence, and the defences in order.
+8. **Who does what**, 9. **Taking it to production**, 10. **Recap**, and a link to this article, rendered locally at `/article`.
 
 Everything on the page is a recorded run, labelled *measured*; the documents, questions, gold answers and the person's review are labelled as hand-written. The page calls no model.
 
@@ -349,6 +453,7 @@ The pipeline steps are dry runs unless given `--live`. Costs are what these step
 | `npm run pipeline -- load` | 0 (needs Neo4j) | free |
 | `npm run pipeline -- ask --live` | about 85 (needs Neo4j) | about $0.08 |
 | `npm run pipeline -- costs` or `site`, `npm run report` | 0 | free |
+| `node --import=tsx scripts/query-example.ts --live` | 2 or 3 (needs Neo4j) | $0.0015 |
 | One question in the Ask panel | 2 or 3 | about $0.002 |
 
 Each call has a timeout and at most two retries. Raw responses and the ledger go to the Git-ignored `runs/`; cleaned results to `results/`. Model output varies between runs, so a new run will not reproduce these numbers exactly; the variation section above shows by how much.
@@ -382,6 +487,7 @@ Each call has a timeout and at most two retries. Raw responses and the ledger go
 - Extraction, resolution, questions, community summaries and the judge were run live with `gemini-3.8-flash` and `gemini-embedding-2` against Neo4j 2026.09.0 Community on 2026-10-23. Every table above comes from those recorded results.
 - `npm test`, `npm run check` and `npm run export` pass; the tests check that the page's numbers agree with the recorded results.
 - SDK calls were checked against the current documentation: Gemini Interactions API structured output and embeddings, the Neo4j JavaScript driver's `executeRead` with a timeout, Vercel Node functions.
+- The query example (`scripts/query-example.ts`) was run live on 2026-10-27 through the same text-to-Cypher and answer code.
 - The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). It was not deployed.
 
 ## Sources
@@ -394,7 +500,7 @@ Each call has a timeout and at most two retries. Raw responses and the ledger go
 - Peng et al., [Graph Retrieval-Augmented Generation: A Survey](https://arxiv.org/abs/2408.08921) (2024).
 - Han et al., [RAG vs. GraphRAG: A Systematic Evaluation and Key Insights](https://arxiv.org/abs/2502.11371) (2025).
 - Xiang et al., [When to use Graphs in RAG](https://arxiv.org/abs/2506.05690) (ICLR 2026).
-- Neo4j: [JavaScript driver transactions](https://neo4j.com/docs/javascript-manual/current/transactions/), [built-in roles](https://neo4j.com/docs/operations-manual/current/authentication-authorization/built-in-roles/), [configuration settings](https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/), [privileges](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-privileges/), [search-performance indexes](https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/overview/), [neo4j-graphrag retrievers](https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html) and [resolvers](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html).
+- Neo4j: [JavaScript driver transactions](https://neo4j.com/docs/javascript-manual/current/transactions/), [built-in roles](https://neo4j.com/docs/operations-manual/current/authentication-authorization/built-in-roles/), [configuration settings](https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/), [privileges](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-privileges/), [search-performance indexes](https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/overview/), [`ORDER BY` and nulls](https://neo4j.com/docs/cypher-manual/current/clauses/order-by/), [neo4j-graphrag retrievers](https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html) and [resolvers](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html).
 - LangChain: [`LLMGraphTransformer`](https://reference.langchain.com/python/langchain-neo4j/graph_transformers/llm/LLMGraphTransformer) and [`GraphCypherQAChain`](https://reference.langchain.com/python/langchain-neo4j/chains/graph_qa/cypher/GraphCypherQAChain); LlamaIndex, [Property Graph Index](https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/).
 - Google: [Gemini structured output](https://ai.google.dev/gemini-api/docs/structured-output), [Gemini embeddings](https://ai.google.dev/gemini-api/docs/embeddings).
 - W3C, [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/) and [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/); ISO/IEC, [39075:2024 GQL](https://webstore.iec.ch/publication/94107).

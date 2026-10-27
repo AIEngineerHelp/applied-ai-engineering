@@ -14,7 +14,7 @@ import type { QuestionResult } from "../src/pipeline/ask.ts";
 const html = readFileSync(join(ROOT, "site", "index.html"), "utf8");
 const readme = readFileSync(join(ROOT, "README.md"), "utf8");
 const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
-const clientSource = ["sections.ts", "walkthrough.ts", "app.ts"].map((f) => readFileSync(join(ROOT, "client", f), "utf8")).join("\n");
+const clientSource = ["sections.ts", "walkthrough.ts", "app.ts", "explain.ts"].map((f) => readFileSync(join(ROOT, "client", f), "utf8")).join("\n");
 
 test("every in-page anchor in the page and the rendered sections points at an element", () => {
   const hrefs = [...html.matchAll(/href="#([^"]*)"/g), ...clientSource.matchAll(/href[=:]\s*"#([^"$]+)"/g)].map((m) => m[1]);
@@ -23,9 +23,9 @@ test("every in-page anchor in the page and the rendered sections points at an el
   for (const h of hrefs) assert.ok(ids.has(h), `#${h} has no element`);
 });
 
-test("the page has the nine sections in order, and the nav links to the local article", () => {
+test("the page has its sections in order, and the nav links to the local article", () => {
   const order = [...html.matchAll(/<section[^>]*id="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ["problem", "idea", "theatre", "payoff", "loses", "roles", "production", "recap", "about"]);
+  assert.deepEqual(order, ["problem", "idea", "theatre", "payoff", "query", "loses", "extraction", "roles", "production", "recap", "about"]);
   assert.match(html, /<a class="nav" href="article">Article<\/a>/);
   assert.match(html, /Full article on GitHub/);
 });
@@ -63,4 +63,33 @@ test("the static export has no ask endpoint, and the page explains why when aski
   const exportScript = readFileSync(join(ROOT, "scripts", "export.ts"), "utf8");
   assert.doesNotMatch(exportScript, /api/);
   assert.match(clientSource, /the published site only replays the recorded runs/);
+});
+
+test("the prompt the page shows is the one the code sends, and each linked line produced its piece of the recorded query", async () => {
+  const { cypherSystem } = await import("../src/cypher-prompt.ts");
+  const { PROMPT_LINKS, promptParts } = await import("../client/explain.ts");
+  const graph = readJson<Parameters<typeof cypherSystem>[0]>("results/graph.json");
+  const prompt = cypherSystem(graph);
+  const parts = promptParts(prompt);
+  assert.equal(parts.length, 4);
+  assert.equal(parts.map((p) => p.text).join("\n\n"), prompt.trim());
+  const ex = readJson<{ attempts: { cypher: string }[] }>("results/query-example.json");
+  const cypher = ex.attempts[ex.attempts.length - 1].cypher;
+  for (const link of PROMPT_LINKS) {
+    const lines = prompt.split("\n").filter(link.line);
+    assert.equal(lines.length, 1, `prompt line ${link.n}`);
+    assert.ok(cypher.includes(link.query), `query piece ${link.n}`);
+    assert.ok(readme.includes(lines[0].length > 120 ? lines[0].slice(0, 60) : lines[0]), `README quotes prompt line ${link.n}`);
+  }
+  assert.ok(readme.includes(cypher.split("\n")[0]));
+});
+
+test("the extraction section's numbers come from the recorded results", async () => {
+  const { goldMisses } = await import("../src/summary.ts");
+  const m = goldMisses(readJson<Question[]>("data/questions.json"), readJson<{ results: QuestionResult[] }>("results/answers.json").results);
+  const gold = summarize(readJson<Question[]>("data/questions.json"), readJson<{ results: QuestionResult[] }>("results/answers.json").results).totals.find((t) => t.method === "gold")!;
+  assert.equal(gold.of - gold.found, m.scored.length);
+  assert.match(readme, new RegExp(`missed ${m.scored.length} of ${gold.of} facts`));
+  const v = readJson<{ union: number; inAll: number; inOne: number }>("results/variation.json");
+  assert.match(readme, new RegExp(`${v.inAll} of ${v.union} appeared in all three runs, ${v.inOne} in only one`));
 });

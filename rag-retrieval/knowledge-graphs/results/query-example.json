@@ -1,0 +1,38 @@
+{
+ "question": "Who manages the Pellham Labs account?",
+ "at": "2026-10-27T09:06:23.206Z",
+ "model": "gemini-3.8-flash",
+ "attempts": [
+  {
+   "cypher": "MATCH (p:Person)-[r:MANAGES_ACCOUNT]->(c:Customer)\nWHERE toLower(c.name) CONTAINS 'pellham labs' OR any(a IN c.aliases WHERE toLower(a) CONTAINS 'pellham labs')\nRETURN p.name AS manager, r.since AS since\nORDER BY r.since DESC\nLIMIT 1",
+   "explanation": "Finds the Person who has a MANAGES_ACCOUNT relationship to the Customer 'Pellham Labs'.",
+   "ok": true,
+   "error": null,
+   "rows": [
+    {
+     "manager": "Jonas Lind",
+     "since": null
+    }
+   ],
+   "ms": 38
+  }
+ ],
+ "answer": "Jonas Lind manages the Pellham Labs account.",
+ "calls": [
+  {
+   "step": "text-to-cypher",
+   "input": 1117,
+   "output": 121,
+   "thought": 0,
+   "cost": 0.0012915
+  },
+  {
+   "step": "answer",
+   "input": 206,
+   "output": 10,
+   "thought": 0,
+   "cost": 0.000192
+  }
+ ],
+ "cost": 0.001484
+}
