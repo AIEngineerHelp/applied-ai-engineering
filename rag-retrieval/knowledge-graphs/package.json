@@ -1,0 +1,30 @@
+{
+  "name": "knowledge-graphs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Build a small knowledge graph from documents and compare graph retrieval with chunk retrieval",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify && node --import=tsx scripts/article.ts",
+    "start": "npm run build:client && node --import=tsx scripts/serve.ts",
+    "check": "tsc --noEmit",
+    "test": "node --import=tsx --test tests/*.test.ts",
+    "export": "npm run build:client && node --import=tsx scripts/export.ts",
+    "pipeline": "node --import=tsx scripts/pipeline.ts",
+    "report": "node --import=tsx scripts/report.ts"
+  },
+  "devDependencies": {
+    "@google/genai": "2.27.0",
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "marked": "17.0.1",
+    "neo4j-driver": "6.2.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

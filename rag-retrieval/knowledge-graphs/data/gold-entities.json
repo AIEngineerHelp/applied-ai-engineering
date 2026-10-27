@@ -1,0 +1,342 @@
+[
+ {
+  "type": "Person",
+  "name": "Priya Raman",
+  "aliases": [
+   "Priya Raman",
+   "Priya"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Tomas Berg",
+  "aliases": [
+   "Tomas Berg",
+   "T. Berg",
+   "Tom Berg"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Ines Okafor",
+  "aliases": [
+   "Ines Okafor"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Lena Vik",
+  "aliases": [
+   "Lena Vik"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Marco Feld",
+  "aliases": [
+   "Marco Feld",
+   "M. Feld"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Ana Duarte",
+  "aliases": [
+   "Ana Duarte"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Jonas Lind",
+  "aliases": [
+   "Jonas Lind"
+  ]
+ },
+ {
+  "type": "Person",
+  "name": "Elin Saar",
+  "aliases": [
+   "Elin Saar"
+  ]
+ },
+ {
+  "type": "Team",
+  "name": "Firmware team",
+  "aliases": [
+   "Firmware team",
+   "Firmware",
+   "Priya Raman's Firmware team"
+  ]
+ },
+ {
+  "type": "Team",
+  "name": "Hardware team",
+  "aliases": [
+   "Hardware team",
+   "Hardware"
+  ]
+ },
+ {
+  "type": "Team",
+  "name": "Customer Support",
+  "aliases": [
+   "Customer Support",
+   "Support"
+  ]
+ },
+ {
+  "type": "Team",
+  "name": "Data Platform team",
+  "aliases": [
+   "Data Platform team",
+   "Data Platform"
+  ]
+ },
+ {
+  "type": "Team",
+  "name": "Supply Chain team",
+  "aliases": [
+   "Supply Chain team",
+   "Supply Chain"
+  ]
+ },
+ {
+  "type": "Service",
+  "name": "Telemetry Gateway",
+  "aliases": [
+   "Telemetry Gateway",
+   "TGW",
+   "the gateway",
+   "telemetry gateway",
+   "gateway"
+  ]
+ },
+ {
+  "type": "Service",
+  "name": "OTA Update Service",
+  "aliases": [
+   "OTA Update Service"
+  ]
+ },
+ {
+  "type": "Service",
+  "name": "Fleet Console",
+  "aliases": [
+   "Fleet Console"
+  ]
+ },
+ {
+  "type": "Product",
+  "name": "Atlas-3",
+  "aliases": [
+   "Atlas-3",
+   "Atlas 3",
+   "A3",
+   "Atlas-3 sensor",
+   "Atlas-3 sensors",
+   "A3 sensors"
+  ]
+ },
+ {
+  "type": "Product",
+  "name": "Borealis controller",
+  "aliases": [
+   "Borealis controller",
+   "Borealis",
+   "Borealis 2.4",
+   "Borealis controllers",
+   "Borealis units"
+  ]
+ },
+ {
+  "type": "Product",
+  "name": "Meridian flow meter",
+  "aliases": [
+   "Meridian flow meter",
+   "Meridian",
+   "Meridian flow meters"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "QX-7 radio chip",
+  "aliases": [
+   "QX-7 radio chip",
+   "QX-7",
+   "QX7 modem",
+   "QX7"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "IP68 enclosure",
+  "aliases": [
+   "IP68 enclosure",
+   "enclosure"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "LX-4 lithium cell",
+  "aliases": [
+   "LX-4 lithium cell",
+   "LX-4"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "Sundra C2 cell",
+  "aliases": [
+   "Sundra C2 cell",
+   "Sundra C2"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "PM-2 power module",
+  "aliases": [
+   "PM-2 power module",
+   "PM-2"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "PM-1",
+  "aliases": [
+   "PM-1"
+  ]
+ },
+ {
+  "type": "Component",
+  "name": "FS-9 sensing element",
+  "aliases": [
+   "FS-9 sensing element",
+   "FS-9"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Varnell Semiconductor",
+  "aliases": [
+   "Varnell Semiconductor",
+   "Varnell Semi",
+   "Varnell"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Tessaly Plastics",
+  "aliases": [
+   "Tessaly Plastics"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Hallam Cells",
+  "aliases": [
+   "Hallam Cells",
+   "Hallam"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Sundra Power",
+  "aliases": [
+   "Sundra Power"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Kerrin Sensors",
+  "aliases": [
+   "Kerrin Sensors",
+   "Kerrin"
+  ]
+ },
+ {
+  "type": "Company",
+  "name": "Atlas Logistics",
+  "aliases": [
+   "Atlas Logistics"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Osterby Water Utility",
+  "aliases": [
+   "Osterby Water Utility",
+   "Osterby Water",
+   "Osterby"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Calder Grain Co-op",
+  "aliases": [
+   "Calder Grain Co-op",
+   "Calder"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Pellham Labs",
+  "aliases": [
+   "Pellham Labs",
+   "Pellham"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Northmoor Irrigation District",
+  "aliases": [
+   "Northmoor Irrigation District",
+   "Northmoor"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Brightwater Aquaculture",
+  "aliases": [
+   "Brightwater Aquaculture",
+   "Brightwater"
+  ]
+ },
+ {
+  "type": "Customer",
+  "name": "Varnell Bay Marina",
+  "aliases": [
+   "Varnell Bay Marina"
+  ]
+ },
+ {
+  "type": "Site",
+  "name": "Tartu plant",
+  "aliases": [
+   "Tartu plant",
+   "Tartu"
+  ]
+ },
+ {
+  "type": "Site",
+  "name": "Brno plant",
+  "aliases": [
+   "Brno plant",
+   "Brno"
+  ]
+ },
+ {
+  "type": "Incident",
+  "name": "QX-7 shipment delay",
+  "aliases": [
+   "QX-7 shipment delay",
+   "QX-7 delay"
+  ]
+ },
+ {
+  "type": "Incident",
+  "name": "Telemetry Gateway outage",
+  "aliases": [
+   "Telemetry Gateway outage"
+  ]
+ }
+]

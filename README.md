@@ -51,6 +51,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Wiki memory for agents](agents/wiki-memory/README.md) ([try it](https://wiki-memory.vercel.app)) explains the pattern Andrej Karpathy calls an "LLM Wiki". Instead of re-searching raw documents for every question, an agent keeps its own notebook of markdown pages and updates it as each new document arrives. The app starts from one question that plain retrieval answers with three conflicting passages. It then explains the idea and lets you step through five documents: for each one, what it says, what the agent did, and the page change that matters most. A check catches values that disagree, and the same question is answered again from one page. The pages are scripted; everything derived from them is computed. No API keys.
 
+[Knowledge graphs for AI engineers](rag-retrieval/knowledge-graphs/README.md) explains what a knowledge graph is, how an LLM extracts one from text, how entity resolution merges names like "Varnell Semi" and "Varnell Semiconductor", and the GraphRAG retrieval patterns. Gemini extracted a graph from 25 synthetic documents three times, rules, an LLM and a person merged the names, and Neo4j answered 15 questions: on the multi-hop question chunk search found 0 of 4 customers and Gemini-written Cypher 4 of 4, while on a prose question chunk search won. The app replays the recorded runs, real model mistakes included, with no keys; locally, with Neo4j and a Gemini key, it also answers your own questions.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

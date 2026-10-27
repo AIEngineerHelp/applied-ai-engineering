@@ -1,0 +1,16 @@
+{
+  "note": "Decisions a person made on the merges the LLM was unsure about (results/resolution.json, queue). Written by hand by the example's author, who knows the corpus. Applied after the LLM stage; every applied merge is recorded as \"person: approved\".",
+  "decisions": [
+    { "a": "Customer Support", "b": "Support", "type": "Team", "decision": "same", "note": "In the org update, \"Support escalates any defect\" refers to Customer Support, the team named in the sentence before." },
+    { "a": "Atlas-3", "b": "A3", "type": "Product", "decision": "same", "note": "Brightwater orders \"A3 sensors\" for oxygen monitoring; Corvane's only water-quality sensor is the Atlas-3." },
+    { "a": "Hardware team", "b": "Atlas team", "type": "Team", "decision": "different", "note": "\"The Atlas team photo\" in the newsletter is a social mention, not a team. It should not be in the graph at all; it stays as an isolated node here so the mistake is visible." },
+    { "a": "Atlas team", "b": "Support", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Data Platform team", "b": "Atlas team", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Firmware team", "b": "Atlas team", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Atlas team", "b": "sales team", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Customer Support", "b": "Atlas team", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Supply Chain", "b": "Atlas team", "type": "Team", "decision": "different", "note": "See above." },
+    { "a": "Borealis controller", "b": "QX-7", "type": "Product", "decision": "different", "note": "\"QX-7\" here is the radio chip, wrongly typed as a Product in the Calder email. The fix is to correct the type, not to merge." },
+    { "a": "Harbour Street", "b": "Tartu plant", "type": "Site", "decision": "different", "note": "Harbour Street is the new head office, not a plant." }
+  ]
+}

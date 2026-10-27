@@ -1,0 +1,77 @@
+{
+ "prices": {
+  "gemini-3.8-flash": {
+   "input": 0.75,
+   "output": 3.75
+  },
+  "gemini-embedding-2": {
+   "input": 0.2,
+   "output": 0
+  }
+ },
+ "steps": [
+  {
+   "step": "extract",
+   "calls": 75,
+   "input": 70152,
+   "output": 27662,
+   "thought": 3916,
+   "cost": 0.171
+  },
+  {
+   "step": "resolve",
+   "calls": 137,
+   "input": 27247,
+   "output": 5595,
+   "thought": 8131,
+   "cost": 0.0716
+  },
+  {
+   "step": "embed",
+   "calls": 3,
+   "input": 2632,
+   "output": 0,
+   "thought": 0,
+   "cost": 0.0005
+  },
+  {
+   "step": "community",
+   "calls": 3,
+   "input": 1581,
+   "output": 365,
+   "thought": 0,
+   "cost": 0.0026
+  },
+  {
+   "step": "answer",
+   "calls": 61,
+   "input": 19952,
+   "output": 2197,
+   "thought": 3319,
+   "cost": 0.0356
+  },
+  {
+   "step": "text-to-cypher",
+   "calls": 16,
+   "input": 18047,
+   "output": 2062,
+   "thought": 2770,
+   "cost": 0.0317
+  },
+  {
+   "step": "judge",
+   "calls": 5,
+   "input": 917,
+   "output": 1224,
+   "thought": 0,
+   "cost": 0.0053
+  }
+ ],
+ "total": {
+  "calls": 300,
+  "cost": 0.3183,
+  "input": 140528,
+  "output": 57241
+ },
+ "note": "Every call in runs/ledger.jsonl, including the smoke test and any reruns. Output includes thinking tokens."
+}

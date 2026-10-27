@@ -1,0 +1,190 @@
+{
+ "company:atlas-logistics": [
+  930,
+  30
+ ],
+ "company:hallam-cells": [
+  930,
+  162
+ ],
+ "company:kerrin-sensors": [
+  930,
+  558
+ ],
+ "company:sundra-power": [
+  930,
+  294
+ ],
+ "company:tessaly-plastics": [
+  930,
+  426
+ ],
+ "company:varnell-semiconductor": [
+  930,
+  690
+ ],
+ "component:fs-9": [
+  740,
+  443
+ ],
+ "component:ip68-enclosure": [
+  740,
+  113
+ ],
+ "component:lx-4-lithium-cell": [
+  740,
+  195
+ ],
+ "component:pm-1": [
+  740,
+  30
+ ],
+ "component:pm-2-power-module": [
+  740,
+  525
+ ],
+ "component:qx-7-radio-chip": [
+  740,
+  360
+ ],
+ "component:sundra-c2": [
+  740,
+  278
+ ],
+ "customer:brightwater-aquaculture": [
+  290,
+  385
+ ],
+ "customer:calder-grain-co-op": [
+  290,
+  436
+ ],
+ "customer:meridian": [
+  290,
+  690
+ ],
+ "customer:northmoor-irrigation-district": [
+  290,
+  538
+ ],
+ "customer:osterby-water-utility": [
+  290,
+  487
+ ],
+ "customer:pellham-labs": [
+  290,
+  588
+ ],
+ "customer:varnell-bay-marina": [
+  290,
+  639
+ ],
+ "incident:qx-7-shipment-delay": [
+  740,
+  690
+ ],
+ "incident:telemetry-gateway-outage": [
+  740,
+  608
+ ],
+ "person:ana-duarte": [
+  70,
+  219
+ ],
+ "person:elin-saar": [
+  70,
+  690
+ ],
+ "person:ines-okafor": [
+  70,
+  30
+ ],
+ "person:jonas-lind": [
+  70,
+  501
+ ],
+ "person:lena-vik": [
+  70,
+  596
+ ],
+ "person:marco-feld": [
+  70,
+  407
+ ],
+ "person:priya-raman": [
+  70,
+  313
+ ],
+ "person:tomas-berg": [
+  70,
+  124
+ ],
+ "product:atlas-3": [
+  520,
+  103
+ ],
+ "product:borealis-controller": [
+  520,
+  177
+ ],
+ "product:meridian": [
+  520,
+  250
+ ],
+ "product:qx-7": [
+  520,
+  30
+ ],
+ "service:fleet-console": [
+  520,
+  323
+ ],
+ "service:ota-update-service": [
+  520,
+  397
+ ],
+ "service:telemetry-gateway": [
+  520,
+  470
+ ],
+ "site:brno-plant": [
+  520,
+  543
+ ],
+ "site:harbour-street": [
+  520,
+  617
+ ],
+ "site:tartu-plant": [
+  520,
+  690
+ ],
+ "team:atlas-team": [
+  290,
+  30
+ ],
+ "team:customer-support": [
+  290,
+  81
+ ],
+ "team:data-platform-team": [
+  290,
+  233
+ ],
+ "team:firmware-team": [
+  290,
+  284
+ ],
+ "team:hardware-team": [
+  290,
+  132
+ ],
+ "team:sales-team": [
+  290,
+  182
+ ],
+ "team:supply-chain": [
+  290,
+  335
+ ]
+}
