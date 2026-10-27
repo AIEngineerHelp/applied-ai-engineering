@@ -4,7 +4,7 @@ Most retrieval-augmented generation (RAG) systems work on chunks. They split doc
 
 A knowledge graph stores the facts inside documents as entities and the relations between them, so code can follow relations from one entity to the next, however far apart the documents that stated them. This article explains what a knowledge graph is, how to build one from text with an LLM, and how to query it. It then measures the whole pipeline on a small corpus: Gemini extracts the facts (three times, to see how much they vary), names are merged by rules, an LLM and a person, the graph is loaded into Neo4j, and 15 questions are answered five ways. Every number below comes from those recorded runs, mistakes included.
 
-**Try it:** this folder contains a web app that replays the runs: the question, what a knowledge graph is, a walkthrough of six documents being extracted, merged and queried, the results, where the graph loses, who does what, and how to take it to production. Run locally with Neo4j and a Gemini key, it also answers your own questions. See [The demo app](#the-demo-app).
+**Try it live:** https://knowledge-graphs-seven.vercel.app (ask your own question at the top; limited to 5 an hour per visitor). This folder contains a web app that replays the runs: the question, what a knowledge graph is, a walkthrough of six documents being extracted, merged and queried, the results, where the graph loses, who does what, and how to take it to production. Run locally with Neo4j and a Gemini key, it also answers your own questions. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
@@ -532,7 +532,7 @@ Without the environment variables the function answers 503, and the page replays
 - `npm test`, `npm run check` and `npm run export` pass; the tests check that the page's numbers agree with the recorded results.
 - SDK calls were checked against the current documentation: Gemini Interactions API structured output and embeddings, the Neo4j JavaScript driver's `executeRead` with a timeout, Vercel Node functions.
 - The query example (`scripts/query-example.ts`) was run live on 2026-10-27 through the same text-to-Cypher and answer code.
-- The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). The bundled `dist/api/ask.js` was run outside the repository against local Neo4j (a question answered, the next from the same client refused with 429, `:AskLog` kept through two reloads), and `vercel build` built it as a Node function. It has not been deployed.
+- The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). The bundled `dist/api/ask.js` was run outside the repository against local Neo4j (a question answered, the next from the same client refused with 429, `:AskLog` kept through two reloads), and `vercel build` built it as a Node function. It was deployed on 2026-10-27 to https://knowledge-graphs-seven.vercel.app with Neo4j AuraDB Free; there, a question was answered, a too-short question was refused with 400 and the sixth question in an hour with 429.
 
 ## Sources
 
