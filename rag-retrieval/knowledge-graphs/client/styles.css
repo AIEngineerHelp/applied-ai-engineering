@@ -187,9 +187,7 @@
   .zoom button { @apply grid size-8 place-items-center text-[16px] text-[var(--muted)] transition-colors duration-150 hover:bg-[var(--glass-strong)] hover:text-[var(--ink)]; }
   .zoom svg { @apply size-3.5; }
 
-  .hops { @apply max-w-[21rem] rounded-2xl p-3; background: var(--glass); backdrop-filter: blur(14px); box-shadow: 0 0 0 1px var(--line); }
-  .hops { display: none; }
-  @media (min-width: 1024px) { .hops:not(:empty) { display: block; } }
+  .hops { @apply grid gap-0.5; }
   .hop { @apply flex items-start gap-2 py-1 text-[12px] opacity-25 transition-opacity duration-300 ease-out; }
   .hop.on { opacity: 1; }
   .hop-n { @apply mt-px grid size-[18px] shrink-0 place-items-center rounded-full font-mono text-[10px] font-semibold; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }

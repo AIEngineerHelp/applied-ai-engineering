@@ -167,15 +167,17 @@ export function extractScene(graph: Graph, engine: Engine, docId: string, prior:
     { at: E1, caption: "Each entity lifts off the page and becomes a node in the graph." },
     ...(aliases.length ? [{ at: F, caption: `Entity resolution: ${fuseText}. The names fuse into one node.` }] : []),
     { at: E3, caption: `The relations stated in the text become edges: ${relEdges.length} from this document.` },
+    { at: E4, caption: `The graph now holds ${litBy(graph, [...prior, docId]).nodes.size} entities and ${litBy(graph, [...prior, docId]).edges.size} relations.` },
   ];
   const camera = engine.fit([...docIds], 1.25);
 
   return {
     fusions,
-    seq: new Sequence(E4 + 0.2, beats, frozen),
+    seq: new Sequence(E4 + 0.6, beats, frozen),
     frame(t) {
       const f = baseFrame(graph, prior);
-      f.camera = camera;
+      // Focus on this document's entities, then pull back to the whole graph.
+      f.camera = t < E4 ? camera : { ...HOME };
       names.forEach((nm, i) => {
         const id = idOf(nm);
         const isAlias = aliases.includes(nm);
@@ -306,10 +308,8 @@ export function askScene(graph: Graph, engine: Engine, r: Comparison, dom: AskDo
     ...r.hops.map((h, i) => ({ at: hopAt[i], caption: `Hop ${i + 1}: ${sentence(graph, h.edge)}.` })),
     { at: V, caption: r.verdict.headline + "." },
   ];
-  const path = [...new Set(r.hops.flatMap((h) => [h.from, h.to]))];
-  // When the verdict lands it covers the lower part of the graph, so frame the path above it.
-  const fitted = engine.fit(path, 1.4);
-  const finalCam = { ...fitted, y: fitted.y + 115 / fitted.z };
+  // When the verdict lands, the whole graph is framed in the space above it, path still lit.
+  const finalCam = { ...HOME };
   return {
     seq: new Sequence(V + 1.4, beats, frozen),
     frame(t) {

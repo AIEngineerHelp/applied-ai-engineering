@@ -79,7 +79,6 @@ function setChapter(c: Chapter, opts: { scroll?: boolean; play?: boolean } = {})
   state.chapter = c;
   document.querySelectorAll<HTMLElement>("[data-chapter]").forEach((b) => b.setAttribute("aria-current", String(b.dataset.chapter === c)));
   engine.userCamera = null;
-  $("hops").innerHTML = "";
   $("faceoff").className = "faceoff pointer-events-auto";
   if (c === "extract") renderExtract();
   if (c === "merge") renderMerge();
@@ -194,6 +193,7 @@ function renderAsk() {
     <h2 class="scene-title mt-2">Ask</h2>
     <p class="scene-lede">Pick a question. The graph follows relations from the entity it names; chunk search returns the most similar passages.</p>
     <div id="qs" class="mt-4 grid gap-1.5 xl:grid-cols-2"></div>
+    <div class="mt-6"><p class="mb-2 flex items-center gap-2 font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Graph traversal <span class="tag tag-live">computed</span></p><ol id="hops" class="hops"></ol></div>
     <div class="mt-6 flex items-center justify-between gap-3">
       <p class="font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Chunk search · TF-IDF</p>
       <div id="k" role="radiogroup" aria-label="Chunks returned" class="seg-group">
@@ -254,9 +254,7 @@ function playQuestion(id: string) {
     })
     .join("");
 
-  $("hops").innerHTML = r.hops.length
-    ? `<p class="mb-1.5 flex items-center justify-between gap-3 font-mono text-[10px] tracking-wider text-[var(--faint)] uppercase"><span>Graph traversal</span><span class="tag tag-live">computed</span></p><ol>${r.hops.map(hopHtml).join("")}</ol>`
-    : "";
+  $("hops").innerHTML = r.hops.map(hopHtml).join("");
 
   const winner = r.verdict.winner;
   const gWin = winner === "graph" || winner === "both";
@@ -296,6 +294,20 @@ const rectOf = (el: HTMLElement): Rect => {
   const r = el.getBoundingClientRect();
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 };
+/**
+ * The part of the graph's slot that no overlay covers: below the scene
+ * controls, and above the caption, or above the verdict once it has landed.
+ * The engine fits the graph into this rectangle, so overlays never hide it.
+ */
+function clearArea(): Rect {
+  const slot = $("slot").getBoundingClientRect();
+  const controls = $("controls").getBoundingClientRect();
+  const faceoff = $("faceoff");
+  const below = faceoff.classList.contains("in") ? faceoff.getBoundingClientRect() : $("caption").getBoundingClientRect();
+  const top = Math.max(slot.top, controls.bottom + 8);
+  const bottom = Math.min(slot.bottom, (below.height ? below.top : slot.bottom - 56) - 8);
+  return { x: slot.left, y: top, w: slot.width, h: Math.max(120, bottom - top) };
+}
 let lastCaption = "";
 let lastHeroCaption = "";
 
@@ -315,7 +327,7 @@ function loop() {
   const t = scene.seq.t;
   const frame = scene.frame(t);
   if (!state.heroActive) scene.dom?.(t);
-  engine.render(frame, rectOf(state.heroActive ? $("hero-slot") : $("slot")));
+  engine.render(frame, state.heroActive ? rectOf($("hero-slot")) : clearArea());
   lastHeroCaption = setCaption($("hero-caption"), hero.seq.caption, lastHeroCaption);
   const verdictShown = state.chapter === "ask" && $("faceoff").classList.contains("in");
   lastCaption = setCaption($("caption"), verdictShown ? "" : stage.seq.caption, lastCaption);
