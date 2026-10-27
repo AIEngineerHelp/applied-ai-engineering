@@ -32,6 +32,8 @@ const params = new URLSearchParams(location.search);
 const tParam = params.has("t") ? Number(params.get("t")) : null;
 const sceneParam = params.get("scene") ?? "hero";
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// ?trace=1: record each frame's scene time, graph area and label sides into a hidden <pre> (for flicker checks).
+const trace: string[] | null = params.has("trace") ? [] : null;
 
 type Chapter = "extract" | "merge" | "ask";
 const state = {
@@ -52,6 +54,8 @@ function readPalette() {
   engine.palette = { paper: v("--paper"), ink: v("--ink"), grey: v("--grey"), faint: v("--faint"), rule: v("--rule"), accent: v("--accent") } as Palette;
 }
 readPalette();
+// Text widths change when the web fonts arrive; lay the labels out again once, then keep them.
+document.fonts?.ready.then(() => engine.invalidateLabels());
 
 const frozenFor = (scene: string) => (tParam !== null && sceneParam === scene ? tParam : null);
 const start = (s: Scene) => {
@@ -303,14 +307,17 @@ const rectOf = (el: HTMLElement): Rect => {
  * controls, and above the caption, or above the verdict once it has landed.
  * The engine fits and clips the graph to this rectangle.
  */
+// Space kept free for the caption under the graph: two lines, whatever the
+// current caption says, so the graph does not reframe when the text changes.
+const CAPTION_RESERVE = 72;
 function clearArea(): Rect {
   const slot = $("slot").getBoundingClientRect();
   const top = $("toprow").getBoundingClientRect();
   const faceoff = $("faceoff");
-  const below = faceoff.classList.contains("in") ? faceoff.getBoundingClientRect() : $("caption").getBoundingClientRect();
   const y0 = Math.max(slot.top, top.bottom + 10);
-  const y1 = Math.min(slot.bottom, (below.height ? below.top : slot.bottom - 56) - 10);
-  return { x: slot.left + 8, y: y0, w: slot.width - 16, h: Math.max(120, y1 - y0) };
+  // Only the verdict, which lands once at the end of a question, changes the area.
+  const bottom = faceoff.classList.contains("in") ? faceoff.getBoundingClientRect().top - 10 : slot.bottom - CAPTION_RESERVE;
+  return { x: slot.left + 8, y: y0, w: slot.width - 16, h: Math.max(120, Math.min(slot.bottom, bottom) - y0) };
 }
 let lastCaption = "";
 let lastHeroCaption = "";
@@ -331,6 +338,18 @@ function loop() {
   const frame = scene.frame(t);
   if (!state.heroActive) scene.dom?.(t);
   engine.render(frame, state.heroActive ? rectOf($("hero-slot")) : clearArea());
+  if (trace) {
+    const r = engine.rect();
+    trace.push(`${scene.seq.t.toFixed(3)}|${r.x.toFixed(1)},${r.y.toFixed(1)},${r.w.toFixed(1)},${r.h.toFixed(1)}|${[...engine.lastSides].map(([k, v]) => `${k}:${v}`).join(",")}`);
+    let pre = document.getElementById("trace");
+    if (!pre) {
+      pre = document.createElement("pre");
+      pre.id = "trace";
+      pre.hidden = true;
+      document.body.append(pre);
+    }
+    pre.textContent = trace.join("\n");
+  }
   lastHeroCaption = setCaption($("hero-caption"), hero.seq.caption, lastHeroCaption);
   const verdictShown = state.chapter === "ask" && $("faceoff").classList.contains("in");
   lastCaption = setCaption($("caption"), verdictShown ? "" : stage.seq.caption, lastCaption);

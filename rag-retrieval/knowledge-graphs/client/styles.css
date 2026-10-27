@@ -57,7 +57,7 @@
   .caption { @apply text-[13.5px] leading-snug text-[var(--ink-2)]; text-wrap: balance; }
   .caption.swap { animation: fade-in 320ms var(--ease-out) both; }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-  #caption { @apply max-w-[44rem] bg-[var(--paper)] px-2; }
+  #caption { @apply max-w-[44rem] bg-[var(--paper)] px-2; line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   #caption:empty { display: none; }
   .note { @apply text-[12px] leading-snug text-[var(--faint)]; }
 
