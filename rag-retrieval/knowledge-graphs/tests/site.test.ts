@@ -63,7 +63,7 @@ test("the export bundles the ask function for Vercel, and the page falls back to
   const exportScript = readFileSync(join(ROOT, "scripts", "export.ts"), "utf8");
   assert.match(exportScript, /api", "ask\.ts/);
   assert.match(exportScript, /maxDuration: 30/);
-  assert.match(clientSource, /only replays the recorded runs above/);
+  assert.match(clientSource, /only replays the recorded runs below/);
   const api = readFileSync(join(ROOT, "api", "ask.ts"), "utf8");
   assert.match(api, /export async function POST\(request: Request\)/);
 });

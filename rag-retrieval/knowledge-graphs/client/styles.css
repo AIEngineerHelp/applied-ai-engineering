@@ -648,6 +648,8 @@
   .table-wrap { overflow-x: auto; }
 
   /* Ask your own question */
+  .link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ask-top { margin: 28px 0 40px; }
   .ask { margin-top: 28px; padding: 22px 24px; border: 1px solid var(--rule-2); border-radius: 4px; background: var(--sheet); }
   .ask textarea { width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--rule-2); border-radius: 4px; background: var(--paper); font: inherit; color: var(--ink); resize: vertical; }
   .ask .examples button { margin: 6px 10px 0 0; font-size: 13px; color: var(--accent); }
