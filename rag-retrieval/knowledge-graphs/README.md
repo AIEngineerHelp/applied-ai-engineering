@@ -1,32 +1,41 @@
 # Knowledge graphs for AI engineers: when GraphRAG beats chunk search, and when it doesn't
 
-Most retrieval-augmented generation (RAG) systems work on chunks. They split documents into passages, embed them, and hand the model the few passages most similar to the question. That works well when the answer sits in one passage. It works badly when the answer is spread across documents that don't mention each other: "which customers are affected if this supplier's chip is late?" needs the supplier register, a product brief and the account list, and only the first of those looks anything like the question.
+Most retrieval-augmented generation (RAG) systems work on chunks. They split documents into passages, embed them, and hand the model the few passages most similar to the question. That works when the answer sits in one passage. It fails when the answer is spread across documents that don't mention each other. "Which customers would be affected by a delay in QX-7 radio chip shipments?" needs a product brief (the chip goes into the Atlas-3), a launch note (and into the Meridian), and three account documents (who runs those products). None of those passages looks like the question.
 
-A knowledge graph stores the facts inside those documents as entities and the relations between them. Retrieval can then follow relations from one entity to the next, however far apart the documents that stated them. This article explains what a knowledge graph is, how teams build one from text with an LLM, how they query it, and the main patterns for using one in RAG (usually called GraphRAG). It works through a small example corpus end to end and shows, with computed results, where the graph wins, where chunk search is just as good, and where chunk search wins.
+A knowledge graph stores the facts inside documents as entities and the relations between them, so code can follow relations from one entity to the next, however far apart the documents that stated them. This article explains what a knowledge graph is, how to build one from text with an LLM, and how to query it. It then measures the whole pipeline on a small corpus: Gemini extracts the facts (three times, to see how much they vary), names are merged by rules, an LLM and a person, the graph is loaded into Neo4j, and 15 questions are answered five ways. Every number below comes from those recorded runs, mistakes included.
 
-**Try it:** this folder contains a guided web app. Watch a document's entities move into a graph, see duplicate names merge, then pick a question and follow the traversal hop by hop while chunk search lists its passages, ending in a score for each method. It runs offline with no API key. See [The demo app](#the-demo-app).
+**Try it:** this folder contains a web app that replays the runs: the question, what a knowledge graph is, a walkthrough of six documents being extracted, merged and queried, the results, where the graph loses, who does what, and how to take it to production. Run locally with Neo4j and a Gemini key, it also answers your own questions. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
-1. **A knowledge graph turns sentences into connections you can follow.** "Varnell supplies the QX-7" and "Osterby runs 420 Atlas-3 units" live in different documents. In a graph they are two edges two hops apart, so a query can walk from the supplier to the customer.
-2. **Building one is extraction, then resolution.** An LLM reads each chunk and returns entities and relations. Entity resolution then decides that "Varnell Semi", "Varnell" and "Varnell Semiconductor" are one node. Skip resolution and every multi-hop path through that company breaks.
-3. **GraphRAG is a family of retrieval patterns, not one algorithm.** Entity-neighbourhood ("local") retrieval, multi-hop traversal, text-to-Cypher, community summaries for whole-corpus questions, and hybrids of graph and vector search all count.
-4. **Graphs win on connected questions.** In our example, chunk search (top 3) found 0 of 3 facts for "which customers would a QX-7 delay affect?", and 1 of 7 for "how many customers depend on Varnell?". The graph traversal found all of them.
-5. **Graphs lose on prose.** "What did the incident review recommend?" has no entity-to-entity answer, so extraction never turned it into an edge. Chunk search found it first time. The practical answer is usually hybrid: return the graph path *and* the passages it came from.
-6. **The costs are real.** Every chunk needs an LLM extraction call at indexing time, extraction misses and invents relations, and the schema needs an owner. Published comparisons find that GraphRAG helps on multi-hop and summary questions and that plain RAG is as good or better on single-hop detail questions.
+1. **A knowledge graph turns sentences into connections code can follow.** "The Atlas-3 main board uses the QX-7 radio chip" and "Osterby Water Utility runs 420 Atlas-3 units" live in different documents. In a graph they are two edges, and one query walks from the chip to the customer.
+2. **On the multi-hop question, the graph found 4 of 4 customers; chunk search found 0 of 4**, with TF-IDF and with Gemini embeddings alike. Across all 15 questions, chunk search with embeddings found 18 of 41 needed facts, Gemini-written Cypher found 30 of 41, and a simple hybrid 31 of 41.
+3. **The graph loses on prose.** "What did the QX-7 incident review recommend?" scored 2 of 2 with chunk search and 0 of 2 with the graph: a recommendation is not a relation between two entities, so it never became an edge.
+4. **The model makes mistakes at every stage, and the demo shows them.** In one extraction run of 69 relations, 1 was wrong and 1 not stated by the text, and 2 entities were mistyped. A rule-and-LLM resolution left 2 entities split until a person merged them. Generated Cypher ignored dates on edges and returned an outdated owner, and once returned nothing until repaired.
+5. **It is cheap at this size, and the cost is at indexing time.** The whole experiment (three extraction runs, resolution, every question with every method, the judge) was 300 Gemini calls for $0.32.
+6. **The work is split between an LLM, code and a person.** The LLM extracts and writes queries; code validates the facts, merges names by rules, guards the queries and scores the answers; a person owns the schema and settles the merges the LLM is unsure about.
 
 ## What a knowledge graph is
 
-A knowledge graph is a set of **nodes** (entities: a person, a product, a company) connected by **edges** (relations: *leads*, *supplies*, *uses*). Both can carry **properties**, key-value facts such as `units: 420` on the edge *Osterby Water Utility USES Atlas-3*. A **schema** (in the semantic-web world, an **ontology**) says which node types and relation types exist and which types each relation may connect, for example that `SUPPLIES` goes from a `Company` to a `Component`.
+A knowledge graph is a set of **nodes** (entities: a person, a product, a company) connected by **edges** (relations: *leads*, *supplies*, *uses*). Both can carry **properties**, such as `units: 420` on the edge *Osterby Water Utility USES Atlas-3*. A **schema** (in the semantic-web world, an **ontology**) says which entity types and relation types exist and which types each relation may connect, for example that `SUPPLIES` goes from a `Company` to a `Component`.
 
-Written as triples, two facts from our example look like this:
+Written as triples, two facts from the example corpus:
 
 ```text
 (Varnell Semiconductor) -[SUPPLIES]-> (QX-7 radio chip)
-(Osterby Water Utility) -[USES {units: 420}]-> (Atlas-3)
+(Osterby Water Utility) -[USES {units: 510}]-> (Atlas-3)
 ```
 
-There are two common ways to store such a graph:
+| Term | Meaning |
+| --- | --- |
+| Entity | A thing the documents talk about: a person, team, product, part, supplier or customer |
+| Relation | A typed link between two entities, such as `SUPPLIES`, `PART_OF` or `USES` |
+| Triple | One fact, entity → relation → entity, kept with the exact sentence it came from |
+| Entity resolution | Deciding that two names, such as "Varnell Semi" and "Varnell Semiconductor", are the same entity, and merging them |
+| Traversal | Answering by following relations from one entity to the next, one hop at a time (here, a Cypher query on Neo4j) |
+| Schema | The allowed entity types and relations, and which types each relation may connect |
+
+There are two common ways to store a graph:
 
 | | Property graph | RDF |
 | --- | --- | --- |
@@ -35,7 +44,7 @@ There are two common ways to store such a graph:
 | Properties on edges | Built in | Need extra modelling (reification or RDF-star) |
 | Strengths | Simple to start with, popular in GraphRAG tooling | Global identifiers, shared vocabularies, reasoning over formal ontologies |
 
-Most GraphRAG libraries target property graphs and Cypher, so this article does too. RDF is the better fit when you must link to public vocabularies or other organizations' data.
+Most GraphRAG libraries target property graphs and Cypher, and so does this example.
 
 ### Chunk RAG, graph RAG and hybrid
 
@@ -44,24 +53,25 @@ Most GraphRAG libraries target property graphs and Cypher, so this article does 
 | Index | Embedded passages | Entities and relations extracted by an LLM | Both, linked: each edge points back to the passage it came from |
 | Indexing cost | One embedding per chunk | At least one LLM call per chunk, plus resolution | Both |
 | Good at | Questions answered by one or two passages; wording and detail | Multi-hop questions, "how is X connected to Y", counting and listing across documents | Both kinds, at the cost of more context |
-| Weak at | Facts spread over passages that don't resemble the question | Anything the extractor didn't capture: reasons, recommendations, nuance | More moving parts |
-| Fails by | Returning the wrong passages | Missing or wrong edges, unmerged duplicate entities | Either, less often |
+| Weak at | Facts spread over passages that don't resemble the question | Anything extraction didn't capture: reasons, recommendations, nuance | More moving parts |
+| Fails by | Returning the wrong passages | Missing or wrong edges, unmerged duplicates, wrong queries | Either, less often |
 
 ## How GraphRAG works
 
 ```mermaid
 flowchart LR
-    D[Documents] --> C[Chunks]
-    C --> X["LLM extraction<br/>entities, relations,<br/>evidence"]
+    D[Documents] --> C[Sections]
+    C --> X["LLM extraction<br/>entities, relations,<br/>quotes"]
     S["Schema<br/>(allowed types)"] --> X
-    X --> R["Entity resolution<br/>merge aliases"]
+    X --> V2["Code checks<br/>types and quotes"]
+    V2 --> R["Entity resolution<br/>rules, embeddings,<br/>LLM, person"]
     R --> G[(Property graph)]
     C --> V[(Vector index)]
-    G -. "each edge links<br/>to its chunk" .- V
-    Q[Question] --> L["Entity linking<br/>or text-to-Cypher"]
+    G -. "each edge keeps<br/>its source" .- V
+    Q[Question] --> L["Text-to-Cypher<br/>+ read-only guard"]
     L --> G
     Q --> V
-    G --> CTX[Context: paths +<br/>source passages]
+    G --> CTX[Context: rows +<br/>source passages]
     V --> CTX
     CTX --> A[LLM answer]
 ```
@@ -70,304 +80,323 @@ The survey by [Peng et al. (2024)](https://arxiv.org/abs/2408.08921) splits the 
 
 ### 1. Extraction
 
-An LLM reads one chunk at a time and returns entities and relations, ideally as structured output that matches a JSON schema. Give it the schema: the allowed entity types, the allowed relation types, and which types each relation connects. Without one, the model invents a new relation name for every sentence (`IS_MADE_BY`, `MANUFACTURES`, `PRODUCES`) and the graph can't be queried reliably.
+An LLM reads one chunk at a time and returns entities and relations as structured output that matches a JSON schema. Give it the schema: the allowed entity types, the allowed relation types, and which types each relation connects. Without one, the model invents a new relation name for every sentence (`IS_MADE_BY`, `MANUFACTURES`, `PRODUCES`) and the graph can't be queried reliably.
 
-The libraries expose this directly. LangChain's `LLMGraphTransformer`, now in the [`langchain-neo4j` package](https://reference.langchain.com/python/langchain-neo4j/graph_transformers/llm/LLMGraphTransformer), takes `allowed_nodes`, `allowed_relationships` and `node_properties`, and with `strict_mode` (on by default) filters out anything outside them. LlamaIndex's [`PropertyGraphIndex`](https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/) offers `SimpleLLMPathExtractor` for free-form triples, `DynamicLLMPathExtractor` for suggested types, and `SchemaLLMPathExtractor` for a strict schema. Microsoft GraphRAG's [default pipeline](https://microsoft.github.io/graphrag/index/default_dataflow/) extracts entities (title, type, description) and relationships (source, target, description) from 1,200-token text units by default.
+The libraries expose this directly. LangChain's [`LLMGraphTransformer`](https://reference.langchain.com/python/langchain-neo4j/graph_transformers/llm/LLMGraphTransformer) takes `allowed_nodes` and `allowed_relationships` and with `strict_mode` filters out anything outside them. LlamaIndex's [`PropertyGraphIndex`](https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/) offers `SchemaLLMPathExtractor` for a strict schema. Microsoft GraphRAG's [default pipeline](https://microsoft.github.io/graphrag/index/default_dataflow/) extracts entities and relationships with descriptions from text units.
 
-Ask the model for **evidence** too: the exact words that state each relation. Evidence lets you check the extraction against the text automatically, and lets retrieval return the source passage alongside the edge.
+Ask the model for **evidence** too: the exact sentence that states each relation. Code can then check that the sentence really is in the document, and retrieval can return it beside the edge.
 
 ### 2. Entity resolution
 
-Extraction runs per chunk, so the same thing arrives under different names. In our six documents, one supplier appears as "Varnell Semi", "Varnell" and "Varnell Semiconductor", and one engineer as "Tomas Berg" and "T. Berg". Resolution merges them. Common approaches, from cheapest to most expensive:
+Extraction runs per chunk, so the same thing arrives under different names: here "Varnell Semi", "Varnell" and "Varnell Semiconductor"; "A3", "Atlas 3" and "Atlas-3"; "TGW" and "Telemetry Gateway". Common approaches, from cheapest to most expensive:
 
-- **Exact match after normalizing** case and punctuation ("Atlas 3" = "Atlas-3"). Microsoft GraphRAG merges entities that share a title and type, then has an LLM condense their descriptions into one ([default dataflow](https://microsoft.github.io/graphrag/index/default_dataflow/)).
-- **Fuzzy or abbreviation rules**: string similarity, initials, prefixes. Neo4j's `neo4j-graphrag` package ships [`SinglePropertyExactMatchResolver`, `FuzzyMatchResolver` (RapidFuzz) and `SpaCySemanticMatchResolver` (embedding similarity)](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html).
-- **Embedding similarity plus an LLM or human check** for borderline pairs, which matters when two genuinely different entities have similar names.
+- **Exact match after normalizing** case and punctuation ("Atlas 3" = "Atlas-3").
+- **Abbreviation and initial rules** ("T. Berg" = "Tomas Berg"). Neo4j's `neo4j-graphrag` package ships [exact, fuzzy (RapidFuzz) and spaCy-similarity resolvers](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html).
+- **Embedding similarity to propose candidates, and an LLM or a person to decide**, for names no rule can match.
 
-Always restrict merges to the same type, and never merge when a name could refer to more than one entity. A wrong merge is worse than a missed one: it connects facts that have nothing to do with each other.
+Always restrict merges to the same type, and never merge a name that could refer to more than one entity. A wrong merge is worse than a missed one: it connects facts that have nothing to do with each other.
 
 ### 3. Storing and querying
 
-Load the resolved entities and relations into a graph store. A Cypher query names a pattern of nodes and relationships, and the database finds every match:
+Load the resolved entities and relations into a graph store. A Cypher query names a pattern, and the database finds every match. This is the query Gemini wrote for the QX-7 question:
 
 ```cypher
-// Which customers use a product that contains the QX-7?
-MATCH (:Component {name: 'QX-7 radio chip'})-[:PART_OF]->(:Product)<-[:USES]-(c:Customer)
-RETURN DISTINCT c.name
+MATCH (c:Component)-[:PART_OF]->(p:Product)<-[:USES]-(cust:Customer)
+WHERE toLower(c.name) CONTAINS 'qx-7 radio chip'
+   OR any(alias IN c.aliases WHERE toLower(alias) CONTAINS 'qx-7 radio chip')
+RETURN DISTINCT cust.name AS customer, p.name AS product
 ```
-
-Variable-length patterns cover "connected somehow" questions. Current Cypher writes them as quantified relationships such as `-[:NEXT]->{1,10}`; the older `-[*1..3]-` form still works but is not GQL-conformant ([Cypher manual](https://neo4j.com/docs/cypher-manual/current/patterns/variable-length-patterns/)).
 
 ### 4. Retrieval patterns
 
 | Pattern | How it works | Good for | Examples |
 | --- | --- | --- | --- |
-| **Local (entity neighbourhood)** | Find the entities the question mentions (by name or by embedding), then return their neighbours, relations and linked passages | "Tell me about X" | GraphRAG [local search](https://microsoft.github.io/graphrag/query/local_search/), LightRAG `local` mode, LlamaIndex `VectorContextRetriever` |
-| **Multi-hop traversal** | Follow a fixed relation pattern, or a shortest path, from the linked entities | Supply chains, ownership, "how is X connected to Y", impact analysis | Cypher `MATCH`, HippoRAG's Personalized PageRank |
-| **Text-to-Cypher** | An LLM writes the query from the schema and the question; the database runs it | Precise filters, counts and aggregations | LlamaIndex `TextToCypherRetriever`, neo4j-graphrag `Text2CypherRetriever`, LangChain `GraphCypherQAChain` |
-| **Community summaries (global)** | Cluster the graph into communities (Leiden), have an LLM summarize each, then map-reduce the summaries to answer | "What are the main themes across the corpus?" | Microsoft GraphRAG [global search](https://microsoft.github.io/graphrag/query/global_search/) |
-| **Hybrid vector + graph** | Vector search finds entry nodes or passages; a graph query expands from them; both go into the context | Most production systems | neo4j-graphrag `VectorCypherRetriever`, LightRAG `hybrid` and `mix` modes |
+| **Local (entity neighbourhood)** | Find the entities the question mentions, then return their neighbours, relations and linked passages | "Tell me about X" | GraphRAG [local search](https://microsoft.github.io/graphrag/query/local_search/), LightRAG `local` mode |
+| **Multi-hop traversal** | Follow a relation pattern or a path from the linked entities | Supply chains, ownership, impact analysis | Cypher `MATCH`, HippoRAG's Personalized PageRank |
+| **Text-to-Cypher** | An LLM writes the query from the schema and the question; the database runs it | Precise filters, counts and aggregations | neo4j-graphrag `Text2CypherRetriever`, LangChain `GraphCypherQAChain` |
+| **Community summaries (global)** | Cluster the graph into communities, have an LLM summarize each, then map-reduce the summaries | "What are the main themes across the corpus?" | Microsoft GraphRAG [global search](https://microsoft.github.io/graphrag/query/global_search/) |
+| **Hybrid vector + graph** | Vector search finds entry passages or nodes; a graph query expands from them; both go into the context | Most production systems | neo4j-graphrag `VectorCypherRetriever`, LightRAG `hybrid` and `mix` modes |
 
-**Community summaries** solve a problem chunk retrieval can't: questions about the whole corpus. Edge et al. ([*From Local to Global*, 2024](https://arxiv.org/abs/2404.16130)) build an entity graph, precompute summaries for communities of closely related entities, answer from each summary, and merge the partial answers. On global sensemaking questions over datasets in the one-million-token range, they report substantial gains over a conventional RAG baseline in comprehensiveness and diversity. The price is many LLM calls at indexing time, and Microsoft's later [LazyGraphRAG](https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/) post describes data indexing costs "identical to vector RAG and 0.1% of the costs of full GraphRAG", by deferring LLM use to query time.
+**Community summaries** answer questions about the whole corpus. Edge et al. ([*From Local to Global*, 2024](https://arxiv.org/abs/2404.16130)) build an entity graph, summarize communities of closely related entities, answer from each summary and merge the partial answers, and report gains over conventional RAG in comprehensiveness and diversity on global questions over corpora in the one-million-token range. The price is many LLM calls at indexing time; Microsoft's [LazyGraphRAG](https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/) describes indexing costs "identical to vector RAG and 0.1% of the costs of full GraphRAG", by deferring LLM use to query time.
 
-**[LightRAG](https://arxiv.org/abs/2410.05779)** (Guo et al., 2024) combines graph structure with vector retrieval in a "dual-level" scheme that retrieves both low-level (specific entities) and high-level (broader themes) knowledge, and adds an incremental update so new documents don't force a full rebuild. Its [repository](https://github.com/HKUDS/LightRAG) exposes `local`, `global`, `hybrid`, `naive` (plain chunk RAG) and `mix` query modes.
+**[LightRAG](https://arxiv.org/abs/2410.05779)** combines graph structure with vector retrieval at two levels (specific entities and broader themes) and supports incremental updates. **[HippoRAG](https://arxiv.org/abs/2405.14831)** runs Personalized PageRank over an extracted graph, seeded from the question's entities, and reports up to 20% better multi-hop QA than prior methods.
 
-**[HippoRAG](https://arxiv.org/abs/2405.14831)** (Gutiérrez et al., NeurIPS 2024) runs Personalized PageRank over an extracted graph, seeded from the entities in the question. On multi-hop QA it reports up to 20% better results than prior methods, and single-step retrieval comparable to or better than iterative retrieval (IRCoT) while 10 to 30 times cheaper and 6 to 13 times faster.
+## The experiment
 
-**Text-to-Cypher needs guardrails.** The model writes code that runs against your database. LlamaIndex's guide notes that "executing arbitrary cypher has its risks" and recommends read-only roles and sandboxes. LangChain's [`GraphCypherQAChain`](https://reference.langchain.com/python/langchain-neo4j/chains/graph_qa/cypher/GraphCypherQAChain) refuses to run until you set `allow_dangerous_requests=True`, and its documentation asks for narrowly scoped database credentials. Use a read-only user, validate the generated query, and cap the result size.
+### The corpus, the schema and the questions
 
-## A worked example
+Corvane Instruments is a fictional maker of water-quality sensors. The corpus is 25 short Markdown documents in [`corpus/`](corpus/), 62 paragraphs in all: org updates, product briefs, a supplier register, account notes, incident reviews, emails, a newsletter, and some unrelated distractors (an office move, a cafeteria memo). Every name is invented and the corpus was written for this example. It is built to contain the things that make real extraction hard:
 
-The example corpus is six short documents from Corvane Instruments, a fictional company that makes water-quality sensors. All names are invented, and the corpus is written for this article, so it is free to reuse. The full text is in [`data/documents.json`](data/documents.json):
+- **Aliases:** Varnell Semi, Varnell and Varnell Semiconductor; QX7 modem and QX-7; A3 and Atlas 3; TGW; T. Berg; M. Feld.
+- **A trap:** Varnell Bay Marina, a customer whose short name is also "Varnell".
+- **Facts that change:** Osterby runs 420 Atlas-3 units in February and 510 in August; the Telemetry Gateway moves from the Firmware team to the Data Platform team on 1 September 2026; the Atlas-3 switches battery from the LX-4 to the Sundra C2.
+- **Prose-only facts:** recommendations and reasons that are not relations between entities.
 
-| Document | What it says |
-| --- | --- |
-| **Engineering teams, Q3 update** | Priya Raman leads the Firmware team. The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices. Tomas Berg leads the Hardware team, which owns the Atlas-3 and Borealis controller designs. Ines Okafor leads Customer Support. |
-| **Atlas-3 sensor: product brief** | The Atlas-3 sends readings every 15 minutes through the Telemetry Gateway. Its main board uses the QX-7 radio chip. Its housing is the IP68 enclosure. |
-| **Supplier register (excerpt)** | Varnell Semi is the sole supplier of the QX-7 radio chip. Tessaly Plastics supplies the IP68 enclosure. |
-| **Borealis controller: release notes 2.4** | The Borealis controller now takes power from the PM-2 power module, which replaces the older PM-1. The PM-2 is made by Varnell. Firmware updates are delivered through the Telemetry Gateway. The design is maintained by T. Berg and the Hardware team. |
-| **Key accounts** | Osterby Water Utility runs 420 Atlas-3 units. Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units. Pellham Labs uses the Borealis controller. |
-| **Incident review: QX-7 shipment delay** | On 3 March 2026, Varnell Semiconductor said QX-7 shipments would slip by six weeks. The review recommended qualifying a second radio-chip supplier by the end of Q3 and keeping eight weeks of chip stock on hand. |
+The schema ([`data/schema.json`](data/schema.json)) has 9 entity types and 13 relation types. The same file builds the extraction prompt, the structured-output JSON schema, the validation rules and the text-to-Cypher prompt.
 
-(The table abridges the documents; the app and the code use the full text.)
+The 15 questions ([`data/questions.json`](data/questions.json)), their correct answers, and the facts each answer needs, with the sentences that support them, were **written by hand and committed before any model ran** (commit `e0ee82d`), along with 42 gold entities ([`data/gold-entities.json`](data/gold-entities.json)) for scoring resolution.
 
-### Extraction
+### Extraction: three runs of Gemini
 
-The schema allows seven entity types (Person, Team, Service, Product, Component, Company, Customer) and eight relation types, defined in [`src/schema.ts`](src/schema.ts). The extraction results are committed as JSON in [`data/extractions/`](data/extractions/), one file per document, in the shape an LLM returns. **They are hand-written fixtures, not live model output**, so the example is deterministic; [`npm run extract -- --live`](#run-it) regenerates them with Gemini. The Borealis release notes, for example, produce:
+Each document was sent to `gemini-3.8-flash` through the Interactions API with the schema as structured output (temperature 0, thinking level low), three times. Code then checked every entity type, every relation's source and target types, and that every quote is verbatim in the document.
 
-```json
-{
-  "entities": [
-    { "name": "Borealis", "type": "Product", "properties": { "version": "2.4" } },
-    { "name": "Borealis controller", "type": "Product" },
-    { "name": "PM-2 power module", "type": "Component" },
-    { "name": "PM-1", "type": "Component" },
-    { "name": "Varnell", "type": "Company" },
-    { "name": "Telemetry Gateway", "type": "Service" },
-    { "name": "T. Berg", "type": "Person" },
-    { "name": "Hardware team", "type": "Team" }
-  ],
-  "relations": [
-    { "source": "PM-2 power module", "type": "PART_OF", "target": "Borealis controller",
-      "evidence": "The Borealis controller now takes power from the PM-2 power module" },
-    { "source": "Varnell", "type": "SUPPLIES", "target": "PM-2 power module",
-      "evidence": "The PM-2 power module is made by Varnell." }
-  ]
-}
-```
+| Run | Entities | Relations | Rejected by validation | Cost |
+| --- | --- | --- | --- | --- |
+| 1 | 125 | 69 | 0 | $0.056 |
+| 2 | 122 | 67 | 0 | $0.054 |
+| 3 | 120 | 70 | 0 | $0.061 |
 
-(Four more relations are omitted here.) `validateExtraction()` rejects any entity or evidence string that isn't in the text and any relation that breaks the schema, such as a `SUPPLIES` edge starting at a Person.
+**The runs mostly agree, not completely.** Jaccard agreement on facts (source, relation, target) between runs was 0.964, 0.912 and 0.912. Of the 58 distinct facts in any run, 52 appeared in all three and 5 in only one, for example `Calder Grain Co-op USES QX-7` (run 3 skipped the product) and `QX-7 shipment delay AFFECTED QX-7 radio chip`.
 
-### Resolution
+**The author reviewed run 1** ([`data/extraction-review.json`](data/extraction-review.json)), and found:
 
-Across the six documents the extractor returned 33 entity names and 21 relations. Resolution ([`src/resolve.ts`](src/resolve.ts)) merges names of the same type that are equal after normalizing, or where every word of the shorter name starts the matching word of the longer one. Numbers must match exactly, so PM-1 never merges with PM-2. Names that match more than one entity are reported, not merged. These merges are computed:
+- **A wrong fact:** `LX-4 PART_OF Atlas-3`, from "From the May build, the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell." The model turned the replaced part into a current part.
+- **A fact the text doesn't state:** `Varnell Semiconductor SUPPLIES QX-7 radio chip` from the incident review, which only says shipments would slip. True elsewhere in the corpus, but not in that quote.
+- **Two type errors:** "QX-7" typed as a Product in an email, and "Meridian" typed as a Customer in "driven by Meridian pilots".
+- **Two spurious entities:** "Atlas team" and "Harbour Street", which no question needs.
 
-| Extracted name | Merged into | Rule |
-| --- | --- | --- |
-| "Varnell Semi", "Varnell" | Varnell Semiconductor | abbreviation |
-| "QX-7" | QX-7 radio chip | abbreviation |
-| "Borealis" | Borealis controller | abbreviation |
-| "T. Berg" | Tomas Berg | initial |
-| "Atlas 3" | Atlas-3 | same name after normalizing |
+Validation caught none of these: each quote was verbatim and each type was allowed. They are errors of meaning, which only a review against the text finds.
 
-The result is **18 entities and 19 relations**. Two relations were stated twice (the Hardware team owning the Borealis design, and Tomas Berg leading the Hardware team, once as "T. Berg") and merged into single edges with two pieces of evidence.
+### Resolution: rules, then an LLM, then a person
+
+The 125 extracted entities from run 1 carry 68 distinct names. Resolution ([`src/resolve.ts`](src/resolve.ts), [`src/pipeline/resolve-run.ts`](src/pipeline/resolve-run.ts)) has three stages:
+
+1. **Rules (code).** Same type, and the names are equal after normalizing, or one is an abbreviation or initials of the other. A name that fits two entities is refused. 68 names → 51 entities.
+2. **Embeddings and an LLM.** `gemini-embedding-2` embeds every name with its context; pairs of the same type above cosine 0.7 go to Gemini with the sentences they came from. Of 135 pairs checked, it said *same* to 2 (QX7 = QX-7 radio chip, TGW = Telemetry Gateway), *different* to 122 and *unsure* to 11. 51 → 49 entities.
+3. **A person.** The 11 unsure pairs went to a review queue. The author's decisions are in [`data/review.json`](data/review.json): 2 merges (A3 = Atlas-3, Support = Customer Support) and 9 refusals. 49 → **47 entities**.
+
+| Stage | Entities | False merges | False splits |
+| --- | --- | --- | --- |
+| Rules and LLM | 49 | 0 | 2 (Atlas-3 / A3, Customer Support / Support) |
+| After the person | 47 | 0 | 0 |
+
+Measured against the 42 gold entities. Three names have no gold entity (Harbour Street, Atlas team, sales team) and the two type errors remain. Until the person merged "A3", Brightwater Aquaculture's order hung off a separate node, invisible to every Atlas-3 question.
+
+**The type rule matters.** Without it, the same rules would have merged "Telemetry Gateway outage" (an Incident) into "Telemetry Gateway" (a Service), and refused "Varnell" and "QX-7" as ambiguous: "Varnell" could be Varnell Semiconductor or the Varnell Bay Marina.
 
 ### The graph
 
-```mermaid
-flowchart LR
-    VAR[Varnell Semiconductor] -->|SUPPLIES| QX7[QX-7 radio chip]
-    VAR -->|SUPPLIES| PM2[PM-2 power module]
-    VAR -->|DELAYED| QX7
-    TES[Tessaly Plastics] -->|SUPPLIES| IP68[IP68 enclosure]
-    QX7 -->|PART_OF| ATL[Atlas-3]
-    IP68 -->|PART_OF| ATL
-    PM2 -->|PART_OF| BOR[Borealis controller]
-    PM2 -->|REPLACES| PM1[PM-1]
-    OST[Osterby Water Utility] -->|USES| ATL
-    CAL[Calder Grain Co-op] -->|USES| ATL
-    PEL[Pellham Labs] -->|USES| BOR
-    ATL -->|CONNECTS_VIA| TG[Telemetry Gateway]
-    BOR -->|CONNECTS_VIA| TG
-    FW[Firmware team] -->|OWNS| TG
-    HW[Hardware team] -->|OWNS| ATL
-    HW -->|OWNS| BOR
-    PR[Priya Raman] -->|LEADS| FW
-    TB[Tomas Berg] -->|LEADS| HW
-    IO[Ines Okafor] -->|LEADS| CS[Customer Support]
-```
+[`src/graph.ts`](src/graph.ts) builds the graph from run 1 and the reviewed entities: **47 nodes and 54 edges**. Every edge keeps its provenance: the document, its date, the quote and the run. A value stated twice keeps both, with the date of each, and the latest as the current value (`units: 510`, with `units_values: [420, 510]`). The graph is loaded into Neo4j `2026.09.0` Community with `MERGE` and a uniqueness constraint on entity ids.
 
-Edge properties are kept too: `USES {units: 420}`, `CONNECTS_VIA {interval: 15 minutes}`, `DELAYED {date: 2026-03-03, delay: six weeks, cause: wafer shortage}`.
+### Questions, five ways
 
-### Six questions, answered both ways
+Each question was answered five ways, with *k* = 3 passages for chunk search:
 
-Each question has a short list of facts its correct answer needs, and each fact has the sentence that states it and, where one was extracted, the edge that represents it ([`data/questions.json`](data/questions.json)). Then, in [`src/compare.ts`](src/compare.ts):
+- **Chunk search (TF-IDF):** paragraphs ranked by TF-IDF cosine.
+- **Chunk search (embeddings):** paragraphs ranked by `gemini-embedding-2` similarity.
+- **Graph, Gemini writes the query:** Gemini gets the schema, the entity names and the question and writes Cypher; the guard checks it; Neo4j runs it in a read transaction with a timeout. If it fails or returns no rows, Gemini gets one repair attempt with the error.
+- **Graph, hand-written query:** the gold Cypher from `questions.json`, as a ceiling for text-to-Cypher.
+- **Hybrid:** the embedding hits, plus the graph edges around every entity those passages mention.
 
-- **Chunk search** splits every document into paragraphs (17 chunks, each with its document title attached), ranks them by TF-IDF cosine similarity to the question and returns the top *k*. A fact counts as retrieved when a returned chunk contains its sentence. TF-IDF stands in for an embedding model so that the comparison runs offline and gives the same result every time.
-- **Graph retrieval** runs the question's traversal: a relation pattern (what text-to-Cypher would generate), a shortest path, or an entity's neighbourhood. **The traversal for each question is scripted; running it is computed.** A fact counts as retrieved when the traversal returned its edge.
-- **Hybrid** returns the graph's edges, the paragraphs those edges were extracted from, and the top *k* chunks.
+A needed fact counts as found when the retrieved context holds it: for passages, every sentence of its supporting chain; for graph rows, the answer's value. Wrong or outdated values that appear are counted separately. The global question is graded by an LLM judge. These are the measured results (`npm run report` prints them):
 
-These are the computed results with *k* = 3 (`npm run compare`):
+| Question | Kind | TF-IDF | Embeddings | Gemini Cypher | Gold Cypher | Hybrid |
+| --- | --- | --- | --- | --- | --- | --- |
+| Which customers would be affected by a delay in QX-7 radio chip shipments? | Multi-hop | 0/4 | 0/4 | **4/4** | 4/4 | 0/4 |
+| How many customers depend on parts made by Varnell Semiconductor? | Aggregation | 0/6 | 0/6 | 0/6, count right | 6/6 | 2/6 |
+| Osterby's sensors stopped uploading. Which team and team lead should get the ticket today? | Multi-hop, changed over time | 0/2 ⚠1 | 0/2 ⚠1 | 2/2 ⚠1 | 2/2 | 2/2 ⚠1 |
+| How is Pellham Labs connected to Varnell Semiconductor? | Connection | 1/3 | 1/3 | 3/3 | 3/3 | 3/3 |
+| Who leads the Firmware team? | Single fact | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
+| What did the QX-7 incident review recommend? | Detail in prose | **2/2** | **2/2** | 0/2 | 0/2 | 2/2 |
+| What are the main supply risks across these documents? | Global | 1/4 | 2/4 (judge) | 2/4 (judge) | – | 2/4 (judge) |
+| How many Atlas-3 units does Osterby Water Utility run? | Single fact, changed over time | 1/1 ⚠1 | 1/1 ⚠1 | 1/1 | 1/1 | 1/1 ⚠1 |
+| Which components go into the Atlas-3 today, and who supplies each? | Aggregation | 0/4 | 2/4 ⚠1 | 4/4 ⚠1 | 4/4 ⚠1 | 4/4 ⚠1 |
+| Which companies can supply the QX-7 radio chip? | Single hop, changed over time | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Which customers were affected by the Telemetry Gateway outage on 14 May 2026? | Multi-hop | 0/5 | 0/5 | 5/5 ⚠1 | 5/5 | 5/5 ⚠1 |
+| Which accounts does Lena Vik manage? | Aggregation | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 |
+| Why did the Atlas-3 switch to a different battery cell? | Detail in prose | 0/1 | 1/1 | 0/1 | 0/1 | 1/1 |
+| Which products does the team led by Tomas Berg own? | Multi-hop | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Where is the Meridian flow meter assembled? | Single fact | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
+| **All questions** | | **14/41** | **18/41** | **30/41** | **34/37** | **31/41** |
+| Questions complete | | 7 of 15 | 8 of 15 | 11 of 15 | 12 of 14 | 12 of 15 |
+| Wrong or outdated values | | 2 | 3 | 3 | 1 | 4 |
 
-| Question | Type | Chunk search | Graph | Hybrid |
-| --- | --- | --- | --- | --- |
-| Osterby Water Utility says its sensors stopped uploading readings. Which team and team lead should get the ticket? | Multi-hop | 2 of 4 | 4 of 4 | 4 of 4 |
-| Which customers would be affected by a delay in QX-7 radio chip shipments? | Multi-hop | 0 of 3 | 3 of 3 | 3 of 3 |
-| How many customers depend on parts from Varnell Semiconductor? | Aggregation | 1 of 7 | 7 of 7 | 7 of 7 |
-| How is Pellham Labs connected to Varnell Semiconductor? | Connection | 1 of 3 | 3 of 3 | 3 of 3 |
-| Who leads the Firmware team? | Single fact | 1 of 1 | 1 of 1 | 1 of 1 |
-| What did the incident review recommend after the QX-7 shipment delay? | Detail in prose | 1 of 1 | 0 of 1 | 1 of 1 |
+⚠ marks a wrong or outdated value in the context, such as the Firmware team as the gateway's owner today, or 420 units. The gold Cypher has no query for the global question, so it is scored on 14.
+
+The final answers, written by Gemini from each method's context, found 19 of 41 facts from embeddings, 30 of 41 from the generated Cypher (3 with a wrong value), and 26 of 41 from the hybrid.
 
 #### Where chunk search misses a hop
 
-**"Which customers would be affected by a delay in QX-7 radio chip shipments?"** The correct answer is Osterby Water Utility and Calder Grain Co-op: the QX-7 is part of the Atlas-3, and both run Atlas-3 sensors.
+For the QX-7 question, embeddings returned the Kerrin second-source email (similarity 0.805), the supplier register (0.796) and the incident review (0.784). They are about the chip and the delay, and none names a customer. The sentences that do, "Osterby Water Utility runs 420 Atlas-3 units" and "Brightwater Aquaculture has ordered 80 A3 sensors", share nothing with a question about radio chips; the link exists only through a third document. TF-IDF did no better.
 
-Chunk search returned the three paragraphs of the incident review, because its title and text repeat "QX-7", "shipment" and "delay". The paragraph that says the QX-7 is part of the Atlas-3 ranked 5th of 17. The two paragraphs that name the customers ranked lower still: they share no words with the question at all, because the account list talks about Atlas-3 units, not radio chips. **No similarity measure can rank a passage highly for a question it has nothing in common with**; the link between "QX-7" and "Osterby" exists only through a third document. An embedding model would match synonyms that TF-IDF misses, but the account list still isn't about radio chips.
+The graph started at the QX-7 radio chip, followed `PART_OF` to the Atlas-3 and the Meridian, and `USES` back to four customers. Gemini's answer: "The customers affected would be Osterby Water Utility, Calder Grain Co-op, and Brightwater Aquaculture (which use the Atlas-3), as well as Northmoor Irrigation District (which uses the Meridian)."
 
-The graph links "QX-7" in the question to the `QX-7 radio chip` node, follows `PART_OF` to the Atlas-3, then `USES` backwards to both customers:
+The hybrid scored 0 of 4 here too: the passages it starts from mention the chip and its suppliers, not the products, so a one-hop expansion never reaches the customers.
 
-```text
-(QX-7 radio chip) -[PART_OF]-> (Atlas-3) <-[USES {units: 420}]- (Osterby Water Utility)
-                                         <-[USES {units: 60}]-  (Calder Grain Co-op)
+#### Where the graph loses
+
+"What did the QX-7 incident review recommend?" The answer, "qualify a second radio-chip supplier by the end of Q3 and keep eight weeks of chip stock on hand", is a recommendation. The schema has no relation for it, so extraction produced none. The graph query returned the incident's relations (it involved Varnell Semiconductor, it affected the QX-7), and Gemini answered that the results "do not contain any information about recommendations". Chunk search ranked the recommendation in its top three. The battery question ("why did the Atlas-3 switch?") failed the same way.
+
+#### Where the generated query went wrong
+
+- **It ignored time.** For "which team should get the ticket today?", the query returned both owners of the Telemetry Gateway, the Firmware team and the Data Platform team, without using the dates on the edges. Gemini's answer: "Either of these teams and their respective leads could receive the ticket."
+- **It returned nothing, then too much.** For the outage question, the first query looked for customers linked straight to the incident and returned 0 rows. The repair went through products and returned 6 customers, including Varnell Bay Marina, which became a customer a month after the outage.
+- **It counted instead of listing.** For "how many customers depend on Varnell?", the query returned `count: 6`. The count is right; the names the scoring needs were never returned.
+- **Rows without their query mean nothing to the model.** In the first answering pass, Gemini saw only the rows, and for "which accounts does Lena Vik manage?" answered "The provided context does not mention Lena Vik", although the rows were exactly her three accounts. Giving it the query beside the rows fixed this; both passes are kept in [`results/answers.json`](results/answers.json) (`firstTry`).
+
+#### The global question
+
+"What are the main supply risks across these documents?" has no entity to start from. The judge gave 2 of 4 to embeddings, to the generated Cypher, to the hybrid, and to a community-summary answer (3 communities of 21, 11 and 3 nodes, each summarized by Gemini, then combined). On a corpus this small, community summaries had nothing to add.
+
+**What these numbers are, and aren't.** They are measured runs on a 62-paragraph corpus written to contain multi-hop questions, aliases and changing facts. They show the mechanisms and the failure modes. They are not a benchmark: a different corpus, model, prompt or *k* would give different numbers.
+
+### Cost
+
+Every call's tokens were logged to `runs/ledger.jsonl` (Git-ignored); [`results/costs.json`](results/costs.json) totals them at the published prices ($0.75 / $3.75 per million input / output tokens for `gemini-3.8-flash`, thinking billed as output; $0.20 per million for `gemini-embedding-2`).
+
+| Step | Calls | Cost |
+| --- | --- | --- |
+| Extraction, 3 runs × 25 documents | 75 | $0.171 |
+| Resolution (LLM checks) | 137 | $0.072 |
+| Embeddings | 3 | $0.0005 |
+| Text-to-Cypher, with repairs | 16 | $0.032 |
+| Answers | 61 | $0.036 |
+| Community summaries | 3 | $0.003 |
+| Judge | 5 | $0.005 |
+| **Total** | **300** | **$0.32** |
+
+## Who does what
+
+| | Does | In this demo |
+| --- | --- | --- |
+| **The LLM** | Extracts entities and relations, with quotes, as structured output; checks merges the rules can't decide; writes Cypher and repairs it; writes answers from the rows and the query | Real: `gemini-3.8-flash`, recorded |
+| **Code** | Validates every triple against the schema and every quote against the text; merges names by rules within a type; loads the graph with provenance; blocks any query that could write or run unbounded, then runs it read-only with a timeout; scores the answers | Real and tested (`npm test`) |
+| **A person** | Designs the schema and changes it; decides the merges the LLM is unsure about; reviews extraction mistakes and which queries may run, with which permissions | Played by the author: 11 merge decisions and a review of run 1, both committed and marked as hand-written |
+
+## Taking it to production
+
+This demo extracts 25 short documents once. A production system extracts continuously from large documents, keeps the graph current and lets people query it safely.
+
+```mermaid
+flowchart LR
+    subgraph Ingest["When a document arrives"]
+      N[New document] --> SP[Split into sections] --> EX["Extract with the schema (LLM)"] --> CK["Check types and quotes (code)"] --> RS["Resolve: rules, embeddings, LLM, person"] --> MG["MERGE into the graph, with sources"] --> CS[Re-summarise communities]
+    end
+    subgraph Query["When a question arrives"]
+      Q[Question] --> T2C["Cypher from a template or the LLM"] --> GD["Guard: read-only, bounded"] --> RO["Run as a read-only user, with a timeout"] --> AN["Answer with the path and its quotes"]
+      GD -. "not in the graph" .-> FB[Chunk search]
+    end
 ```
 
-**"Osterby Water Utility says its sensors stopped uploading readings. Which team and team lead should get the ticket?"** needs four hops: Osterby uses the Atlas-3, the Atlas-3 uploads through the Telemetry Gateway, the Firmware team owns the gateway, and Priya Raman leads the Firmware team. Chunk search found the first two. The org chart paragraph with the last two ranked 4th of 17, one place below the cut-off. The graph followed `USES → CONNECTS_VIA → ←OWNS → ←LEADS` and returned Priya Raman with the whole path.
-
-**"How many customers depend on parts from Varnell Semiconductor?"** is an aggregation over two branches (QX-7 → Atlas-3 → two customers, PM-2 → Borealis → one customer). Chunk search found 1 of the 7 facts. A count over a graph pattern is one query; over chunks, it needs every relevant passage in the context and the model to do the joining.
-
-#### Where chunk search is as good
-
-**"Who leads the Firmware team?"** One sentence answers it. Chunk search ranked that paragraph first, and the graph returned one edge. For questions like this, the graph adds indexing cost and adds no recall.
-
-#### Where chunk search wins
-
-**"What did the incident review recommend after the QX-7 shipment delay?"** The answer, "qualify a second radio-chip supplier by the end of Q3 and keep eight weeks of chip stock on hand", is a recommendation, not a relation between two entities. The schema has no relation type for it, so the extractor didn't produce an edge. The graph's neighbourhood of the QX-7 contains three edges: Varnell supplies it, Varnell delayed it, and it is part of the Atlas-3. It knows *that* there was a delay, not what anyone decided to do about it. Chunk search ranked the recommendation first. Hybrid retrieval gets it because it returns passages too.
-
-#### The budget question
-
-A bigger *k* helps chunk search, at the cost of more context. With *k* = 5 (`npm run compare -- --k 5`), chunk search finds all 4 facts for the support-ticket question, but still only 1 of 3 for the QX-7 customers, 2 of 7 for the Varnell count and 2 of 3 for the Pellham connection. In this corpus, 5 chunks is already 29% of everything. Passages that share no words with the question don't get closer by raising *k* a little.
-
-**What these numbers are, and aren't.** They are computed from fixed inputs on a 17-chunk corpus written to illustrate the patterns, with hand-written extraction and scripted traversals. They show the mechanism. They are not a benchmark, and they say nothing about extraction quality, which is the hardest part in practice.
+| Problem | What goes wrong | How to handle it |
+| --- | --- | --- |
+| Extraction quality and cost | Every chunk is an LLM call, and extraction misses facts, adds implied ones and mistypes entities (here: 1 wrong and 1 unstated relation of 69, and 2 type errors, in one run) | Structured output against a schema; a verbatim quote per relation, checked in code; review a sample; measure agreement between runs. Tune prompts on your data: Microsoft GraphRAG's docs [strongly encourage](https://microsoft.github.io/graphrag/prompt_tuning/overview/) its auto-tuning. If indexing cost dominates, [LazyGraphRAG](https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/) defers LLM use to query time |
+| Schema design and change | Too loose, and every sentence invents a relation; too strict, and needed facts are dropped (here, every recommendation) | Start from the questions people ask; keep the schema small, versioned and in one file used by the prompt and the validation; log rejected and unmapped extractions; re-extract affected documents when the schema changes |
+| Entity resolution errors | A false merge joins unrelated facts; a false split breaks every path through the entity (here, "A3") | Rules within a type that refuse ambiguous names; embeddings to propose candidates; an LLM to check with context; a person for anything unsure. Keep decisions as data so they can be reviewed and undone; measure them against a labelled sample |
+| Stale facts and provenance | Facts change (420 → 510 units; a new owner) and an old edge looks as current as a new one | Keep document, date, quote and run on every edge; keep each value with its date and prefer the latest when the question asks about now; retract edges only a deleted document supports |
+| Text-to-Cypher safety | A model-written query can write, delete or exhaust memory. A read transaction alone is not protection: the [Neo4j driver manual](https://neo4j.com/docs/javascript-manual/current/transactions/) says read mode gives no security guarantee that writes are rejected | Check the query text before it runs (one read-only statement, bounded paths, a row limit, as [`src/cypher-guard.ts`](src/cypher-guard.ts) does); connect as a user with the built-in [`reader` role](https://neo4j.com/docs/operations-manual/current/authentication-authorization/built-in-roles/) where your edition has it; set `db.transaction.timeout` and `db.memory.transaction.max`; prefer templates for frequent questions. LangChain's [`GraphCypherQAChain`](https://reference.langchain.com/python/langchain-neo4j/chains/graph_qa/cypher/GraphCypherQAChain) refuses to run until you set `allow_dangerous_requests` for this reason |
+| Graph size and latency | Variable-length paths explode on large graphs; name lookups without an index scan every node | A uniqueness constraint on ids and [search-performance indexes](https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/overview/) on matched properties; bound hops and rows; precompute frequent paths |
+| Global questions | "What are the main risks?" has no entity to start from, and rows are not themes | Community summaries with map-reduce, as GraphRAG's [global search](https://microsoft.github.io/graphrag/query/global_search/) does; lower community levels give more detail at higher cost |
+| Hybrid retrieval | The graph misses prose; chunk search misses chains | Combine them: vector hits, then the graph around their entities, or the graph first, then the passages its edges came from. Measure both on your questions |
+| Permissions | A graph merges facts from documents with different readers, and a traversal can walk into facts the asker may not see | Keep source documents on every edge and filter by what the asker may read at query time; Neo4j Enterprise has [fine-grained privileges](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-privileges/); otherwise separate graphs per audience. Strip personal data before extraction |
 
 ## What the research says
 
-Controlled comparisons agree with the shape of the example, and add caveats:
+- Han et al., [*RAG vs. GraphRAG: A Systematic Evaluation and Key Insights*](https://arxiv.org/abs/2502.11371) (2025), compare both under one protocol. RAG does well on detailed single-hop questions; GraphRAG methods do better on multi-hop questions. Knowledge-graph-based GraphRAG often underperforms on QA because of limited graph coverage: only 65.8% of answer entities were in the HotpotQA graph. Combining the two gave consistent gains.
+- Xiang et al., [*When to use Graphs in RAG*](https://arxiv.org/abs/2506.05690) (ICLR 2026), start from the observation that GraphRAG frequently underperforms vanilla RAG on real-world tasks, and build GraphRAG-Bench to find out when graphs help.
 
-- Han et al., [*RAG vs. GraphRAG: A Systematic Evaluation and Key Insights*](https://arxiv.org/abs/2502.11371) (2025), compare both under one protocol. They find that RAG does well on detailed single-hop questions, while GraphRAG methods do better on multi-hop questions, and summary-level graph retrieval helps comparison and temporal questions. They also report that knowledge-graph-based GraphRAG generally underperforms on question answering because of limited graph coverage: only 65.8% of answer entities were in the HotpotQA graph and 65.5% in the NQ graph. Combining or choosing between the two approaches gave consistent gains.
-- Xiang et al., [*When to use Graphs in RAG*](https://arxiv.org/abs/2506.05690) (ICLR 2026), start from the observation that GraphRAG frequently underperforms vanilla RAG on real-world tasks, and build GraphRAG-Bench to find out when graphs help. Their benchmark covers fact retrieval, complex reasoning, contextual summarization and creative generation, and evaluates graph construction, retrieval and generation separately.
-
-## Failure modes
-
-| Failure | What happens | Mitigation |
-| --- | --- | --- |
-| Missed relations | The edge for a hop was never extracted, so the path doesn't exist | Smaller chunks, a second extraction pass over the same chunk, extraction evals against a labelled sample, hybrid retrieval as a fallback |
-| Invented relations | The extractor states a relation the text doesn't | Require evidence spans and check they are in the text; keep the source chunk on every edge |
-| Unmerged duplicates | "Varnell Semi" and "Varnell Semiconductor" are separate nodes; paths through them break | Entity resolution with type constraints; monitor nodes with similar names |
-| Wrong merges | Two different people called "A. Berg" become one; unrelated facts get connected | Never merge ambiguous names; human review for high-stakes merges |
-| Schema drift | New documents need relation types the schema lacks, so they are dropped or forced into the wrong type | Give the schema an owner; log rejected extractions and review them |
-| Unsafe text-to-Cypher | A generated query writes, deletes or reads more than it should | Read-only credentials, query validation, result limits |
-| Stale graph | Documents change but their edges don't | Re-extract on change, keep provenance so edges from a deleted document can be removed |
-| Graph-only context | The answer needs prose the graph doesn't hold | Return each edge's source passage (hybrid) |
-
-## Practical advice
-
-1. **Start from the questions.** Write down 20 to 50 real questions and mark which are multi-hop, aggregations or "how is X connected to Y". If almost none are, improve chunking, hybrid search and reranking first.
-2. **Design a small schema.** Five to ten entity types and a dozen relation types that your questions need. Each relation should connect specific types.
-3. **Extract with structured output and evidence**, then validate every result against the schema and the text, as `validateExtraction()` does here.
-4. **Resolve entities conservatively**, within a type, and log what was merged and what was ambiguous.
-5. **Keep provenance on every edge.** It makes answers citable, lets hybrid retrieval return the passage, and makes deletions possible.
-6. **Retrieve hybrid by default**: vector search for entry points and detail, graph expansion for connections, both in the context.
-7. **Prefer templates to free text-to-Cypher** for frequent question shapes (LlamaIndex's `CypherTemplateRetriever` does this), and run anything generated with read-only credentials.
-8. **Evaluate both stages.** Measure extraction precision and recall on a labelled sample, and retrieval on your question set, as the fact table in this example does.
+Both agree with the shape of the results here: the graph wins on chains, loses on prose, and the hybrid is the safer default.
 
 ## The demo app
 
-The app stages the example above as a short guided walkthrough: an opening and three chapters, each with a plain caption at every step.
+A single page, in this order:
 
-- **Opening.** Words from the six documents appear as a page of text. The entity names darken, move to their places and settle into a graph as the relations draw in. Then you can begin with the first document, or skip straight to the questions.
-- **1 Extract.** Pick a document. The entities in the text are marked one after another, then each moves into the graph as a node. When a name is an alias ("Varnell Semi"), it waits above its entity (Varnell Semiconductor) and then joins it, and the relations from the document draw in as edges.
-- **2 Merge.** All 33 extracted names appear beside their entities. Identical names merge first, then each alias group joins its entity in turn, marked in the accent colour: 33 names become 18 entities, and 21 relations become 19 edges.
-- **3 Ask.** Pick a question. The traversal draws itself hop by hop as a line in the accent colour, while chunk search lists its top passages in the panel (collapsed, with any matched fact underlined). At the end a score card shows each method's count of the facts the answer needs, the verdict and the correct answer. The prose-detail question plays the same way, and there chunk search wins.
+1. **The problem.** The QX-7 question, the three paragraphs embeddings return, 0 of 4 customers, and the sentences the answer actually needs.
+2. **What a knowledge graph is.** Plain prose, a with-and-without diagram, and the six terms above.
+3. **The walkthrough.** Six documents, one at a time, on one clock: the document on the left with each quote numbered and linked to the fact Gemini extracted from it on the right, a "What happened" strip, and the graph growing in the margin. Then the merge (rules, LLM, person) and the question asked again. It plays by itself; a black Play/Pause button, Previous and Next, and speeds of 0.5×, 0.75×, 1× and 1.5× control it, and any manual click pauses it. With reduced motion it doesn't autoplay and every scene opens on its final frame.
+4. **The payoff.** The generated Cypher, the path it followed, 4 of 4 against 0 of 4, and the table of all 15 questions.
+5. **When the graph loses.** The prose question side by side, when to use which, the hybrid, and the model's real mistakes from every stage.
+6. **Who does what**, 7. **Taking it to production**, 8. **Recap**, and a link to this article, rendered locally at `/article`.
 
-The graph is drawn like a technical diagram. Each entity type has its own small shape (● person, ○ team, ◇ service, ■ product, □ component, ▲ company, ◆ customer), edges are thin grey lines, and labels are placed so they don't collide. The page is light by default, warm off-white paper with ink, plus one muted blue accent for the active path, and a charcoal dark mode is available. Drag to pan, use the buttons or Ctrl and scroll to zoom, and hover or tap a node to see its aliases, relations and source documents. The controls replay a scene, step back and forward through it, pause it, or skip to the end. One thing moves at a time, and no step lasts longer than about 1.2 seconds. With reduced motion turned on, every scene opens on its final frame.
+Everything on the page is a recorded run, labelled *measured*; the documents, questions, gold answers and the person's review are labelled as hand-written. The page calls no model.
 
-**Scripted:** the documents, the extraction fixtures, each question's traversal and Cypher query, its correct answer, and the staging (timings, camera moves). **Computed:** the highlights, entity resolution, the graph, the traversal, the TF-IDF ranking, the hybrid set and every verdict and score. The graph's node positions are hand-placed in [`data/layout.json`](data/layout.json) for legibility; which nodes and edges exist is computed.
+**Ask your own question.** Run locally with Neo4j and a Gemini key, the panel under the results sends your question to `POST /api/ask`: Gemini writes Cypher, the guard checks it, Neo4j runs it read-only with a timeout, and you see the query, the rows and the answer. The endpoint ([`src/ask-endpoint.ts`](src/ask-endpoint.ts)) limits question length, rate-limits each client by a salted hash of its address (20 per hour by default), and is a Web-standard handler that [`api/ask.ts`](api/ask.ts) exposes as a Vercel function. **It is not deployed:** the static export has no `/api/ask`, so a published copy only replays the recorded runs and the panel says so.
 
-### Run it
+## Run it
 
 Requirements: Node.js 22.12 or later. From `rag-retrieval/knowledge-graphs/`:
 
 ```sh
 npm ci
 npm start          # builds the app and serves it on http://127.0.0.1:4332 (PORT and HOST to change)
-npm test           # resolution, traversal, retrieval, verdicts and fixture checks; offline
+npm test           # schema, quotes, resolution, guard, scoring, app/results agreement, anchors; offline
 npm run check      # TypeScript type check
-npm run compare    # prints the comparison table above (add -- --k 5 for top 5)
-npm run export     # static copy in dist/ for deployment
+npm run export     # static copy in dist/ (no /api/ask)
 ```
 
-Open a chapter directly with `?scene=extract`, `?scene=merge` or `?scene=ask`, plus `&doc=` (a document id, such as `borealis`) or `&q=` (a question id from `data/questions.json`, such as `qx7-customers`), `&k=5`, and `&theme=light`. `&t=` freezes a scene at that many seconds, which is useful for screenshots. For example, `http://127.0.0.1:4332/?scene=ask&q=varnell-exposure` or `http://127.0.0.1:4332/?t=3.2`.
+**Replay needs no keys and no database.** The recorded results in `results/` are bundled into the page. Review hooks: `?only=<section id>` shows one section, `?scene=<n>` opens a walkthrough scene, `&t=<ms>` freezes it at that time, `&speed=0.5` and `&theme=dark`.
 
-The app makes no API calls. The fonts load from Google Fonts.
+### Live: Neo4j, Gemini and the pipeline
 
-### Re-extract with Gemini (optional, paid)
-
-[`scripts/extract.ts`](scripts/extract.ts) sends each document to Gemini's `generateContent` endpoint with the schema as structured output (`responseMimeType: application/json` and `responseJsonSchema`, the same request shape as this repository's [guardrails experiment](../../evaluations-reliability/agent-guardrails/README.md)), validates the result, and writes it to the Git-ignored `runs/extractions/`. It never overwrites the committed fixtures.
+Requirements: Docker, and a Gemini API key for the paid steps.
 
 ```sh
-npm run extract              # dry run: prints the prompt and the number of calls; no API calls
-cp .env.example .env         # then set GEMINI_API_KEY (and GEMINI_MODEL if you like)
-npm run extract -- --live    # paid: 6 calls, one per document
+cp .env.example .env               # set GEMINI_API_KEY and a NEO4J_PASSWORD of your choice
+docker compose up -d               # Neo4j 2026.09.0 Community on 127.0.0.1:7474 and :7687
+npm run pipeline -- load           # free: builds the graph from results/ and loads it into Neo4j
+npm start                          # the "Ask your own question" panel now works (paid per question)
 ```
 
-A live run makes six Gemini calls, each with one short document, retried at most twice on rate limits or server errors, with a 60-second timeout. **We did not run it live for this article**, so its output has not been checked against the fixtures. Expect the model's names, relation choices and evidence spans to differ from the fixtures, and some validation problems. Comparing the two is a useful exercise.
+Neo4j listens on localhost only, with a 10-second transaction timeout. Switching to Neo4j AuraDB means changing the three `NEO4J_*` values. Stop it with `docker compose down`; add `-v` to delete its data volume.
+
+The pipeline steps are dry runs unless given `--live`. Costs are what these steps cost us:
+
+| Command | Calls | Cost (measured) |
+| --- | --- | --- |
+| `npm run pipeline -- extract --live --runs 3` | 75 | $0.17 |
+| `npm run pipeline -- variation` | 0 | free |
+| `npm run pipeline -- resolve --live` | 137 + 3 embedding batches | $0.07 |
+| `npm run pipeline -- load` | 0 (needs Neo4j) | free |
+| `npm run pipeline -- ask --live` | about 85 (needs Neo4j) | about $0.08 |
+| `npm run pipeline -- costs` or `site`, `npm run report` | 0 | free |
+| One question in the Ask panel | 2 or 3 | about $0.002 |
+
+Each call has a timeout and at most two retries. Raw responses and the ledger go to the Git-ignored `runs/`; cleaned results to `results/`. Model output varies between runs, so a new run will not reproduce these numbers exactly; the variation section above shows by how much.
 
 ### Layout
 
 | Path | What it holds |
 | --- | --- |
-| `data/documents.json` | The six documents |
-| `data/extractions/*.json` | Extraction fixtures, one per document |
-| `data/questions.json` | Questions, scripted traversals and Cypher, correct answers, required facts |
-| `data/layout.json` | Node positions for the drawing |
-| `src/schema.ts` | Entity and relation types, the extraction JSON schema, validation |
-| `src/resolve.ts` | Entity resolution |
-| `src/graph.ts` | Graph building, entity linking, pattern traversal, shortest path, neighbourhood |
-| `src/retrieve.ts` | Paragraph chunking and TF-IDF ranking |
-| `src/compare.ts` | Runs a question all three ways and computes the verdict |
-| `src/spans.ts` | Finds mentions and evidence in the text for highlighting |
-| `client/` | The app (TypeScript and Tailwind CSS v4): `engine.ts` draws the graph on a canvas as a technical diagram, `scenes.ts` stages each chapter as a timeline, `timeline.ts` is the scene clock, `app.ts` is the page |
-| `scripts/` | Local server, static export, comparison table, Gemini extraction |
-| `tests/graph.test.ts` | Tests (Node's built-in test runner) |
+| `corpus/*.md` | The 25 documents, with front matter |
+| `data/` | Hand-written inputs: schema, questions with gold answers and Cypher, gold entities, the person's merge decisions, the extraction review |
+| `results/` | Recorded runs: three extractions, variation, resolution, graph, layout, answers, costs |
+| `src/` | Schema and validation, resolution rules, graph building, the Cypher guard, scoring, TF-IDF, the ask endpoint, label placement |
+| `src/pipeline/` | Gemini calls and the cost ledger, extraction, resolution, Neo4j, questions |
+| `client/` | The page (TypeScript and Tailwind CSS v4): `sections.ts`, `walkthrough.ts`, `graph-svg.ts`, `clock.ts` |
+| `scripts/` | Pipeline, local server, static export, article rendering, gold checks, report |
+| `api/ask.ts` | The Vercel function for the ask endpoint (not deployed) |
+| `tests/` | Node's built-in test runner |
 
 ## Limitations
 
-- **Hand-written extraction.** The fixtures are cleaner than real LLM output: every relation is correct and complete. Real extraction misses relations, adds wrong ones and names things inconsistently, and that is where most GraphRAG projects spend their effort.
-- **Scripted traversals.** Each question's graph query is written by hand. In production an LLM chooses the entry entities and writes the query (text-to-Cypher) or picks a template, and it can choose wrongly.
-- **TF-IDF, not embeddings.** Embeddings would rank some passages differently, mainly by matching synonyms. They would not change the central point: a passage that shares no subject with the question ranks low in any similarity measure.
-- **A tiny corpus.** Seventeen chunks, 18 entities. At scale, entity linking, resolution and graph noise all get harder, and so does keeping the graph current.
-- **No community summaries in the app.** Global search over community summaries is explained above but not implemented, because a corpus this small has nothing to summarize.
-- **Simple resolution rules.** Prefix-and-initial matching works for this corpus. Real data needs embedding similarity and review, and will still produce some wrong merges.
+- **This is a teaching demo, not a production system.** It extracts 25 short synthetic documents once and stops; nothing keeps the graph current.
+- **A small, constructed corpus.** The documents were written to contain multi-hop questions, aliases and changing facts. Real corpora are larger and messier, and the margins between methods will differ.
+- **One reviewer.** The person's decisions and the extraction review were made by the author, who also wrote the gold answers.
+- **Scoring is string-based.** A fact counts when its value appears in the context. A paraphrase can be missed, and the global question relies on an LLM judge.
+- **The guard is a teaching guard.** It checks the query text with rules; locally the app connects as the `neo4j` admin user, because Community Edition has no `reader` role. Use a read-only user in production.
+- **The in-memory rate limit** is per server instance; a deployment needs a shared store.
+- **No chunking of long documents.** Each document fits in one extraction call.
 
 ## What we verified and what we did not
 
-- The tests (`npm test`), type check (`npm run check`), comparison (`npm run compare`) and export (`npm run export`) were run on 2026-10-21, and every number in [the worked example](#a-worked-example) comes from that code.
-- The live Gemini extraction was **not run**; only its dry run was. The request shape matches the repository's other Gemini examples, but this script's live output is untested.
-- Claims about libraries and papers were checked against the linked documentation and abstracts on 2026-10-21. Library APIs change quickly: check the current documentation before you copy a class name.
+- Extraction, resolution, questions, community summaries and the judge were run live with `gemini-3.8-flash` and `gemini-embedding-2` against Neo4j 2026.09.0 Community on 2026-10-23. Every table above comes from those recorded results.
+- `npm test`, `npm run check` and `npm run export` pass; the tests check that the page's numbers agree with the recorded results.
+- SDK calls were checked against the current documentation: Gemini Interactions API structured output and embeddings, the Neo4j JavaScript driver's `executeRead` with a timeout, Vercel Node functions.
+- The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). It was not deployed.
 
 ## Sources
 
-- Edge, Trinh, Cheng et al., [From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130) (2024, revised 2025).
-- Microsoft GraphRAG documentation: [overview](https://microsoft.github.io/graphrag/), [default indexing dataflow](https://microsoft.github.io/graphrag/index/default_dataflow/), [local search](https://microsoft.github.io/graphrag/query/local_search/), [global search](https://microsoft.github.io/graphrag/query/global_search/).
+- Edge, Trinh, Cheng et al., [From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130) (2024).
+- Microsoft GraphRAG documentation: [overview](https://microsoft.github.io/graphrag/), [default dataflow](https://microsoft.github.io/graphrag/index/default_dataflow/), [prompt tuning](https://microsoft.github.io/graphrag/prompt_tuning/overview/), [local search](https://microsoft.github.io/graphrag/query/local_search/), [global search](https://microsoft.github.io/graphrag/query/global_search/).
 - Microsoft Research, [LazyGraphRAG: Setting a new standard for quality and cost](https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/) (2024).
-- Guo, Xia, Yu, Ao, Huang, [LightRAG: Simple and Fast Retrieval-Augmented Generation](https://arxiv.org/abs/2410.05779) (2024), and the [LightRAG repository](https://github.com/HKUDS/LightRAG).
-- Gutiérrez, Shu, Gu, Yasunaga, Su, [HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models](https://arxiv.org/abs/2405.14831) (NeurIPS 2024).
-- Peng, Zhu, Liu et al., [Graph Retrieval-Augmented Generation: A Survey](https://arxiv.org/abs/2408.08921) (2024).
-- Han, Ma, Wang et al., [RAG vs. GraphRAG: A Systematic Evaluation and Key Insights](https://arxiv.org/abs/2502.11371) (2025).
-- Xiang, Wu, Zhang et al., [When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation](https://arxiv.org/abs/2506.05690) (ICLR 2026).
-- LangChain: [`LLMGraphTransformer`](https://reference.langchain.com/python/langchain-neo4j/graph_transformers/llm/LLMGraphTransformer) and [`GraphCypherQAChain`](https://reference.langchain.com/python/langchain-neo4j/chains/graph_qa/cypher/GraphCypherQAChain) in `langchain-neo4j`.
-- LlamaIndex, [Using a Property Graph Index](https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/).
-- Neo4j: [neo4j-graphrag retrievers](https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html), [entity resolvers](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html), [Cypher variable-length patterns](https://neo4j.com/docs/cypher-manual/current/patterns/variable-length-patterns/).
-- W3C, [RDF 1.1 Concepts and Abstract Syntax](https://www.w3.org/TR/rdf11-concepts/) (2014) and [SPARQL 1.1 Query Language](https://www.w3.org/TR/sparql11-query/) (2013); ISO/IEC, [39075:2024 GQL](https://webstore.iec.ch/publication/94107).
+- Guo et al., [LightRAG](https://arxiv.org/abs/2410.05779) (2024), and the [LightRAG repository](https://github.com/HKUDS/LightRAG).
+- Gutiérrez et al., [HippoRAG](https://arxiv.org/abs/2405.14831) (NeurIPS 2024).
+- Peng et al., [Graph Retrieval-Augmented Generation: A Survey](https://arxiv.org/abs/2408.08921) (2024).
+- Han et al., [RAG vs. GraphRAG: A Systematic Evaluation and Key Insights](https://arxiv.org/abs/2502.11371) (2025).
+- Xiang et al., [When to use Graphs in RAG](https://arxiv.org/abs/2506.05690) (ICLR 2026).
+- Neo4j: [JavaScript driver transactions](https://neo4j.com/docs/javascript-manual/current/transactions/), [built-in roles](https://neo4j.com/docs/operations-manual/current/authentication-authorization/built-in-roles/), [configuration settings](https://neo4j.com/docs/operations-manual/current/configuration/configuration-settings/), [privileges](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-privileges/), [search-performance indexes](https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/overview/), [neo4j-graphrag retrievers](https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html) and [resolvers](https://neo4j.com/docs/neo4j-graphrag-python/current/_modules/neo4j_graphrag/components/resolver.html).
+- LangChain: [`LLMGraphTransformer`](https://reference.langchain.com/python/langchain-neo4j/graph_transformers/llm/LLMGraphTransformer) and [`GraphCypherQAChain`](https://reference.langchain.com/python/langchain-neo4j/chains/graph_qa/cypher/GraphCypherQAChain); LlamaIndex, [Property Graph Index](https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/).
+- Google: [Gemini structured output](https://ai.google.dev/gemini-api/docs/structured-output), [Gemini embeddings](https://ai.google.dev/gemini-api/docs/embeddings).
+- W3C, [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/) and [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/); ISO/IEC, [39075:2024 GQL](https://webstore.iec.ch/publication/94107).
 
-Related in this repository: [Chunking by document type](../chunking-strategies/README.md) · [Biomedical hybrid search](../biomedical-search/README.md) · [Knowledge graph from logs in the incident response agent](../../agents/incident-response-agent/README.md#memory-and-knowledge) · [RAG & Retrieval community category](https://aiengineer.help/c/rag-retrieval/6)
+Related in this repository: [Wiki memory](../../agents/wiki-memory/README.md) (pages of prose an agent maintains, rather than typed facts) · [Chunking by document type](../chunking-strategies/README.md) · [Biomedical hybrid search](../biomedical-search/README.md) · [RAG & Retrieval community category](https://aiengineer.help/c/rag-retrieval/6)
