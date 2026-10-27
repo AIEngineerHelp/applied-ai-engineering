@@ -1,0 +1,20 @@
+{
+  "Varnell Semiconductor": [120, 110],
+  "Tessaly Plastics": [120, 260],
+  "QX-7 radio chip": [360, 55],
+  "IP68 enclosure": [360, 165],
+  "PM-2 power module": [360, 275],
+  "PM-1": [200, 365],
+  "Atlas-3": [600, 110],
+  "Borealis controller": [600, 290],
+  "Osterby Water Utility": [840, 55],
+  "Calder Grain Co-op": [840, 175],
+  "Pellham Labs": [840, 290],
+  "Telemetry Gateway": [800, 455],
+  "Hardware team": [440, 435],
+  "Firmware team": [440, 525],
+  "Customer Support": [440, 605],
+  "Tomas Berg": [140, 435],
+  "Priya Raman": [140, 525],
+  "Ines Okafor": [140, 605]
+}

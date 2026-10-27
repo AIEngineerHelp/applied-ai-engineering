@@ -1,0 +1,53 @@
+{
+  "document": "atlas-3",
+  "source": "fixture",
+  "note": "Hand-written in the format an LLM extractor returns (see src/schema.ts). Regenerate with `npm run extract -- --live`.",
+  "entities": [
+    {
+      "name": "Atlas-3",
+      "type": "Product",
+      "properties": {
+        "category": "water-quality sensor",
+        "battery_life": "five years"
+      }
+    },
+    {
+      "name": "Telemetry Gateway",
+      "type": "Service"
+    },
+    {
+      "name": "QX-7 radio chip",
+      "type": "Component"
+    },
+    {
+      "name": "IP68 enclosure",
+      "type": "Component",
+      "properties": {
+        "rating": "continuous immersion to two metres"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "source": "Atlas-3",
+      "type": "CONNECTS_VIA",
+      "target": "Telemetry Gateway",
+      "properties": {
+        "interval": "15 minutes"
+      },
+      "evidence": "It sends readings every 15 minutes through the Telemetry Gateway."
+    },
+    {
+      "source": "QX-7 radio chip",
+      "type": "PART_OF",
+      "target": "Atlas-3",
+      "evidence": "The Atlas-3 main board uses the QX-7 radio chip for its cellular link."
+    },
+    {
+      "source": "IP68 enclosure",
+      "type": "PART_OF",
+      "target": "Atlas-3",
+      "evidence": "The Atlas-3 housing is the IP68 enclosure"
+    }
+  ]
+}

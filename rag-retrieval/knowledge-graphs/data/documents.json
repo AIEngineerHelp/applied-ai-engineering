@@ -1,0 +1,61 @@
+[
+  {
+    "id": "teams",
+    "title": "Engineering teams, Q3 update",
+    "kind": "Org update",
+    "paragraphs": [
+      "Priya Raman leads the Firmware team. The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices.",
+      "Tomas Berg leads the Hardware team. The Hardware team owns the Atlas-3 design and the Borealis controller design.",
+      "Ines Okafor leads Customer Support. Support escalates any defect it cannot reproduce to the team that owns the affected system, and aims to answer within one business day."
+    ]
+  },
+  {
+    "id": "atlas-3",
+    "title": "Atlas-3 sensor: product brief",
+    "kind": "Product brief",
+    "paragraphs": [
+      "The Atlas-3 is a battery-powered water-quality sensor. It sends readings every 15 minutes through the Telemetry Gateway.",
+      "The Atlas-3 main board uses the QX-7 radio chip for its cellular link. Battery life is rated at five years at the default reading interval.",
+      "The Atlas-3 housing is the IP68 enclosure, which is rated for continuous immersion to two metres."
+    ]
+  },
+  {
+    "id": "suppliers",
+    "title": "Supplier register (excerpt)",
+    "kind": "Supplier register",
+    "paragraphs": [
+      "Varnell Semi is the sole supplier of the QX-7 radio chip. The supply contract renews every January.",
+      "Tessaly Plastics supplies the IP68 enclosure. We own the tooling for the enclosure, so a second moulder could be qualified within a quarter."
+    ]
+  },
+  {
+    "id": "borealis",
+    "title": "Borealis controller: release notes 2.4",
+    "kind": "Release notes",
+    "paragraphs": [
+      "Borealis 2.4 adds Modbus support. The Borealis controller now takes power from the PM-2 power module, which replaces the older PM-1.",
+      "The PM-2 power module is made by Varnell. Firmware updates for the controller are delivered through the Telemetry Gateway.",
+      "The controller design is maintained by T. Berg and the Hardware team."
+    ]
+  },
+  {
+    "id": "customers",
+    "title": "Key accounts",
+    "kind": "Account list",
+    "paragraphs": [
+      "Osterby Water Utility runs 420 Atlas-3 units across its reservoirs and treatment plants. It renewed its service plan in May.",
+      "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units.",
+      "Pellham Labs uses the Borealis controller to run its environmental test chambers."
+    ]
+  },
+  {
+    "id": "incident",
+    "title": "Incident review: QX-7 shipment delay",
+    "kind": "Incident review",
+    "paragraphs": [
+      "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage.",
+      "The review recommended qualifying a second radio-chip supplier by the end of Q3 and keeping eight weeks of chip stock on hand.",
+      "No customer shipments were missed, because the warehouse held enough finished units to cover the gap."
+    ]
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "document": "suppliers",
+  "source": "fixture",
+  "note": "Hand-written in the format an LLM extractor returns (see src/schema.ts). Regenerate with `npm run extract -- --live`.",
+  "entities": [
+    {
+      "name": "Varnell Semi",
+      "type": "Company"
+    },
+    {
+      "name": "QX-7 radio chip",
+      "type": "Component"
+    },
+    {
+      "name": "Tessaly Plastics",
+      "type": "Company"
+    },
+    {
+      "name": "IP68 enclosure",
+      "type": "Component"
+    }
+  ],
+  "relations": [
+    {
+      "source": "Varnell Semi",
+      "type": "SUPPLIES",
+      "target": "QX-7 radio chip",
+      "properties": {
+        "sole_supplier": true
+      },
+      "evidence": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+    },
+    {
+      "source": "Tessaly Plastics",
+      "type": "SUPPLIES",
+      "target": "IP68 enclosure",
+      "evidence": "Tessaly Plastics supplies the IP68 enclosure."
+    }
+  ]
+}

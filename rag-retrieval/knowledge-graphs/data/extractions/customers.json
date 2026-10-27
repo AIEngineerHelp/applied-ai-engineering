@@ -1,0 +1,57 @@
+{
+  "document": "customers",
+  "source": "fixture",
+  "note": "Hand-written in the format an LLM extractor returns (see src/schema.ts). Regenerate with `npm run extract -- --live`.",
+  "entities": [
+    {
+      "name": "Osterby Water Utility",
+      "type": "Customer"
+    },
+    {
+      "name": "Atlas-3",
+      "type": "Product"
+    },
+    {
+      "name": "Calder Grain Co-op",
+      "type": "Customer"
+    },
+    {
+      "name": "Atlas 3",
+      "type": "Product"
+    },
+    {
+      "name": "Pellham Labs",
+      "type": "Customer"
+    },
+    {
+      "name": "Borealis controller",
+      "type": "Product"
+    }
+  ],
+  "relations": [
+    {
+      "source": "Osterby Water Utility",
+      "type": "USES",
+      "target": "Atlas-3",
+      "properties": {
+        "units": 420
+      },
+      "evidence": "Osterby Water Utility runs 420 Atlas-3 units"
+    },
+    {
+      "source": "Calder Grain Co-op",
+      "type": "USES",
+      "target": "Atlas 3",
+      "properties": {
+        "units": 60
+      },
+      "evidence": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units."
+    },
+    {
+      "source": "Pellham Labs",
+      "type": "USES",
+      "target": "Borealis controller",
+      "evidence": "Pellham Labs uses the Borealis controller"
+    }
+  ]
+}

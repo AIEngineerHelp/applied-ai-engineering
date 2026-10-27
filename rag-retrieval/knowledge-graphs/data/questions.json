@@ -1,0 +1,116 @@
+[
+  {
+    "id": "upload-ticket",
+    "kind": "Multi-hop",
+    "question": "Osterby Water Utility says its sensors stopped uploading readings. Which team and team lead should get the ticket?",
+    "answer": "The Firmware team, led by Priya Raman. Osterby uses the Atlas-3, the Atlas-3 uploads through the Telemetry Gateway, and the Firmware team owns the gateway.",
+    "strategy": {
+      "type": "pattern",
+      "start": "Osterby Water Utility",
+      "steps": [
+        { "rel": "USES", "dir": "out" },
+        { "rel": "CONNECTS_VIA", "dir": "out" },
+        { "rel": "OWNS", "dir": "in" },
+        { "rel": "LEADS", "dir": "in" }
+      ]
+    },
+    "cypher": "MATCH (:Customer {name: 'Osterby Water Utility'})-[:USES]->(:Product)\n      -[:CONNECTS_VIA]->(:Service)<-[:OWNS]-(t:Team)<-[:LEADS]-(p:Person)\nRETURN t.name, p.name",
+    "expected": ["Priya Raman"],
+    "facts": [
+      { "label": "Osterby uses the Atlas-3", "evidence": "Osterby Water Utility runs 420 Atlas-3 units", "triple": ["Osterby Water Utility", "USES", "Atlas-3"] },
+      { "label": "The Atlas-3 uploads through the Telemetry Gateway", "evidence": "It sends readings every 15 minutes through the Telemetry Gateway.", "triple": ["Atlas-3", "CONNECTS_VIA", "Telemetry Gateway"] },
+      { "label": "The Firmware team owns the gateway", "evidence": "The Firmware team owns the Telemetry Gateway", "triple": ["Firmware team", "OWNS", "Telemetry Gateway"] },
+      { "label": "Priya Raman leads the Firmware team", "evidence": "Priya Raman leads the Firmware team.", "triple": ["Priya Raman", "LEADS", "Firmware team"] }
+    ]
+  },
+  {
+    "id": "qx7-customers",
+    "kind": "Multi-hop",
+    "question": "Which customers would be affected by a delay in QX-7 radio chip shipments?",
+    "answer": "Osterby Water Utility and Calder Grain Co-op. The QX-7 is part of the Atlas-3, and both run Atlas-3 sensors.",
+    "strategy": {
+      "type": "pattern",
+      "start": "QX-7 radio chip",
+      "steps": [
+        { "rel": "PART_OF", "dir": "out" },
+        { "rel": "USES", "dir": "in" }
+      ]
+    },
+    "cypher": "MATCH (:Component {name: 'QX-7 radio chip'})-[:PART_OF]->(:Product)<-[:USES]-(c:Customer)\nRETURN DISTINCT c.name",
+    "expected": ["Osterby Water Utility", "Calder Grain Co-op"],
+    "facts": [
+      { "label": "The QX-7 is part of the Atlas-3", "evidence": "The Atlas-3 main board uses the QX-7 radio chip for its cellular link.", "triple": ["QX-7 radio chip", "PART_OF", "Atlas-3"] },
+      { "label": "Osterby uses the Atlas-3", "evidence": "Osterby Water Utility runs 420 Atlas-3 units", "triple": ["Osterby Water Utility", "USES", "Atlas-3"] },
+      { "label": "Calder uses the Atlas-3", "evidence": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units.", "triple": ["Calder Grain Co-op", "USES", "Atlas-3"] }
+    ]
+  },
+  {
+    "id": "varnell-exposure",
+    "kind": "Aggregation",
+    "question": "How many customers depend on parts from Varnell Semiconductor?",
+    "answer": "Three: Osterby Water Utility and Calder Grain Co-op through the QX-7 chip in the Atlas-3, and Pellham Labs through the PM-2 module in the Borealis controller.",
+    "strategy": {
+      "type": "pattern",
+      "start": "Varnell Semiconductor",
+      "steps": [
+        { "rel": "SUPPLIES", "dir": "out" },
+        { "rel": "PART_OF", "dir": "out" },
+        { "rel": "USES", "dir": "in" }
+      ],
+      "count": true
+    },
+    "cypher": "MATCH (:Company {name: 'Varnell Semiconductor'})-[:SUPPLIES]->(:Component)\n      -[:PART_OF]->(:Product)<-[:USES]-(c:Customer)\nRETURN count(DISTINCT c)",
+    "expected": ["Osterby Water Utility", "Calder Grain Co-op", "Pellham Labs"],
+    "facts": [
+      { "label": "Varnell supplies the QX-7", "evidence": "Varnell Semi is the sole supplier of the QX-7 radio chip.", "triple": ["Varnell Semiconductor", "SUPPLIES", "QX-7 radio chip"] },
+      { "label": "Varnell supplies the PM-2", "evidence": "The PM-2 power module is made by Varnell.", "triple": ["Varnell Semiconductor", "SUPPLIES", "PM-2 power module"] },
+      { "label": "The QX-7 is part of the Atlas-3", "evidence": "The Atlas-3 main board uses the QX-7 radio chip for its cellular link.", "triple": ["QX-7 radio chip", "PART_OF", "Atlas-3"] },
+      { "label": "The PM-2 is part of the Borealis", "evidence": "The Borealis controller now takes power from the PM-2 power module", "triple": ["PM-2 power module", "PART_OF", "Borealis controller"] },
+      { "label": "Osterby uses the Atlas-3", "evidence": "Osterby Water Utility runs 420 Atlas-3 units", "triple": ["Osterby Water Utility", "USES", "Atlas-3"] },
+      { "label": "Calder uses the Atlas-3", "evidence": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units.", "triple": ["Calder Grain Co-op", "USES", "Atlas-3"] },
+      { "label": "Pellham uses the Borealis", "evidence": "Pellham Labs uses the Borealis controller", "triple": ["Pellham Labs", "USES", "Borealis controller"] }
+    ]
+  },
+  {
+    "id": "pellham-varnell",
+    "kind": "Connection",
+    "question": "How is Pellham Labs connected to Varnell Semiconductor?",
+    "answer": "Pellham Labs uses the Borealis controller, the Borealis runs on the PM-2 power module, and Varnell makes the PM-2.",
+    "strategy": { "type": "path", "from": "Pellham Labs", "to": "Varnell Semiconductor" },
+    "cypher": "MATCH p = shortestPath((:Customer {name: 'Pellham Labs'})-[*..6]-(:Company {name: 'Varnell Semiconductor'}))\nRETURN p",
+    "expected": ["Pellham Labs", "Borealis controller", "PM-2 power module", "Varnell Semiconductor"],
+    "facts": [
+      { "label": "Pellham uses the Borealis", "evidence": "Pellham Labs uses the Borealis controller", "triple": ["Pellham Labs", "USES", "Borealis controller"] },
+      { "label": "The PM-2 is part of the Borealis", "evidence": "The Borealis controller now takes power from the PM-2 power module", "triple": ["PM-2 power module", "PART_OF", "Borealis controller"] },
+      { "label": "Varnell supplies the PM-2", "evidence": "The PM-2 power module is made by Varnell.", "triple": ["Varnell Semiconductor", "SUPPLIES", "PM-2 power module"] }
+    ]
+  },
+  {
+    "id": "who-leads-firmware",
+    "kind": "Single fact",
+    "question": "Who leads the Firmware team?",
+    "answer": "Priya Raman.",
+    "strategy": {
+      "type": "pattern",
+      "start": "Firmware team",
+      "steps": [{ "rel": "LEADS", "dir": "in" }]
+    },
+    "cypher": "MATCH (p:Person)-[:LEADS]->(:Team {name: 'Firmware team'})\nRETURN p.name",
+    "expected": ["Priya Raman"],
+    "facts": [
+      { "label": "Priya Raman leads the Firmware team", "evidence": "Priya Raman leads the Firmware team.", "triple": ["Priya Raman", "LEADS", "Firmware team"] }
+    ]
+  },
+  {
+    "id": "incident-actions",
+    "kind": "Detail in prose",
+    "question": "What did the incident review recommend after the QX-7 shipment delay?",
+    "answer": "Qualify a second radio-chip supplier by the end of Q3, and keep eight weeks of chip stock on hand.",
+    "strategy": { "type": "neighbourhood", "around": "QX-7 radio chip", "depth": 1 },
+    "cypher": "MATCH (c:Component {name: 'QX-7 radio chip'})-[r]-(n)\nRETURN c, r, n",
+    "expected": [],
+    "facts": [
+      { "label": "The review's recommendation", "evidence": "The review recommended qualifying a second radio-chip supplier by the end of Q3 and keeping eight weeks of chip stock on hand." }
+    ]
+  }
+]

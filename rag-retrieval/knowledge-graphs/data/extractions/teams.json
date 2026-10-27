@@ -1,0 +1,84 @@
+{
+  "document": "teams",
+  "source": "fixture",
+  "note": "Hand-written in the format an LLM extractor returns (see src/schema.ts). Regenerate with `npm run extract -- --live`.",
+  "entities": [
+    {
+      "name": "Priya Raman",
+      "type": "Person"
+    },
+    {
+      "name": "Firmware team",
+      "type": "Team"
+    },
+    {
+      "name": "Telemetry Gateway",
+      "type": "Service",
+      "properties": {
+        "description": "cloud service that receives data from devices"
+      }
+    },
+    {
+      "name": "Tomas Berg",
+      "type": "Person"
+    },
+    {
+      "name": "Hardware team",
+      "type": "Team"
+    },
+    {
+      "name": "Atlas-3",
+      "type": "Product"
+    },
+    {
+      "name": "Borealis controller",
+      "type": "Product"
+    },
+    {
+      "name": "Ines Okafor",
+      "type": "Person"
+    },
+    {
+      "name": "Customer Support",
+      "type": "Team"
+    }
+  ],
+  "relations": [
+    {
+      "source": "Priya Raman",
+      "type": "LEADS",
+      "target": "Firmware team",
+      "evidence": "Priya Raman leads the Firmware team."
+    },
+    {
+      "source": "Firmware team",
+      "type": "OWNS",
+      "target": "Telemetry Gateway",
+      "evidence": "The Firmware team owns the Telemetry Gateway"
+    },
+    {
+      "source": "Tomas Berg",
+      "type": "LEADS",
+      "target": "Hardware team",
+      "evidence": "Tomas Berg leads the Hardware team."
+    },
+    {
+      "source": "Hardware team",
+      "type": "OWNS",
+      "target": "Atlas-3",
+      "evidence": "The Hardware team owns the Atlas-3 design"
+    },
+    {
+      "source": "Hardware team",
+      "type": "OWNS",
+      "target": "Borealis controller",
+      "evidence": "the Borealis controller design"
+    },
+    {
+      "source": "Ines Okafor",
+      "type": "LEADS",
+      "target": "Customer Support",
+      "evidence": "Ines Okafor leads Customer Support."
+    }
+  ]
+}
