@@ -16,7 +16,7 @@ export function liveAskDeps(): AskDeps {
         await generateText({
           step: "ask-endpoint",
           label: q.slice(0, 60),
-          system: "You answer questions about Corvane Instruments using only the query rows given. One to three sentences. If the rows don't answer the question, say so.",
+          system: "You answer questions about Corvane Instruments using only the query and its result rows given; the query shows what each column means. One to three sentences. If the rows don't answer the question, say so.",
           input: `${context}\n\nQuestion: ${q}`,
         })
       ).text.trim(),

@@ -8,14 +8,13 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify",
+    "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=[name] && tailwindcss -i client/styles.css -o site/build/app.css --minify && node --import=tsx scripts/article.ts",
     "start": "npm run build:client && node --import=tsx scripts/serve.ts",
     "check": "tsc --noEmit",
     "test": "node --import=tsx --test tests/*.test.ts",
-    "compare": "node --import=tsx scripts/compare.ts",
-    "extract": "node --import=tsx scripts/extract.ts",
     "export": "npm run build:client && node --import=tsx scripts/export.ts",
-    "pipeline": "node --import=tsx scripts/pipeline.ts"
+    "pipeline": "node --import=tsx scripts/pipeline.ts",
+    "report": "node --import=tsx scripts/report.ts"
   },
   "devDependencies": {
     "@google/genai": "2.27.0",

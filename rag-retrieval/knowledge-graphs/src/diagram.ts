@@ -108,14 +108,16 @@ export function placeLabels(o: {
     for (let side = 0; side < 8; side++) {
       const b = labelBox(side, x, y, w, h, o.r + 5);
       const crossings = o.edgePts.filter(([px, py]) => px > b.x && px < b.x + b.w && py > b.y && py < b.y + b.h).length;
-      const hits = placed.filter((p) => overlaps(b, p.box)).length + nodeBoxes.filter((n) => overlaps(b, n)).length;
+      const hits = placed.filter((p) => overlaps(b, p.box)).length * 200 + nodeBoxes.filter((n) => overlaps(b, n)).length * 60;
       const out = b.x < o.view.x || b.x + b.w > o.view.x + o.view.w || b.y < o.view.y || b.y + b.h > o.view.y + o.view.h ? 1 : 0;
-      const score = crossings * 3 + hits * 25 + out * 80 + side * 0.5;
+      const score = Math.min(crossings, 40) * 3 + hits + out * 1000 + side * 0.5;
       if (score < bestScore) {
         bestScore = score;
         best = side;
       }
     }
+    // Every spot overprints another label or leaves the drawing: leave this name to the tooltip.
+    if (bestScore >= 200) continue;
     placed.push({ id, box: labelBox(best, x, y, w, h, o.r + 5) });
   }
   return placed;

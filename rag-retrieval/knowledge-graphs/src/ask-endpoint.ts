@@ -66,7 +66,7 @@ export async function handleAsk(request: Request, deps: AskDeps): Promise<Respon
     const final = attempts[attempts.length - 1].run;
     const rows = final.rows.slice(0, 50);
     const answer = final.ok
-      ? await deps.answer(question, `Query result rows:\n${JSON.stringify(rows)}`)
+      ? await deps.answer(question, `The Cypher query that was run:\n${final.cypher}\n\nIts result rows:\n${JSON.stringify(rows)}`)
       : final.blocked
         ? "The generated query was blocked by the read-only guard, so it never reached the database."
         : "The query failed, so there is no answer.";
