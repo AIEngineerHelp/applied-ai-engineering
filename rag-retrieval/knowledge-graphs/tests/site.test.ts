@@ -59,10 +59,13 @@ test("the production table covers the nine problems", () => {
   );
 });
 
-test("the static export has no ask endpoint, and the page explains why when asking fails", () => {
+test("the export bundles the ask function for Vercel, and the page falls back to replay when asking is unavailable", () => {
   const exportScript = readFileSync(join(ROOT, "scripts", "export.ts"), "utf8");
-  assert.doesNotMatch(exportScript, /api/);
-  assert.match(clientSource, /the published site only replays the recorded runs/);
+  assert.match(exportScript, /api", "ask\.ts/);
+  assert.match(exportScript, /maxDuration: 30/);
+  assert.match(clientSource, /only replays the recorded runs above/);
+  const api = readFileSync(join(ROOT, "api", "ask.ts"), "utf8");
+  assert.match(api, /export async function POST\(request: Request\)/);
 });
 
 test("the prompt the page shows is the one the code sends, and each linked line produced its piece of the recorded query", async () => {

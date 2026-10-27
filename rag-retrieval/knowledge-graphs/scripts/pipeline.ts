@@ -3,7 +3,7 @@
 //   npm run pipeline -- extract --live --runs 3   extract every document 3 times (paid)
 //   npm run pipeline -- variation                compare the extraction runs (offline)
 //   npm run pipeline -- resolve --live           entity resolution: rules, embeddings, LLM check (paid)
-//   npm run pipeline -- load                     build the graph and load it into Neo4j (needs Neo4j)
+//   npm run pipeline -- load                     load results/graph.json into Neo4j; no model calls (--rebuild: rebuild it offline first)
 //   npm run pipeline -- ask --live               every question, every method (paid, needs Neo4j)
 //   npm run pipeline -- costs                    total the ledger into results/costs.json (offline)
 //   npm run pipeline -- site                     write the corpus and the graph layout for the app (offline)
@@ -111,12 +111,18 @@ async function main() {
       return;
     }
     case "load": {
-      const run = read<ExtractionRun>(results("extraction", "run-1.json"));
-      const resolution = read<Resolution & { reviewed: { clusters: Cluster[] } }>(results("resolution.json"));
-      const dateOf = new Map(docs.map((d) => [d.id, d.date]));
-      const graph = buildGraph(run.runId, resolution.reviewed.clusters, run.docs.map((d) => ({ doc: d.doc, date: dateOf.get(d.doc)!, triples: d.triples })));
-      save(results("graph.json"), graph);
-      console.log(`Graph: ${graph.nodes.length} entities, ${graph.edges.length} edges (${graph.dropped.length} triples dropped).`);
+      // No model calls: loads the committed results/graph.json into whatever NEO4J_* points at
+      // (Docker, or AuraDB with a neo4j+s:// URI). --rebuild first rebuilds it from run 1 and
+      // the reviewed resolution, offline.
+      let graph: Graph;
+      if (args.includes("--rebuild")) {
+        const run = read<ExtractionRun>(results("extraction", "run-1.json"));
+        const resolution = read<Resolution & { reviewed: { clusters: Cluster[] } }>(results("resolution.json"));
+        const dateOf = new Map(docs.map((d) => [d.id, d.date]));
+        graph = buildGraph(run.runId, resolution.reviewed.clusters, run.docs.map((d) => ({ doc: d.doc, date: dateOf.get(d.doc)!, triples: d.triples })));
+        save(results("graph.json"), graph);
+      } else graph = read<Graph>(results("graph.json"));
+      console.log(`Graph: ${graph.nodes.length} entities, ${graph.edges.length} edges.`);
       const counts = await loadGraph(graph);
       console.log(`Loaded into Neo4j at ${process.env.NEO4J_URI}: ${counts.nodes} nodes, ${counts.edges} relationships.`);
       await closeDb();

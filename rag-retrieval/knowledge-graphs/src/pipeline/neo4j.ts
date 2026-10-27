@@ -20,11 +20,16 @@ export async function closeDb() {
   driver = null;
 }
 
-/** Replace the database contents with `graph`. Labels and relationship types come only from the schema. */
+/**
+ * Replace the knowledge graph with `graph`: delete every :Entity node (and so its
+ * relationships), then MERGE the graph. Idempotent, and it leaves other data, such
+ * as the :AskLog rate-limit nodes, in place. Labels and relationship types come only
+ * from the schema. No model calls.
+ */
 export async function loadGraph(graph: Graph) {
   const session = db().session({ defaultAccessMode: neo4j.session.WRITE });
   try {
-    await session.run("MATCH (n) DETACH DELETE n");
+    await session.run("MATCH (n:Entity) DETACH DELETE n");
     await session.run("CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE");
     for (const type of ENTITY_TYPES) {
       const rows = graph.nodes.filter((n) => n.type === type).map((n) => ({ id: n.id, name: n.name, aliases: n.aliases, docs: n.docs }));
@@ -42,7 +47,7 @@ export async function loadGraph(graph: Graph) {
         { rows },
       );
     }
-    const counts = await session.run("MATCH (n) WITH count(n) AS nodes MATCH ()-[r]->() RETURN nodes, count(r) AS edges");
+    const counts = await session.run("MATCH (n:Entity) WITH count(n) AS nodes MATCH (:Entity)-[r]->(:Entity) RETURN nodes, count(r) AS edges");
     return { nodes: Number(counts.records[0].get("nodes")), edges: Number(counts.records[0].get("edges")) };
   } finally {
     await session.close();
@@ -87,7 +92,8 @@ export async function runReadOnly(cypher: string, params: Record<string, unknown
   const session = db().session({ defaultAccessMode: neo4j.session.READ });
   try {
     const res = await session.executeRead((tx) => tx.run(g.cypher, params), { timeout: timeoutMs });
-    const rows = res.records.map((r) => Object.fromEntries(r.keys.map((k) => [String(k), plain(r.get(k))])));
+    // A query over unlabelled nodes could still reach the rate-limit log: drop any row that carries its fields.
+    const rows = res.records.map((r) => Object.fromEntries(r.keys.map((k) => [String(k), plain(r.get(k))]))).filter((row) => !JSON.stringify(row).includes('"ipHash"'));
     return { cypher: g.cypher, ok: true, rows, error: null, blocked: false, ms: Date.now() - started };
   } catch (e) {
     const msg = String((e as Error).message ?? e).split("\n")[0];

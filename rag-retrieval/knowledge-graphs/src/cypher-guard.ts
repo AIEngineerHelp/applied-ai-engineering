@@ -27,6 +27,8 @@ export function guardCypher(input: string): GuardResult {
   let q = input.trim().replace(/;\s*$/, "");
   if (!q) return { ok: false, reason: "The query is empty." };
   if (q.length > 2000) return { ok: false, reason: "The query is longer than 2,000 characters." };
+  // The rate-limit log shares the database; model queries may not name it, even in backticks.
+  if (/asklog|iphash/i.test(q)) return { ok: false, reason: "That part of the database is not queryable." };
   const bare = stripLiterals(q);
   if (bare.includes(";")) return { ok: false, reason: "Only one statement is allowed." };
   const kw = WRITE_OR_ADMIN.exec(bare);

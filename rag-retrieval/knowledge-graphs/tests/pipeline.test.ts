@@ -14,7 +14,7 @@ import { variation } from "../src/pipeline/variation.ts";
 import { summarize } from "../src/summary.ts";
 import type { QuestionResult } from "../src/pipeline/ask.ts";
 import { communities, entitiesIn } from "../src/pipeline/ask.ts";
-import { handleAsk, rateLimit, resetRateLimits, type AskDeps } from "../src/ask-endpoint.ts";
+import { clientHash, handleAsk, memoryLimitStore, NOT_CONFIGURED, type AskDeps } from "../src/ask-endpoint.ts";
 import { layoutGraph } from "../src/layout.ts";
 import { placeLabels, overlaps, textWidth } from "../src/diagram.ts";
 import { goldOf } from "../src/gold.ts";
@@ -169,6 +169,10 @@ test("the guard blocks writes, procedures, several statements and unbounded path
     "MATCH (n) RETURN n LIMIT 5000",
     "LOAD CSV FROM 'x' AS r RETURN r",
     "RETURN apoc.version()",
+    "MATCH (a:AskLog) RETURN count(a)",
+    "MATCH (a:`AskLog`) RETURN a.at",
+    "MATCH (n) WHERE n.ipHash IS NOT NULL RETURN n.ipHash",
+    "MATCH (n) RETURN labels(n) AS l // asklog",
   ])
     assert.equal(guardCypher(q).ok, false, q);
 });
@@ -225,9 +229,11 @@ test("communities are deterministic and only keep groups of three or more", () =
 // ---------------------------------------------------------------- the ask endpoint
 
 function deps(over: Partial<AskDeps> = {}): AskDeps {
+  const store = memoryLimitStore();
   return {
     graph: () => graph,
     configured: () => true,
+    limits: () => store,
     textToCypher: async () => [{ cypher: "MATCH (n) RETURN n.name LIMIT 1", explanation: "x", run: { ok: true, rows: [{ "n.name": "Atlas-3" }], error: null, blocked: false, cypher: "MATCH (n) RETURN n.name LIMIT 1", ms: 1 } }],
     answer: async () => "Atlas-3.",
     ...over,
@@ -236,26 +242,69 @@ function deps(over: Partial<AskDeps> = {}): AskDeps {
 const post = (body: unknown, ip = "1.2.3.4") => new Request("http://x/api/ask", { method: "POST", headers: { "x-forwarded-for": ip, "content-type": "application/json" }, body: JSON.stringify(body) });
 
 test("the ask endpoint validates input and explains when it isn't configured", async () => {
-  resetRateLimits();
   assert.equal((await handleAsk(new Request("http://x/api/ask"), deps())).status, 405);
   assert.equal((await handleAsk(post({ question: "hi" }), deps())).status, 400);
-  assert.equal((await handleAsk(post({ question: "Which customers use the Atlas-3?" }), deps({ configured: () => false }))).status, 503);
+  assert.equal((await handleAsk(post({ question: "x".repeat(301) }), deps())).status, 400);
+  assert.equal((await handleAsk(new Request("http://x/api/ask", { method: "POST", body: "x".repeat(5000) }), deps())).status, 413);
+  const off = await handleAsk(post({ question: "Which customers use the Atlas-3?" }), deps({ configured: () => false }));
+  assert.equal(off.status, 503);
+  assert.equal(((await off.json()) as { error: string }).error, NOT_CONFIGURED);
   const ok = await handleAsk(post({ question: "Which customers use the Atlas-3?" }), deps());
   assert.equal(ok.status, 200);
   assert.equal(((await ok.json()) as { answer: string }).answer, "Atlas-3.");
 });
 
-test("the ask endpoint rate-limits per client and reports a blocked query without running it", async () => {
-  resetRateLimits();
-  for (let i = 0; i < 3; i++) assert.equal(rateLimit("k", 1000 + i, 3), null);
-  assert.match(rateLimit("k", 2000, 3)!, /limit/);
-  assert.equal(rateLimit("k", 1000 + 3600_001, 3), null, "the window slides");
-  resetRateLimits();
+test("the ask endpoint limits each client per hour and everyone per day, with friendly 429s", async () => {
+  const store = memoryLimitStore();
+  let now = 1_000_000;
+  const d = deps({ limits: () => store, now: () => now });
+  const q = { question: "Which customers use the Atlas-3?" };
+  const saved = { ...process.env };
+  try {
+    process.env.ASK_LIMIT_IP_PER_HOUR = "2";
+    process.env.ASK_LIMIT_PER_DAY = "3";
+    assert.equal((await handleAsk(post(q, "1.1.1.1"), d)).status, 200);
+    assert.equal((await handleAsk(post(q, "1.1.1.1"), d)).status, 200);
+    const third = await handleAsk(post(q, "1.1.1.1"), d);
+    assert.equal(third.status, 429);
+    assert.match(((await third.json()) as { error: string }).error, /2 questions in the last hour/);
+    assert.equal((await handleAsk(post(q, "2.2.2.2"), d)).status, 200, "another client still may");
+    const day = await handleAsk(post(q, "3.3.3.3"), d);
+    assert.equal(day.status, 429, "the day's total is reached");
+    assert.match(((await day.json()) as { error: string }).error, /3 questions for today/);
+    now += 25 * 3600_000;
+    assert.equal((await handleAsk(post(q, "1.1.1.1"), d)).status, 200, "the windows roll");
+    assert.equal(store.log.length, 4, "refused requests are not recorded");
+    assert.ok(store.log.every((l) => /^[0-9a-f]{32}$/.test(l.ipHash) && l.ipHash !== "1.1.1.1"), "only salted hashes are stored");
+    process.env.RATE_LIMIT_SALT = "a";
+    const h1 = clientHash(post(q, "1.1.1.1"));
+    process.env.RATE_LIMIT_SALT = "b";
+    assert.notEqual(clientHash(post(q, "1.1.1.1")), h1, "the salt changes the hash");
+  } finally {
+    process.env = saved;
+  }
+});
+
+test("the ask endpoint reports a blocked query without running it, and a database outage as 503", async () => {
   const blocked = await handleAsk(
     post({ question: "Delete everything in the graph please" }),
     deps({ textToCypher: async () => [{ cypher: "MATCH (n) DETACH DELETE n", explanation: "x", run: { ok: false, rows: [], error: '"DETACH" is not allowed', blocked: true, cypher: "MATCH (n) DETACH DELETE n", ms: 0 } }] }),
   );
   assert.match(((await blocked.json()) as { answer: string }).answer, /blocked by the read-only guard/);
+  const down = await handleAsk(post({ question: "Which customers use the Atlas-3?" }), deps({ limits: () => ({ take: async () => { throw new Error("ServiceUnavailable"); } }) }));
+  assert.equal(down.status, 503);
+});
+
+test("the ask endpoint gives up after its deadline", async () => {
+  const saved = process.env.ASK_DEADLINE_MS;
+  process.env.ASK_DEADLINE_MS = "50";
+  try {
+    const slow = await handleAsk(post({ question: "Which customers use the Atlas-3?" }), deps({ textToCypher: () => new Promise((r) => setTimeout(() => r([]), 500)) }));
+    assert.equal(slow.status, 504);
+  } finally {
+    if (saved === undefined) delete process.env.ASK_DEADLINE_MS;
+    else process.env.ASK_DEADLINE_MS = saved;
+  }
 });
 
 // ---------------------------------------------------------------- drawing

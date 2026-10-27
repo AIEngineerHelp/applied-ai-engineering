@@ -77,7 +77,7 @@ const EXAMPLES = ["Which products does Varnell Semiconductor supply parts for?",
 
 export function renderAskPanel() {
   $("ask").innerHTML = `<h3 class="sub">Ask your own question</h3>
-    <p class="caption mt-1">Gemini writes a Cypher query, the read-only guard checks it, and Neo4j runs it with a timeout. You see the query, the rows and the answer. This needs the app running locally with Neo4j and a Gemini key (see the README); the published site only replays the recorded runs above.</p>
+    <p class="caption mt-1">Gemini writes a Cypher query, the read-only guard checks it, and Neo4j runs it with a timeout. You see the query, the rows and the answer. Each question makes two or three Gemini calls, so there is a limit per hour and per day. It needs Neo4j and a Gemini key on the server; where they aren't set up, this page only replays the recorded runs above.</p>
     <textarea id="ask-q" rows="2" maxlength="300" aria-label="Your question" placeholder="e.g. Which customers use the Borealis controller?"></textarea>
     <div class="examples">${EXAMPLES.map((e) => `<button type="button" data-example="${esc(e)}">${esc(e)}</button>`).join("")}</div>
     <div class="mt-4 flex items-center gap-4"><button id="ask-go" type="button" class="btn">Ask</button><span id="ask-status" class="caption" aria-live="polite"></span></div>
@@ -94,13 +94,13 @@ export function renderAskPanel() {
     $("ask-out").innerHTML = "";
     try {
       const res = await fetch("api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question }) });
-      const body = (await res.json().catch(() => ({ error: "Asking needs the app running locally (npm start) with Neo4j and a Gemini key." }))) as {
+      const body = (await res.json().catch(() => ({ error: "Asking isn't available on this copy, so it only replays the recorded runs above." }))) as {
         error?: string;
         answer?: string;
         attempts?: { cypher: string; ok: boolean; blocked: boolean; error: string | null; rows: unknown[]; ms: number }[];
       };
       if (!res.ok || body.error) {
-        $("ask-status").textContent = body.error ?? `Not available here (HTTP ${res.status}). Run the app locally to ask your own questions.`;
+        $("ask-status").textContent = body.error ?? `Not available right now (HTTP ${res.status}). The recorded runs above still work.`;
         return;
       }
       $("ask-status").textContent = "";
@@ -108,7 +108,7 @@ export function renderAskPanel() {
         .map((a, i) => `<p class="label mt-6">${i === 0 ? "The query Gemini wrote" : "Its repair"}</p><pre class="cypher">${esc(a.cypher)}</pre>${a.ok ? `<pre class="rows">${esc(JSON.stringify(a.rows, null, 1))}</pre><p class="caption">${plural(a.rows.length, "row")} in ${a.ms} ms</p>` : `<p class="cypher-err">${a.blocked ? "Blocked by the guard: " : "Failed: "}${esc(a.error ?? "")}</p>`}`)
         .join("") + `<p class="label mt-6">The answer</p><p class="answer">${esc(body.answer ?? "")}</p>`;
     } catch {
-      $("ask-status").textContent = "Not available here. Run the app locally (npm start) with Neo4j and a Gemini key to ask your own questions.";
+      $("ask-status").textContent = "Asking isn't available on this copy, so it only replays the recorded runs above.";
     } finally {
       btn.disabled = false;
     }

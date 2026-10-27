@@ -46,6 +46,11 @@ export const EMBED_MODEL = () => process.env.GEMINI_EMBEDDING_MODEL || "gemini-e
 export const usageLog: CallUsage[] = [];
 function record(u: CallUsage) {
   usageLog.push(u);
+  // On a serverless host the file system is read-only: log the usage instead.
+  if (process.env.VERCEL) {
+    console.log(JSON.stringify({ gemini: u }));
+    return;
+  }
   mkdirSync(join(ROOT, "runs"), { recursive: true });
   appendFileSync(join(ROOT, "runs", "ledger.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), ...u })}\n`);
 }
@@ -76,7 +81,7 @@ async function interact(step: string, label: string, body: Record<string, unknow
   const model = MODEL();
   const started = Date.now();
   const res = (await withRetry(() =>
-    ai().interactions.create({ model, store: false, ...body } as never, { timeout: 120_000, maxRetries: 2 }),
+    ai().interactions.create({ model, store: false, ...body } as never, { timeout: Number(process.env.GEMINI_TIMEOUT_MS) || 120_000, maxRetries: 2 }),
   )) as unknown as Interaction;
   if (res.status && res.status !== "completed") throw new Error(`Gemini interaction ended with status ${res.status}`);
   const input = res.usage?.total_input_tokens ?? 0;

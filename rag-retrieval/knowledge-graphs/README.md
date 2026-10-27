@@ -414,7 +414,7 @@ A single page, in this order:
 
 Everything on the page is a recorded run, labelled *measured*; the documents, questions, gold answers and the person's review are labelled as hand-written. The page calls no model.
 
-**Ask your own question.** Run locally with Neo4j and a Gemini key, the panel under the results sends your question to `POST /api/ask`: Gemini writes Cypher, the guard checks it, Neo4j runs it read-only with a timeout, and you see the query, the rows and the answer. The endpoint ([`src/ask-endpoint.ts`](src/ask-endpoint.ts)) limits question length, rate-limits each client by a salted hash of its address (20 per hour by default), and is a Web-standard handler that [`api/ask.ts`](api/ask.ts) exposes as a Vercel function. **It is not deployed:** the static export has no `/api/ask`, so a published copy only replays the recorded runs and the panel says so.
+**Ask your own question.** The panel under the results sends your question to `POST /api/ask`: Gemini writes Cypher, the guard checks it, Neo4j runs it read-only with a timeout, and you see the query, the rows and the answer. The endpoint ([`src/ask-endpoint.ts`](src/ask-endpoint.ts)) is a Web-standard handler that runs in the local server and, through [`api/ask.ts`](api/ask.ts), as a Vercel function. It needs Neo4j and a Gemini key on the server; without them it answers 503 and the page says it only replays the recorded runs. See [Limits on asking](#limits-on-asking).
 
 ## Run it
 
@@ -425,23 +425,23 @@ npm ci
 npm start          # builds the app and serves it on http://127.0.0.1:4332 (PORT and HOST to change)
 npm test           # schema, quotes, resolution, guard, scoring, app/results agreement, anchors; offline
 npm run check      # TypeScript type check
-npm run export     # static copy in dist/ (no /api/ask)
+npm run export     # deployable copy in dist/: the static page plus api/ask.js, bundled
 ```
 
-**Replay needs no keys and no database.** The recorded results in `results/` are bundled into the page. Review hooks: `?only=<section id>` shows one section, `?scene=<n>` opens a walkthrough scene, `&t=<ms>` freezes it at that time, `&speed=0.5` and `&theme=dark`.
+**Viewing needs only `npm start`: no keys and no database.** The recorded results in `results/` are bundled into the page. Review hooks: `?only=<section id>` shows one section, `?scene=<n>` opens a walkthrough scene, `&t=<ms>` freezes it at that time, `&speed=0.5` and `&theme=dark`.
 
-### Live: Neo4j, Gemini and the pipeline
+### Asking and re-running: Neo4j and Gemini
 
-Requirements: Docker, and a Gemini API key for the paid steps.
+Asking your own question, or re-running the pipeline, needs Neo4j (Docker locally, or AuraDB Free) and a Gemini API key.
 
 ```sh
 cp .env.example .env               # set GEMINI_API_KEY and a NEO4J_PASSWORD of your choice
 docker compose up -d               # Neo4j 2026.09.0 Community on 127.0.0.1:7474 and :7687
-npm run pipeline -- load           # free: builds the graph from results/ and loads it into Neo4j
+npm run pipeline -- load           # free, no model calls: loads results/graph.json into Neo4j
 npm start                          # the "Ask your own question" panel now works (paid per question)
 ```
 
-Neo4j listens on localhost only, with a 10-second transaction timeout. Switching to Neo4j AuraDB means changing the three `NEO4J_*` values. Stop it with `docker compose down`; add `-v` to delete its data volume.
+Neo4j listens on localhost only, with a 10-second transaction timeout. Switching to Neo4j AuraDB means changing the three `NEO4J_*` values. `load` replaces the `:Entity` nodes only, so running it twice gives the same graph and keeps the `:AskLog` rate-limit counts; `load --rebuild` first rebuilds `results/graph.json` from the recorded extraction and resolution, offline. Stop it with `docker compose down`; add `-v` to delete its data volume.
 
 The pipeline steps are dry runs unless given `--live`. Costs are what these steps cost us:
 
@@ -454,9 +454,53 @@ The pipeline steps are dry runs unless given `--live`. Costs are what these step
 | `npm run pipeline -- ask --live` | about 85 (needs Neo4j) | about $0.08 |
 | `npm run pipeline -- costs` or `site`, `npm run report` | 0 | free |
 | `node --import=tsx scripts/query-example.ts --live` | 2 or 3 (needs Neo4j) | $0.0015 |
-| One question in the Ask panel | 2 or 3 | about $0.002 |
+| One question in the Ask panel | 2, or 3 with a repair | about $0.0026, or $0.0045 (estimate) |
 
-Each call has a timeout and at most two retries. Raw responses and the ledger go to the Git-ignored `runs/`; cleaned results to `results/`. Model output varies between runs, so a new run will not reproduce these numbers exactly; the variation section above shows by how much.
+Each call has a timeout and at most two retries.
+
+### Limits on asking
+
+Every question costs model calls, so the endpoint limits them:
+
+| Limit | Default | Set with |
+| --- | --- | --- |
+| Questions per client per hour (salted hash of the IP address) | 5 | `ASK_LIMIT_IP_PER_HOUR` (0 turns it off) |
+| Questions per day, everyone together (rolling 24 hours) | 300 | `ASK_LIMIT_PER_DAY` (0 turns it off) |
+| Question length | 8 to 300 characters | fixed |
+| Neo4j query timeout | 5 s | `ASK_QUERY_TIMEOUT_MS` |
+| Whole request | 25 s | `ASK_DEADLINE_MS` |
+| Each Gemini call | 120 s | `GEMINI_TIMEOUT_MS` (20000 recommended when deployed) |
+
+Over a limit, the endpoint answers 429 with a plain message. The counts are `(:AskLog {ipHash, at})` nodes in Neo4j itself, so they hold across serverless instances. Server code writes them in its own write transaction ([`src/pipeline/ask-log.ts`](src/pipeline/ask-log.ts)) and deletes entries older than a day. Model-written Cypher can't reach them: the AskLog label is not in the prompt, the guard refuses any query that mentions `AskLog` or `ipHash`, and rows carrying an `ipHash` are dropped. The address is stored only as a SHA-256 hash with `RATE_LIMIT_SALT`.
+
+**Cost per question.** From `results/costs.json`, a text-to-Cypher call averaged $0.0020 and an answer $0.0006, so a question costs about $0.0026, or $0.0045 when the query needs a repair. These are estimates from the recorded runs, not a bill. At the default daily limit of 300 questions, that is at most about $0.77 to $1.36 a day.
+
+## Deploy
+
+The deployable copy is `dist/`: the static page, and `api/ask.js`, the ask function bundled by `npm run export` with everything it imports, including `results/graph.json` for the entity names in the prompt. It needs no install or build step on Vercel, and none of the Git-ignored files. `dist/vercel.json` gives the function 30 seconds and 1 GB.
+
+1. **Create a Neo4j AuraDB Free instance** at [console.neo4j.io](https://console.neo4j.io), and save the connection URI (`neo4j+s://<id>.databases.neo4j.io`), username and password it shows once.
+2. **Load the graph into it** (free, no model calls): put the three values in `.env` as `NEO4J_URI`, `NEO4J_USERNAME` and `NEO4J_PASSWORD`, then run `npm run pipeline -- load`.
+3. **Build and deploy from `dist/`:**
+
+```sh
+npm run export
+cd dist
+vercel link                      # once: creates dist/.vercel, which later exports keep
+vercel env add GEMINI_API_KEY production
+vercel env add NEO4J_URI production
+vercel env add NEO4J_USERNAME production
+vercel env add NEO4J_PASSWORD production
+vercel env add RATE_LIMIT_SALT production
+vercel env add ASK_LIMIT_IP_PER_HOUR production      # e.g. 5
+vercel env add ASK_LIMIT_PER_DAY production          # e.g. 300
+vercel env add GEMINI_TIMEOUT_MS production          # optional, e.g. 20000
+vercel deploy --prod
+```
+
+Without the environment variables the function answers 503, and the page replays the recorded runs only. `npx vercel build` in a linked `dist/` builds the static files and one Node function (`api/ask`, 30 s, 1024 MB) without deploying.
+
+**AuraDB Free pauses when idle.** Neo4j's docs: free instances "are paused automatically after 72 hours of inactivity", and one that "remains paused for more than 30 days" is deleted. While it is paused, the endpoint answers 503 ("can't reach its database") and the page still replays the recorded runs. Resume it from the console, then run `npm run pipeline -- load` again if it was deleted and recreated. Raw responses and the ledger go to the Git-ignored `runs/`; cleaned results to `results/`. Model output varies between runs, so a new run will not reproduce these numbers exactly; the variation section above shows by how much.
 
 ### Layout
 
@@ -469,7 +513,7 @@ Each call has a timeout and at most two retries. Raw responses and the ledger go
 | `src/pipeline/` | Gemini calls and the cost ledger, extraction, resolution, Neo4j, questions |
 | `client/` | The page (TypeScript and Tailwind CSS v4): `sections.ts`, `walkthrough.ts`, `graph-svg.ts`, `clock.ts` |
 | `scripts/` | Pipeline, local server, static export, article rendering, gold checks, report |
-| `api/ask.ts` | The Vercel function for the ask endpoint (not deployed) |
+| `api/ask.ts` | The Vercel function for the ask endpoint, bundled into `dist/api/ask.js` by `npm run export` |
 | `tests/` | Node's built-in test runner |
 
 ## Limitations
@@ -478,8 +522,8 @@ Each call has a timeout and at most two retries. Raw responses and the ledger go
 - **A small, constructed corpus.** The documents were written to contain multi-hop questions, aliases and changing facts. Real corpora are larger and messier, and the margins between methods will differ.
 - **One reviewer.** The person's decisions and the extraction review were made by the author, who also wrote the gold answers.
 - **Scoring is string-based.** A fact counts when its value appears in the context. A paraphrase can be missed, and the global question relies on an LLM judge.
-- **The guard is a teaching guard.** It checks the query text with rules; locally the app connects as the `neo4j` admin user, because Community Edition has no `reader` role. Use a read-only user in production.
-- **The in-memory rate limit** is per server instance; a deployment needs a shared store.
+- **The guard is a teaching guard.** It checks the query text with rules; the app connects as the database's admin user, because Community Edition and AuraDB Free have no `reader` role. On a plan that has one, connect the ask endpoint as a read-only user.
+- **The rate limit is approximate under load.** Two requests arriving at once can both pass the check before either is recorded, so the limits can be exceeded by a few.
 - **No chunking of long documents.** Each document fits in one extraction call.
 
 ## What we verified and what we did not
@@ -488,7 +532,7 @@ Each call has a timeout and at most two retries. Raw responses and the ledger go
 - `npm test`, `npm run check` and `npm run export` pass; the tests check that the page's numbers agree with the recorded results.
 - SDK calls were checked against the current documentation: Gemini Interactions API structured output and embeddings, the Neo4j JavaScript driver's `executeRead` with a timeout, Vercel Node functions.
 - The query example (`scripts/query-example.ts`) was run live on 2026-10-27 through the same text-to-Cypher and answer code.
-- The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). It was not deployed.
+- The ask endpoint was run locally against Neo4j, including a question asking it to delete data (Gemini wrote a read-only count instead). The bundled `dist/api/ask.js` was run outside the repository against local Neo4j (a question answered, the next from the same client refused with 429, `:AskLog` kept through two reloads), and `vercel build` built it as a Node function. It has not been deployed.
 
 ## Sources
 
