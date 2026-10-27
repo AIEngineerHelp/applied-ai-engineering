@@ -1,6 +1,6 @@
-// The page: an opening shot, then a stage with three chapters (extract,
-// merge, ask). The graph is drawn on a fixed canvas by engine.ts; scenes.ts
-// stages each chapter as a timeline; src/ computes everything shown.
+// The page: an opening, then a stage with three chapters (extract, merge,
+// ask). engine.ts draws the graph; scenes.ts stages each chapter as a
+// timeline; src/ computes everything that is shown.
 //
 // URL hooks: ?scene=hero|extract|merge|ask, &doc=<id>, &q=<id>, &k=3|5,
 // &t=<seconds> freezes the scene at that moment (for screenshots),
@@ -11,14 +11,16 @@ import { buildGraph, sentence, type Hop } from "../src/graph.ts";
 import { chunkDocuments, docText, TfIdfIndex } from "../src/retrieve.ts";
 import { compare } from "../src/compare.ts";
 import { pieces } from "../src/spans.ts";
+import { ENTITY_TYPES } from "../src/schema.ts";
 import LAYOUT from "../data/layout.json" with { type: "json" };
-import { Engine, HOME, type Rect } from "./engine.ts";
+import { Engine, HOME, SHAPES, type Palette, type Rect } from "./engine.ts";
 import { askScene, extractScene, heroScene, litBy, mergeScene, type Scene } from "./scenes.ts";
-import { Sequence, ease, span } from "./timeline.ts";
+import { Sequence } from "./timeline.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const layout = LAYOUT as Record<string, number[]>;
+const glyph = (type: string) => SHAPES[type]?.glyph ?? "●";
 
 const graph = buildGraph(EXTRACTIONS);
 const index = new TfIdfIndex(chunkDocuments(DOCUMENTS));
@@ -42,40 +44,38 @@ const state = {
 };
 
 const engine = new Engine($("back") as HTMLCanvasElement, $("front") as HTMLCanvasElement, graph, layout);
-engine.dark = document.documentElement.dataset.theme !== "light";
 engine.reduced = reduced;
 engine.frozen = tParam !== null;
+function readPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (n: string) => cs.getPropertyValue(n).trim();
+  engine.palette = { paper: v("--paper"), ink: v("--ink"), grey: v("--grey"), faint: v("--faint"), rule: v("--rule"), accent: v("--accent") } as Palette;
+}
+readPalette();
 
 const frozenFor = (scene: string) => (tParam !== null && sceneParam === scene ? tParam : null);
 const start = (s: Scene) => {
   if (reduced && tParam === null) s.seq.skip();
   return s;
 };
-
-let hero = start(heroScene(graph, engine, layout, frozenFor("hero")));
+let hero = start(heroScene(graph, layout, frozenFor("hero")));
 let stage: Scene = idle();
 
 function idle(): Scene {
-  const seq = new Sequence(0, [{ at: 0, caption: "" }]);
   return {
-    seq,
+    seq: new Sequence(0, [{ at: 0, caption: "" }]),
     frame: () => {
       const { nodes, edges } = litBy(graph, state.added);
-      return {
-        nodes: new Map([...nodes].map((id) => [id, { lit: 1 }])),
-        edges: new Map([...edges].map((id) => [id, { draw: 1 }])),
-        ghost: 0.55,
-        labels: [],
-        flashes: [],
-        camera: { ...HOME },
-      };
+      return { nodes: new Map([...nodes].map((id) => [id, { lit: 1 }])), edges: new Map([...edges].map((id) => [id, { draw: 1 }])), ghost: 1, labels: [], camera: { ...HOME } };
     },
   };
 }
 
+$("legend").innerHTML = ENTITY_TYPES.map((t) => `<li><b>${glyph(t)}</b>${t}</li>`).join("");
+
 // --- Chapters ------------------------------------------------------------------
 
-function setChapter(c: Chapter, opts: { scroll?: boolean; play?: boolean } = {}) {
+function setChapter(c: Chapter, opts: { scroll?: boolean } = {}) {
   state.chapter = c;
   document.querySelectorAll<HTMLElement>("[data-chapter]").forEach((b) => b.setAttribute("aria-current", String(b.dataset.chapter === c)));
   engine.userCamera = null;
@@ -86,35 +86,37 @@ function setChapter(c: Chapter, opts: { scroll?: boolean; play?: boolean } = {})
   if (opts.scroll) $("stage").scrollIntoView({ behavior: reduced || tParam !== null ? "auto" : "smooth" });
 }
 
-// --- 01 Extract ----------------------------------------------------------------
+// --- 1 Extract -------------------------------------------------------------------
 
 function renderExtract() {
-  const p = $("panel");
-  p.innerHTML = `
-    <div class="flex items-center gap-2"><span class="eyebrow">Chapter 01</span><span class="tag">extraction: fixture</span></div>
+  $("panel").innerHTML = `
+    <p class="kicker">Chapter 1</p>
     <h2 class="scene-title mt-2">Extract</h2>
-    <p class="scene-lede">Pick a document. The extractor marks its entities, then each one flies into the graph. Names it has seen before fuse with their node.</p>
-    <div id="docs" class="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3"></div>
-    <article id="doc" class="doc mt-6"></article>
-    <div class="mt-5"><p class="mb-1 font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Relations</p><ul id="rels"></ul></div>
-    <div id="fusions" class="mt-4"></div>
-    <div class="mt-7 flex flex-wrap gap-3"><button id="next-doc" type="button" class="cta"></button></div>`;
+    <p class="scene-lede">Pick a document. The extractor marks the entities in it, and each one becomes a node. A name it has seen before in another form joins that node.</p>
+    <p class="note mt-2">Extraction results are hand-written fixtures in the format an LLM returns.</p>
+    <div id="docs" class="doclist"></div>
+    <article id="doc" class="doc mt-7"></article>
+    <div class="mt-6"><p class="label">Relations</p><ul id="rels"></ul></div>
+    <div id="fusions" class="mt-5"></div>
+    <div class="mt-8"><button id="next-doc" type="button" class="btn-ink"></button></div>`;
   renderDocButtons();
   playDoc(state.doc);
   $("next-doc").addEventListener("click", () => {
     const next = DOCUMENTS.find((d) => !state.added.includes(d.id));
     if (next) playDoc(next.id);
-    else setChapter("merge", { play: true });
+    else setChapter("merge");
   });
 }
 
 function renderDocButtons() {
-  $("docs").innerHTML = DOCUMENTS.map(
-    (d) => `<button type="button" class="chip-btn" data-doc="${d.id}" aria-pressed="${d.id === state.doc}">${state.added.includes(d.id) ? '<i class="done"></i>' : ""}<span class="k">${esc(d.kind)}</span><span class="n">${esc(d.title)}</span></button>`,
+  const docs = document.getElementById("docs");
+  if (!docs) return;
+  docs.innerHTML = DOCUMENTS.map(
+    (d) => `<button type="button" class="docrow" data-doc="${d.id}" aria-pressed="${d.id === state.doc}"><span class="kind">${esc(d.kind)}</span><span>${esc(d.title)}</span>${state.added.includes(d.id) ? '<span class="done">read</span>' : ""}</button>`,
   ).join("");
   const next = DOCUMENTS.find((d) => !state.added.includes(d.id));
   const btn = document.getElementById("next-doc");
-  if (btn) btn.innerHTML = next ? `Next: ${esc(next.title)} <span aria-hidden="true">→</span>` : `Continue: resolve every name <span aria-hidden="true">→</span>`;
+  if (btn) btn.textContent = next ? `Next: ${next.title}` : "Continue to Merge";
 }
 
 function playDoc(docId: string) {
@@ -124,87 +126,88 @@ function playDoc(docId: string) {
   const doc = DOCUMENTS.find((d) => d.id === docId)!;
   const x = EXTRACTIONS.find((e) => e.document === docId)!;
   const types = new Map(x.entities.map((e) => [e.name, e.type]));
-
-  // The document, one element per paragraph, mentions wrapped.
   const html = pieces(docText(doc), x)
     .map((pc) => {
       const t = esc(pc.text).replace(/\n\n/g, "</p><p>");
-      return pc.entity ? `<span class="ent" data-name="${esc(pc.entity)}" data-type="${types.get(pc.entity)}">${t}</span>` : t;
+      return pc.entity ? `<span class="ent" data-name="${esc(pc.entity)}" data-glyph="${glyph(types.get(pc.entity)!)}">${t}</span>` : t;
     })
     .join("");
-  $("doc").innerHTML = `<p class="!opacity-100 !transform-none !filter-none font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">${esc(doc.kind)}</p>
-    <h3 class="display mt-1 text-[26px] leading-tight !opacity-100">${esc(doc.title)}</h3>
-    <div class="mt-3 space-y-3 text-[15px] leading-[1.75] text-[var(--ink)]"><p>${html}</p></div>`;
+  $("doc").innerHTML = `<p class="!opacity-100 text-[11.5px] text-[var(--faint)]">${esc(doc.kind)}</p>
+    <h3 class="serif mt-1 text-[22px] leading-snug">${esc(doc.title)}</h3>
+    <div class="body mt-3 space-y-3 text-[15px] leading-[1.75] text-[var(--ink-2)]"><p>${html}</p></div>`;
+  const ename = (n: string) => `<span class="ename text-[var(--ink)]" data-glyph="${glyph(types.get(n)!)}">${esc(n)}</span>`;
   $("rels").innerHTML = x.relations
-    .map(
-      (r) => `<li class="rel"><span class="pill" data-type="${types.get(r.source)}">${esc(r.source)}</span><span class="rtype">─${r.type}→</span><span class="pill" data-type="${types.get(r.target)}">${esc(r.target)}</span>${r.properties ? `<span class="font-mono text-[10.5px] text-[var(--faint)]">{${esc(Object.entries(r.properties).map(([k, v]) => `${k}: ${v}`).join(", "))}}</span>` : ""}</li>`,
-    )
+    .map((r) => `<li class="rel">${ename(r.source)}<span class="rtype">${r.type}</span>${ename(r.target)}${r.properties ? `<span class="rtype">{${esc(Object.entries(r.properties).map(([k, v]) => `${k}: ${v}`).join(", "))}}</span>` : ""}</li>`)
     .join("");
-
-  const paras = () => [...$("doc").querySelectorAll<HTMLElement>(".space-y-3 > p")];
+  const paras = () => [...$("doc").querySelectorAll<HTMLElement>(".body > p")];
   const spans = new Map<string, HTMLElement[]>();
   $("doc").querySelectorAll<HTMLElement>(".ent").forEach((s) => spans.set(s.dataset.name!, [...(spans.get(s.dataset.name!) ?? []), s]));
-  const scene = extractScene(graph, engine, docId, prior, {
-    spanRect: (n) => spans.get(n)?.[0]?.getBoundingClientRect() ?? null,
-    setSpanState: (n, st) => spans.get(n)?.forEach((s) => s.className = `ent ${st === "idle" ? "" : st}`),
-    setParagraphs: (v) => paras().forEach((p, i) => p.classList.toggle("in", i < v)),
-    setRelations: (v) => $("rels").querySelectorAll("li").forEach((li, i) => li.classList.toggle("in", i < v)),
-  }, frozenFor("extract"));
+  const scene = extractScene(
+    graph,
+    engine,
+    docId,
+    prior,
+    {
+      spanRect: (n) => spans.get(n)?.[0]?.getBoundingClientRect() ?? null,
+      setSpanState: (n, st) => spans.get(n)?.forEach((s) => (s.className = `ent ${st === "idle" ? "" : st}`)),
+      setParagraphs: (v) => paras().forEach((p, i) => p.classList.toggle("in", i < v)),
+      setRelations: (v) => $("rels").querySelectorAll("li").forEach((li, i) => li.classList.toggle("in", i < v)),
+    },
+    frozenFor("extract"),
+  );
   $("fusions").innerHTML = scene.fusions.length
-    ? `<p class="mb-2 font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Entity resolution <span class="tag tag-live ml-1">computed</span></p>` +
-      scene.fusions.map((f) => `<p class="flex flex-wrap items-center gap-1.5 py-0.5 text-[12.5px]"><span class="pill" data-type="${types.get(f.alias)}">${esc(f.alias)}</span><span class="text-[var(--faint)]">fuses with</span><span class="pill" data-type="${types.get(f.alias)}">${esc(f.canonical)}</span><span class="text-[11.5px] text-[var(--faint)]">${f.reason}</span></p>`).join("")
+    ? `<p class="label">Entity resolution</p>` +
+      scene.fusions.map((f) => `<p class="py-0.5 text-[12.5px] text-[var(--ink-2)]">${ename(f.alias)} <span class="text-[var(--faint)]">→</span> <span class="text-[var(--ink)]">${esc(f.canonical)}</span> <span class="note">· ${f.reason}</span></p>`).join("") +
+      `<p class="note mt-1">Resolution is computed by src/resolve.ts.</p>`
     : "";
   stage = start(scene);
   renderDocButtons();
 }
 
-// --- 02 Merge ----------------------------------------------------------------------
+// --- 2 Merge ---------------------------------------------------------------------
 
 function renderMerge() {
   const groups = [...graph.nodes.values()].filter((e) => e.aliases.length);
   const names = EXTRACTIONS.reduce((s, x) => s + x.entities.length, 0);
   const rels = EXTRACTIONS.reduce((s, x) => s + x.relations.length, 0);
   $("panel").innerHTML = `
-    <div class="flex items-center gap-2"><span class="eyebrow">Chapter 02</span><span class="tag tag-live">computed</span></div>
+    <p class="kicker">Chapter 2</p>
     <h2 class="scene-title mt-2">Merge</h2>
-    <p class="scene-lede">The extractor reads one document at a time, so the same supplier comes back as “Varnell Semi”, “Varnell” and “Varnell Semiconductor”. Entity resolution fuses names of the same type that are equal after normalizing, or where each word of the short name starts the matching word of the long one. Numbers must match exactly, and a name that could fit two entities is left alone.</p>
-    <div class="mt-6 grid grid-cols-2 gap-3">
-      <div class="score !px-0"><p class="lbl">Names → entities</p><p class="num">${names}<small> → </small>${graph.nodes.size}</p></div>
-      <div class="score !px-0"><p class="lbl">Relations → edges</p><p class="num">${rels}<small> → </small>${graph.edges.length}</p></div>
-    </div>
-    <ul class="mt-5 grid gap-2.5">${groups
-      .map(
-        (g) => `<li class="flex flex-wrap items-center gap-1.5 text-[13px]">${g.aliases.map((a) => `<span class="pill" data-type="${g.type}">${esc(a)}</span>`).join("")}<span class="text-[var(--faint)]">→</span><span class="pill" data-type="${g.type}">${esc(g.name)}</span><span class="text-[11.5px] text-[var(--faint)]">${g.merges[0].reason}</span></li>`,
-      )
+    <p class="scene-lede">The extractor reads one document at a time, so one supplier comes back as “Varnell Semi”, “Varnell” and “Varnell Semiconductor”. Entity resolution merges names of the same type that are equal after normalizing, or where each word of the shorter name starts the matching word of the longer one. Numbers must match exactly, and a name that could fit two entities is left alone.</p>
+    <dl class="mt-7 grid grid-cols-2 border-y border-[var(--rule)] py-4">
+      <div><dt class="label !mb-1">Names → entities</dt><dd class="serif text-[28px]">${names} → ${graph.nodes.size}</dd></div>
+      <div><dt class="label !mb-1">Relations → edges</dt><dd class="serif text-[28px]">${rels} → ${graph.edges.length}</dd></div>
+    </dl>
+    <ul class="mt-5 grid gap-2">${groups
+      .map((g) => `<li class="text-[13px] text-[var(--ink-2)]">${g.aliases.map((a) => `“${esc(a)}”`).join(", ")} <span class="text-[var(--faint)]">→</span> <span class="text-[var(--ink)]">${glyph(g.type)} ${esc(g.name)}</span> <span class="note">· ${g.merges[0].reason}</span></li>`)
       .join("")}</ul>
-    <p class="mt-5 text-[13px] leading-relaxed text-[var(--muted)]">Two relations were stated in two documents each (the Hardware team owns the Borealis design; Tomas Berg, also written “T. Berg”, leads the Hardware team). Each became one edge with two pieces of evidence.</p>
-    <div class="mt-7"><button id="to-ask" type="button" class="cta">Continue: ask a question <span aria-hidden="true">→</span></button></div>`;
+    <p class="mt-5 text-[13px] leading-relaxed text-[var(--grey)]">Two relations were stated in two documents each, so each became one edge with two pieces of evidence.</p>
+    <p class="note mt-2">All of this is computed by src/resolve.ts and src/graph.ts.</p>
+    <div class="mt-8"><button id="to-ask" type="button" class="btn-ink">Continue to Ask</button></div>`;
   $("to-ask").addEventListener("click", () => setChapter("ask"));
   state.added = DOCUMENTS.map((d) => d.id);
   stage = start(mergeScene(graph, engine, layout, frozenFor("merge")));
 }
 
-// --- 03 Ask ----------------------------------------------------------------------
+// --- 3 Ask --------------------------------------------------------------------------
 
 function renderAsk() {
   state.added = DOCUMENTS.map((d) => d.id);
   $("panel").innerHTML = `
-    <div class="flex items-center gap-2"><span class="eyebrow">Chapter 03</span></div>
+    <p class="kicker">Chapter 3</p>
     <h2 class="scene-title mt-2">Ask</h2>
-    <p class="scene-lede">Pick a question. The graph follows relations from the entity it names; chunk search returns the most similar passages.</p>
-    <div id="qs" class="mt-4 grid gap-1.5 xl:grid-cols-2"></div>
-    <div class="mt-6"><p class="mb-2 flex items-center gap-2 font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Graph traversal <span class="tag tag-live">computed</span></p><ol id="hops" class="hops"></ol></div>
-    <div class="mt-6 flex items-center justify-between gap-3">
-      <p class="font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">Chunk search · TF-IDF</p>
+    <p class="scene-lede">Pick a question. The graph follows relations from the entity it names; chunk search returns the passages most similar to it.</p>
+    <div id="qs" class="mt-5 border-t border-[var(--rule)]"></div>
+    <div class="mt-7"><p class="label">Graph traversal</p><ol id="hops"></ol><p class="note mt-1">The query is scripted; running it is computed.</p></div>
+    <div class="mt-7 flex items-baseline justify-between gap-3">
+      <p class="label">Chunk search · TF-IDF</p>
       <div id="k" role="radiogroup" aria-label="Chunks returned" class="seg-group">
-        <button type="button" role="radio" data-k="3" aria-checked="${state.k === 3}" class="seg">Top 3</button>
-        <button type="button" role="radio" data-k="5" aria-checked="${state.k === 5}" class="seg">Top 5</button>
+        <button type="button" role="radio" data-k="3" aria-checked="${state.k === 3}" class="seg">top 3</button>
+        <button type="button" role="radio" data-k="5" aria-checked="${state.k === 5}" class="seg">top 5</button>
       </div>
     </div>
-    <ol id="passages" class="mt-3 grid gap-2"></ol>
-    <p class="mt-6 mb-2 font-mono text-[10.5px] tracking-wider text-[var(--faint)] uppercase">What the answer needs</p>
-    <ul id="facts" class="grid gap-1.5"></ul>
-    <details class="mt-5 rounded-xl p-3 text-[12.5px] [box-shadow:0_0_0_1px_var(--line)]"><summary class="cursor-pointer text-[var(--muted)]">The graph query <span class="tag ml-1">scripted</span></summary><pre id="cypher" class="mt-2 overflow-x-auto font-mono text-[11.5px] leading-relaxed text-[var(--muted)]"></pre></details>`;
+    <ol id="passages" class="border-t border-[var(--rule)]"></ol>
+    <div class="mt-7"><p class="label">What the answer needs</p><ul id="facts"></ul></div>`;
   $("k").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-k]");
     if (!b) return;
@@ -212,20 +215,21 @@ function renderAsk() {
     $("k").querySelectorAll("[data-k]").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
     playQuestion(state.question);
   });
+  $("passages").addEventListener("click", (e) => (e.target as HTMLElement).closest(".passage")?.classList.toggle("open"));
   renderQuestions();
   playQuestion(state.question);
 }
 
 function renderQuestions() {
   $("qs").innerHTML = QUESTIONS.map(
-    (q) => `<button type="button" class="chip-btn !py-2" data-q="${q.id}" aria-pressed="${q.id === state.question}"><span class="k">${esc(q.kind)}</span><span class="n !text-[12.5px] !font-normal">${esc(q.question)}</span></button>`,
+    (q) => `<button type="button" class="qrow" data-q="${q.id}" aria-pressed="${q.id === state.question}"><span class="kind">${esc(q.kind)}</span>${esc(q.question)}</button>`,
   ).join("");
 }
 
 function hopHtml(h: Hop, i: number) {
   const fwd = h.from === h.edge.source;
-  const pill = (id: string) => `<span class="pill" data-type="${typeOf(id)}">${esc(nameOf(id))}</span>`;
-  return `<li class="hop"><span class="hop-n">${i + 1}</span><span class="flex flex-wrap items-center gap-1">${pill(h.from)}<span class="rtype">${fwd ? `─${h.edge.type}→` : `←${h.edge.type}─`}</span>${pill(h.to)}</span></li>`;
+  const n = (id: string) => `<span class="text-[var(--ink)]">${glyph(typeOf(id))} ${esc(nameOf(id))}</span>`;
+  return `<li class="hop"><span class="hop-n">${i + 1}</span><span>${n(h.from)} <span class="rtype">${fwd ? `${h.edge.type} →` : `← ${h.edge.type}`}</span> ${n(h.to)}</span></li>`;
 }
 
 function playQuestion(id: string) {
@@ -236,81 +240,80 @@ function playQuestion(id: string) {
   const n = r.facts.length;
   const g = r.facts.filter((f) => f.byGraph).length;
   const c = r.facts.filter((f) => f.byChunks).length;
-  $("cypher").textContent = q.cypher;
 
+  $("hops").innerHTML = r.hops.map(hopHtml).join("");
   $("passages").innerHTML = r.hits
     .map((h, i) => {
       let text = esc(h.chunk.text);
-      for (const f of r.facts) if (text.includes(esc(f.evidence))) text = text.replace(esc(f.evidence), `<mark class="fact-hit">${esc(f.evidence)}</mark>`);
-      return `<li class="passage"><div class="mb-1 flex items-center justify-between gap-2 font-mono text-[10.5px] text-[var(--faint)]"><span>#${i + 1} · ${esc(h.chunk.title)} ¶${h.chunk.index}</span><span>${h.score.toFixed(3)}</span></div><p class="text-[13.5px] leading-relaxed text-[var(--muted)]">${text}</p></li>`;
+      for (const f of r.facts) if (text.includes(esc(f.evidence))) text = text.replace(esc(f.evidence), `<mark>${esc(f.evidence)}</mark>`);
+      return `<li><button type="button" class="passage"><span class="meta"><span>${i + 1}. ${esc(h.chunk.title)}, ¶${h.chunk.index}</span><span class="font-mono">${h.score.toFixed(3)}</span></span><span class="body">${text}</span></button></li>`;
     })
     .join("");
   $("facts").innerHTML = r.facts
     .map((f) => {
-      const where = index.chunks.find((x) => x.id === f.chunk)!;
-      const chunkSays = f.byChunks ? `chunk search: ranked ${f.rank}` : f.score ? `chunk search: ranked ${f.rank} of ${index.chunks.length}` : "chunk search: no shared words";
-      const graphSays = f.byGraph ? "graph: edge returned" : f.triple ? "graph: not on the path" : "graph: never extracted";
-      return `<li class="fact ${f.byChunks ? "hit" : "miss"}" data-graph="${f.byGraph}"><span class="dot"></span><span><span class="block font-medium ${f.byChunks ? "text-[var(--ink)]" : ""}">${esc(f.label)}</span><span class="font-mono text-[10.5px] text-[var(--faint)]">${esc(where.title)} ¶${where.index} · ${chunkSays} · ${graphSays}</span></span></li>`;
+      const how = f.byChunks ? `chunk search, rank ${f.rank}` : f.score ? `chunk search ranked it ${f.rank} of ${index.chunks.length}` : "no words in common with the question";
+      const graphHow = f.byGraph ? "graph: on the path" : f.triple ? "graph: not on the path" : "graph: never extracted";
+      return `<li class="fact ${f.byChunks ? "hit" : "miss"}"><span class="mk">${f.byChunks ? "✓" : "–"}</span><span>${esc(f.label)}<span class="note block">${how} · ${graphHow}</span></span></li>`;
     })
     .join("");
-
-  $("hops").innerHTML = r.hops.map(hopHtml).join("");
 
   const winner = r.verdict.winner;
   const gWin = winner === "graph" || winner === "both";
   const cWin = winner === "chunks" || winner === "both";
   $("faceoff").innerHTML = `
-    <div class="grid grid-cols-2">
-      <div class="score ${gWin ? "win" : "lose"}"><p class="lbl">Graph traversal</p><p class="num"><span data-count="${g}">0</span><small> / ${n}</small></p></div>
-      <div class="score ${cWin ? "win" : "lose"} [box-shadow:-1px_0_0_var(--line)]"><p class="lbl">Chunk search · top ${state.k}</p><p class="num"><span data-count="${c}">0</span><small> / ${n}</small></p></div>
+    <div class="grid grid-cols-2 border-b border-[var(--rule)]">
+      <div class="score ${gWin ? "win" : ""}"><p class="lbl">Graph traversal</p><p class="num">${g}<small> / ${n}</small></p></div>
+      <div class="score ${cWin ? "win" : ""} border-l border-[var(--rule)]"><p class="lbl">Chunk search, top ${state.k}</p><p class="num">${c}<small> / ${n}</small></p></div>
     </div>
-    <div class="px-4 pt-2.5 pb-3 [box-shadow:0_-1px_0_var(--line)] md:px-5 md:pt-3 md:pb-4">
-      <p class="text-[14.5px] font-semibold md:text-[15.5px]">${esc(r.verdict.headline)}</p>
-      <p class="mt-1 hidden text-[12.5px] leading-relaxed text-[var(--muted)] md:block">${esc(r.verdict.detail)}</p>
-      <p class="mt-1.5 hidden text-[12.5px] leading-relaxed md:block"><span class="text-[var(--faint)]">Correct answer:</span> ${esc(q.answer)}</p>
+    <div class="px-4 pt-3 pb-3.5 md:px-5">
+      <p class="text-[14px] font-medium text-[var(--ink)]">${esc(r.verdict.headline)}.</p>
+      <p class="mt-1 hidden text-[12.5px] leading-relaxed text-[var(--grey)] md:block">${esc(r.verdict.detail)}</p>
+      <p class="mt-1.5 hidden text-[12.5px] leading-relaxed text-[var(--ink-2)] md:block"><span class="text-[var(--grey)]">Correct answer:</span> ${esc(q.answer)}</p>
     </div>`;
 
-  const passages = [...$("passages").children] as HTMLElement[];
+  const passages = [...$("passages").querySelectorAll<HTMLElement>(".passage")];
   const facts = [...$("facts").children] as HTMLElement[];
-  const counts = [...$("faceoff").querySelectorAll<HTMLElement>("[data-count]")];
-  const scene = askScene(graph, engine, r, {
-    apply(t, times) {
-      passages.forEach((p, i) => p.classList.toggle("in", t >= 0.35 + i * 0.22));
-      $("hops").querySelectorAll(".hop").forEach((h, i) => h.classList.toggle("on", t >= times.hops[i] + 0.4));
-      facts.forEach((f, i) => f.classList.toggle("in", t >= times.verdict - 0.2 + i * 0.06));
-      const landed = t >= times.verdict;
-      const fo = $("faceoff");
-      if (landed !== fo.classList.contains("in")) fo.classList.toggle("in", landed);
-      const k = ease.out(span(t, times.verdict + 0.15, 0.8));
-      counts.forEach((el) => (el.textContent = String(Math.round(Number(el.dataset.count) * k))));
+  const scene = askScene(
+    graph,
+    engine,
+    r,
+    {
+      apply(t, times) {
+        passages.forEach((p, i) => p.classList.toggle("in", t >= 0.3 + i * 0.15));
+        $("hops").querySelectorAll(".hop").forEach((h, i) => h.classList.toggle("on", t >= times.hops[i] + 0.4));
+        facts.forEach((f) => f.classList.toggle("in", t >= times.verdict));
+        const fo = $("faceoff");
+        const landed = t >= times.verdict;
+        if (landed !== fo.classList.contains("in")) fo.classList.toggle("in", landed);
+      },
     },
-  }, frozenFor("ask"));
+    frozenFor("ask"),
+  );
   stage = start(scene);
 }
 
-// --- Frame loop -------------------------------------------------------------------
+// --- Frame loop ---------------------------------------------------------------------
 
 const rectOf = (el: HTMLElement): Rect => {
   const r = el.getBoundingClientRect();
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 };
 /**
- * The part of the graph's slot that no overlay covers: below the scene
+ * The part of the graph's slot that no overlay covers: below the legend and
  * controls, and above the caption, or above the verdict once it has landed.
- * The engine fits the graph into this rectangle, so overlays never hide it.
+ * The engine fits and clips the graph to this rectangle.
  */
 function clearArea(): Rect {
   const slot = $("slot").getBoundingClientRect();
-  const controls = $("controls").getBoundingClientRect();
+  const top = $("toprow").getBoundingClientRect();
   const faceoff = $("faceoff");
   const below = faceoff.classList.contains("in") ? faceoff.getBoundingClientRect() : $("caption").getBoundingClientRect();
-  const top = Math.max(slot.top, controls.bottom + 8);
-  const bottom = Math.min(slot.bottom, (below.height ? below.top : slot.bottom - 56) - 8);
-  return { x: slot.left, y: top, w: slot.width, h: Math.max(120, bottom - top) };
+  const y0 = Math.max(slot.top, top.bottom + 10);
+  const y1 = Math.min(slot.bottom, (below.height ? below.top : slot.bottom - 56) - 10);
+  return { x: slot.left + 8, y: y0, w: slot.width - 16, h: Math.max(120, y1 - y0) };
 }
 let lastCaption = "";
 let lastHeroCaption = "";
-
 function setCaption(el: HTMLElement, text: string, last: string) {
   if (text === last) return last;
   el.textContent = text;
@@ -332,15 +335,13 @@ function loop() {
   const verdictShown = state.chapter === "ask" && $("faceoff").classList.contains("in");
   lastCaption = setCaption($("caption"), verdictShown ? "" : stage.seq.caption, lastCaption);
   $("controls").classList.toggle("paused", !stage.seq.playing);
-  ($("progress-bar") as HTMLElement).style.width = `${stage.seq.duration ? (stage.seq.t / stage.seq.duration) * 100 : 100}%`;
+  $("progress-bar").style.width = `${stage.seq.duration ? (stage.seq.t / stage.seq.duration) * 100 : 100}%`;
   requestAnimationFrame(loop);
 }
 
-// --- Interaction -----------------------------------------------------------------
+// --- Interaction --------------------------------------------------------------------
 
-$("cta").addEventListener("click", () => {
-  setChapter("extract", { scroll: true });
-});
+$("cta").addEventListener("click", () => setChapter("extract", { scroll: true }));
 $("skip").addEventListener("click", () => setChapter("ask", { scroll: true }));
 $("chapters").addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest<HTMLElement>("[data-chapter]");
@@ -376,10 +377,9 @@ addEventListener("keydown", (e) => {
   else if (e.key === "ArrowLeft") stage.seq.prev();
 });
 
-// Pan, zoom and inspect the graph.
 const slot = $("slot");
-let drag: { x: number; y: number; cx: number; cy: number } | null = null;
 const tip = $("tip");
+let drag: { x: number; y: number; cx: number; cy: number } | null = null;
 function showTip(id: string | null, x = 0, y = 0) {
   engine.hover = id;
   if (!id) {
@@ -388,14 +388,13 @@ function showTip(id: string | null, x = 0, y = 0) {
   }
   const e = graph.nodes.get(id)!;
   const docs = [...new Set(e.mentions.map((m) => m.document))];
-  const deg = graph.edges.filter((x) => x.source === id || x.target === id);
-  const props = Object.entries(e.properties);
-  tip.innerHTML = `<p class="flex items-center gap-2"><span class="pill" data-type="${e.type}">${esc(e.name)}</span><span class="text-[11px] text-[var(--faint)]">${e.type}</span></p>
-    ${e.aliases.length ? `<p class="mt-1.5 text-[var(--muted)]">Also written ${e.aliases.map((a) => `“${esc(a)}”`).join(", ")}</p>` : ""}
-    <p class="mt-1 text-[var(--muted)]">${deg.map((d) => esc(sentence(graph, d))).join(" · ")}</p>
-    <p class="mt-1 text-[11px] text-[var(--faint)]">From ${docs.map((d) => esc(titleOf(d))).join(", ")}${props.length ? ` · ${esc(props.map(([k, v]) => `${k}: ${v}`).join(", "))}` : ""}</p>`;
-  tip.style.left = `${Math.min(innerWidth - 300, x + 16)}px`;
-  tip.style.top = `${Math.min(innerHeight - 140, y + 16)}px`;
+  const rel = graph.edges.filter((x) => x.source === id || x.target === id);
+  tip.innerHTML = `<p class="text-[var(--ink)]"><span class="font-medium">${glyph(e.type)} ${esc(e.name)}</span> <span class="text-[var(--faint)]">${e.type}</span></p>
+    ${e.aliases.length ? `<p class="mt-1">Also written ${e.aliases.map((a) => `“${esc(a)}”`).join(", ")}</p>` : ""}
+    <p class="mt-1">${rel.map((d) => esc(sentence(graph, d))).join(" · ")}</p>
+    <p class="note mt-1">From ${docs.map((d) => esc(titleOf(d))).join(", ")}</p>`;
+  tip.style.left = `${Math.min(innerWidth - 300, x + 14)}px`;
+  tip.style.top = `${Math.min(innerHeight - 140, y + 14)}px`;
   tip.classList.add("on");
 }
 slot.addEventListener("pointermove", (e) => {
@@ -412,7 +411,6 @@ slot.addEventListener("pointerleave", () => showTip(null));
 slot.addEventListener("pointerdown", (e) => {
   const id = engine.hit(e.clientX, e.clientY);
   if (id) {
-    engine.userCamera = engine.fit([id, ...graph.edges.filter((x) => x.source === id || x.target === id).flatMap((x) => [x.source, x.target])], 1.8);
     showTip(id, e.clientX, e.clientY);
     return;
   }
@@ -423,25 +421,24 @@ slot.addEventListener("pointerup", () => (drag = null));
 slot.addEventListener(
   "wheel",
   (e) => {
-    if (!e.ctrlKey && !e.metaKey) return; // plain scrolling still scrolls the page
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     const c = engine.userCamera ?? engine.camera;
-    engine.userCamera = { ...c, z: Math.max(0.6, Math.min(3, c.z * Math.exp(-e.deltaY * 0.01))) };
+    engine.userCamera = { ...c, z: Math.max(0.7, Math.min(2.5, c.z * Math.exp(-e.deltaY * 0.01))) };
   },
   { passive: false },
 );
 document.querySelector(".zoom")!.addEventListener("click", (e) => {
   const z = (e.target as HTMLElement).closest<HTMLElement>("[data-zoom]")?.dataset.zoom;
   const c = engine.userCamera ?? engine.camera;
-  if (z === "in") engine.userCamera = { ...c, z: Math.min(3, c.z * 1.3) };
-  if (z === "out") engine.userCamera = { ...c, z: Math.max(0.6, c.z / 1.3) };
+  if (z === "in") engine.userCamera = { ...c, z: Math.min(2.5, c.z * 1.25) };
+  if (z === "out") engine.userCamera = { ...c, z: Math.max(0.7, c.z / 1.25) };
   if (z === "reset") engine.userCamera = null;
 });
-
 $("theme").addEventListener("click", () => {
   const root = document.documentElement;
   root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
-  engine.dark = root.dataset.theme === "dark";
+  readPalette();
   try {
     localStorage.setItem("kg-theme", root.dataset.theme);
   } catch {
@@ -449,10 +446,9 @@ $("theme").addEventListener("click", () => {
   }
 });
 
-// --- Start -------------------------------------------------------------------------
+// --- Start ----------------------------------------------------------------------------
 
 if (params.get("doc") && DOCUMENTS.some((d) => d.id === params.get("doc"))) {
-  // Documents before the requested one count as already extracted.
   const i = DOCUMENTS.findIndex((d) => d.id === params.get("doc"));
   state.added = DOCUMENTS.slice(0, i).map((d) => d.id);
   state.doc = DOCUMENTS[i].id;
@@ -466,15 +462,17 @@ if (sceneParam !== "hero") {
 } else {
   // The stage waits until the visitor arrives, so its first scene plays on screen.
   stage = idle();
-  let started = false;
-  new IntersectionObserver((entries) => {
-    if (!started && entries.some((e) => e.isIntersecting)) {
-      started = true;
-      if (state.chapter === "extract" && state.added.length === 0) playDoc(state.doc);
-    }
-  }, { threshold: 0.35 }).observe($("stage"));
-  // The extract panel is rendered, but nothing is "added" until it plays.
   state.added = [];
   renderDocButtons();
+  let started = false;
+  new IntersectionObserver(
+    (entries) => {
+      if (!started && entries.some((e) => e.isIntersecting)) {
+        started = true;
+        if (state.chapter === "extract" && state.added.length === 0) playDoc(state.doc);
+      }
+    },
+    { threshold: 0.35 },
+  ).observe($("stage"));
 }
 requestAnimationFrame(loop);

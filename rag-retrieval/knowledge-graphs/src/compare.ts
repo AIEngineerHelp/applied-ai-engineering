@@ -163,7 +163,7 @@ function verdict(g: Graph, index: TfIdfIndex, facts: FactResult[], o: Comparison
     if (zero.length > 1) why.push(`${zero.length} facts, such as “${zero[0].label}”, are in passages that share no words with the question.`);
     return {
       winner: "graph",
-      headline: "The graph finds the whole answer; chunk search misses part of it",
+      headline: `The graph finds the whole answer; chunk search ${c === 0 ? "misses all of it" : "misses part of it"}`,
       detail: `The answer needs ${n} facts from ${new Set(facts.map((f) => f.chunk)).size} passages. Chunk search found ${c} in its top ${k}. ${why.join(" ")} The graph reached every fact by following edges from the entity the question names.`,
     };
   }

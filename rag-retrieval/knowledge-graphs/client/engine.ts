@@ -1,12 +1,15 @@
-// The canvas renderer. Two full-viewport canvases:
-//   back  stars (with parallax), graph edges, glowing nodes, labels, hero words
-//   front flying labels and flashes, which travel over the page's panels
-// The graph lives in world coordinates (data/layout.json, about 960 × 660)
-// and is mapped into a "slot": the hero section or the sticky stage panel,
-// whichever is on screen. The camera pans and zooms inside the slot.
+// The canvas renderer, drawn like a technical diagram: small ink shapes for
+// entities (the shape is the type), thin grey edges, labels with a paper
+// knock-out so they stay readable, and one accent colour for the active path.
 //
-// Scenes don't draw; they describe a Frame (what is lit, hot, drawn, flying)
-// and the engine eases the display toward it every animation frame.
+// Two full-viewport canvases:
+//   back   the graph (clipped to the area no overlay covers) and hero words
+//   front  labels that travel from the document into the graph
+// The graph lives in world coordinates (data/layout.json, about 960 × 660)
+// and is fitted into a rectangle the page supplies: the hero, or the part of
+// the stage that the controls, caption and verdict leave clear.
+//
+// Scenes don't draw; they describe a Frame, and the engine eases toward it.
 
 import type { Graph } from "../src/graph.ts";
 
@@ -16,17 +19,14 @@ export interface Camera {
   y: number;
   z: number;
 }
-
 export interface NodeTarget {
-  lit: number; // 0 = ghost point, 1 = fully lit with label
+  lit: number; // 0 = faint point, 1 = drawn with its label
   hot?: number; // on the active traversal
-  flare?: number; // momentary extra glow (arrival, fusion)
 }
 export interface EdgeTarget {
   draw: number; // 0..1 how much of the edge is drawn
-  hot?: number;
-  pulse?: number; // position of a travelling light, 0..1 from source side of the hop
-  reverse?: boolean; // pulse travels target → source
+  path?: number; // 0..1 how much of the accent path line is drawn over it
+  reverse?: boolean; // the path runs target → source
   label?: boolean;
 }
 export interface FlyLabel {
@@ -35,15 +35,6 @@ export interface FlyLabel {
   x: number; // screen
   y: number;
   alpha: number;
-  size: number; // px
-  glow: number; // 0..1
-}
-export interface Flash {
-  x: number;
-  y: number;
-  r: number; // px
-  alpha: number;
-  type: string;
 }
 export interface HeroWord {
   text: string;
@@ -51,48 +42,44 @@ export interface HeroWord {
   x: number; // world
   y: number;
   alpha: number;
-  glow: number;
-  size: number; // world units
+  ink: number; // 0 = grey word, 1 = ink entity
 }
 export interface Frame {
   nodes: Map<string, NodeTarget>;
   edges: Map<string, EdgeTarget>;
-  ghost: number; // alpha of unlit nodes
-  labels: FlyLabel[]; // front canvas
-  flashes: Flash[]; // front canvas
-  worldFlashes?: { id: string; r: number; alpha: number }[]; // flashes at a node, in world space
-  words?: HeroWord[]; // back canvas, world space
+  ghost: number; // opacity of not-yet-extracted entities
+  labels: FlyLabel[];
+  words?: HeroWord[];
   camera: Camera;
-  instantCamera?: boolean;
-  clipLabels?: boolean; // keep flying labels inside the graph's slot
+  clipLabels?: boolean;
 }
 
-export const WORLD = { x: 480, y: 330, w: 940, h: 680 };
+export interface Palette {
+  paper: string;
+  ink: string;
+  grey: string;
+  faint: string;
+  rule: string;
+  accent: string;
+}
+
+export const WORLD = { x: 480, y: 330, w: 940, h: 690 };
 export const HOME: Camera = { x: WORLD.x, y: WORLD.y, z: 1 };
 
-const TYPE_COLORS: Record<string, { dark: string; light: string }> = {
-  Person: { dark: "#ff6b8b", light: "#e11d48" },
-  Team: { dark: "#8b93ff", light: "#4f46e5" },
-  Service: { dark: "#4cc3ff", light: "#0284c7" },
-  Product: { dark: "#3ff0d0", light: "#0d9488" },
-  Component: { dark: "#b18cff", light: "#7c3aed" },
-  Company: { dark: "#ffc24d", light: "#d97706" },
-  Customer: { dark: "#62f08f", light: "#16a34a" },
+/** Each entity type is a shape, filled or outlined. */
+export const SHAPES: Record<string, { shape: "circle" | "square" | "diamond" | "triangle"; filled: boolean; glyph: string }> = {
+  Person: { shape: "circle", filled: true, glyph: "●" },
+  Team: { shape: "circle", filled: false, glyph: "○" },
+  Service: { shape: "diamond", filled: false, glyph: "◇" },
+  Product: { shape: "square", filled: true, glyph: "■" },
+  Component: { shape: "square", filled: false, glyph: "□" },
+  Company: { shape: "triangle", filled: true, glyph: "▲" },
+  Customer: { shape: "diamond", filled: true, glyph: "◆" },
 };
 
-export const typeColor = (type: string, dark: boolean) => (TYPE_COLORS[type] ?? { dark: "#ffffff", light: "#18181b" })[dark ? "dark" : "light"];
-
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
-
-interface Display {
-  lit: number;
-  hot: number;
-  flare: number;
-}
-interface EdgeDisplay {
-  draw: number;
-  hot: number;
-}
+type Box = { x: number; y: number; w: number; h: number };
+const hits = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 export class Engine {
   private back: CanvasRenderingContext2D;
@@ -100,22 +87,18 @@ export class Engine {
   private dpr = 1;
   private W = 0;
   private H = 0;
-  private sprites = new Map<string, HTMLCanvasElement>();
-  private nodeDisp = new Map<string, Display>();
-  private edgeDisp = new Map<string, EdgeDisplay>();
-  private stars: { x: number; y: number; d: number; r: number; tw: number }[] = [];
-  private pointer = { x: 0, y: 0, sx: 0, sy: 0 };
+  private nodeDisp = new Map<string, { lit: number; hot: number }>();
+  private edgeDisp = new Map<string, { draw: number; path: number }>();
   private last = performance.now();
   private rectNow: Rect | null = null;
+  private bend = new Map<string, number>();
 
   camera: Camera = { ...HOME };
-  userCamera: Camera | null = null; // set while the visitor pans or zooms
-  dark = true;
+  userCamera: Camera | null = null;
   reduced = false;
-  frozen = false; // ?t= screenshots: no drift, no idle pulses
+  frozen = false;
   hover: string | null = null;
-  clock = 0;
-  private bend = new Map<string, number>();
+  palette: Palette = { paper: "#faf9f7", ink: "#1b1b19", grey: "#6f6e69", faint: "#a9a7a0", rule: "#e3e1db", accent: "#2f4f7f" };
 
   constructor(
     backCanvas: HTMLCanvasElement,
@@ -127,18 +110,11 @@ export class Engine {
     this.front = frontCanvas.getContext("2d")!;
     this.resize();
     addEventListener("resize", () => this.resize());
-    addEventListener("pointermove", (e) => {
-      this.pointer.x = e.clientX / Math.max(1, this.W) - 0.5;
-      this.pointer.y = e.clientY / Math.max(1, this.H) - 0.5;
-    });
-    // Seeded stars, so frames are repeatable.
-    let s = 7;
-    const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-    for (let i = 0; i < 240; i++) this.stars.push({ x: rnd(), y: rnd(), d: 0.15 + rnd() * 0.85, r: 0.4 + rnd() * 1.1, tw: rnd() * 6.28 });
     // Two relations between the same pair of nodes bow apart as curves.
     for (const e of graph.edges) {
       const pair = graph.edges.filter((o) => (o.source === e.source && o.target === e.target) || (o.source === e.target && o.target === e.source));
-      this.bend.set(e.id, pair.length > 1 ? (pair.indexOf(e) - (pair.length - 1) / 2) * 120 : 0);
+      const sign = e.source < e.target ? 1 : -1;
+      this.bend.set(e.id, pair.length > 1 ? (pair.indexOf(e) - (pair.length - 1) / 2) * 90 * sign : 0);
     }
   }
 
@@ -154,60 +130,30 @@ export class Engine {
     }
   }
 
-  /** A soft radial glow, pre-rendered once per colour so drawing it is cheap. */
-  private sprite(color: string): HTMLCanvasElement {
-    let c = this.sprites.get(color);
-    if (c) return c;
-    c = document.createElement("canvas");
-    c.width = c.height = 128;
-    const g = c.getContext("2d")!;
-    const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, color);
-    grad.addColorStop(0.18, `${color}cc`);
-    grad.addColorStop(0.45, `${color}33`);
-    grad.addColorStop(1, `${color}00`);
-    g.fillStyle = grad;
-    g.fillRect(0, 0, 128, 128);
-    this.sprites.set(color, c);
-    return c;
-  }
-
-  // --- coordinates ------------------------------------------------------------
+  // --- coordinates --------------------------------------------------------------
 
   rect(): Rect {
     return this.rectNow ?? { x: 0, y: 0, w: this.W, h: this.H };
   }
-  private baseScale(r: Rect) {
-    return Math.min(r.w / WORLD.w, r.h / WORLD.h) * 0.94;
-  }
   scale(): number {
-    return this.baseScale(this.rect()) * this.camera.z;
+    const r = this.rect();
+    return Math.min(r.w / WORLD.w, r.h / WORLD.h) * 0.96 * this.camera.z;
   }
-  /** World position of a node, with a slow drift. */
   pos(id: string): [number, number] {
     const p = this.layout[this.graph.nodes.get(id)!.name];
-    if (this.reduced || this.frozen) return [p[0], p[1]];
-    const ph = p[0] * 0.013 + p[1] * 0.021;
-    return [p[0] + Math.sin(this.clock * 0.32 + ph) * 7, p[1] + Math.cos(this.clock * 0.27 + ph * 1.3) * 6];
+    return [p[0], p[1]];
   }
   toScreen(wx: number, wy: number): [number, number] {
     const r = this.rect();
     const s = this.scale();
     return [r.x + r.w / 2 + (wx - this.camera.x) * s, r.y + r.h / 2 + (wy - this.camera.y) * s];
   }
-  toWorld(sx: number, sy: number): [number, number] {
-    const r = this.rect();
-    const s = this.scale();
-    return [(sx - r.x - r.w / 2) / s + this.camera.x, (sy - r.y - r.h / 2) / s + this.camera.y];
-  }
   nodeScreen(id: string): [number, number] {
-    const [x, y] = this.pos(id);
-    return this.toScreen(x, y);
+    return this.toScreen(...this.pos(id));
   }
-  /** The node under a screen point, if any. */
   hit(sx: number, sy: number): string | null {
     let best: string | null = null;
-    let bestD = 22;
+    let bestD = 18;
     for (const id of this.graph.nodes.keys()) {
       if ((this.nodeDisp.get(id)?.lit ?? 0) < 0.5) continue;
       const [x, y] = this.nodeScreen(id);
@@ -219,250 +165,239 @@ export class Engine {
     }
     return best;
   }
-  /** Camera that frames a set of world points inside the slot. */
-  fit(ids: string[], maxZoom = 1.9): Camera {
+  /** Camera that frames a set of nodes, never zoomed in so far that labels crowd the edges. */
+  fit(ids: string[], maxZoom = 1.6): Camera {
     if (!ids.length) return { ...HOME };
     const pts = ids.map((id) => this.layout[this.graph.nodes.get(id)!.name]);
     const xs = pts.map((p) => p[0]);
     const ys = pts.map((p) => p[1]);
-    const [x0, x1, y0, y1] = [Math.min(...xs) - 130, Math.max(...xs) + 130, Math.min(...ys) - 90, Math.max(...ys) + 110];
-    const z = Math.max(0.9, Math.min(maxZoom, Math.min(WORLD.w / (x1 - x0), WORLD.h / (y1 - y0))));
+    const [x0, x1, y0, y1] = [Math.min(...xs) - 140, Math.max(...xs) + 140, Math.min(...ys) - 80, Math.max(...ys) + 110];
+    const z = Math.max(1, Math.min(maxZoom, Math.min(WORLD.w / (x1 - x0), WORLD.h / (y1 - y0))));
     return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, z };
   }
 
-  // --- the frame ----------------------------------------------------------------
+  // --- the frame ------------------------------------------------------------------
 
-  render(frame: Frame, slot: Rect) {
+  render(frame: Frame, area: Rect) {
     const now = performance.now();
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
-    if (!this.reduced && !this.frozen) this.clock += dt;
-    const k = this.reduced || this.frozen ? 1 : 1 - Math.exp(-dt * 9);
-    const kCam = this.reduced || this.frozen || frame.instantCamera ? 1 : 1 - Math.exp(-dt * 3.2);
+    const still = this.reduced || this.frozen;
+    const k = still ? 1 : 1 - Math.exp(-dt * 8);
+    const kCam = still ? 1 : 1 - Math.exp(-dt * 3);
 
-    // The slot glides between the hero and the stage as the page scrolls.
-    this.rectNow = this.rectNow && !this.reduced ? { x: lerp(this.rectNow.x, slot.x, kCam * 1.6 > 1 ? 1 : kCam * 1.6), y: lerp(this.rectNow.y, slot.y, Math.min(1, kCam * 1.6)), w: lerp(this.rectNow.w, slot.w, Math.min(1, kCam * 1.6)), h: lerp(this.rectNow.h, slot.h, Math.min(1, kCam * 1.6)) } : { ...slot };
+    this.rectNow = this.rectNow && !still ? { x: lerp(this.rectNow.x, area.x, kCam), y: lerp(this.rectNow.y, area.y, kCam), w: lerp(this.rectNow.w, area.w, kCam), h: lerp(this.rectNow.h, area.h, kCam) } : { ...area };
     const target = this.userCamera ?? frame.camera;
     this.camera = { x: lerp(this.camera.x, target.x, kCam), y: lerp(this.camera.y, target.y, kCam), z: lerp(this.camera.z, target.z, kCam) };
-    this.pointer.sx = lerp(this.pointer.sx, this.pointer.x, k * 0.3);
-    this.pointer.sy = lerp(this.pointer.sy, this.pointer.y, k * 0.3);
 
     for (const id of this.graph.nodes.keys()) {
       const t = frame.nodes.get(id);
-      const d = this.nodeDisp.get(id) ?? { lit: 0, hot: 0, flare: 0 };
+      const d = this.nodeDisp.get(id) ?? { lit: 0, hot: 0 };
       d.lit = lerp(d.lit, t?.lit ?? 0, k);
       d.hot = lerp(d.hot, t?.hot ?? 0, k);
-      d.flare = lerp(d.flare, t?.flare ?? 0, Math.min(1, k * 1.5));
       this.nodeDisp.set(id, d);
     }
     for (const e of this.graph.edges) {
       const t = frame.edges.get(e.id);
-      const d = this.edgeDisp.get(e.id) ?? { draw: 0, hot: 0 };
-      // Drawing in follows the scene exactly; fading out is eased.
+      const d = this.edgeDisp.get(e.id) ?? { draw: 0, path: 0 };
+      // Lines draw in exactly with the scene; they fade out gently.
       d.draw = (t?.draw ?? 0) >= d.draw ? (t?.draw ?? 0) : lerp(d.draw, t?.draw ?? 0, k);
-      d.hot = lerp(d.hot, t?.hot ?? 0, k);
+      d.path = (t?.path ?? 0) >= d.path ? (t?.path ?? 0) : lerp(d.path, t?.path ?? 0, k);
       this.edgeDisp.set(e.id, d);
     }
-
     this.drawBack(frame);
     this.drawFront(frame);
   }
 
+  private shape(ctx: CanvasRenderingContext2D, type: string, x: number, y: number, r: number, color: string, paper: string) {
+    const s = SHAPES[type] ?? SHAPES.Person;
+    ctx.beginPath();
+    if (s.shape === "circle") ctx.arc(x, y, r, 0, 6.283);
+    if (s.shape === "square") ctx.rect(x - r * 0.88, y - r * 0.88, r * 1.76, r * 1.76);
+    if (s.shape === "diamond") {
+      ctx.moveTo(x, y - r * 1.2);
+      ctx.lineTo(x + r * 1.2, y);
+      ctx.lineTo(x, y + r * 1.2);
+      ctx.lineTo(x - r * 1.2, y);
+      ctx.closePath();
+    }
+    if (s.shape === "triangle") {
+      ctx.moveTo(x, y - r * 1.15);
+      ctx.lineTo(x + r * 1.1, y + r * 0.8);
+      ctx.lineTo(x - r * 1.1, y + r * 0.8);
+      ctx.closePath();
+    }
+    ctx.fillStyle = s.filled ? color : paper;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+
   private drawBack(frame: Frame) {
     const ctx = this.back;
-    const { dpr, W, H } = this;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-
-    // Stars, in layers that shift with the camera and the pointer.
-    const s = this.scale();
-    const camDx = (this.camera.x - HOME.x) * s;
-    const camDy = (this.camera.y - HOME.y) * s;
-    ctx.fillStyle = this.dark ? "#cfd8ff" : "#64748b";
-    for (const st of this.stars) {
-      const px = (((st.x * W - camDx * st.d * 0.12 - this.pointer.sx * 26 * st.d) % W) + W) % W;
-      const py = (((st.y * H - camDy * st.d * 0.12 - this.pointer.sy * 18 * st.d) % H) + H) % H;
-      const tw = this.reduced || this.frozen ? 0.7 : 0.55 + 0.45 * Math.sin(this.clock * 1.3 + st.tw);
-      ctx.globalAlpha = (this.dark ? 0.55 : 0.22) * st.d * tw;
-      ctx.beginPath();
-      ctx.arc(px, py, st.r * (this.dark ? 1 : 0.8), 0, 6.283);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    const P = this.palette;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.W, this.H);
+    const r = this.rect();
+    // Nothing is drawn outside the clear area, so no overlay ever covers the graph.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(r.x - 4, r.y - 4, r.w + 8, r.h + 8);
+    ctx.clip();
 
     const scale = this.scale();
-    const fontPx = Math.max(11, Math.min(15, 14 * scale));
+    const fontPx = Math.max(11, Math.min(13, 12.5 * scale));
+    const nodeR = Math.max(3.4, Math.min(5.2, 4.6 * scale));
+    const anyHot = [...frame.edges.values()].some((x) => (x.path ?? 0) > 0) || [...frame.nodes.values()].some((n) => (n.hot ?? 0) > 0.5);
 
-    // Edges.
+    // Edges: thin grey lines with small arrowheads; the path drawn over them in the accent.
+    const edgePoints: [number, number][] = [];
     for (const e of this.graph.edges) {
       const d = this.edgeDisp.get(e.id)!;
       if (d.draw <= 0.002) continue;
-      const pts = this.curve(e.id, e.source, e.target);
-      const n = Math.max(1, Math.round(d.draw * (pts.length - 1)));
-      const t = frame.edges.get(e.id);
-      const focusDim = frame.nodes.size && [...frame.edges.values()].some((x) => (x.hot ?? 0) > 0.5) && d.hot < 0.3 ? 0.35 : 1;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i <= n; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-      const base = this.dark ? "rgba(190,205,255," : "rgba(51,65,85,";
-      ctx.strokeStyle = `${base}${(0.2 + 0.1 * (this.hover && (e.source === this.hover || e.target === this.hover) ? 3 : 0)) * focusDim})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-      if (d.hot > 0.02) {
-        const hotColor = this.dark ? "94,234,212" : "13,148,136";
-        ctx.strokeStyle = `rgba(${hotColor},${0.22 * d.hot})`;
-        ctx.lineWidth = 9;
-        ctx.stroke();
-        ctx.strokeStyle = `rgba(${hotColor},${0.95 * d.hot})`;
-        ctx.lineWidth = 2.4;
-        ctx.stroke();
-      }
-      // Arrowhead at the target end, once the edge is drawn.
-      if (d.draw > 0.97) {
-        const [ax, ay] = pts[pts.length - 1];
-        const [bx, by] = pts[pts.length - 3];
-        const ang = Math.atan2(ay - by, ax - bx);
-        ctx.fillStyle = d.hot > 0.3 ? (this.dark ? "#5eead4" : "#0d9488") : `${base}${0.45 * focusDim})`;
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(ax - 8 * Math.cos(ang - 0.42), ay - 8 * Math.sin(ang - 0.42));
-        ctx.lineTo(ax - 8 * Math.cos(ang + 0.42), ay - 8 * Math.sin(ang + 0.42));
-        ctx.closePath();
-        ctx.fill();
-      }
-      // Idle light, now and then, along drawn edges; travelling pulses on the active path.
-      let pulse = t?.pulse;
-      if (pulse === undefined && !this.reduced && !this.frozen && d.draw > 0.99) {
-        const ph = (this.clock * 0.16 + (e.id.length * 0.137) % 1) % 1;
-        if (ph < 0.3) pulse = ph / 0.3;
-      }
-      if (pulse !== undefined && pulse >= 0 && pulse <= 1) {
-        const p = t?.reverse ? 1 - pulse : pulse;
-        const [px, py] = pts[Math.round(p * (pts.length - 1))];
-        const strong = t?.pulse !== undefined;
-        const spr = this.sprite(strong ? (this.dark ? "#a7fff0" : "#0d9488") : this.dark ? "#c7d2fe" : "#64748b");
-        const size = strong ? 46 : 18;
-        ctx.globalAlpha = strong ? 1 : 0.5 * focusDim;
-        ctx.drawImage(spr, px - size / 2, py - size / 2, size, size);
-        ctx.globalAlpha = 1;
+      const pts = this.curve(e.id, e.source, e.target, 36);
+      edgePoints.push(...pts.slice(0, Math.round(d.draw * (pts.length - 1)) + 1));
+      const touchesHover = this.hover && (e.source === this.hover || e.target === this.hover);
+      ctx.globalAlpha = anyHot && d.path < 0.05 ? 0.45 : 1;
+      this.polyline(ctx, pts, 0, d.draw, touchesHover ? P.grey : P.faint, 1);
+      if (d.draw > 0.98) this.arrow(ctx, pts, touchesHover ? P.grey : P.faint);
+      ctx.globalAlpha = 1;
+      if (d.path > 0.001) {
+        const t = frame.edges.get(e.id);
+        if (t?.reverse) this.polyline(ctx, pts, 1 - d.path, 1, P.accent, 2);
+        else this.polyline(ctx, pts, 0, d.path, P.accent, 2);
+        if (d.path > 0.98) this.arrow(ctx, pts, P.accent);
       }
     }
 
-    // Nodes.
+    // Nodes, then their labels. Each label goes below, above, right or left of
+    // its node, whichever side crosses the fewest edges and no other label.
+    const labelBoxes: Box[] = [];
+    const nodeBoxes: Box[] = [];
+    const toLabel: { id: string; x: number; y: number; alpha: number; hot: boolean }[] = [];
     for (const [id, node] of this.graph.nodes) {
       const d = this.nodeDisp.get(id)!;
       const [x, y] = this.nodeScreen(id);
-      const color = typeColor(node.type, this.dark);
-      const ghostA = frame.ghost * (1 - d.lit);
-      if (ghostA > 0.01) {
-        ctx.globalAlpha = ghostA;
-        ctx.fillStyle = this.dark ? "#9aa6c8" : "#94a3b8";
+      if (frame.ghost > 0 && d.lit < 0.99) {
+        ctx.globalAlpha = frame.ghost * (1 - d.lit) * 0.5;
+        ctx.fillStyle = P.faint;
         ctx.beginPath();
-        ctx.arc(x, y, 2.2, 0, 6.283);
+        ctx.arc(x, y, 1.6, 0, 6.283);
         ctx.fill();
-        ctx.globalAlpha = 1;
       }
       if (d.lit < 0.01) continue;
-      const anyHot = [...frame.nodes.values()].some((n) => (n.hot ?? 0) > 0.5);
-      const dim = anyHot && d.hot < 0.3 && this.hover !== id ? 0.38 : 1;
-      const glow = (0.75 + d.hot * 0.7 + d.flare * 1.4 + (this.hover === id ? 0.5 : 0)) * d.lit;
-      const g = 78 * Math.min(2.4, glow) * Math.max(0.75, Math.min(1.25, scale));
-      ctx.globalAlpha = Math.min(1, (this.dark ? 0.85 : 0.45) * dim * Math.min(1, glow));
-      ctx.drawImage(this.sprite(color), x - g / 2, y - g / 2, g, g);
+      const dim = anyHot && d.hot < 0.3 && this.hover !== id ? 0.4 : 1;
       ctx.globalAlpha = d.lit * dim;
-      const r = (5.2 + d.hot * 1.8 + d.flare * 2) * Math.max(0.85, Math.min(1.3, scale));
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.fill();
-      ctx.fillStyle = this.dark ? "#ffffff" : "#ffffff";
-      ctx.globalAlpha = d.lit * dim * (0.55 + 0.45 * d.hot);
-      ctx.beginPath();
-      ctx.arc(x, y, r * 0.45, 0, 6.283);
-      ctx.fill();
-      // A dashed ring marks an entity merged from several names.
+      const color = d.hot > 0.5 ? P.accent : P.ink;
+      this.shape(ctx, node.type, x, y, nodeR + (d.hot > 0.5 ? 0.6 : 0), color, P.paper);
+      // A second hairline ring marks an entity merged from several names.
       if (node.aliases.length) {
-        ctx.globalAlpha = d.lit * dim * 0.7;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2.5, 3]);
+        ctx.strokeStyle = d.hot > 0.5 ? P.accent : P.faint;
+        ctx.lineWidth = 0.8;
         ctx.beginPath();
-        ctx.arc(x, y, r + 5.5, 0, 6.283);
+        ctx.arc(x, y, nodeR + 4.5, 0, 6.283);
         ctx.stroke();
-        ctx.setLineDash([]);
       }
-      // Label.
-      const la = Math.max(0, (d.lit - 0.35) / 0.65) * dim;
-      if (la > 0.01) {
-        ctx.globalAlpha = la;
-        ctx.font = `${d.hot > 0.5 || this.hover === id ? 600 : 500} ${fontPx}px Inter, system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = this.dark ? "rgba(5,7,15,0.85)" : "rgba(250,250,247,0.9)";
-        ctx.lineWidth = 4;
-        ctx.strokeText(node.name, x, y + r + 8);
-        ctx.fillStyle = this.dark ? (d.hot > 0.5 ? "#ffffff" : "#d7def0") : d.hot > 0.5 ? "#0f172a" : "#334155";
-        ctx.fillText(node.name, x, y + r + 8);
-      }
+      ctx.globalAlpha = 1;
+      nodeBoxes.push({ x: x - nodeR - 5, y: y - nodeR - 5, w: 2 * nodeR + 10, h: 2 * nodeR + 10 });
+      const la = Math.max(0, (d.lit - 0.4) / 0.6) * dim;
+      if (la > 0.01) toLabel.push({ id, x, y, alpha: la, hot: d.hot > 0.5 });
+    }
+    for (const l of toLabel) {
+      const name = this.graph.nodes.get(l.id)!.name;
+      ctx.font = `${l.hot || this.hover === l.id ? 600 : 450} ${fontPx}px Inter, system-ui, sans-serif`;
+      const w = ctx.measureText(name).width + 4;
+      const h = fontPx + 3;
+      const gap = nodeR + 6;
+      const options: Box[] = [
+        { x: l.x - w / 2, y: l.y + gap - 1, w, h },
+        { x: l.x - w / 2, y: l.y - gap - h + 1, w, h },
+        { x: l.x + gap + 2, y: l.y - h / 2, w, h },
+        { x: l.x - gap - 2 - w, y: l.y - h / 2, w, h },
+      ];
+      let best = options[0];
+      let bestScore = Infinity;
+      options.forEach((b, i) => {
+        const inside = edgePoints.filter(([px, py]) => px > b.x && px < b.x + b.w && py > b.y && py < b.y + b.h).length;
+        const overlap = labelBoxes.filter((o) => hits(b, o)).length + nodeBoxes.filter((o) => hits(b, o)).length;
+        const outside = b.x < r.x || b.x + b.w > r.x + r.w || b.y < r.y || b.y + b.h > r.y + r.h ? 1 : 0;
+        const score = inside * 3 + overlap * 20 + outside * 60 + i * 0.6;
+        if (score < bestScore) {
+          bestScore = score;
+          best = b;
+        }
+      });
+      labelBoxes.push(best);
+      ctx.globalAlpha = l.alpha;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = P.paper;
+      ctx.lineWidth = 4;
+      ctx.strokeText(name, best.x + 2, best.y + 1);
+      ctx.fillStyle = l.hot ? P.accent : P.ink;
+      ctx.fillText(name, best.x + 2, best.y + 1);
       ctx.globalAlpha = 1;
     }
 
-    // Edge labels: on the active path, and around the hovered node.
+    // Relation names on the active path and around the hovered node, placed
+    // where they collide with no node and no label.
+    const placed: Box[] = [];
+    const relPx = Math.max(10, fontPx - 2);
+    ctx.font = `500 ${relPx}px "JetBrains Mono", ui-monospace, monospace`;
     for (const e of this.graph.edges) {
       const d = this.edgeDisp.get(e.id)!;
       const t = frame.edges.get(e.id);
-      const show = (t?.label && d.hot > 0.4) || (this.hover && (e.source === this.hover || e.target === this.hover) && d.draw > 0.9);
+      const show = (t?.label && d.path > 0.6) || (this.hover && (e.source === this.hover || e.target === this.hover) && d.draw > 0.9);
       if (!show) continue;
-      const [lx, ly] = this.labelPoint(e.id, e.source, e.target);
-      ctx.font = `600 ${Math.max(10, fontPx - 3)}px "JetBrains Mono", ui-monospace, monospace`;
-      const w = ctx.measureText(e.type).width + 12;
-      const h = Math.max(10, fontPx - 3) + 8;
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = this.dark ? "rgba(8,12,24,0.92)" : "rgba(255,255,255,0.95)";
-      ctx.strokeStyle = this.dark ? "rgba(94,234,212,0.55)" : "rgba(13,148,136,0.5)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(lx - w / 2, ly - h / 2, w, h, 5);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = this.dark ? "#99f6e4" : "#0f766e";
+      const pts = this.curve(e.id, e.source, e.target);
+      const w = ctx.measureText(e.type).width + 8;
+      const h = relPx + 5;
+      let spot: [number, number] | null = null;
+      outer: for (const f of [0.5, 0.4, 0.6, 0.32, 0.68, 0.25, 0.75, 0.18, 0.82]) {
+        const i = Math.round(f * (pts.length - 1));
+        const [px, py] = pts[i];
+        const [qx, qy] = pts[Math.min(pts.length - 1, i + 1)];
+        const len = Math.hypot(qx - px, qy - py) || 1;
+        const [nx, ny] = [-(qy - py) / len, (qx - px) / len];
+        for (const off of [0, 12, -12]) {
+          const cx = px + nx * off;
+          const cy = py + ny * off;
+          const b = { x: cx - w / 2 - 4, y: cy - h / 2 - 3, w: w + 8, h: h + 6 };
+          if ([...labelBoxes, ...nodeBoxes, ...placed].some((o) => hits(b, o))) continue;
+          spot = [cx, cy];
+          break outer;
+        }
+      }
+      if (!spot) continue;
+      placed.push({ x: spot[0] - w / 2, y: spot[1] - h / 2, w, h });
+      ctx.fillStyle = P.paper;
+      ctx.fillRect(spot[0] - w / 2, spot[1] - h / 2, w, h);
+      ctx.fillStyle = t?.label ? P.accent : P.grey;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(e.type, lx, ly + 0.5);
-      ctx.globalAlpha = 1;
+      ctx.fillText(e.type, spot[0], spot[1] + 0.5);
     }
 
-    // Hero words (world space).
+    // Hero words.
     for (const w of frame.words ?? []) {
       if (w.alpha < 0.01) continue;
       const [sx, sy] = this.toScreen(w.x, w.y);
-      const px = Math.max(10, w.size * scale);
-      ctx.font = `${w.type ? 500 : 400} ${px}px Inter, system-ui, sans-serif`;
+      ctx.globalAlpha = w.alpha;
+      ctx.font = `${w.type && w.ink > 0.5 ? 500 : 400} ${Math.max(11, 13 * scale)}px Inter, system-ui, sans-serif`;
+      ctx.fillStyle = w.type && w.ink > 0.5 ? P.ink : P.faint;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      if (w.type && w.glow > 0.02) {
-        const c = typeColor(w.type, this.dark);
-        const g = px * 5 * (0.6 + w.glow);
-        ctx.globalAlpha = w.alpha * w.glow * (this.dark ? 0.55 : 0.3);
-        ctx.drawImage(this.sprite(c), sx - g / 2, sy - g / 2, g, g);
-        ctx.globalAlpha = w.alpha;
-        ctx.fillStyle = mix(this.dark ? "#cbd5e1" : "#475569", c, w.glow);
-      } else {
-        ctx.globalAlpha = w.alpha;
-        ctx.fillStyle = this.dark ? "#8b95b3" : "#64748b";
-      }
       ctx.fillText(w.text, sx, sy);
     }
     ctx.globalAlpha = 1;
-
-    // Flashes anchored to nodes.
-    for (const f of frame.worldFlashes ?? []) this.ring(ctx, ...this.nodeScreen(f.id), f.r, f.alpha, this.graph.nodes.get(f.id)!.type);
+    ctx.restore();
   }
 
   private drawFront(frame: Frame) {
     const ctx = this.front;
+    const P = this.palette;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.W, this.H);
     ctx.save();
@@ -472,50 +407,63 @@ export class Engine {
       ctx.rect(r.x, r.y, r.w, r.h);
       ctx.clip();
     }
-    for (const f of frame.flashes) this.ring(ctx, f.x, f.y, f.r, f.alpha, f.type);
+    ctx.font = "500 12px Inter, system-ui, sans-serif";
     for (const l of frame.labels) {
       if (l.alpha < 0.01) continue;
-      const c = typeColor(l.type, this.dark);
-      ctx.font = `600 ${l.size}px Inter, system-ui, sans-serif`;
-      const w = ctx.measureText(l.text).width + 16;
-      const h = l.size + 10;
-      if (l.glow > 0.02) {
-        const g = w * 1.6;
-        ctx.globalAlpha = l.alpha * l.glow * (this.dark ? 0.5 : 0.25);
-        ctx.drawImage(this.sprite(c), l.x - g / 2, l.y - g / 2, g, g);
-      }
+      const w = ctx.measureText(l.text).width + 26;
+      const h = 22;
       ctx.globalAlpha = l.alpha;
-      ctx.fillStyle = this.dark ? "rgba(10,14,28,0.88)" : "rgba(255,255,255,0.94)";
-      ctx.strokeStyle = c;
-      ctx.lineWidth = 1.2;
+      ctx.fillStyle = P.paper;
+      ctx.strokeStyle = P.ink;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.roundRect(l.x - w / 2, l.y - h / 2, w, h, h / 2);
+      ctx.roundRect(l.x - w / 2, l.y - h / 2, w, h, 3);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = this.dark ? "#ffffff" : "#0f172a";
-      ctx.textAlign = "center";
+      this.shape(ctx, l.type, l.x - w / 2 + 10, l.y, 3, P.ink, P.paper);
+      ctx.fillStyle = P.ink;
+      ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.fillText(l.text, l.x, l.y + 0.5);
+      ctx.fillText(l.text, l.x - w / 2 + 18, l.y + 0.5);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
   }
 
-  private ring(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, alpha: number, type: string) {
-    if (alpha < 0.01) return;
-    const c = typeColor(type, this.dark);
-    ctx.globalAlpha = alpha * 0.6;
-    ctx.drawImage(this.sprite(c), x - r, y - r, r * 2, r * 2);
-    ctx.globalAlpha = alpha;
-    ctx.strokeStyle = c;
-    ctx.lineWidth = 2;
+  private polyline(ctx: CanvasRenderingContext2D, pts: [number, number][], from: number, to: number, color: string, width: number) {
+    const n = pts.length - 1;
+    const a = from * n;
+    const b = to * n;
+    if (b - a <= 0) return;
+    const at = (f: number): [number, number] => {
+      const i = Math.min(n - 1, Math.floor(f));
+      const u = f - i;
+      return [lerp(pts[i][0], pts[i + 1][0], u), lerp(pts[i][1], pts[i + 1][1], u)];
+    };
     ctx.beginPath();
-    ctx.arc(x, y, r * 0.7, 0, 6.283);
+    ctx.moveTo(...at(a));
+    for (let i = Math.ceil(a); i < b; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.lineTo(...at(b));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = "round";
     ctx.stroke();
-    ctx.globalAlpha = 1;
   }
 
-  /** Points along an edge, in screen space, trimmed at both nodes. */
+  private arrow(ctx: CanvasRenderingContext2D, pts: [number, number][], color: string) {
+    const [ax, ay] = pts[pts.length - 1];
+    const [bx, by] = pts[pts.length - 3];
+    const ang = Math.atan2(ay - by, ax - bx);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 6 * Math.cos(ang - 0.45), ay - 6 * Math.sin(ang - 0.45));
+    ctx.lineTo(ax - 6 * Math.cos(ang + 0.45), ay - 6 * Math.sin(ang + 0.45));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /** Points along an edge in screen space, trimmed at both nodes. */
   curve(edgeId: string, from: string, to: string, n = 24): [number, number][] {
     const [x1, y1] = this.nodeScreen(from);
     const [x2, y2] = this.nodeScreen(to);
@@ -524,28 +472,13 @@ export class Engine {
     const b = (this.bend.get(edgeId) ?? 0) * this.scale();
     const [cx, cy] = [(x1 + x2) / 2 + nx * b, (y1 + y2) / 2 + ny * b];
     const pts: [number, number][] = [];
-    const trim = 12 / Math.max(len, 1);
+    const t0 = 10 / len;
+    const t1 = 1 - 12 / len;
     for (let i = 0; i <= n; i++) {
-      const t = trim + (i / n) * (1 - 2.2 * trim);
+      const t = t0 + (i / n) * (t1 - t0);
       const u = 1 - t;
       pts.push([u * u * x1 + 2 * u * t * cx + t * t * x2, u * u * y1 + 2 * u * t * cy + t * t * y2]);
     }
     return pts;
   }
-  /** Where an edge's label sits: the middle of its curve, nudged outward. */
-  labelPoint(edgeId: string, from: string, to: string): [number, number] {
-    const [x1, y1] = this.nodeScreen(from);
-    const [x2, y2] = this.nodeScreen(to);
-    const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-    const [nx, ny] = [-(y2 - y1) / len, (x2 - x1) / len];
-    const bend = this.bend.get(edgeId) ?? 0;
-    const off = bend ? (bend * this.scale()) / 2 + Math.sign(bend) * 4 : -12;
-    return [(x1 + x2) / 2 + nx * off, (y1 + y2) / 2 + ny * off];
-  }
-}
-
-function mix(a: string, b: string, t: number) {
-  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
-  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
-  return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * Math.max(0, Math.min(1, t)))).join(",")})`;
 }

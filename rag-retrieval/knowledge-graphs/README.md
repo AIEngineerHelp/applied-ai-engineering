@@ -4,7 +4,7 @@ Most retrieval-augmented generation (RAG) systems work on chunks. They split doc
 
 A knowledge graph stores the facts inside those documents as entities and the relations between them. Retrieval can then follow relations from one entity to the next, however far apart the documents that stated them. This article explains what a knowledge graph is, how teams build one from text with an LLM, how they query it, and the main patterns for using one in RAG (usually called GraphRAG). It works through a small example corpus end to end and shows, with computed results, where the graph wins, where chunk search is just as good, and where chunk search wins.
 
-**Try it:** this folder contains a guided web app. Watch a document's entities light up and fly into a glowing graph, see duplicate names fuse, then pick a question and follow the traversal hop by hop while chunk search brings up its passages, ending in a scored face-off. It runs offline with no API key. See [The demo app](#the-demo-app).
+**Try it:** this folder contains a guided web app. Watch a document's entities move into a graph, see duplicate names merge, then pick a question and follow the traversal hop by hop while chunk search lists its passages, ending in a score for each method. It runs offline with no API key. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
@@ -282,14 +282,14 @@ Controlled comparisons agree with the shape of the example, and add caveats:
 
 ## The demo app
 
-The app stages the example above as a short guided film in the browser. It has an opening shot and three chapters, each with a plain caption at every step:
+The app stages the example above as a short guided walkthrough: an opening and three chapters, each with a plain caption at every step.
 
-- **Opening shot.** Words from the six documents rise across the screen. The entity names light up in their type's colour, fly to their places and fuse where two names mean the same thing, and the relations draw in as a graph. Then you can begin with the first document, or skip straight to the questions.
-- **01 Extract.** Pick a document. Its text appears, the entities light up one after another, then each lifts off the page and flies into the graph. When a name is an alias ("Varnell Semi"), it fuses with its entity (Varnell Semiconductor) in a flash of light, and the relations from the document draw in as edges.
-- **02 Merge.** All 33 extracted names appear at once. Identical names merge first, then the camera visits each alias group as it fuses: 33 names become 18 entities, and 21 relations become 19 edges.
-- **03 Ask.** Pick a question. The camera follows the traversal hop by hop, with a pulse of light along each edge, while chunk search brings up its top passages beside it. At the end a split-screen face-off shows each method's score out of the facts the answer needs, with the verdict and the correct answer. The prose-detail question plays the same way, and there chunk search wins.
+- **Opening.** Words from the six documents appear as a page of text. The entity names darken, move to their places and settle into a graph as the relations draw in. Then you can begin with the first document, or skip straight to the questions.
+- **1 Extract.** Pick a document. The entities in the text are marked one after another, then each moves into the graph as a node. When a name is an alias ("Varnell Semi"), it waits above its entity (Varnell Semiconductor) and then joins it, and the relations from the document draw in as edges.
+- **2 Merge.** All 33 extracted names appear beside their entities. Identical names merge first, then each alias group joins its entity in turn, marked in the accent colour: 33 names become 18 entities, and 21 relations become 19 edges.
+- **3 Ask.** Pick a question. The traversal draws itself hop by hop as a line in the accent colour, while chunk search lists its top passages in the panel (collapsed, with any matched fact underlined). At the end a score card shows each method's count of the facts the answer needs, the verdict and the correct answer. The prose-detail question plays the same way, and there chunk search wins.
 
-The graph is drawn on a canvas. Nodes glow in their type's colour, drift slowly and sit over a star field with parallax. Drag to pan, use the buttons or Ctrl and scroll to zoom, and hover or tap a node to see its aliases, relations and source documents. The controls let you replay a scene, step back and forward through its beats, pause it, or skip to the end. Storytelling beats last up to about 1.5 seconds, while buttons respond at once. With reduced motion turned on, every scene opens on its final frame, with no drift or pulses. The page opens in dark mode, and a light mode is available.
+The graph is drawn like a technical diagram. Each entity type has its own small shape (● person, ○ team, ◇ service, ■ product, □ component, ▲ company, ◆ customer), edges are thin grey lines, and labels are placed so they don't collide. The page is light by default, warm off-white paper with ink, plus one muted blue accent for the active path, and a charcoal dark mode is available. Drag to pan, use the buttons or Ctrl and scroll to zoom, and hover or tap a node to see its aliases, relations and source documents. The controls replay a scene, step back and forward through it, pause it, or skip to the end. One thing moves at a time, and no step lasts longer than about 1.2 seconds. With reduced motion turned on, every scene opens on its final frame.
 
 **Scripted:** the documents, the extraction fixtures, each question's traversal and Cypher query, its correct answer, and the staging (timings, camera moves). **Computed:** the highlights, entity resolution, the graph, the traversal, the TF-IDF ranking, the hybrid set and every verdict and score. The graph's node positions are hand-placed in [`data/layout.json`](data/layout.json) for legibility; which nodes and edges exist is computed.
 
@@ -336,7 +336,7 @@ A live run makes six Gemini calls, each with one short document, retried at most
 | `src/retrieve.ts` | Paragraph chunking and TF-IDF ranking |
 | `src/compare.ts` | Runs a question all three ways and computes the verdict |
 | `src/spans.ts` | Finds mentions and evidence in the text for highlighting |
-| `client/` | The app (TypeScript and Tailwind CSS v4): `engine.ts` draws the graph on a canvas, `scenes.ts` stages each chapter as a timeline, `timeline.ts` is the scene clock, `app.ts` is the page |
+| `client/` | The app (TypeScript and Tailwind CSS v4): `engine.ts` draws the graph on a canvas as a technical diagram, `scenes.ts` stages each chapter as a timeline, `timeline.ts` is the scene clock, `app.ts` is the page |
 | `scripts/` | Local server, static export, comparison table, Gemini extraction |
 | `tests/graph.test.ts` | Tests (Node's built-in test runner) |
 

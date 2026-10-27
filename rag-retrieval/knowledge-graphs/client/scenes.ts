@@ -1,13 +1,14 @@
 // The four scenes. Each is a timeline (beats with captions) and a function
-// from time t to a Frame for the engine, plus optional DOM updates. Nothing
-// here computes results: resolution, the graph, traversal and retrieval come
+// from time t to a Frame for the engine, plus optional DOM updates. One thing
+// moves at a time; no beat runs longer than about 1.2 s. Nothing here
+// computes results: resolution, the graph, traversal and retrieval come
 // from src/ and are only staged here.
 
 import { DOCUMENTS, EXTRACTIONS } from "../src/data.ts";
 import { sentence, type Graph } from "../src/graph.ts";
 import { lookup } from "../src/resolve.ts";
 import type { Comparison } from "../src/compare.ts";
-import { Engine, HOME, type EdgeTarget, type Flash, type FlyLabel, type Frame, type HeroWord, type NodeTarget } from "./engine.ts";
+import { Engine, HOME, type EdgeTarget, type Frame, type HeroWord, type NodeTarget } from "./engine.ts";
 import { ease, Sequence, span, type Beat } from "./timeline.ts";
 
 export interface Scene {
@@ -34,40 +35,36 @@ function baseFrame(graph: Graph, docs: string[], ghost = 1): Frame {
   return {
     nodes: new Map([...nodes].map((id) => [id, { lit: 1 } as NodeTarget])),
     edges: new Map([...edges].map((id) => [id, { draw: 1 } as EdgeTarget])),
-    ghost: ghost * 0.55,
+    ghost,
     labels: [],
-    flashes: [],
     camera: { ...HOME },
   };
 }
 
-// --- Hero: words rise, lock into entities, snap into a constellation ----------
+// --- Opening: words from the documents settle into a graph ------------------------
 
-export function heroScene(graph: Graph, engine: Engine, layout: Record<string, number[]>, frozen: number | null): Scene {
+export function heroScene(graph: Graph, layout: Record<string, number[]>, frozen: number | null): Scene {
   const beats: Beat[] = [
-    { at: 0, caption: "Six documents from a fictional sensor maker." },
-    { at: 1.4, caption: "An LLM picks out the entities: people, teams, products, parts, suppliers and customers." },
-    { at: 2.6, caption: "Different names for the same thing fuse into one node." },
-    { at: 4.0, caption: "The relations between them become a knowledge graph." },
+    { at: 0, caption: "Six short documents from a fictional sensor maker." },
+    { at: 1.2, caption: "An extractor picks out the entities: people, teams, products, parts, suppliers, customers." },
+    { at: 2.3, caption: "Names that mean the same thing become one node." },
+    { at: 3.5, caption: "The relations between them become a knowledge graph." },
   ];
   const rnd = seeded(11);
-  const words: (HeroWord & { x0: number; y0: number; id: string | null; delay: number; arrive: number })[] = [];
-  // Every entity mention, as written.
+  const words: (HeroWord & { x0: number; y0: number; id: string | null; delay: number })[] = [];
   EXTRACTIONS.forEach((x) =>
     x.entities.forEach((e) => {
-      const id = lookup(graph.resolution, e.type, e.name)!;
-      words.push({ text: e.name, type: e.type, id, x: 0, y: 0, x0: 40 + rnd() * 880, y0: 30 + rnd() * 600, alpha: 0, glow: 0, size: 15, delay: 0, arrive: 0 });
+      words.push({ text: e.name, type: e.type, id: lookup(graph.resolution, e.type, e.name)!, x: 0, y: 0, x0: 0, y0: 0, alpha: 0, ink: 0, delay: 0 });
     }),
   );
-  // Plain words from the documents that are not entities.
   const names = new Set(EXTRACTIONS.flatMap((x) => x.entities.map((e) => e.name.toLowerCase())));
   const filler = [...new Set(DOCUMENTS.flatMap((d) => d.paragraphs.join(" ").split(/[^A-Za-z]+/)).filter((w) => w.length > 4 && !names.has(w.toLowerCase())))];
-  for (let i = 0; i < 46 && filler.length; i++) {
+  for (let i = 0; i < 27 && filler.length; i++) {
     const w = filler.splice(Math.floor(rnd() * filler.length), 1)[0];
-    words.push({ text: w.toLowerCase(), type: null, id: null, x: 0, y: 0, x0: 20 + rnd() * 920, y0: 20 + rnd() * 620, alpha: 0, glow: 0, size: 13, delay: 0, arrive: 0 });
+    words.push({ text: w.toLowerCase(), type: null, id: null, x: 0, y: 0, x0: 0, y0: 0, alpha: 0, ink: 0, delay: 0 });
   }
-  // Spread the words over a jittered grid so they don't pile on top of each other.
-  const cols = 6;
+  // A loose grid, so the words read as a page of text rather than a pile.
+  const cols = 5;
   const rows = Math.ceil(words.length / cols);
   const cells = Array.from({ length: cols * rows }, (_, i) => i);
   for (let i = cells.length - 1; i > 0; i--) {
@@ -76,59 +73,44 @@ export function heroScene(graph: Graph, engine: Engine, layout: Record<string, n
   }
   words.forEach((w, i) => {
     const c = cells[i];
-    w.x0 = 80 + (c % cols) * (800 / (cols - 1)) + (rnd() - 0.5) * 40 + (Math.floor(c / cols) % 2 ? 40 : -40);
-    w.y0 = 20 + Math.floor(c / cols) * (620 / (rows - 1)) + (rnd() - 0.5) * 12;
-    w.delay = rnd() * 0.6;
-    w.arrive = 2.6 + (i % 33) * 0.018 + 1.0;
+    w.x0 = 110 + (c % cols) * (740 / (cols - 1)) + (Math.floor(c / cols) % 2 ? 36 : -36);
+    w.y0 = 30 + Math.floor(c / cols) * (600 / (rows - 1));
+    w.delay = rnd() * 0.5;
   });
-  const firstArrival = new Map<string, number>();
-  for (const w of words) if (w.id) firstArrival.set(w.id, Math.min(firstArrival.get(w.id) ?? 99, w.arrive));
   const edgeOrder = graph.edges.map((e) => e.id);
-
   return {
-    seq: new Sequence(5.4, beats, frozen),
+    seq: new Sequence(4.7, beats, frozen),
     frame(t) {
-      const f: Frame = { nodes: new Map(), edges: new Map(), ghost: 0, labels: [], flashes: [], worldFlashes: [], words: [], camera: { ...HOME } };
+      const f: Frame = { nodes: new Map(), edges: new Map(), ghost: 0, labels: [], words: [], camera: { ...HOME } };
       for (const w of words) {
-        const rise = ease.out(span(t, w.delay, 1.1));
+        const appear = ease.out(span(t, w.delay, 0.7));
         let x = w.x0;
-        let y = w.y0 + 70 * (1 - rise);
-        let alpha = rise * (w.type ? 0.95 : 0.6);
-        let glow = 0;
-        let size = w.size;
+        let y = w.y0 + 10 * (1 - appear);
+        let alpha = appear;
+        let ink = 0;
         if (w.type) {
-          glow = ease.out(span(t, 1.4 + w.delay * 0.8, 0.6));
-          const p = ease.inOut(span(t, w.arrive - 1.0, 1.0));
+          ink = span(t, 1.2 + w.delay * 0.6, 0.4);
+          const p = ease.inOut(span(t, 2.3, 1.1));
           const [nx, ny] = layout[graph.nodes.get(w.id!)!.name];
           x = lerp(x, nx, p);
           y = lerp(y, ny, p);
-          size = lerp(15, 9, p);
-          alpha *= 1 - span(p, 0.82, 0.18);
+          alpha *= 1 - span(p, 0.75, 0.25);
         } else {
-          alpha *= 1 - 0.9 * span(t, 1.5, 0.9);
-          alpha *= 1 - span(t, 2.6, 0.6);
+          alpha *= 0.9 * (1 - span(t, 1.3, 0.8));
         }
-        f.words!.push({ ...w, x, y, alpha, glow, size });
+        f.words!.push({ ...w, x, y, alpha, ink });
       }
-      for (const [id, at] of firstArrival) {
-        f.nodes.set(id, { lit: span(t, at - 0.1, 0.35), flare: t >= at ? 1 - span(t, at, 0.6) : 0 });
-      }
-      // A ring where a second name lands on an existing node: the fusion.
-      for (const w of words) {
-        if (!w.id || w.arrive === firstArrival.get(w.id) || t < w.arrive || t > w.arrive + 0.6) continue;
-        const k = span(t, w.arrive, 0.6);
-        f.worldFlashes!.push({ id: w.id, r: 10 + 38 * k, alpha: 1 - k });
-      }
-      edgeOrder.forEach((id, j) => f.edges.set(id, { draw: ease.out(span(t, 4.0 + j * 0.05, 0.6)) }));
+      for (const id of graph.nodes.keys()) f.nodes.set(id, { lit: span(t, 3.2, 0.3) });
+      edgeOrder.forEach((id, j) => f.edges.set(id, { draw: ease.out(span(t, 3.5 + j * 0.02, 0.8)) }));
       return f;
     },
   };
 }
 
-// --- Extract: one document ignites, its entities fly into the graph -------------
+// --- Extract: one document; its entities move into the graph -----------------------
 
 export interface ExtractDom {
-  spanRect(name: string): DOMRect | null; // first mention of a name in the shown document
+  spanRect(name: string): DOMRect | null;
   setSpanState(name: string, state: "idle" | "lit" | "lifted"): void;
   setParagraphs(visible: number): void;
   setRelations(visible: number): void;
@@ -142,96 +124,87 @@ export function extractScene(graph: Graph, engine: Engine, docId: string, prior:
   const typeOf = new Map(x.entities.map((e) => [e.name, e.type]));
   const idOf = (n: string) => lookup(graph.resolution, typeOf.get(n)!, n)!;
   const n = names.length;
-  const step = Math.min(0.12, 0.9 / n);
+  // Beat 1: the text appears. Beat 2: entities are marked. Beat 3: they move to the graph.
+  // Beat 4 (if any): aliases join their entity. Beat 5: edges draw.
+  const step = Math.min(0.1, 0.8 / n);
   const ign = names.map((_, i) => 0.6 + i * step);
-  const E1 = 0.6 + n * step + 0.25;
-  const lift = names.map((_, i) => E1 + i * 0.09);
-  const FLY = 0.85;
+  const E1 = 0.6 + n * step + 0.2;
+  const lift = names.map((_, i) => E1 + i * 0.05);
+  const FLY = 0.8;
   const arrive = lift.map((l) => l + FLY);
-  const E2 = Math.max(...arrive) + 0.15;
+  const E2 = Math.max(...arrive) + 0.1;
   const aliases = names.filter((nm) => graph.nodes.get(idOf(nm))!.name !== nm);
   const fusions = aliases.map((a) => {
     const e = graph.nodes.get(idOf(a))!;
     return { alias: a, canonical: e.name, reason: e.merges.find((m) => m.alias === a)!.reason };
   });
   const F = E2;
-  const E3 = aliases.length ? F + 1.3 : E2;
+  const E3 = aliases.length ? F + 1.1 : E2;
   const relEdges = x.relations.map((r) => `${idOf(r.source)}|${r.type}|${idOf(r.target)}`);
-  const E4 = E3 + relEdges.length * 0.12 + 0.7;
-  const docIds = [...new Set(names.map(idOf))];
+  const E4 = E3 + Math.min(1.1, relEdges.length * 0.1 + 0.6);
+  const after = litBy(graph, [...prior, docId]);
 
-  const fuseText = fusions.map((f) => `“${f.alias}” is ${f.canonical}`).join("; ");
   const beats: Beat[] = [
     { at: 0, caption: `Reading “${doc.title}”.` },
-    { at: 0.6, caption: "The extractor marks every entity it finds. Colour shows the type." },
-    { at: E1, caption: "Each entity lifts off the page and becomes a node in the graph." },
-    ...(aliases.length ? [{ at: F, caption: `Entity resolution: ${fuseText}. The names fuse into one node.` }] : []),
-    { at: E3, caption: `The relations stated in the text become edges: ${relEdges.length} from this document.` },
-    { at: E4, caption: `The graph now holds ${litBy(graph, [...prior, docId]).nodes.size} entities and ${litBy(graph, [...prior, docId]).edges.size} relations.` },
+    { at: 0.6, caption: "The extractor marks each entity it finds." },
+    { at: E1, caption: "Each entity becomes a node in the graph." },
+    ...(aliases.length ? [{ at: F, caption: `Entity resolution: ${fusions.map((f) => `“${f.alias}” is ${f.canonical}`).join("; ")}.` }] : []),
+    { at: E3, caption: `The relations in the text become edges: ${relEdges.length} from this document.` },
+    { at: E4, caption: `The graph now holds ${after.nodes.size} entities and ${after.edges.size} relations.` },
   ];
-  const camera = engine.fit([...docIds], 1.25);
+  // The camera holds the whole graph; the document's entities are what change.
+  const camera = { ...HOME };
 
   return {
     fusions,
-    seq: new Sequence(E4 + 0.6, beats, frozen),
+    seq: new Sequence(E4 + 0.5, beats, frozen),
     frame(t) {
       const f = baseFrame(graph, prior);
-      // Focus on this document's entities, then pull back to the whole graph.
-      f.camera = t < E4 ? camera : { ...HOME };
+      f.camera = camera;
       names.forEach((nm, i) => {
         const id = idOf(nm);
         const isAlias = aliases.includes(nm);
         const known = before.nodes.has(id);
-        const fuseAt = F + 0.7;
-        const litAt = isAlias && !known && !names.some((o) => o !== nm && idOf(o) === id && !aliases.includes(o)) ? fuseAt : arrive[i];
+        const hasPlainMention = names.some((o) => o !== nm && idOf(o) === id && !aliases.includes(o));
+        const litAt = isAlias && !known && !hasPlainMention ? F + 0.8 : arrive[i];
         const cur = f.nodes.get(id) ?? { lit: 0 };
-        const lit = Math.max(cur.lit, span(t, litAt - 0.05, 0.3));
-        const flare = Math.max(cur.flare ?? 0, t >= arrive[i] && !isAlias ? 1 - span(t, arrive[i], 0.6) : 0, isAlias && t >= fuseAt ? 1 - span(t, fuseAt, 0.7) : 0);
-        f.nodes.set(id, { lit, flare });
-
-        // The flying label.
+        f.nodes.set(id, { lit: Math.max(cur.lit, span(t, litAt - 0.1, 0.3)) });
         if (t < lift[i]) return;
+        // The moving label: from its place in the text to its node.
         const rect = dom.spanRect(nm);
         const [ex, ey] = engine.nodeScreen(id);
-        const [sx, sy] = rect ? [rect.left + rect.width / 2, rect.top + rect.height / 2] : [ex, ey + 80];
+        const [sx, sy] = rect ? [rect.left + rect.width / 2, rect.top + rect.height / 2] : [ex, ey + 60];
         const p = ease.inOut(span(t, lift[i], FLY));
-        const hold = isAlias ? [ex, ey - 34] : [ex, ey];
-        const cx = (sx + hold[0]) / 2;
-        const cy = Math.min(sy, hold[1]) - 90;
-        let lx = (1 - p) * (1 - p) * sx + 2 * (1 - p) * p * cx + p * p * hold[0];
-        let ly = (1 - p) * (1 - p) * sy + 2 * (1 - p) * p * cy + p * p * hold[1];
+        const hold: [number, number] = isAlias ? [ex, ey - 28] : [ex, ey];
+        let lx = lerp(sx, hold[0], p);
+        let ly = lerp(sy, hold[1], p);
         let alpha = 1;
-        let size = lerp(14, 12, p);
-        if (!isAlias) alpha = 1 - span(t, arrive[i], 0.25);
+        if (!isAlias) alpha = 1 - span(t, arrive[i] - 0.1, 0.2);
         else {
-          const q = ease.inOut(span(t, F, 0.7));
+          // The alias waits above its entity, then slides into it.
+          const q = ease.inOut(span(t, F, 0.8));
           lx = lerp(lx, ex, q);
           ly = lerp(ly, ey, q);
-          size = lerp(12, 9, q);
-          alpha = 1 - span(t, F + 0.6, 0.2);
-          if (t >= fuseAt) {
-            const k = span(t, fuseAt, 0.7);
-            f.flashes.push({ x: ex, y: ey, r: 12 + 60 * ease.out(k), alpha: 1 - k, type: typeOf.get(nm)! } as Flash);
-          }
+          alpha = 1 - span(t, F + 0.6, 0.25);
         }
-        if (alpha > 0.01) f.labels.push({ text: nm, type: typeOf.get(nm)!, x: lx, y: ly, alpha, size, glow: 1 - span(p, 0.6, 0.4) * 0.5 } as FlyLabel);
+        if (alpha > 0.01) f.labels.push({ text: nm, type: typeOf.get(nm)!, x: lx, y: ly, alpha });
       });
       relEdges.forEach((id, j) => {
-        const d = ease.out(span(t, E3 + j * 0.12, 0.6));
+        const d = ease.inOut(span(t, E3 + j * 0.1, 0.6));
         const cur = f.edges.get(id);
-        f.edges.set(id, { draw: Math.max(cur?.draw ?? 0, d), pulse: d > 0 && d < 1 ? d : undefined });
+        f.edges.set(id, { draw: Math.max(cur?.draw ?? 0, d) });
       });
       return f;
     },
     dom(t) {
-      dom.setParagraphs(Math.floor(span(t, 0, 0.6) * doc.paragraphs.length + (t >= 0.6 ? 1 : 0.0001)));
+      dom.setParagraphs(t >= 0.05 ? doc.paragraphs.length : 0);
       names.forEach((nm, i) => dom.setSpanState(nm, t >= lift[i] ? "lifted" : t >= ign[i] ? "lit" : "idle"));
-      dom.setRelations(relEdges.filter((_, j) => t >= E3 + j * 0.12).length);
+      dom.setRelations(relEdges.filter((_, j) => t >= E3 + j * 0.1).length);
     },
   };
 }
 
-// --- Merge: every name in the corpus resolves into the graph ----------------------
+// --- Merge: every name in the corpus resolves into the graph -----------------------
 
 export function mergeScene(graph: Graph, engine: Engine, layout: Record<string, number[]>, frozen: number | null): Scene {
   const rnd = seeded(29);
@@ -239,66 +212,56 @@ export function mergeScene(graph: Graph, engine: Engine, layout: Record<string, 
     x.entities.map((e) => {
       const id = lookup(graph.resolution, e.type, e.name)!;
       const a = rnd() * 6.283;
-      const r = 70 + rnd() * 60;
-      return { name: e.name, type: e.type, id, ox: Math.cos(a) * r, oy: Math.sin(a) * r * 0.7, alias: graph.nodes.get(id)!.name !== e.name, delay: rnd() * 0.5 };
+      const r = 60 + rnd() * 40;
+      return { name: e.name, type: e.type, id, ox: Math.cos(a) * r, oy: Math.sin(a) * r * 0.6, alias: graph.nodes.get(id)!.name !== e.name, delay: rnd() * 0.4 };
     }),
   );
   const groups = [...graph.nodes.values()].filter((e) => e.aliases.length);
-  const G0 = 2.6;
-  const GL = 1.25;
+  const G0 = 2.1;
+  const GL = 1.1;
   const Ge = G0 + groups.length * GL;
   const beats: Beat[] = [
-    { at: 0, caption: `${mentions.length} names came out of six documents. Many are the same thing written differently.` },
-    { at: 1.1, caption: "Identical names merge at once: “Telemetry Gateway” appears in three documents and becomes one node." },
-    ...groups.map((g, i) => ({
-      at: G0 + i * GL,
-      caption: `${g.aliases.map((a) => `“${a}”`).join(" and ")} → ${g.name} · ${g.merges[0].reason}.`,
-    })),
-    { at: Ge, caption: `${mentions.length} names became ${graph.nodes.size} entities. ${EXTRACTIONS.reduce((s, x) => s + x.relations.length, 0)} relations became ${graph.edges.length} edges, because two were stated twice.` },
+    { at: 0, caption: `${mentions.length} names came out of six documents. Many are the same thing, written differently.` },
+    { at: 0.9, caption: "Identical names merge at once: “Telemetry Gateway” appears three times and becomes one node." },
+    ...groups.map((g, i) => ({ at: G0 + i * GL, caption: `${g.aliases.map((a) => `“${a}”`).join(" and ")} → ${g.name}. Rule: ${g.merges[0].reason}.` })),
+    { at: Ge, caption: `${mentions.length} names became ${graph.nodes.size} entities; ${EXTRACTIONS.reduce((s, x) => s + x.relations.length, 0)} relations became ${graph.edges.length} edges.` },
   ];
   return {
-    seq: new Sequence(Ge + 1.5, beats, frozen),
+    seq: new Sequence(Ge + 1.2, beats, frozen),
     frame(t) {
-      const f: Frame = { nodes: new Map(), edges: new Map(), ghost: 0.55, labels: [], flashes: [], camera: { ...HOME }, clipLabels: true };
+      const f: Frame = { nodes: new Map(), edges: new Map(), ghost: 1, labels: [], camera: { ...HOME }, clipLabels: true };
       const gi = Math.floor((t - G0) / GL);
-      if (t >= G0 && gi < groups.length) f.camera = { ...engine.fit([groups[gi].id], 1.7) };
+      // The entity being resolved is marked in the accent; the camera stays still.
+      const focus = t >= G0 && gi < groups.length ? groups[gi].id : null;
       for (const m of mentions) {
         const [nx, ny] = layout[graph.nodes.get(m.id)!.name];
-        const appear = ease.out(span(t, m.delay, 0.6));
+        const appear = ease.out(span(t, m.delay, 0.5));
         const g = groups.findIndex((e) => e.id === m.id);
-        const start = m.alias ? G0 + g * GL : 1.1 + m.delay;
-        const p = ease.inOut(span(t, start, m.alias ? 0.75 : 0.9));
-        const wx = nx + m.ox * (1 - p);
-        const wy = ny + m.oy * (1 - p);
-        const [sx, sy] = engine.toScreen(wx, wy);
-        const alpha = appear * (1 - span(p, 0.8, 0.2));
-        if (alpha > 0.01) f.labels.push({ text: m.name, type: m.type, x: sx, y: sy, alpha, size: 12, glow: m.alias ? 1 : 0.5 });
-        const arrive = start + (m.alias ? 0.75 : 0.9);
-        const node = f.nodes.get(m.id) ?? { lit: 0, flare: 0 };
-        node.lit = Math.max(node.lit, span(t, arrive - 0.1, 0.3));
-        if (t >= arrive) node.flare = Math.max(node.flare ?? 0, 1 - span(t, arrive, 0.7));
+        const start = m.alias ? G0 + g * GL : 0.9 + m.delay * 0.5;
+        const p = ease.inOut(span(t, start, 0.8));
+        const [sx, sy] = engine.toScreen(nx + m.ox * (1 - p), ny + m.oy * (1 - p));
+        const alpha = appear * (1 - span(p, 0.75, 0.25));
+        if (alpha > 0.01) f.labels.push({ text: m.name, type: m.type, x: sx, y: sy, alpha });
+        const node = f.nodes.get(m.id) ?? { lit: 0 };
+        node.lit = Math.max(node.lit, span(t, start + 0.7, 0.3));
+        if (m.id === focus) node.hot = 1;
         f.nodes.set(m.id, node);
-        if (m.alias && t >= arrive && t < arrive + 0.8) {
-          const k = span(t, arrive, 0.8);
-          const [ex, ey] = engine.nodeScreen(m.id);
-          f.flashes.push({ x: ex, y: ey, r: 14 + 70 * ease.out(k), alpha: 1 - k, type: m.type });
-        }
       }
-      graph.edges.forEach((e, j) => f.edges.set(e.id, { draw: ease.out(span(t, Ge + j * 0.04, 0.6)) }));
+      graph.edges.forEach((e, j) => f.edges.set(e.id, { draw: ease.inOut(span(t, Ge + j * 0.02, 0.7)) }));
       return f;
     },
   };
 }
 
-// --- Ask: the traversal, hop by hop, against chunk search -------------------------
+// --- Ask: the traversal, hop by hop, against chunk search -----------------------------
 
 export interface AskDom {
   apply(t: number, times: { hops: number[]; verdict: number }): void;
 }
 
 export function askScene(graph: Graph, engine: Engine, r: Comparison, dom: AskDom, frozen: number | null): Scene {
-  const H0 = 1.0;
-  const HL = 1.15;
+  const H0 = 0.8;
+  const HL = 1.1;
   const hopAt = r.hops.map((_, i) => H0 + i * HL);
   const V = H0 + r.hops.length * HL;
   const start = r.hops[0]?.from;
@@ -306,38 +269,24 @@ export function askScene(graph: Graph, engine: Engine, r: Comparison, dom: AskDo
   const beats: Beat[] = [
     { at: 0, caption: start ? `The graph starts at the entity the question names: ${name(start)}.` : "No entity in the question." },
     ...r.hops.map((h, i) => ({ at: hopAt[i], caption: `Hop ${i + 1}: ${sentence(graph, h.edge)}.` })),
-    { at: V, caption: r.verdict.headline + "." },
+    { at: V, caption: `${r.verdict.headline}.` },
   ];
-  // When the verdict lands, the whole graph is framed in the space above it, path still lit.
-  const finalCam = { ...HOME };
   return {
-    seq: new Sequence(V + 1.4, beats, frozen),
+    seq: new Sequence(V + 1.0, beats, frozen),
     frame(t) {
       const f = baseFrame(graph, DOCUMENTS.map((d) => d.id), 0);
-      if (start) f.nodes.set(start, { lit: 1, hot: span(t, 0.2, 0.4), flare: t < 1 ? 1 - span(t, 0.4, 0.6) : 0 });
-      f.camera = start ? { ...engine.fit([start], 1.6) } : { ...HOME };
+      if (start) f.nodes.set(start, { lit: 1, hot: span(t, 0.2, 0.3) });
+      // The camera holds the whole graph; the path draws itself in the accent.
+      f.camera = { ...HOME };
       r.hops.forEach((h, i) => {
         const s = hopAt[i];
-        const pulse = span(t, s, 0.75);
         const edge = f.edges.get(h.edge.id)!;
-        edge.hot = Math.max(edge.hot ?? 0, span(t, s + 0.55, 0.3));
-        edge.label = t >= s + 0.4;
-        if (t >= s && pulse < 1) {
-          edge.pulse = pulse;
-          edge.reverse = h.from !== h.edge.source;
-        }
-        const arrived = s + 0.75;
+        edge.path = Math.max(edge.path ?? 0, ease.inOut(span(t, s, 0.8)));
+        edge.reverse = h.from !== h.edge.source;
+        edge.label = true;
         const node = f.nodes.get(h.to)!;
-        node.hot = Math.max(node.hot ?? 0, span(t, arrived - 0.1, 0.3));
-        if (t >= arrived) node.flare = Math.max(node.flare ?? 0, 1 - span(t, arrived, 0.6));
-        if (t >= s && t < V) {
-          const [ax, ay] = engine.pos(h.from);
-          const [bx, by] = engine.pos(h.to);
-          const k = ease.inOut(span(t, s, 1.0));
-          f.camera = { x: lerp(ax, bx, k), y: lerp(ay, by, k), z: 1.55 };
-        }
+        node.hot = Math.max(node.hot ?? 0, span(t, s + 0.7, 0.2));
       });
-      if (t >= V) f.camera = finalCam;
       return f;
     },
     dom(t) {

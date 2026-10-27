@@ -180,6 +180,14 @@ test("computed outcomes: the graph wins multi-hop, both win single facts, chunks
   for (const r of Object.values(outcome)) assert.equal(r.outcome.hybrid, "complete", r.question.id);
 });
 
+test("the headline follows the score: all missed, or part missed", () => {
+  const all = compare(graph, index, QUESTIONS.find((q) => q.id === "qx7-customers")!, 3);
+  assert.equal(all.facts.filter((f) => f.byChunks).length, 0);
+  assert.match(all.verdict.headline, /misses all of it/);
+  const part = compare(graph, index, QUESTIONS.find((q) => q.id === "upload-ticket")!, 3);
+  assert.match(part.verdict.headline, /misses part of it/);
+});
+
 test("verdicts state the real rank of a missed passage", () => {
   const r = compare(graph, index, QUESTIONS.find((q) => q.id === "upload-ticket")!, 3);
   const missed = r.facts.find((f) => !f.byChunks)!;
