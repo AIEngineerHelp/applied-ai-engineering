@@ -4,7 +4,7 @@ Most retrieval-augmented generation (RAG) systems work on chunks. They split doc
 
 A knowledge graph stores the facts inside those documents as entities and the relations between them. Retrieval can then follow relations from one entity to the next, however far apart the documents that stated them. This article explains what a knowledge graph is, how teams build one from text with an LLM, how they query it, and the main patterns for using one in RAG (usually called GraphRAG). It works through a small example corpus end to end and shows, with computed results, where the graph wins, where chunk search is just as good, and where chunk search wins.
 
-**Try it:** this folder contains a small web app. Pick a document and watch its entities and relations being highlighted, see them merge into one graph, then pick a question and watch the traversal light up hop by hop next to the passages chunk search returns. It runs offline with no API key. See [The demo app](#the-demo-app).
+**Try it:** this folder contains a guided web app. Watch a document's entities light up and fly into a glowing graph, see duplicate names fuse, then pick a question and follow the traversal hop by hop while chunk search brings up its passages, ending in a scored face-off. It runs offline with no API key. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
@@ -282,13 +282,16 @@ Controlled comparisons agree with the shape of the example, and add caveats:
 
 ## The demo app
 
-The app runs the example above in the browser, in three steps:
+The app stages the example above as a short guided film in the browser. It has an opening shot and three chapters, each with a plain caption at every step:
 
-1. **Extract.** Pick one of the six documents. The entities in the fixture are highlighted in the text one after another, coloured by type, followed by the relations. Hover a relation to see the sentence it came from. Names that entity resolution merged into an existing entity are listed with the rule that merged them.
-2. **Merge.** Each document you open is added to the graph, and its new nodes and edges animate in. A dashed ring marks an entity merged from several names. Hover or tap a node to see its aliases, properties and source documents.
-3. **Ask.** Pick a question. The graph traversal lights up hop by hop, in the graph and as a list, next to the passages chunk search returned. A verdict says which method found the whole answer and, from the actual ranks, why the other missed. The fact table shows chunk search, graph and hybrid for each fact. Switch between top 3 and top 5 chunks.
+- **Opening shot.** Words from the six documents rise across the screen. The entity names light up in their type's colour, fly to their places and fuse where two names mean the same thing, and the relations draw in as a graph. Then you can begin with the first document, or skip straight to the questions.
+- **01 Extract.** Pick a document. Its text appears, the entities light up one after another, then each lifts off the page and flies into the graph. When a name is an alias ("Varnell Semi"), it fuses with its entity (Varnell Semiconductor) in a flash of light, and the relations from the document draw in as edges.
+- **02 Merge.** All 33 extracted names appear at once. Identical names merge first, then the camera visits each alias group as it fuses: 33 names become 18 entities, and 21 relations become 19 edges.
+- **03 Ask.** Pick a question. The camera follows the traversal hop by hop, with a pulse of light along each edge, while chunk search brings up its top passages beside it. At the end a split-screen face-off shows each method's score out of the facts the answer needs, with the verdict and the correct answer. The prose-detail question plays the same way, and there chunk search wins.
 
-**Scripted:** the documents, the extraction fixtures, each question's traversal and Cypher query, and its correct answer. **Computed:** the highlights, entity resolution, the graph, the traversal, the TF-IDF ranking, the hybrid set and every verdict. The graph's node positions are hand-placed in [`data/layout.json`](data/layout.json) for legibility; which nodes and edges exist is computed. Motion stays under 300 ms per element, and the app respects reduced-motion settings.
+The graph is drawn on a canvas. Nodes glow in their type's colour, drift slowly and sit over a star field with parallax. Drag to pan, use the buttons or Ctrl and scroll to zoom, and hover or tap a node to see its aliases, relations and source documents. The controls let you replay a scene, step back and forward through its beats, pause it, or skip to the end. Storytelling beats last up to about 1.5 seconds, while buttons respond at once. With reduced motion turned on, every scene opens on its final frame, with no drift or pulses. The page opens in dark mode, and a light mode is available.
+
+**Scripted:** the documents, the extraction fixtures, each question's traversal and Cypher query, its correct answer, and the staging (timings, camera moves). **Computed:** the highlights, entity resolution, the graph, the traversal, the TF-IDF ranking, the hybrid set and every verdict and score. The graph's node positions are hand-placed in [`data/layout.json`](data/layout.json) for legibility; which nodes and edges exist is computed.
 
 ### Run it
 
@@ -303,7 +306,7 @@ npm run compare    # prints the comparison table above (add -- --k 5 for top 5)
 npm run export     # static copy in dist/ for deployment
 ```
 
-Open a view directly with `?doc=` (a document id, such as `borealis`), `?q=` (a question id from `data/questions.json`, such as `qx7-customers`) and `?theme=light` or `?theme=dark`. For example, `http://127.0.0.1:4332/?q=varnell-exposure`.
+Open a chapter directly with `?scene=extract`, `?scene=merge` or `?scene=ask`, plus `&doc=` (a document id, such as `borealis`) or `&q=` (a question id from `data/questions.json`, such as `qx7-customers`), `&k=5`, and `&theme=light`. `&t=` freezes a scene at that many seconds, which is useful for screenshots. For example, `http://127.0.0.1:4332/?scene=ask&q=varnell-exposure` or `http://127.0.0.1:4332/?t=3.2`.
 
 The app makes no API calls. The fonts load from Google Fonts.
 
@@ -333,7 +336,7 @@ A live run makes six Gemini calls, each with one short document, retried at most
 | `src/retrieve.ts` | Paragraph chunking and TF-IDF ranking |
 | `src/compare.ts` | Runs a question all three ways and computes the verdict |
 | `src/spans.ts` | Finds mentions and evidence in the text for highlighting |
-| `client/` | The app (TypeScript, Tailwind CSS v4, hand-drawn SVG graph) |
+| `client/` | The app (TypeScript and Tailwind CSS v4): `engine.ts` draws the graph on a canvas, `scenes.ts` stages each chapter as a timeline, `timeline.ts` is the scene clock, `app.ts` is the page |
 | `scripts/` | Local server, static export, comparison table, Gemini extraction |
 | `tests/graph.test.ts` | Tests (Node's built-in test runner) |
 

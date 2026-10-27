@@ -1,109 +1,101 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Graph vs Chunk Search</title>
-<meta name="description" content="Extract entities and relations from six documents, merge them into a knowledge graph, then compare graph traversal with chunk retrieval on multi-hop questions.">
+<meta name="description" content="Watch six documents turn into a knowledge graph, then see a graph traversal and chunk search race to answer the same questions.">
+<meta name="theme-color" content="#05070f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="build/app.css">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script>
-  // Set the theme before first paint: the saved choice, else the system's.
+  // Dark by default; ?theme= or the saved choice can switch to light before first paint.
   (() => {
     let t = new URLSearchParams(location.search).get("theme");
     if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("kg-theme"); } catch {} }
-    document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
   })();
 </script>
 </head>
-<body class="bg-zinc-50 font-sans text-[15px] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-<header class="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-zinc-200 bg-zinc-50/80 px-4 backdrop-blur-md md:px-6 dark:border-zinc-800 dark:bg-zinc-950/80">
-  <a class="flex min-w-0 items-center gap-2.5 font-semibold tracking-tight" href="./">
-    <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-teal-600 pb-px text-[15px] leading-none font-extrabold tracking-tight text-white shadow-sm shadow-teal-900/20" aria-hidden="true">ai</span>
-    <span class="truncate">Knowledge Graph vs Chunk Search</span>
+<body class="font-sans text-[15px] antialiased">
+<canvas id="back" class="pointer-events-none fixed inset-0 z-0" aria-hidden="true"></canvas>
+<div class="vignette pointer-events-none fixed inset-0 z-[1]" aria-hidden="true"></div>
+<div class="grain pointer-events-none fixed inset-0 z-[2]" aria-hidden="true"></div>
+
+<header class="topbar fixed inset-x-0 top-0 z-50 flex h-14 items-center gap-3 px-4 md:px-7">
+  <a class="flex min-w-0 items-center gap-2.5 text-[14px] font-semibold tracking-tight" href="./">
+    <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-teal-400 pb-px text-[14px] leading-none font-extrabold tracking-tight text-zinc-950 shadow-[0_0_24px_rgb(45_212_191/0.45)]" aria-hidden="true">ai</span>
+    <span class="hidden truncate sm:inline">Knowledge Graph vs Chunk Search</span>
   </a>
-  <nav class="ml-auto flex items-center gap-1 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-    <a class="hidden rounded-lg px-2.5 py-1.5 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 sm:block dark:hover:bg-zinc-800 dark:hover:text-zinc-100" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/knowledge-graphs#readme">Article</a>
-    <a class="hidden rounded-lg px-2.5 py-1.5 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 sm:block dark:hover:bg-zinc-800 dark:hover:text-zinc-100" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/knowledge-graphs">Code</a>
-    <button id="theme" type="button" class="rounded-lg p-2 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label="Switch color theme" title="Switch color theme">
-      <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
-    </button>
+  <nav id="chapters" class="ml-auto flex items-center gap-0.5 text-[13px] font-medium" aria-label="Chapters">
+    <button type="button" class="chap" data-chapter="extract"><span class="chap-n">01</span>Extract</button>
+    <button type="button" class="chap" data-chapter="merge"><span class="chap-n">02</span>Merge</button>
+    <button type="button" class="chap" data-chapter="ask"><span class="chap-n">03</span>Ask</button>
   </nav>
+  <a class="ghost-btn hidden md:inline-flex" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/knowledge-graphs#readme">Article</a>
+  <button id="theme" type="button" class="ghost-btn !px-2" aria-label="Switch between dark and light" title="Switch between dark and light">
+    <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg>
+  </button>
 </header>
 
-<main class="mx-auto max-w-[1440px] px-4 pt-6 pb-14 md:px-8 md:pt-8">
-  <section class="mb-6 max-w-4xl">
-    <p class="mb-2 text-xs font-bold tracking-widest text-teal-700 uppercase dark:text-teal-400">RAG &amp; Retrieval · GraphRAG</p>
-    <h1 class="mb-2.5 text-2xl leading-tight font-bold tracking-tight text-balance md:text-[32px]">How a knowledge graph answers questions that chunk search misses</h1>
-    <p class="text-base leading-relaxed text-zinc-600 dark:text-zinc-400">Six short documents from Corvane Instruments, a fictional sensor maker. <b class="font-semibold text-zinc-800 dark:text-zinc-200">1</b> Pick a document to see the entities and relations extracted from it. <b class="font-semibold text-zinc-800 dark:text-zinc-200">2</b> Watch them merge into one graph. <b class="font-semibold text-zinc-800 dark:text-zinc-200">3</b> Ask a question and compare a graph traversal with ordinary chunk retrieval.</p>
-  </section>
-
-  <ol id="steps" class="mb-5 flex flex-wrap gap-2 text-[13px] font-medium" aria-label="Steps"></ol>
-
-  <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-    <!-- Step 1 -->
-    <section id="s1" aria-labelledby="s1-title" class="card">
-      <div class="card-head">
-        <span class="step-num">1</span>
-        <div class="min-w-0">
-          <h2 id="s1-title" class="card-title">Extract entities and relations</h2>
-          <p class="card-sub">Pick a document. Highlighted names are the entities an LLM extractor returned for it.</p>
+<main class="relative z-10">
+  <!-- Opening shot -->
+  <section id="hero" class="relative h-svh min-h-[620px] overflow-hidden">
+    <div id="hero-slot" class="absolute inset-x-2 top-[32%] bottom-[23%] lg:top-[12%] lg:right-[2%] lg:bottom-[12%] lg:left-[38%]" aria-hidden="true"></div>
+    <div class="relative flex h-full flex-col px-5 pt-20 pb-6 md:px-10 lg:w-[40%] lg:justify-center lg:pt-14 lg:pb-14">
+      <p class="eyebrow">GraphRAG · RAG &amp; Retrieval</p>
+      <h1 class="display mt-3 text-[38px] leading-[1.02] md:text-[56px] xl:text-[72px]">How a knowledge graph answers what <em>chunk search misses</em></h1>
+      <p class="mt-4 max-w-md text-[15px] leading-relaxed text-[var(--muted)] md:text-base">Six short documents become a graph of entities and relations. Then both methods race to answer the same questions.</p>
+      <div class="mt-auto lg:mt-9">
+        <p id="hero-caption" class="subtitle min-h-[3.2em] max-w-md" aria-live="polite"></p>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <button id="cta" type="button" class="cta">Begin with the first document
+            <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></button>
+          <button id="skip" type="button" class="ghost-btn">Skip to the questions</button>
         </div>
-      </div>
-      <div id="docs" role="tablist" aria-label="Documents" class="grid grid-cols-2 gap-1.5 px-4 pt-3 sm:grid-cols-3"></div>
-      <article id="doc" class="px-4 pt-4 pb-1" aria-live="polite"></article>
-      <div class="px-4 pt-2 pb-4">
-        <h3 class="sub-title">Relations <span id="rel-count" class="font-normal text-zinc-500"></span></h3>
-        <ul id="relations" class="grid gap-1"></ul>
-        <div id="merges" class="mt-3 empty:hidden"></div>
-      </div>
-    </section>
-
-    <!-- Step 2 -->
-    <section id="s2" aria-labelledby="s2-title" class="card">
-      <div class="card-head">
-        <span class="step-num">2</span>
-        <div class="min-w-0 flex-1">
-          <h2 id="s2-title" class="card-title">Merge them into one graph</h2>
-          <p id="graph-stats" class="card-sub" aria-live="polite"></p>
-        </div>
-        <button id="add-all" type="button" class="btn shrink-0">Add all documents</button>
-      </div>
-      <div class="overflow-x-auto px-2 pt-1">
-        <svg id="graph" class="block w-full min-w-[620px] select-none" viewBox="0 0 960 660" role="img" aria-label="Knowledge graph"></svg>
-      </div>
-      <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-t border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <ul id="legend" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400"></ul>
-        <p id="node-info" class="min-h-[2.5em] max-w-xl text-[13px] leading-snug text-zinc-600 dark:text-zinc-400"></p>
-      </div>
-    </section>
-  </div>
-
-  <!-- Step 3 -->
-  <section id="s3" aria-labelledby="s3-title" class="card mt-4">
-    <div class="card-head">
-      <span class="step-num">3</span>
-      <div class="min-w-0 flex-1">
-        <h2 id="s3-title" class="card-title">Ask a question</h2>
-        <p class="card-sub">Both methods search all six documents. The verdict checks which of the facts the answer needs each one actually returned.</p>
-      </div>
-      <div id="k" role="radiogroup" aria-label="Chunks returned" class="seg-group shrink-0">
-        <button type="button" role="radio" data-k="3" aria-checked="true" class="seg">Top 3</button>
-        <button type="button" role="radio" data-k="5" aria-checked="false" class="seg">Top 5</button>
       </div>
     </div>
-    <div id="questions" class="grid gap-2 px-4 pt-3 sm:grid-cols-2 xl:grid-cols-3"></div>
-    <div id="result" class="px-4 pt-4 pb-5" aria-live="polite"></div>
   </section>
 
-  <p class="mt-5 max-w-4xl text-[13px] leading-relaxed text-zinc-500">
-    <b class="font-semibold text-zinc-700 dark:text-zinc-300">What is scripted and what is computed.</b>
-    Scripted: the documents, the extraction results (hand-written JSON in the format an LLM extractor returns), each question's graph query and its correct answer. Computed in your browser: the highlights, entity resolution, the graph, the traversal, the TF-IDF chunk ranking, and every verdict. TF-IDF stands in for an embedding model so the comparison is offline and repeatable.
-  </p>
+  <!-- The stage: panel + graph -->
+  <section id="stage" class="relative lg:grid lg:grid-cols-[minmax(400px,480px)_minmax(0,1fr)]">
+    <div class="stage-slot relative z-0 h-[62svh] min-h-[440px] lg:sticky lg:order-2 lg:top-0 lg:h-svh">
+      <div id="slot" class="absolute inset-0 top-24 touch-none lg:top-14" role="img" aria-label="Knowledge graph"></div>
+      <div class="pointer-events-none absolute inset-x-3 top-16 flex items-start justify-between gap-2 lg:inset-x-6 lg:top-20">
+        <div id="hops" class="hops pointer-events-auto"></div>
+        <div id="controls" class="controls pointer-events-auto ml-auto">
+          <button type="button" data-act="replay" aria-label="Replay scene" title="Replay"><svg viewBox="0 0 16 16"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button type="button" data-act="prev" aria-label="Previous beat" title="Previous beat"><svg viewBox="0 0 16 16"><path d="M10.5 3.5 6 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button type="button" data-act="toggle" aria-label="Play or pause" title="Play or pause"><svg viewBox="0 0 16 16" class="ic-pause"><path d="M5.5 3.5v9m5-9v9" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><svg viewBox="0 0 16 16" class="ic-play"><path d="M5 3.2v9.6L12.5 8z" fill="currentColor"/></svg></button>
+          <button type="button" data-act="next" aria-label="Next beat" title="Next beat"><svg viewBox="0 0 16 16"><path d="m5.5 3.5 4.5 4.5-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button type="button" data-act="skip" aria-label="Skip to the end" title="Skip to the end"><svg viewBox="0 0 16 16"><path d="m3.5 3.5 4.5 4.5-4.5 4.5m5-9 4.5 4.5-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
+        </div>
+      </div>
+      <div class="pointer-events-none absolute inset-x-3 bottom-2 flex flex-col items-center gap-2 lg:inset-x-8 lg:bottom-7">
+        <div id="faceoff" class="faceoff pointer-events-auto" aria-live="polite"></div>
+        <p id="caption" class="subtitle subtitle-stage text-center" aria-live="polite"></p>
+      </div>
+      <div class="zoom pointer-events-auto absolute right-6 bottom-7 hidden lg:flex">
+        <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+        <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+        <button type="button" data-zoom="reset" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 16 16"><path d="M2.5 6V2.5H6m4 0h3.5V6m0 4v3.5H10m-4 0H2.5V10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+      </div>
+    </div>
+
+    <div id="panel" class="panel relative z-10 lg:order-1 lg:min-h-svh"></div>
+  </section>
+
+  <footer class="relative z-10 border-t border-[var(--line)] px-5 py-8 text-[13px] leading-relaxed text-[var(--muted)] md:px-10">
+    <p class="max-w-3xl"><b class="font-semibold text-[var(--ink)]">Scripted and computed.</b> Scripted: the six documents, the extraction results (hand-written JSON in the format an LLM extractor returns), each question's graph query and its correct answer. Computed in your browser: entity resolution, the graph, every traversal, the TF-IDF chunk ranking and every verdict. TF-IDF stands in for an embedding model so the comparison is offline and repeatable. <a class="underline decoration-[var(--line)] underline-offset-4 hover:text-[var(--ink)]" href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/knowledge-graphs#readme">Read the article</a>.</p>
+  </footer>
 </main>
+
+<canvas id="front" class="pointer-events-none fixed inset-0 z-40" aria-hidden="true"></canvas>
+<div id="tip" class="tip pointer-events-none fixed z-[60]" role="status"></div>
 
 <script type="module" src="build/app.js"></script>
 </body>
