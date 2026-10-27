@@ -1,0 +1,289 @@
+[
+ {
+  "id": "supplier-register",
+  "title": "Supplier register (excerpt)",
+  "kind": "Supplier register",
+  "date": "2026-01-08",
+  "paragraphs": [
+   "Varnell Semi is the sole supplier of the QX-7 radio chip. The supply contract renews every January.",
+   "Tessaly Plastics supplies the IP68 enclosure. We own the tooling for the enclosure, so a second moulder could be qualified within a quarter.",
+   "Hallam Cells supplies the LX-4 lithium cell. Lead times have been stable at six weeks."
+  ],
+  "text": "Varnell Semi is the sole supplier of the QX-7 radio chip. The supply contract renews every January.\n\nTessaly Plastics supplies the IP68 enclosure. We own the tooling for the enclosure, so a second moulder could be qualified within a quarter.\n\nHallam Cells supplies the LX-4 lithium cell. Lead times have been stable at six weeks."
+ },
+ {
+  "id": "atlas-3-brief",
+  "title": "Atlas-3 sensor: product brief",
+  "kind": "Product brief",
+  "date": "2026-01-20",
+  "paragraphs": [
+   "The Atlas-3 is a battery-powered water-quality sensor. It sends readings every 15 minutes through the Telemetry Gateway.",
+   "The Atlas-3 main board uses the QX-7 radio chip for its cellular link. The housing is the IP68 enclosure, which is rated for continuous immersion to two metres.",
+   "The Atlas-3 runs on one LX-4 lithium cell. Battery life is rated at five years at the default reading interval.",
+   "Atlas-3 units are assembled at the Tartu plant."
+  ],
+  "text": "The Atlas-3 is a battery-powered water-quality sensor. It sends readings every 15 minutes through the Telemetry Gateway.\n\nThe Atlas-3 main board uses the QX-7 radio chip for its cellular link. The housing is the IP68 enclosure, which is rated for continuous immersion to two metres.\n\nThe Atlas-3 runs on one LX-4 lithium cell. Battery life is rated at five years at the default reading interval.\n\nAtlas-3 units are assembled at the Tartu plant."
+ },
+ {
+  "id": "teams-q1",
+  "title": "Engineering teams, Q1 update",
+  "kind": "Org update",
+  "date": "2026-02-02",
+  "paragraphs": [
+   "Priya Raman leads the Firmware team. The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices, and the OTA Update Service.",
+   "Tomas Berg leads the Hardware team. The Hardware team owns the Atlas-3 design and the Borealis controller design.",
+   "Ines Okafor leads Customer Support. Support escalates any defect it cannot reproduce to the team that owns the affected system, and aims to answer within one business day."
+  ],
+  "text": "Priya Raman leads the Firmware team. The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices, and the OTA Update Service.\n\nTomas Berg leads the Hardware team. The Hardware team owns the Atlas-3 design and the Borealis controller design.\n\nInes Okafor leads Customer Support. Support escalates any defect it cannot reproduce to the team that owns the affected system, and aims to answer within one business day."
+ },
+ {
+  "id": "key-accounts",
+  "title": "Key accounts, February",
+  "kind": "Account list",
+  "date": "2026-02-10",
+  "paragraphs": [
+   "Osterby Water Utility runs 420 Atlas-3 units across its reservoirs and treatment plants.",
+   "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units.",
+   "Pellham Labs uses the Borealis controller to run its environmental test chambers.",
+   "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+  ],
+  "text": "Osterby Water Utility runs 420 Atlas-3 units across its reservoirs and treatment plants.\n\nCalder Grain Co-op monitors silo humidity with 60 Atlas 3 units.\n\nPellham Labs uses the Borealis controller to run its environmental test chambers.\n\nLena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+ },
+ {
+  "id": "borealis-release-2-4",
+  "title": "Borealis controller: release notes 2.4",
+  "kind": "Release notes",
+  "date": "2026-02-24",
+  "paragraphs": [
+   "Borealis 2.4 adds Modbus support. The Borealis controller now takes power from the PM-2 power module, which replaces the older PM-1.",
+   "The PM-2 power module is made by Varnell. Firmware updates for the controller are delivered through the Telemetry Gateway.",
+   "The controller design is maintained by T. Berg and the Hardware team. Borealis controllers are built at the Brno plant."
+  ],
+  "text": "Borealis 2.4 adds Modbus support. The Borealis controller now takes power from the PM-2 power module, which replaces the older PM-1.\n\nThe PM-2 power module is made by Varnell. Firmware updates for the controller are delivered through the Telemetry Gateway.\n\nThe controller design is maintained by T. Berg and the Hardware team. Borealis controllers are built at the Brno plant."
+ },
+ {
+  "id": "meridian-launch",
+  "title": "Meridian flow meter: launch note",
+  "kind": "Product brief",
+  "date": "2026-03-03",
+  "paragraphs": [
+   "The Meridian flow meter is our new product for irrigation networks. It reports flow and pressure every five minutes through TGW, our telemetry gateway.",
+   "Meridian uses the same QX7 modem as the Atlas-3 for its cellular link. Its flow element is the FS-9 sensing element, supplied by Kerrin Sensors.",
+   "Meridian units are assembled at the Tartu plant, on the line next to the Atlas-3."
+  ],
+  "text": "The Meridian flow meter is our new product for irrigation networks. It reports flow and pressure every five minutes through TGW, our telemetry gateway.\n\nMeridian uses the same QX7 modem as the Atlas-3 for its cellular link. Its flow element is the FS-9 sensing element, supplied by Kerrin Sensors.\n\nMeridian units are assembled at the Tartu plant, on the line next to the Atlas-3."
+ },
+ {
+  "id": "incident-qx7",
+  "title": "Incident review: QX-7 shipment delay",
+  "kind": "Incident review",
+  "date": "2026-03-12",
+  "paragraphs": [
+   "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage.",
+   "The review recommended qualifying a second radio-chip supplier by the end of Q3 and keeping eight weeks of chip stock on hand.",
+   "No customer shipments were missed, because the warehouse held enough finished units to cover the gap."
+  ],
+  "text": "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage.\n\nThe review recommended qualifying a second radio-chip supplier by the end of Q3 and keeping eight weeks of chip stock on hand.\n\nNo customer shipments were missed, because the warehouse held enough finished units to cover the gap."
+ },
+ {
+  "id": "northmoor-pilot",
+  "title": "Account note: Northmoor pilot",
+  "kind": "Account note",
+  "date": "2026-03-19",
+  "paragraphs": [
+   "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters across its eastern canals.",
+   "Lena Vik takes over the Northmoor Irrigation District account from the sales team. The first 40 meters ship in April."
+  ],
+  "text": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters across its eastern canals.\n\nLena Vik takes over the Northmoor Irrigation District account from the sales team. The first 40 meters ship in April."
+ },
+ {
+  "id": "brightwater-order",
+  "title": "Email: Brightwater order",
+  "kind": "Email",
+  "date": "2026-04-02",
+  "paragraphs": [
+   "Brightwater Aquaculture has ordered 80 A3 sensors to monitor oxygen in its fish pens. Delivery from Tartu is booked for the week of 20 April.",
+   "Brightwater asked whether the A3 can report every five minutes. Support confirmed the reading interval is configurable."
+  ],
+  "text": "Brightwater Aquaculture has ordered 80 A3 sensors to monitor oxygen in its fish pens. Delivery from Tartu is booked for the week of 20 April.\n\nBrightwater asked whether the A3 can report every five minutes. Support confirmed the reading interval is configurable."
+ },
+ {
+  "id": "cafeteria-memo",
+  "title": "Memo: Tartu plant canteen",
+  "kind": "Memo",
+  "date": "2026-04-15",
+  "paragraphs": [
+   "From 4 May, the Tartu plant canteen opens at 7:30. The Atlas meeting room on floor 2 will be used for overflow seating during the morning shift.",
+   "Please return trays to the racks by the window. Questions go to the facilities desk."
+  ],
+  "text": "From 4 May, the Tartu plant canteen opens at 7:30. The Atlas meeting room on floor 2 will be used for overflow seating during the morning shift.\n\nPlease return trays to the racks by the window. Questions go to the facilities desk."
+ },
+ {
+  "id": "battery-switch",
+  "title": "Engineering note: Atlas-3 battery change",
+  "kind": "Engineering note",
+  "date": "2026-04-28",
+  "paragraphs": [
+   "From the May build, the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell.",
+   "We made the change because the LX-4 lost a third of its capacity below minus ten degrees in the Osterby winter trials, which would have cut battery life to under three years for northern customers.",
+   "The Sundra C2 has the same footprint, so the main board does not change."
+  ],
+  "text": "From the May build, the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell.\n\nWe made the change because the LX-4 lost a third of its capacity below minus ten degrees in the Osterby winter trials, which would have cut battery life to under three years for northern customers.\n\nThe Sundra C2 has the same footprint, so the main board does not change."
+ },
+ {
+  "id": "kerrin-second-source",
+  "title": "Email: QX-7 second source",
+  "kind": "Email",
+  "date": "2026-05-06",
+  "paragraphs": [
+   "Marco Feld here, from Supply Chain. As of this week, Kerrin Sensors is qualified as a second source for the QX-7 radio chip.",
+   "The first Kerrin lot is 2,000 chips. Varnell remains the main supplier until Kerrin volumes ramp up in Q4."
+  ],
+  "text": "Marco Feld here, from Supply Chain. As of this week, Kerrin Sensors is qualified as a second source for the QX-7 radio chip.\n\nThe first Kerrin lot is 2,000 chips. Varnell remains the main supplier until Kerrin volumes ramp up in Q4."
+ },
+ {
+  "id": "incident-gateway",
+  "title": "Incident review: Telemetry Gateway outage",
+  "kind": "Incident review",
+  "date": "2026-05-15",
+  "paragraphs": [
+   "On 14 May 2026, the Telemetry Gateway rejected device connections for three hours. Every device that uploads through the gateway lost data for that window.",
+   "The cause was an expired TLS certificate on the gateway's load balancer. Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed.",
+   "The review recommended automating certificate renewal and alerting 30 days before any certificate expires."
+  ],
+  "text": "On 14 May 2026, the Telemetry Gateway rejected device connections for three hours. Every device that uploads through the gateway lost data for that window.\n\nThe cause was an expired TLS certificate on the gateway's load balancer. Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed.\n\nThe review recommended automating certificate renewal and alerting 30 days before any certificate expires."
+ },
+ {
+  "id": "supply-chain-standup",
+  "title": "Meeting notes: supply chain stand-up",
+  "kind": "Meeting notes",
+  "date": "2026-05-20",
+  "paragraphs": [
+   "Attendees: M. Feld (Supply Chain team lead), Tomas Berg, Priya Raman.",
+   "Main supply risks: the QX-7 is still mostly single-sourced until Kerrin volumes ramp, and Varnell also makes the PM-2, so a problem at Varnell would hit both the Atlas-3 and the Borealis at once.",
+   "The enclosure is low risk, since we own the tooling. The battery change removes our dependence on Hallam for the Atlas-3."
+  ],
+  "text": "Attendees: M. Feld (Supply Chain team lead), Tomas Berg, Priya Raman.\n\nMain supply risks: the QX-7 is still mostly single-sourced until Kerrin volumes ramp, and Varnell also makes the PM-2, so a problem at Varnell would hit both the Atlas-3 and the Borealis at once.\n\nThe enclosure is low risk, since we own the tooling. The battery change removes our dependence on Hallam for the Atlas-3."
+ },
+ {
+  "id": "newsletter-june",
+  "title": "Newsletter: June",
+  "kind": "Newsletter",
+  "date": "2026-06-03",
+  "paragraphs": [
+   "Our stand at the WaterTech fair was a success. Thanks to Atlas Logistics for getting the demo crates to Rotterdam on time.",
+   "The summer party is on 26 June at the harbour. The Atlas team photo from last year is on the intranet."
+  ],
+  "text": "Our stand at the WaterTech fair was a success. Thanks to Atlas Logistics for getting the demo crates to Rotterdam on time.\n\nThe summer party is on 26 June at the harbour. The Atlas team photo from last year is on the intranet."
+ },
+ {
+  "id": "varnell-bay-order",
+  "title": "Account note: Varnell Bay Marina",
+  "kind": "Account note",
+  "date": "2026-06-11",
+  "paragraphs": [
+   "Varnell Bay Marina has ordered 12 Borealis controllers to run the pumps on its floating docks. It is a new customer and has no connection to our chip supplier.",
+   "Jonas Lind manages the Varnell Bay Marina account."
+  ],
+  "text": "Varnell Bay Marina has ordered 12 Borealis controllers to run the pumps on its floating docks. It is a new customer and has no connection to our chip supplier.\n\nJonas Lind manages the Varnell Bay Marina account."
+ },
+ {
+  "id": "pellham-qbr",
+  "title": "Quarterly review: Pellham Labs",
+  "kind": "Account note",
+  "date": "2026-06-25",
+  "paragraphs": [
+   "Pellham Labs now runs 34 Borealis units across two buildings and plans to add a third building in the autumn.",
+   "Jonas Lind manages the Pellham Labs account. Pellham asked for a longer warranty on the PM-2 power module."
+  ],
+  "text": "Pellham Labs now runs 34 Borealis units across two buildings and plans to add a third building in the autumn.\n\nJonas Lind manages the Pellham Labs account. Pellham asked for a longer warranty on the PM-2 power module."
+ },
+ {
+  "id": "tartu-plant",
+  "title": "Operations note: Tartu plant",
+  "kind": "Operations note",
+  "date": "2026-07-07",
+  "paragraphs": [
+   "The Tartu plant assembles the Atlas-3 and the Meridian flow meter. Elin Saar is the plant manager.",
+   "Line 2 will be retooled in August for the higher Meridian volumes."
+  ],
+  "text": "The Tartu plant assembles the Atlas-3 and the Meridian flow meter. Elin Saar is the plant manager.\n\nLine 2 will be retooled in August for the higher Meridian volumes."
+ },
+ {
+  "id": "fleet-console",
+  "title": "Fleet Console: product brief",
+  "kind": "Product brief",
+  "date": "2026-07-21",
+  "paragraphs": [
+   "Fleet Console is the web dashboard where customers see their devices and readings. It reads all device data from the Telemetry Gateway.",
+   "Fleet Console is owned by the Data Platform team, which Ana Duarte leads."
+  ],
+  "text": "Fleet Console is the web dashboard where customers see their devices and readings. It reads all device data from the Telemetry Gateway.\n\nFleet Console is owned by the Data Platform team, which Ana Duarte leads."
+ },
+ {
+  "id": "osterby-qbr",
+  "title": "Quarterly review: Osterby Water",
+  "kind": "Account note",
+  "date": "2026-08-05",
+  "paragraphs": [
+   "After the reservoir expansion, Osterby Water now runs 510 Atlas-3 units.",
+   "Lena Vik presented the winter-readiness plan. Osterby asked for alerts in Fleet Console when a sensor stops reporting."
+  ],
+  "text": "After the reservoir expansion, Osterby Water now runs 510 Atlas-3 units.\n\nLena Vik presented the winter-readiness plan. Osterby asked for alerts in Fleet Console when a sensor stops reporting."
+ },
+ {
+  "id": "calder-email",
+  "title": "Email: Calder Grain",
+  "kind": "Email",
+  "date": "2026-08-19",
+  "paragraphs": [
+   "Calder Grain Co-op is happy with its 60 sensors and asked whether the QX-7 delay in March would affect spare parts. Lena Vik confirmed it would not.",
+   "Calder would like humidity alerts by text message before the harvest."
+  ],
+  "text": "Calder Grain Co-op is happy with its 60 sensors and asked whether the QX-7 delay in March would affect spare parts. Lena Vik confirmed it would not.\n\nCalder would like humidity alerts by text message before the harvest."
+ },
+ {
+  "id": "reorg-memo",
+  "title": "Memo: Telemetry Gateway ownership",
+  "kind": "Memo",
+  "date": "2026-09-01",
+  "paragraphs": [
+   "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team, led by Ana Duarte.",
+   "Priya Raman's Firmware team keeps the OTA Update Service. Support should route gateway tickets to the Data Platform team from today."
+  ],
+  "text": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team, led by Ana Duarte.\n\nPriya Raman's Firmware team keeps the OTA Update Service. Support should route gateway tickets to the Data Platform team from today."
+ },
+ {
+  "id": "office-move",
+  "title": "Memo: office move",
+  "kind": "Memo",
+  "date": "2026-09-09",
+  "paragraphs": [
+   "Head office moves to 14 Harbour Street on 1 October. Desks are assigned by team; the Hardware team and the Firmware team share floor 3.",
+   "Parking permits for the new building are available from the facilities desk."
+  ],
+  "text": "Head office moves to 14 Harbour Street on 1 October. Desks are assigned by team; the Hardware team and the Firmware team share floor 3.\n\nParking permits for the new building are available from the facilities desk."
+ },
+ {
+  "id": "hallam-note",
+  "title": "Supplier note: Hallam Cells",
+  "kind": "Supplier note",
+  "date": "2026-09-22",
+  "paragraphs": [
+   "Hallam Cells remains the supplier of the LX-4 lithium cell for the Borealis controller's backup supply.",
+   "The Atlas-3 no longer uses the LX-4, so Hallam volumes will fall by about half next year."
+  ],
+  "text": "Hallam Cells remains the supplier of the LX-4 lithium cell for the Borealis controller's backup supply.\n\nThe Atlas-3 no longer uses the LX-4, so Hallam volumes will fall by about half next year."
+ },
+ {
+  "id": "board-update-q3",
+  "title": "Board update, Q3",
+  "kind": "Board update",
+  "date": "2026-10-02",
+  "paragraphs": [
+   "Revenue grew 18 percent on the quarter, driven by Meridian pilots and the Osterby expansion.",
+   "Headcount is 212. The board approved the move to Harbour Street and the Brno plant's new test bay."
+  ],
+  "text": "Revenue grew 18 percent on the quarter, driven by Meridian pilots and the Osterby expansion.\n\nHeadcount is 212. The board approved the move to Harbour Street and the Brno plant's new test bay."
+ }
+]

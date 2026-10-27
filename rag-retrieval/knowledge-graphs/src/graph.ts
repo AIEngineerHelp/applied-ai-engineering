@@ -1,161 +1,87 @@
-// A small in-memory property graph and the three traversals the app uses:
-// a fixed relationship pattern (what a Cypher MATCH does), the shortest path
-// between two entities, and an entity's neighbourhood (local search).
+// Build the graph from validated triples and resolved entities. Every edge
+// keeps its provenance: the documents, dates and exact quotes it came from, the
+// extraction run, and any properties per mention (so a value that changed over
+// time, like a unit count, keeps both values with their dates).
 
-import { RELATION_TYPES, type Extraction, type Properties, type RelationType } from "./schema.ts";
-import { lookup, resolve, type Entity, type Resolution } from "./resolve.ts";
+import type { Cluster } from "./resolve.ts";
+import type { Triple } from "./schema.ts";
 
-export interface Edge {
+export interface GNode {
   id: string;
-  source: string; // entity id
-  type: RelationType;
-  target: string; // entity id
-  properties: Properties;
-  /** Where each copy of this relation was stated. Duplicates across documents merge into one edge. */
-  evidence: { document: string; text: string }[];
+  name: string;
+  type: string;
+  aliases: string[];
+  docs: string[];
+}
+
+export interface Mention {
+  doc: string;
+  date: string;
+  quote: string;
+  properties: Record<string, string | number>;
+}
+
+export interface GEdge {
+  id: string; // source|TYPE|target
+  source: string;
+  type: string;
+  target: string;
+  mentions: Mention[]; // sorted by date
 }
 
 export interface Graph {
-  nodes: Map<string, Entity>;
-  edges: Edge[];
-  resolution: Resolution;
+  run: string;
+  nodes: GNode[];
+  edges: GEdge[];
+  dropped: { doc: string; triple: Triple; reason: string }[];
 }
 
-export function buildGraph(extractions: Extraction[]): Graph {
-  const resolution = resolve(extractions);
-  const nodes = new Map(resolution.entities.map((e) => [e.id, e]));
-  const edges = new Map<string, Edge>();
-  for (const x of extractions) {
-    const typeOf = new Map(x.entities.map((e) => [e.name, e.type]));
-    for (const r of x.relations) {
-      const source = lookup(resolution, typeOf.get(r.source) ?? "", r.source);
-      const target = lookup(resolution, typeOf.get(r.target) ?? "", r.target);
-      if (!source || !target) throw new Error(`Relation ${r.source} ${r.type} ${r.target} in ${x.document} names an unknown entity`);
-      const id = `${source}|${r.type}|${target}`;
-      const edge = edges.get(id) ?? { id, source, type: r.type, target, properties: {}, evidence: [] };
-      Object.assign(edge.properties, r.properties ?? {});
-      edge.evidence.push({ document: x.document, text: r.evidence });
-      edges.set(id, edge);
-    }
-  }
-  return { nodes, edges: [...edges.values()], resolution };
-}
-
-export const findByName = (g: Graph, name: string): Entity | undefined =>
-  [...g.nodes.values()].find((e) => e.name === name || e.aliases.includes(name));
-
-/** Entities named in a question, longest names first, without overlapping matches. */
-export function linkEntities(g: Graph, text: string): string[] {
-  const lower = text.toLowerCase();
-  const names = [...g.nodes.values()]
-    .flatMap((e) => [e.name, ...e.aliases].map((n) => ({ id: e.id, n: n.toLowerCase() })))
-    .sort((a, b) => b.n.length - a.n.length);
-  const taken: [number, number][] = [];
-  const found: { id: string; at: number }[] = [];
-  for (const { id, n } of names) {
-    let from = 0;
-    for (let at = lower.indexOf(n, from); at !== -1; at = lower.indexOf(n, from)) {
-      from = at + 1;
-      const end = at + n.length;
-      const bounded = !/[\p{L}\p{N}]/u.test(lower[at - 1] ?? " ") && !/[\p{L}\p{N}]/u.test(lower[end] ?? " ");
-      if (!bounded || taken.some(([s, e]) => at < e && end > s)) continue;
-      taken.push([at, end]);
-      found.push({ id, at });
-    }
-  }
-  return [...new Set(found.sort((a, b) => a.at - b.at).map((f) => f.id))];
-}
-
-/** One hop of a pattern: follow `rel` outward or inward, optionally to a node type. */
-export interface Step {
-  rel: RelationType;
-  dir: "out" | "in";
-}
-
-/** One edge walked in a given direction, for display: from → to. */
-export interface Hop {
-  edge: Edge;
-  from: string;
-  to: string;
-}
-
-/**
- * Every path from `start` that follows the steps in order, like
- * MATCH (start)-[:A]->()-[:B]->()<-[:C]-(end). Returns the paths and the
- * distinct end nodes.
- */
-export function followPattern(g: Graph, start: string, steps: Step[]): { paths: Hop[][]; ends: string[] } {
-  let paths: Hop[][] = [[]];
-  let heads = [start];
-  for (const step of steps) {
-    const nextPaths: Hop[][] = [];
-    const nextHeads: string[] = [];
-    paths.forEach((path, i) => {
-      const at = heads[i];
-      for (const edge of g.edges) {
-        if (edge.type !== step.rel) continue;
-        const to = step.dir === "out" ? (edge.source === at ? edge.target : null) : edge.target === at ? edge.source : null;
-        if (!to || path.some((h) => h.from === to)) continue; // no cycles
-        nextPaths.push([...path, { edge, from: at, to }]);
-        nextHeads.push(to);
+export function buildGraph(runId: string, clusters: Cluster[], docs: { doc: string; date: string; triples: Triple[] }[]): Graph {
+  const find = (name: string, type: string) => clusters.find((c) => c.type === type && c.members.some((m) => m.name === name));
+  const nodes = clusters.map((c) => ({ id: c.id, name: c.name, type: c.type, aliases: c.members.map((m) => m.name).filter((n) => n !== c.name), docs: c.docs }));
+  const edges = new Map<string, GEdge>();
+  const dropped: Graph["dropped"] = [];
+  for (const d of docs) {
+    for (const t of d.triples) {
+      const s = find(t.source, t.sourceType);
+      const o = find(t.target, t.targetType);
+      if (!s || !o) {
+        dropped.push({ doc: d.doc, triple: t, reason: "entity not resolved" });
+        continue;
       }
-    });
-    paths = nextPaths;
-    heads = nextHeads;
-  }
-  return { paths, ends: [...new Set(heads)] };
-}
-
-/** Shortest path between two entities, ignoring edge direction (breadth-first). */
-export function shortestPath(g: Graph, from: string, to: string, maxHops = 6): Hop[] | null {
-  const prev = new Map<string, Hop | null>([[from, null]]);
-  let frontier = [from];
-  for (let depth = 0; depth < maxHops && frontier.length && !prev.has(to); depth++) {
-    const next: string[] = [];
-    for (const at of frontier) {
-      for (const edge of g.edges) {
-        const other = edge.source === at ? edge.target : edge.target === at ? edge.source : null;
-        if (!other || prev.has(other)) continue;
-        prev.set(other, { edge, from: at, to: other });
-        next.push(other);
+      if (s.id === o.id) {
+        dropped.push({ doc: d.doc, triple: t, reason: "both ends resolved to the same entity" });
+        continue;
       }
+      const id = `${s.id}|${t.relation}|${o.id}`;
+      const e = edges.get(id) ?? { id, source: s.id, type: t.relation, target: o.id, mentions: [] };
+      e.mentions.push({ doc: d.doc, date: d.date, quote: t.quote, properties: t.properties });
+      edges.set(id, e);
     }
-    frontier = next;
   }
-  if (!prev.has(to)) return null;
-  const hops: Hop[] = [];
-  for (let h = prev.get(to); h; h = prev.get(h.from)) hops.unshift(h);
-  return hops;
+  for (const e of edges.values()) e.mentions.sort((a, b) => a.date.localeCompare(b.date) || a.doc.localeCompare(b.doc));
+  return { run: runId, nodes, edges: [...edges.values()], dropped };
 }
 
-/** Every edge touching the given entities, out to `depth` hops (local search). */
-export function neighbourhood(g: Graph, ids: string[], depth = 1): Hop[] {
-  const seen = new Set(ids);
-  const hops: Hop[] = [];
-  const used = new Set<string>();
-  let frontier = [...ids];
-  for (let d = 0; d < depth; d++) {
-    const next: string[] = [];
-    for (const at of frontier) {
-      for (const edge of g.edges) {
-        if (used.has(edge.id)) continue;
-        const other = edge.source === at ? edge.target : edge.target === at ? edge.source : null;
-        if (!other) continue;
-        used.add(edge.id);
-        hops.push({ edge, from: at, to: other });
-        if (!seen.has(other)) {
-          seen.add(other);
-          next.push(other);
-        }
-      }
-    }
-    frontier = next;
+/** Cypher-friendly relationship properties: lists in date order, plus first and last seen. */
+export function edgeProperties(e: GEdge, run: string) {
+  const props: Record<string, unknown> = {
+    docs: e.mentions.map((m) => m.doc),
+    doc_dates: e.mentions.map((m) => m.date),
+    quotes: e.mentions.map((m) => m.quote),
+    first_seen: e.mentions[0].date,
+    last_seen: e.mentions[e.mentions.length - 1].date,
+    run,
+  };
+  // A property stated in any mention keeps every value with the date it was stated
+  // (Neo4j lists can't hold nulls, so only mentions that state it are listed), and
+  // the latest value as a scalar: units: 510, units_values: [420, 510], units_dates: [...].
+  const keys = [...new Set(e.mentions.flatMap((m) => Object.keys(m.properties)))];
+  for (const k of keys) {
+    const stated = e.mentions.filter((m) => m.properties[k] !== undefined);
+    props[`${k}_values`] = stated.map((m) => m.properties[k]);
+    props[`${k}_dates`] = stated.map((m) => m.date);
+    props[k] = stated[stated.length - 1].properties[k];
   }
-  return hops;
-}
-
-/** "Varnell Semiconductor supplies QX-7 radio chip", in the edge's own direction. */
-export function sentence(g: Graph, edge: Edge): string {
-  const name = (id: string) => g.nodes.get(id)?.name ?? id;
-  return `${name(edge.source)} ${RELATION_TYPES[edge.type].reads} ${name(edge.target)}`;
+  return props;
 }

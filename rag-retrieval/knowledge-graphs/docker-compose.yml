@@ -1,0 +1,16 @@
+# Local Neo4j for this example: same Cypher as Neo4j AuraDB. The password comes from .env.
+services:
+  neo4j:
+    image: neo4j:2026.09.0-community
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env}
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+      NEO4J_db_transaction_timeout: 10s
+    volumes:
+      - neo4j-data:/data
+volumes:
+  neo4j-data:

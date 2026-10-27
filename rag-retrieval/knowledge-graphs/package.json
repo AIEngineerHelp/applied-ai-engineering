@@ -14,12 +14,16 @@
     "test": "node --import=tsx --test tests/*.test.ts",
     "compare": "node --import=tsx scripts/compare.ts",
     "extract": "node --import=tsx scripts/extract.ts",
-    "export": "npm run build:client && node --import=tsx scripts/export.ts"
+    "export": "npm run build:client && node --import=tsx scripts/export.ts",
+    "pipeline": "node --import=tsx scripts/pipeline.ts"
   },
   "devDependencies": {
+    "@google/genai": "2.27.0",
     "@tailwindcss/cli": "^4.3.3",
     "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
+    "marked": "17.0.1",
+    "neo4j-driver": "6.2.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"

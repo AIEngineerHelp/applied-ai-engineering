@@ -199,7 +199,8 @@
         ]
       }
     ],
-    "cypher": "MATCH (s:Company)-[:SUPPLIES]->(k:Component)-[:PART_OF]->(p:Product)<-[:USES]-(c:Customer)\nWHERE toLower(s.name) STARTS WITH 'varnell'\nRETURN count(DISTINCT c) AS customers, collect(DISTINCT c.name) AS names"
+    "cypher": "MATCH (s:Company)-[:SUPPLIES]->(k:Component)-[:PART_OF]->(p:Product)<-[:USES]-(c:Customer)\nWHERE toLower(s.name) STARTS WITH 'varnell'\nRETURN count(DISTINCT c) AS customers, collect(DISTINCT c.name) AS names",
+    "count": 6
   },
   {
     "id": "upload-ticket",

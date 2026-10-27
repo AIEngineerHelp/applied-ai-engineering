@@ -1,12 +1,7 @@
-// The chunk-retrieval baseline: one chunk per paragraph, with the document
-// title attached, ranked by TF-IDF cosine similarity to the question.
-//
-// TF-IDF is a stand-in for an embedding model so the comparison runs offline
-// and gives the same answer every time. Embeddings also match synonyms
-// ("upload" ~ "sends readings"), which TF-IDF does not; that helps with
-// wording, but not with the failure this example is about: a chunk that
-// shares no subject with the question (an org chart, for a question about a
-// customer) is far from the question in any similarity space.
+// Chunk retrieval: one chunk per paragraph, with the document title attached.
+// The main baseline is vector search with Gemini embeddings (src/pipeline/ask.ts);
+// this file also keeps a TF-IDF ranking as a second, offline baseline: it needs no
+// API and gives the same answer every time.
 
 export interface Doc {
   id: string;

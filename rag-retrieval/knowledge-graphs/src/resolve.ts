@@ -1,117 +1,100 @@
-// Entity resolution: decide which extracted names refer to the same thing.
-//
-// Extractors see one chunk at a time, so the same company comes back as
-// "Varnell Semi", "Varnell" and "Varnell Semiconductor". Without resolution
-// the graph gets three disconnected nodes and every multi-hop path through
-// them breaks. The rules here are deliberately simple and conservative:
+// Entity resolution, stage 1: deterministic rules. Extractors read one document
+// at a time, so the same supplier arrives as "Varnell Semi", "Varnell" and
+// "Varnell Semiconductor". The rules here are conservative:
 //
 //   1. Only names of the same entity type can merge.
-//   2. Two names merge when they are equal after normalizing case and
+//   2. Two names merge when they are equal after normalising case and
 //      punctuation ("Atlas 3" = "Atlas-3"), or when every word of the shorter
-//      name is the start of the matching word in the longer one ("Varnell
-//      Semi" → "Varnell Semiconductor", "T. Berg" → "Tomas Berg").
-//   3. A name that matches more than one entity is left alone and reported as
-//      ambiguous rather than guessed.
+//      name starts the matching word of the longer one ("Varnell Semi" →
+//      "Varnell Semiconductor", "T. Berg" → "Tomas Berg"). Numbers must match.
+//   3. A name that matches more than one entity is left alone and reported.
 //
-// Production systems add embedding similarity and an LLM or human check for
-// borderline pairs; see the README.
+// Stage 2 (src/pipeline/resolve-run.ts) proposes further merges from embedding
+// similarity and asks an LLM to confirm them; anything uncertain goes to a person.
 
-import type { EntityType, Extraction, Properties } from "./schema.ts";
+export type MergeHow = "rule: same name after normalizing" | "rule: abbreviation or initial" | "llm: confirmed" | "person: approved";
 
-export type MergeReason = "same name after normalizing" | "abbreviation or initial";
-
-export interface Entity {
-  id: string;
-  name: string; // canonical name: the most complete form seen
-  type: EntityType;
-  aliases: string[]; // every other surface form merged into this entity
-  merges: { alias: string; reason: MergeReason }[];
-  mentions: { document: string; name: string }[];
-  properties: Properties;
+export interface Mention {
+  name: string;
+  type: string;
+  docs: string[];
 }
 
-export interface Resolution {
-  entities: Entity[];
-  /** `${type}|${surface name}` → entity id */
-  index: Map<string, string>;
-  ambiguous: { name: string; type: EntityType; candidates: string[] }[];
+export interface Cluster {
+  id: string;
+  name: string; // canonical: the most complete form seen
+  type: string;
+  members: { name: string; how: MergeHow | "first"; detail?: string }[];
+  docs: string[];
 }
 
 export const tokens = (name: string): string[] =>
   name
     .toLowerCase()
+    .replace(/['’]s\b/g, "")
     .replace(/[-_/]/g, " ")
     .replace(/[^\p{L}\p{N} ]/gu, "")
     .split(/\s+/)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((w, i, all) => !(i === 0 && w === "the" && all.length > 1));
 
 export const slug = (name: string) => tokens(name).join("-");
 
-/** Why `a` and `b` name the same entity, or null if they don't. */
-export function sameEntity(a: string, b: string): MergeReason | null {
+/** Why the rules say `a` and `b` are the same entity, or null. */
+export function sameByRule(a: string, b: string): MergeHow | null {
   const ta = tokens(a);
   const tb = tokens(b);
-  if (ta.join(" ") === tb.join(" ")) return "same name after normalizing";
+  if (!ta.length || !tb.length) return null;
+  if (ta.join(" ") === tb.join(" ")) return "rule: same name after normalizing";
   const [short, long] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
-  if (short.length === 0) return null;
-  // Every word of the short name must start the word in the same position of
-  // the long one. Numbers must match exactly, so PM-1 never merges with PM-2.
   const ok = short.every((w, i) => (/^\d+$/.test(w) ? long[i] === w : long[i].startsWith(w)));
-  return ok ? "abbreviation or initial" : null;
+  return ok ? "rule: abbreviation or initial" : null;
 }
 
-const key = (type: string, name: string) => `${type}|${name}`;
-
-export function resolve(extractions: Extraction[]): Resolution {
-  // Every distinct (type, surface form), with where it was mentioned.
-  const forms = new Map<string, { name: string; type: EntityType; mentions: Entity["mentions"]; properties: Properties }>();
-  for (const x of extractions) {
-    for (const e of x.entities) {
-      const k = key(e.type, e.name);
-      const form = forms.get(k) ?? { name: e.name, type: e.type, mentions: [], properties: {} };
-      form.mentions.push({ document: x.document, name: e.name });
-      Object.assign(form.properties, e.properties ?? {});
-      forms.set(k, form);
-    }
+/**
+ * Cluster mentions by the rules. Longest names go first and become canonical, so
+ * the result does not depend on document order. Returns the clusters and the
+ * names the rules refused because they fit more than one cluster.
+ */
+export function clusterByRules(mentions: Mention[]): { clusters: Cluster[]; ambiguous: { name: string; type: string; candidates: string[] }[] } {
+  const forms = new Map<string, Mention>();
+  for (const m of mentions) {
+    const key = `${m.type}|${m.name}`;
+    const f = forms.get(key) ?? { name: m.name, type: m.type, docs: [] };
+    f.docs = [...new Set([...f.docs, ...m.docs])];
+    forms.set(key, f);
   }
-
-  // Most complete names first, so they become the canonical names and the
-  // shorter forms are compared against them. The order is fully determined,
-  // so the result never depends on the order of the documents.
   const ordered = [...forms.values()].sort(
-    (a, b) =>
-      tokens(b.name).length - tokens(a.name).length ||
-      b.name.length - a.name.length ||
-      b.mentions.length - a.mentions.length ||
-      a.name.localeCompare(b.name),
+    (a, b) => tokens(b.name).length - tokens(a.name).length || b.name.length - a.name.length || b.docs.length - a.docs.length || a.name.localeCompare(b.name),
   );
-
-  const entities: Entity[] = [];
-  const index = new Map<string, string>();
-  const ambiguous: Resolution["ambiguous"] = [];
-  for (const form of ordered) {
-    const candidates = entities
-      .filter((e) => e.type === form.type)
-      .map((e) => ({ e, reason: sameEntity(form.name, e.name) }))
-      .filter((c): c is { e: Entity; reason: MergeReason } => c.reason !== null);
-    if (candidates.length === 1) {
-      const { e, reason } = candidates[0];
-      e.aliases.push(form.name);
-      e.merges.push({ alias: form.name, reason });
-      e.mentions.push(...form.mentions);
-      for (const [p, v] of Object.entries(form.properties)) if (!(p in e.properties)) e.properties[p] = v;
-      index.set(key(form.type, form.name), e.id);
+  const clusters: Cluster[] = [];
+  const ambiguous: { name: string; type: string; candidates: string[] }[] = [];
+  for (const f of ordered) {
+    const hits = clusters
+      .filter((c) => c.type === f.type)
+      .map((c) => ({ c, how: sameByRule(f.name, c.name) }))
+      .filter((h): h is { c: Cluster; how: MergeHow } => h.how !== null);
+    if (hits.length === 1) {
+      hits[0].c.members.push({ name: f.name, how: hits[0].how });
+      hits[0].c.docs = [...new Set([...hits[0].c.docs, ...f.docs])];
       continue;
     }
-    if (candidates.length > 1) {
-      ambiguous.push({ name: form.name, type: form.type, candidates: candidates.map((c) => c.e.name) });
-    }
-    let id = slug(form.name);
-    while (entities.some((e) => e.id === id)) id += "-2";
-    entities.push({ id, name: form.name, type: form.type, aliases: [], merges: [], mentions: [...form.mentions], properties: { ...form.properties } });
-    index.set(key(form.type, form.name), id);
+    if (hits.length > 1) ambiguous.push({ name: f.name, type: f.type, candidates: hits.map((h) => h.c.name) });
+    let id = `${f.type.toLowerCase()}:${slug(f.name)}`;
+    while (clusters.some((c) => c.id === id)) id += "-2";
+    clusters.push({ id, name: f.name, type: f.type, members: [{ name: f.name, how: "first" }], docs: [...f.docs] });
   }
-  return { entities, index, ambiguous };
+  return { clusters, ambiguous };
 }
 
-export const lookup = (r: Resolution, type: string, name: string) => r.index.get(key(type, name));
+/** Merge cluster `b` into `a` (stage 2). The longer name stays canonical. */
+export function mergeClusters(a: Cluster, b: Cluster, detail: string, how: MergeHow = "llm: confirmed"): Cluster {
+  const [head, tail] = a.name.length >= b.name.length ? [a, b] : [b, a];
+  return {
+    id: head.id,
+    name: head.name,
+    type: head.type,
+    members: [...head.members, ...tail.members.map((m) => ({ name: m.name, how, detail }))],
+    docs: [...new Set([...head.docs, ...tail.docs])],
+  };
+}

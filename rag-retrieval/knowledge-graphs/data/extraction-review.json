@@ -1,0 +1,17 @@
+{
+  "note": "The author's review of extraction run 1 (results/extraction/run-1.json), written by hand after the run. Every other relation in run 1 was checked against its quote and is supported by it.",
+  "wrong": [
+    { "doc": "battery-switch", "source": "LX-4", "relation": "PART_OF", "target": "Atlas-3", "why": "The quote says the Atlas-3 uses the Sundra C2 \"instead of the LX-4\". The model turned the replaced part into a current part. With no end date on the edge, the graph keeps saying the LX-4 is in the Atlas-3." }
+  ],
+  "unsupported": [
+    { "doc": "incident-qx7", "source": "Varnell Semiconductor", "relation": "SUPPLIES", "target": "QX-7", "why": "True elsewhere in the corpus, but this quote only says shipments would slip. The prompt asked for facts the text states, not facts it implies." }
+  ],
+  "typeErrors": [
+    { "doc": "calder-email", "name": "QX-7", "extractedAs": "Product", "should": "Component", "why": "The chip was typed as a product in an email about spare parts." },
+    { "doc": "board-update-q3", "name": "Meridian", "extractedAs": "Customer", "should": "Product", "why": "\"driven by Meridian pilots\" was read as a customer." }
+  ],
+  "spurious": [
+    { "doc": "newsletter-june", "name": "Atlas team", "type": "Team", "why": "\"The Atlas team photo\" is a social mention, not a team." },
+    { "doc": "board-update-q3", "name": "Harbour Street", "type": "Site", "why": "The new head office, not a plant where products are made." }
+  ]
+}

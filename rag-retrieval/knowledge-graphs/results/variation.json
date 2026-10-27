@@ -1,0 +1,307 @@
+{
+ "runs": [
+  {
+   "run": 1,
+   "entities": 125,
+   "relations": 69,
+   "distinct": 54,
+   "rejects": 0,
+   "cost": 0.056
+  },
+  {
+   "run": 2,
+   "entities": 122,
+   "relations": 67,
+   "distinct": 54,
+   "rejects": 0,
+   "cost": 0.0537
+  },
+  {
+   "run": 3,
+   "entities": 120,
+   "relations": 70,
+   "distinct": 55,
+   "rejects": 0,
+   "cost": 0.0613
+  }
+ ],
+ "pairs": [
+  {
+   "a": 1,
+   "b": 2,
+   "jaccard": 0.964
+  },
+  {
+   "a": 1,
+   "b": 3,
+   "jaccard": 0.912
+  },
+  {
+   "a": 2,
+   "b": 3,
+   "jaccard": 0.912
+  }
+ ],
+ "union": 58,
+ "inAll": 52,
+ "inOne": 5,
+ "onlyInOne": [
+  "?Incident review: QX-7 shipment delay -AFFECTED-> QX-7 radio chip",
+  "?Incident review: QX-7 shipment delay -INVOLVES-> Varnell Semiconductor",
+  "Calder Grain Co-op -USES-> ?QX-7",
+  "QX-7 shipment delay -AFFECTED-> ?QX-7",
+  "QX-7 shipment delay -AFFECTED-> QX-7 radio chip"
+ ],
+ "perDoc": [
+  {
+   "doc": "supplier-register",
+   "counts": [
+    3,
+    3,
+    3
+   ],
+   "agreed": 3,
+   "union": 3
+  },
+  {
+   "doc": "atlas-3-brief",
+   "counts": [
+    5,
+    5,
+    5
+   ],
+   "agreed": 5,
+   "union": 5
+  },
+  {
+   "doc": "teams-q1",
+   "counts": [
+    7,
+    7,
+    7
+   ],
+   "agreed": 7,
+   "union": 7
+  },
+  {
+   "doc": "key-accounts",
+   "counts": [
+    5,
+    5,
+    5
+   ],
+   "agreed": 5,
+   "union": 5
+  },
+  {
+   "doc": "borealis-release-2-4",
+   "counts": [
+    6,
+    6,
+    6
+   ],
+   "agreed": 6,
+   "union": 6
+  },
+  {
+   "doc": "meridian-launch",
+   "counts": [
+    6,
+    6,
+    6
+   ],
+   "agreed": 6,
+   "union": 6
+  },
+  {
+   "doc": "incident-qx7",
+   "counts": [
+    3,
+    2,
+    3
+   ],
+   "agreed": 0,
+   "union": 6
+  },
+  {
+   "doc": "northmoor-pilot",
+   "counts": [
+    2,
+    2,
+    2
+   ],
+   "agreed": 2,
+   "union": 2
+  },
+  {
+   "doc": "brightwater-order",
+   "counts": [
+    1,
+    1,
+    1
+   ],
+   "agreed": 1,
+   "union": 1
+  },
+  {
+   "doc": "cafeteria-memo",
+   "counts": [
+    0,
+    0,
+    0
+   ],
+   "agreed": 0,
+   "union": 0
+  },
+  {
+   "doc": "battery-switch",
+   "counts": [
+    4,
+    3,
+    4
+   ],
+   "agreed": 3,
+   "union": 4
+  },
+  {
+   "doc": "kerrin-second-source",
+   "counts": [
+    3,
+    3,
+    3
+   ],
+   "agreed": 3,
+   "union": 3
+  },
+  {
+   "doc": "incident-gateway",
+   "counts": [
+    4,
+    4,
+    4
+   ],
+   "agreed": 4,
+   "union": 4
+  },
+  {
+   "doc": "supply-chain-standup",
+   "counts": [
+    2,
+    2,
+    2
+   ],
+   "agreed": 2,
+   "union": 2
+  },
+  {
+   "doc": "newsletter-june",
+   "counts": [
+    0,
+    0,
+    0
+   ],
+   "agreed": 0,
+   "union": 0
+  },
+  {
+   "doc": "varnell-bay-order",
+   "counts": [
+    2,
+    2,
+    2
+   ],
+   "agreed": 2,
+   "union": 2
+  },
+  {
+   "doc": "pellham-qbr",
+   "counts": [
+    2,
+    2,
+    2
+   ],
+   "agreed": 2,
+   "union": 2
+  },
+  {
+   "doc": "tartu-plant",
+   "counts": [
+    3,
+    3,
+    3
+   ],
+   "agreed": 3,
+   "union": 3
+  },
+  {
+   "doc": "fleet-console",
+   "counts": [
+    3,
+    3,
+    3
+   ],
+   "agreed": 3,
+   "union": 3
+  },
+  {
+   "doc": "osterby-qbr",
+   "counts": [
+    1,
+    1,
+    1
+   ],
+   "agreed": 1,
+   "union": 1
+  },
+  {
+   "doc": "calder-email",
+   "counts": [
+    0,
+    0,
+    1
+   ],
+   "agreed": 0,
+   "union": 1
+  },
+  {
+   "doc": "reorg-memo",
+   "counts": [
+    5,
+    5,
+    5
+   ],
+   "agreed": 5,
+   "union": 5
+  },
+  {
+   "doc": "office-move",
+   "counts": [
+    0,
+    0,
+    0
+   ],
+   "agreed": 0,
+   "union": 0
+  },
+  {
+   "doc": "hallam-note",
+   "counts": [
+    2,
+    2,
+    2
+   ],
+   "agreed": 2,
+   "union": 2
+  },
+  {
+   "doc": "board-update-q3",
+   "counts": [
+    0,
+    0,
+    0
+   ],
+   "agreed": 0,
+   "union": 0
+  }
+ ]
+}
