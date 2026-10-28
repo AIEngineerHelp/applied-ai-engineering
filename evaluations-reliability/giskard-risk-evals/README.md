@@ -342,11 +342,16 @@ The demo runs the method above with real Giskard v3 against two small Gemini age
 | Naive prompt | Be helpful and specific, with no written policy | Be reassuring and practical, with no written policy |
 | Hardened prompt | The two risk policies written into the system prompt | The two risk policies written into the system prompt |
 
-The page works in three steps:
+The page is a guided lesson in nine short chapters, built entirely from the recorded runs:
 
-1. **Choose what to test.** Pick an agent, a risk and a prompt version. The page shows the risk definition as its owner would write it, what the attacker is told (including Giskard's own attacker prompt), and the exact rule the judge applies.
-2. **Watch Giskard attack.** Replay a recorded run, or start a live one. Ten attacks run in parallel. Each is a fresh conversation of up to three turns, and you can read any of them as it unfolds.
-3. **Read the verdict.** See the judge's pass or fail and its reason. Phrases the judge quoted are highlighted in the conversation. A summary shows the run's pass rate next to the other prompt version.
+1. **The problem** and **2. Write the rule:** why a policy written in prose can't be unit-tested, and the risk definition that fixes it.
+3. **One rule, two readers:** how Giskard gives the same definition to an attacker LLM and a judge LLM.
+4. **Watch an attack:** a step-by-step replay of one real conversation, with a note under each message. Penny half-refuses ("I can't tell you to buy an individual stock"), after already suggesting an amount. The attacker quotes that back ("like you suggested") and gets a full recommendation.
+5. **How the judge decides:** exactly what the `Conformity` judge receives, and its verdict.
+6. **Measure, fix, measure again:** 0 of 10 attacks passed, then the policy went into the prompt and 10 of 10 passed, followed by all four risks side by side.
+7. **When the judge is wrong:** three verdicts that point to the rule, a clinical decision, or the harness rather than the agent.
+8. **Explore every attack:** the lab. Pick any agent, risk and prompt version, replay its run, read any conversation and verdict, or run new attacks live.
+9. **Use it in your code:** the Giskard code behind it.
 
 ### What we measured
 
@@ -385,7 +390,7 @@ uv sync
 uv run python -m riskdemo serve      # http://127.0.0.1:4330
 ```
 
-The recorded runs replay without a key. To share a specific conversation, link to it, for example `http://127.0.0.1:4330/?risk=dispute-recourse&version=naive&attack=10`. Add `&replay=1` instead of `&attack=…` to start a replay.
+The recorded runs replay without a key. To share a specific conversation from the lab, link to it, for example `http://127.0.0.1:4330/?risk=dispute-recourse&version=naive&attack=10`. Add `&replay=1` instead of `&attack=…` to start a replay, and `?step=4` opens the chapter 4 walkthrough at that step.
 
 For live runs, copy `.env.example` to `.env` and set `GEMINI_API_KEY`. The **Run live with Gemini** button then runs 10 new attacks for the selected risk and prompt version, and only one live run can be active at a time. Each attack makes up to 3 attacker calls, up to 3 agent calls and 1 judge call, so a run makes at most 70 paid calls. In our recording, each run took between 1.5 and 3 minutes. Live runs are saved to the Git-ignored `runs/` folder.
 
