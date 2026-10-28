@@ -1,0 +1,2 @@
+# Live runs from the app stay local; `record` writes the committed examples to results/recorded/.
+runs/
