@@ -133,6 +133,22 @@ async def start_run(request: RunRequest) -> dict:
     return {"id": run["id"]}
 
 
+@app.get("/api/runs")
+def list_runs() -> list[dict]:
+    """Live runs, newest first: the ones in this process plus any saved in runs/."""
+    runs = {r["id"]: r for r in _live.values()}
+    if config.RUNS.exists():
+        for path in config.RUNS.glob("*.json"):
+            if path.stem not in runs:
+                try:
+                    runs[path.stem] = json.loads(path.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+    keys = ("id", "risk", "version", "started_at", "status", "summary")
+    listing = [{k: r.get(k) for k in keys} for r in runs.values() if r.get("risk") in RISKS]
+    return sorted(listing, key=lambda r: r["started_at"] or "", reverse=True)
+
+
 @app.get("/api/runs/{run_id}")
 def get_run(run_id: str) -> dict:
     if run_id in _live:

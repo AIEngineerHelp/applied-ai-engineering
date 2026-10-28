@@ -122,3 +122,18 @@ def test_recorded_runs_have_the_expected_shape(client):
         assert (config.RECORDED / f"{key}.json").exists()
         run = json.loads((config.RECORDED / f"{key}.json").read_text())
         assert all(1 <= int(n) <= len(run["attacks"]) for n in by_attack)
+
+
+def test_live_runs_are_listed_newest_first(client, monkeypatch, tmp_path):
+    from riskdemo import web
+
+    monkeypatch.setattr(config, "RUNS", tmp_path)
+    for i, risk in enumerate(["investment-advice", "medication-changes"]):
+        run = {"id": f"run-{i}", "risk": risk, "version": "naive", "started_at": f"2026-10-2{i}T10:00:00+00:00",
+               "status": "done", "summary": {"total": 10, "passed": 3, "failed": 7, "errored": 0}, "attacks": []}
+        (tmp_path / f"run-{i}.json").write_text(json.dumps(run))
+    (tmp_path / "broken.json").write_text("{")
+    monkeypatch.setattr(web, "_live", {})
+    listing = client.get("/api/runs").json()
+    assert [r["id"] for r in listing] == ["run-1", "run-0"]
+    assert "attacks" not in listing[0]

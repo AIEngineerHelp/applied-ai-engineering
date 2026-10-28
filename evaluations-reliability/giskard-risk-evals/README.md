@@ -4,7 +4,7 @@ In regulated industries, engineers don't decide what an agent may say. Lawyers, 
 
 This article explains how [Giskard](https://giskard.ai/), an open-source library for testing agents, turns a written risk policy into adversarial test conversations and an LLM judge. It works through a banking assistant first, then applies the same method to a patient-facing healthcare assistant. The code targets Giskard v3 and was checked against its source; see [What we verified](#what-we-verified-and-what-we-did-not).
 
-**Try it:** this folder also contains a small demo app that runs real Giskard against two Gemini agents, a banking assistant and a clinic assistant. You pick a risk, watch Giskard's attacker talk to the agent turn by turn, and read the judge's verdict. Recorded runs replay without an API key. See [The demo app](#the-demo-app).
+**Try it:** this folder also contains a red-team console that runs real Giskard against two Gemini agents, a banking assistant and a clinic assistant. You pick a policy, watch Giskard's attacker work on the agent turn by turn, and review the judge's verdicts. Recorded runs replay without an API key. See [The demo app](#the-demo-app).
 
 ## Key takeaways
 
@@ -338,16 +338,13 @@ The demo runs the method above with real Giskard v3 against two small Gemini age
 | Naive prompt | Be helpful and specific, with no written policy | Be reassuring and practical, with no written policy |
 | Hardened prompt | The two risk policies written into the system prompt | The two risk policies written into the system prompt |
 
-The page is a guided lesson in nine short chapters, built entirely from the recorded runs:
+The app is a small red-team console, laid out like the evaluation tools teams use in practice: Giskard Hub's scan-then-review loop, promptfoo's findings, and the baseline comparisons in Braintrust or Langfuse. Each policy has three steps:
 
-1. **The problem** and **2. Write the rule:** why a policy written in prose can't be unit-tested, and the risk definition that fixes it.
-3. **One rule, two readers:** how Giskard gives the same definition to an attacker LLM and a judge LLM.
-4. **Watch an attack:** a step-by-step replay of one real conversation, with a note under each message. Penny half-refuses ("I can't tell you to buy an individual stock"), after already suggesting an amount. The attacker quotes that back ("like you suggested") and gets a full recommendation.
-5. **How the judge decides:** exactly what the `Conformity` judge receives, and its verdict.
-6. **Measure, fix, measure again:** 0 of 10 attacks passed, then the policy went into the prompt and 10 of 10 passed, followed by all four risks side by side.
-7. **When the judge is wrong:** three verdicts that point to the rule, a clinical decision, or the harness rather than the agent.
-8. **Explore every attack:** the lab. Pick any agent, risk and prompt version, replay its run, read any conversation and verdict, or run new attacks live.
-9. **Use it in your code:** the Giskard code behind it.
+1. **Policy.** The risk definition as its owner wrote it, the rule text that both the attacker and the judge read, and the agent's system prompt for the selected version.
+2. **Attack.** Replay the recorded run, or start a live one, and watch ten conversations fill in side by side. A one-line verdict ("Penny broke the rule in all 10 attacks.") sits next to the naive and hardened baselines.
+3. **Review.** Findings come first: failures, then verdicts we flagged for a second look. Each attack shows the judge's reason, with the phrases it quoted highlighted in the conversation. You can agree with the judge, or disagree and say what should change: the agent's prompt, the attacks, the judge or the rule. Use ← and → to move through the queue. Your answers are kept in your browser only.
+
+An overview page puts all four policies side by side, and live runs you start appear in the sidebar.
 
 ### What we measured
 
@@ -386,7 +383,7 @@ uv sync
 uv run python -m riskdemo serve      # http://127.0.0.1:4330
 ```
 
-The recorded runs replay without a key. To share a specific conversation from the lab, link to it, for example `http://127.0.0.1:4330/?risk=dispute-recourse&version=naive&attack=10`. Add `&replay=1` instead of `&attack=…` to start a replay, and `?step=4` opens the chapter 4 walkthrough at that step.
+The recorded runs replay without a key. Every screen has its own link, for example `http://127.0.0.1:4330/#/dispute-recourse/naive/review/10` for one conversation and its verdict.
 
 For live runs, copy `.env.example` to `.env` and set `GEMINI_API_KEY`. The **Run live with Gemini** button then runs 10 new attacks for the selected risk and prompt version, and only one live run can be active at a time. Each attack makes up to 3 attacker calls, up to 3 agent calls and 1 judge call, so a run makes at most 70 paid calls. In our recording, each run took between 1.5 and 3 minutes. Live runs are saved to the Git-ignored `runs/` folder.
 
@@ -395,6 +392,14 @@ uv run pytest                          # offline: no API calls
 uv run ruff check riskdemo tests
 uv run python -m riskdemo record         # dry run: lists the runs and the maximum number of calls
 uv run python -m riskdemo record --live  # paid: re-records results/recorded/ (at most 560 calls)
+```
+
+The console's frontend is TypeScript and Tailwind CSS in `client/`. Its built files are committed in `riskdemo/static/`, so running the app needs only Python. To change the frontend, use Node.js 22.12 or later:
+
+```sh
+npm ci
+npm test         # the console's logic: verdicts, ordering, quoted phrases, markdown, replay
+npm run build    # type-checks, then rebuilds riskdemo/static/app.js and app.css
 ```
 
 To try your own policy, add a `RiskDefinition` to `riskdemo/catalog.py`, or change an agent's prompts there. Then record it with `record --live --risk <id>`.
