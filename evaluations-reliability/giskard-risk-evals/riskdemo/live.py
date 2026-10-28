@@ -7,9 +7,11 @@ from typing import Any
 
 from giskard.checks import set_default_generator, set_default_judge
 
-from riskdemo.catalog import AGENTS, RISKS
+from riskdemo import costs
+from riskdemo.catalog import AGENTS, RISKS, RiskDefinition
 from riskdemo.config import Settings
 from riskdemo.engine import AgentCall, build_scenarios, new_run, run_attacks
+from riskdemo.seeds import seeds_for
 
 RETRYABLE = (429, 500, 502, 503, 504)
 
@@ -48,6 +50,7 @@ def gemini_agent(settings: Settings, system_prompt: str) -> AgentCall:
 
 def configure_giskard(settings: Settings) -> None:
     """Point Giskard's attacker (generator) and judge at Gemini through its `gemini/` provider."""
+    costs.install()
     set_default_generator(f"gemini/{settings.attacker_model}")
     set_default_judge(f"gemini/{settings.judge_model}")
 
@@ -64,15 +67,25 @@ def save(run: dict[str, Any], path: Path) -> None:
 
 
 async def live_run(
-    settings: Settings, risk_id: str, version: str, n: int, run: dict[str, Any] | None = None, on_change=None
+    settings: Settings,
+    risk_id: str,
+    version: str,
+    n: int,
+    run: dict[str, Any] | None = None,
+    on_change=None,
+    *,
+    seeded: bool = False,
+    risk: RiskDefinition | None = None,
 ) -> dict[str, Any]:
+    """Run n attacks. `seeded` gives each attack its own seed; `risk` overrides the definition (a revision)."""
     if not settings.live_available:
         raise RuntimeError("Set GEMINI_API_KEY to run live attacks.")
-    risk = RISKS[risk_id]
+    risk = risk or RISKS[risk_id]
     agent = AGENTS[risk.agent]
     configure_giskard(settings)
-    run = run or new_run(risk, version, n, "live", models(settings))
-    scenarios = build_scenarios(risk, agent, n)
+    seeds = seeds_for(risk, n) if seeded else None
+    run = run or new_run(risk, version, n, "live", models(settings), seeds=seeds)
+    scenarios = build_scenarios(risk, agent, n, seeds=seeds)
     return await run_attacks(
         run,
         scenarios,

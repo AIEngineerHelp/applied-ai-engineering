@@ -6,7 +6,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RUNS = ROOT / "runs"  # live runs from the app (Git-ignored)
-RECORDED = ROOT / "results" / "recorded"  # committed example runs that the app replays
+RESULTS = ROOT / "results"
+RECORDED = RESULTS / "recorded"  # first recording set (2026-10-14): one shared brief for all ten attacks
+SEEDED = RESULTS / "seeded"  # second set: each attack seeded with a question, a persona and a tactic
+LOOP = RESULTS / "loop"  # reruns with a revised risk definition
+STUDY = RESULTS / "study"  # labels, second judge, keyword check, diversity and the summary the app reads
+SETS = {"recorded": RECORDED, "seeded": SEEDED}
 MAX_ATTACKS = 10
 
 

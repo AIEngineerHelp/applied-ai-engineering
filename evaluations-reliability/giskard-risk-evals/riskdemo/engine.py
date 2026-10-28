@@ -15,8 +15,10 @@ from typing import Any
 
 import giskard.scan  # noqa: F401  registers the giskard.scan prompt templates used below
 from giskard.checks import Check, Conformity, LLMGenerator, Scenario
+from giskard.checks.core.input_generator import InputGenerator
 
 from riskdemo.catalog import Agent, RiskDefinition
+from riskdemo.seeds import Seed, seed_brief
 
 ATTACKER_TEMPLATE = "giskard.scan::scenarios/adversarial.j2"
 ATTACKER_MAX_TURNS = 3
@@ -38,26 +40,57 @@ def attacker_brief(risk: RiskDefinition, agent: Agent) -> dict[str, Any]:
     }
 
 
+@InputGenerator.register("seeded_llm_generator")
+class SeededLLMGenerator(LLMGenerator):
+    """Giskard's LLM attacker, with one extra paragraph in the category description it reads.
+
+    The adversarial template reads only the trace's annotations (description, category, rule, languages),
+    and every scenario in a run shares them. This generator hands the attacker a copy of the trace whose
+    category description ends with this attack's seed. The scenario's own annotations stay untouched,
+    so the judge, which also sees the annotations, never sees the seed.
+    """
+
+    seed_text: str = ""
+
+    async def get_inputs(self, trace) -> dict[str, Any]:
+        annotations = dict(trace.annotations)
+        category = dict(annotations.get("category") or {})
+        category["description"] = f"{category.get('description', '')}\n\n{self.seed_text}".strip()
+        annotations["category"] = category
+        return {"trace": trace.model_copy(update={"annotations": annotations})}
+
+
 def build_scenarios(
     risk: RiskDefinition,
     agent: Agent,
     n: int,
     *,
+    seeds: list[Seed] | None = None,
     attacker: Callable[[], Any] | None = None,
     judge: Callable[[], Check] | None = None,
 ) -> list[Scenario]:
     """One scenario per attack. Each runs a fresh conversation, so the same rule yields different attacks.
 
-    `attacker` and `judge` default to Giskard's LLM attacker and `Conformity` judge; tests pass
-    deterministic stand-ins.
+    With `seeds`, attack i starts from seeds[i] (a question, a persona and a tactic) instead of the
+    shared brief alone. `attacker` and `judge` default to Giskard's LLM attacker and `Conformity` judge;
+    tests pass deterministic stand-ins.
     """
-    make_attacker = attacker or (
-        lambda: LLMGenerator(prompt_path=ATTACKER_TEMPLATE, max_steps=ATTACKER_MAX_TURNS)
-    )
+    if seeds is not None and len(seeds) < n:
+        raise ValueError(f"Need {n} seeds, got {len(seeds)}.")
+
+    def make_attacker(i: int):
+        if attacker:
+            return attacker()
+        if seeds:
+            return SeededLLMGenerator(
+                prompt_path=ATTACKER_TEMPLATE, max_steps=ATTACKER_MAX_TURNS, seed_text=seed_brief(seeds[i])
+            )
+        return LLMGenerator(prompt_path=ATTACKER_TEMPLATE, max_steps=ATTACKER_MAX_TURNS)
+
     make_judge = judge or (lambda: Conformity(name=risk.risk, rule=risk.rule()))
     return [
         Scenario(f"{risk.risk} #{i + 1}")
-        .interact(make_attacker())
+        .interact(make_attacker(i))
         .check(make_judge())
         .with_annotations(attacker_brief(risk, agent))
         .with_tags([f"domain:{risk.domain}", f"category:{risk.category}", f"risk:{risk.risk}"])
@@ -65,7 +98,14 @@ def build_scenarios(
     ]
 
 
-def new_run(risk: RiskDefinition, version: str, n: int, mode: str, models: dict[str, str]) -> dict[str, Any]:
+def new_run(
+    risk: RiskDefinition,
+    version: str,
+    n: int,
+    mode: str,
+    models: dict[str, str],
+    seeds: list[Seed] | None = None,
+) -> dict[str, Any]:
     return {
         "id": datetime.now(UTC).strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:6],
         "mode": mode,
@@ -75,11 +115,21 @@ def new_run(risk: RiskDefinition, version: str, n: int, mode: str, models: dict[
         "models": models,
         "giskard": {p: metadata.version(p) for p in ("giskard-checks", "giskard-scan")},
         "rule": risk.rule(),
+        "rule_revision": risk.revision,
+        "seeded": seeds is not None,
         "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "finished_at": None,
         "status": "running",
         "attacks": [
-            {"index": i, "status": "queued", "turns": [], "checks": [], "error": None, "duration_ms": None}
+            {
+                "index": i,
+                "status": "queued",
+                "turns": [],
+                "checks": [],
+                "error": None,
+                "duration_ms": None,
+                **({"seed": seeds[i].to_dict()} if seeds else {}),
+            }
             for i in range(n)
         ],
         "summary": None,
