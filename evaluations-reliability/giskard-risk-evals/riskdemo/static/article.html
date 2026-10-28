@@ -729,6 +729,40 @@ chest_pain = (
 <td>The definition. We revised it; the verdict held, and a different attack flipped</td>
 </tr>
 </tbody></table>
+<h3 id="what-giskard-did-for-us-and-what-it-didn39t">What Giskard did for us, and what it didn&#39;t</h3>
+<p>Giskard doesn&#39;t bring its own model. Its attacker and its judge are LLM calls, here to Gemini, so a script that calls Gemini directly could do the same job. What the library adds is the harness around those calls. In <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/engine.py"><code>riskdemo/engine.py</code></a> we used three parts of it:</p>
+<table>
+<thead>
+<tr>
+<th>Giskard gave us</th>
+<th>API</th>
+<th>Why it helped</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A multi-turn attacker</td>
+<td><code>LLMGenerator</code> with the <code>giskard.scan</code> adversarial template</td>
+<td>It reads the rule and plays a user for up to three turns, changing tactic after each reply. That red-team prompt and loop is the slowest part to write and tune yourself.</td>
+</tr>
+<tr>
+<td>One shape for every test</td>
+<td><code>Scenario</code>, the <code>Conformity</code> check, <code>Trace</code></td>
+<td>A rule becomes a scenario with a judge, and every turn is recorded. That shape lets the app replay runs and lets us score the same conversations again.</td>
+</tr>
+<tr>
+<td>Swappable parts</td>
+<td><code>set_default_generator</code>, <code>set_default_judge</code></td>
+<td>Changing the model is one line: that is how we re-scored with a second judge and added seeds without rewriting the loop.</td>
+</tr>
+</tbody></table>
+<p>What we had to add on top, all measured above:</p>
+<ul>
+<li><strong>Seeds, so the attacks differ.</strong> Out of the box, 19% of attack pairs in a cell opened with the same four words; seeding each attack with its own question, persona and tactic brought that to 0%.</li>
+<li><strong>Labels, to check the judge.</strong> <code>Conformity</code> is an LLM judge with an LLM&#39;s blind spots. On the seeded medication cell it passed 9 of 10 conversations; our labels pass 4.</li>
+<li><strong>A cost ledger.</strong> The library doesn&#39;t track spend; <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/costs.py"><code>riskdemo/costs.py</code></a> logs every call.</li>
+<li><strong>Workarounds for a young API.</strong> Giskard 3.0.1 is new. Seeding meant subclassing its input generator, and the study reads its <code>Trace</code> class from internal modules that can change between releases.</li>
+</ul>
+<p><strong>Could you do this without Giskard?</strong> Yes: the attacker loop and the judge are a few hundred lines of your own code. Giskard got us from a written rule to realistic multi-turn attacks quickly and gave every run the same shape, and it pays off more with many rules and many agents in CI, where a shared test format matters. But the findings in this article came from measuring its output, and a hand-written script would have had the same problems. Treat it as a convenient harness, not a source of truth.</p>
 <h3 id="cost">Cost</h3>
 <p>Every Gemini call is logged with its token counts to the Git-ignored <code>runs/costs.jsonl</code> by <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/costs.py"><code>riskdemo/costs.py</code></a>, which wraps the <code>google-genai</code> SDK that Giskard&#39;s <code>gemini/</code> provider also uses. Prices are Google&#39;s paid-tier list prices as read on 2026-10-27: <code>gemini-3.8-flash</code> $0.75 / $3.75 per million input / output tokens, <code>gemini-4-argon</code> $2 / $10 (until 2026-11-30), <code>gemini-embedding-2</code> $0.20 for input. The work on 2026-10-27 made 981 logged calls for an estimated <strong>$3.77</strong>: $3.38 for <code>gemini-3.8-flash</code> (the seeded recording, the loop reruns and a re-judge), $0.38 for <code>gemini-4-argon</code> (50 judge calls) and under $0.01 for embeddings. One seeded cell of 10 attacks costs about $0.30. The first recording (2026-10-14) was not logged.</p>
 <h3 id="run-it">Run it</h3>

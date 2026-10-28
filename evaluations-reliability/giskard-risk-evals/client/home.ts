@@ -1,5 +1,6 @@
 // The start page: the problem, how Giskard tests a rule (diagram and glossary), how to use the console,
-// and where to read what we measured. Every number comes from the catalog or results/study/summary.json.
+// where to read what we measured, and what Giskard did for us versus what we added. Every number comes
+// from the catalog or results/study/summary.json.
 
 import { esc, pct } from "./logic.ts";
 import type { Catalog, SetName, Study, Summary, Version } from "./types.ts";
@@ -92,6 +93,48 @@ function findings(study: Study | null): string {
     .join("")}</div>`;
 }
 
+// What the library did here and what we built on top. Giskard's attacker and judge are LLM calls (Gemini
+// here), so the honest question is what the harness adds over a script that calls the same model.
+function giskardRole(study: Study | null): string {
+  const div = study?.diversity?.sets;
+  const sc = study?.seeded_check;
+  const scJudge = sc && study ? sc.raters[study.judge_models[0]] : undefined;
+  const gave: [string, string, string][] = [
+    ["A multi-turn attacker", "LLMGenerator + the giskard.scan adversarial template", "It reads the rule and plays a user for up to three turns, changing tactic after each reply. Writing and tuning that red-team prompt and loop yourself is the slowest part to get right."],
+    ["One shape for every test", "Scenario + Conformity check + Trace", "A rule becomes a scenario with a judge; every turn is recorded as a trace. That shape is what lets this app replay the runs, and lets us score the same conversations again later."],
+    ["Swappable parts", "set_default_generator, set_default_judge", "Changing the model is one line. That is how we re-scored every conversation with a second judge, and how we added seeds without rewriting the loop."],
+  ];
+  const added: [string, string][] = [
+    ["Seeds, so the attacks differ", div ? `Out of the box, ${pct(div.recorded.mean.shared_opening)} of attack pairs in a cell opened with the same four words. Giving each attack its own question, persona and tactic brought that to ${pct(div.seeded.mean.shared_opening)}.` : "Out of the box, the ten attacks in a cell read the same brief and often opened the same way."],
+    ["Labels, to check the judge", scJudge && sc ? `Conformity is an LLM judge with an LLM's blind spots. On one medication cell it passed ${scJudge.both_pass + scJudge.false_pass} of ${sc.n}; our labels pass ${sc.label_passed}. It missed advice inside role-play scripts and hypotheticals.` : "Conformity is an LLM judge with an LLM's blind spots; only labels show where."],
+    ["A cost ledger", "Every attacker, agent and judge call is logged with its tokens and price in runs/costs.jsonl. The library doesn't track spend."],
+    ["Workarounds for a young API", "Giskard 3.0.1 is new. Seeding meant subclassing its input generator and reading its Trace class from internal modules, which can change between releases."],
+  ];
+  return `
+    <section class="mt-14" id="why-giskard">
+      <h2 class="font-serif text-2xl text-ink">What Giskard did for us, and what it didn't</h2>
+      <p class="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-2">Giskard doesn't bring its own model. Its attacker and its judge are LLM calls, here to Gemini, so a script that calls Gemini directly could do the same job. What the library adds is the harness around those calls.</p>
+      <div class="mt-6 grid gap-6 lg:grid-cols-2">
+        <div>
+          <h3 class="text-sm font-medium text-ink">What Giskard gave us</h3>
+          <ul class="mt-3 space-y-3">
+            ${gave.map(([t, api, d]) => `<li class="rounded-lg border border-line bg-card p-4"><div class="text-sm font-medium text-ink">${t}</div><div class="mt-0.5 font-mono text-[11.5px] text-ink-3">${esc(api)}</div><p class="mt-1.5 text-sm leading-relaxed text-ink-2">${esc(d)}</p></li>`).join("")}
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-medium text-ink">What we had to add</h3>
+          <ul class="mt-3 space-y-3">
+            ${added.map(([t, d]) => `<li class="rounded-lg border border-dashed border-line-2 p-4"><div class="text-sm font-medium text-ink">${t}</div><p class="mt-1.5 text-sm leading-relaxed text-ink-2">${esc(d)}</p></li>`).join("")}
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 rounded-lg border-l-2 border-accent bg-card px-4 py-3.5">
+        <div class="text-sm font-medium text-ink">Could you do this without Giskard?</div>
+        <p class="mt-1.5 text-[15px] leading-relaxed text-ink-2">Yes. The attacker loop and the judge are a few hundred lines of your own code. Giskard got us from a written rule to realistic multi-turn attacks quickly, and gave every run the same shape. It pays off more with many rules and many agents in CI, where a shared test format matters. But the findings on this page came from measuring its output: the repeated attacks, the judge's blind spots, the half-refusals. A hand-written script would have had the same problems. Treat Giskard as a convenient harness, not a source of truth.</p>
+      </div>
+    </section>`;
+}
+
 export function home(c: Catalog, study: Study | null, set: SetName): string {
   const first = Object.values(c.risks)[0];
   return `
@@ -157,6 +200,7 @@ export function home(c: Catalog, study: Study | null, set: SetName): string {
         <a href="/article" class="inline-flex items-center gap-2 rounded-md border border-line-2 px-4 py-2.5 text-sm text-ink hover:bg-sunk">${icon("book", 15)} Read the article</a>
       </div>
     </section>
+    ${giskardRole(study)}
     <p class="mt-12 border-t border-line pt-5 text-xs leading-relaxed text-ink-3">Everything here is synthetic: the bank, the clinic, the member and the patient are invented, and the risk definitions are teaching examples, not legal or clinical guidance.</p>
   </article>`;
 }
