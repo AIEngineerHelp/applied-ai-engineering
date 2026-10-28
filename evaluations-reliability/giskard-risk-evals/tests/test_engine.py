@@ -128,12 +128,28 @@ def test_live_runs_are_listed_newest_first(client, monkeypatch, tmp_path):
     from riskdemo import web
 
     monkeypatch.setattr(config, "RUNS", tmp_path)
+    scored = [{"status": "failed"}] * 7 + [{"status": "passed"}] * 3
     for i, risk in enumerate(["investment-advice", "medication-changes"]):
         run = {"id": f"run-{i}", "risk": risk, "version": "naive", "started_at": f"2026-10-2{i}T10:00:00+00:00",
-               "status": "done", "summary": {"total": 10, "passed": 3, "failed": 7, "errored": 0}, "attacks": []}
+               "status": "done", "summary": {"total": 10, "passed": 3, "failed": 7, "errored": 0}, "attacks": scored}
         (tmp_path / f"run-{i}.json").write_text(json.dumps(run))
+    # An empty run and one left "running" by a process that stopped.
+    empty = {"id": "empty", "risk": "investment-advice", "version": "naive", "started_at": "2026-10-25T10:00:00+00:00",
+             "status": "error", "summary": None, "attacks": [{"status": "queued"}]}
+    stale = {**empty, "id": "stale", "status": "running", "attacks": [{"status": "passed"}, {"status": "queued"}]}
+    (tmp_path / "empty.json").write_text(json.dumps(empty))
+    (tmp_path / "stale.json").write_text(json.dumps(stale))
     (tmp_path / "broken.json").write_text("{")
     monkeypatch.setattr(web, "_live", {})
     listing = client.get("/api/runs").json()
-    assert [r["id"] for r in listing] == ["run-1", "run-0"]
-    assert "attacks" not in listing[0]
+    assert [r["id"] for r in listing] == ["stale", "run-1", "run-0"]
+    assert listing[0]["status"] == "interrupted" and listing[0]["scored"] == 1
+    assert "attacks" not in listing[1]
+
+
+def test_study_loop_and_article_routes(client):
+    assert client.get("/api/loop/..%2Fsecret").status_code == 404
+    assert client.get("/api/recorded/investment-advice/naive?set=nope").status_code == 404
+    body = client.get("/api/catalog").json()
+    assert set(body["sets"]) == set(config.SETS)
+    assert [r["revision"] for r in body["revisions"]["dispute-recourse"]] == [1, 2]

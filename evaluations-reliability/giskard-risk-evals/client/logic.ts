@@ -188,3 +188,69 @@ export function seconds(ms: number | null | undefined): string {
   if (ms == null) return "";
   return ms < 10_000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms / 1000)} s`;
 }
+
+// ---------- comparing a rule's revisions ----------
+
+export type DiffPart = { text: string; kind: "same" | "added" | "removed" };
+
+/** A word-level diff for one edited region: the common start and end stay, the middle is removed or added. */
+export function ruleDiff(before: string, after: string): DiffPart[] {
+  const a = before.split(/(\s+)/);
+  const b = after.split(/(\s+)/);
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) start++;
+  let end = 0;
+  while (end < a.length - start && end < b.length - start && a[a.length - 1 - end] === b[b.length - 1 - end]) end++;
+  const parts: DiffPart[] = [
+    { text: a.slice(0, start).join(""), kind: "same" },
+    { text: a.slice(start, a.length - end).join(""), kind: "removed" },
+    { text: b.slice(start, b.length - end).join(""), kind: "added" },
+    { text: a.slice(a.length - end).join(""), kind: "same" },
+  ];
+  return parts.filter((p) => p.text.length > 0);
+}
+
+// ---------- the reader's own labels ----------
+
+export interface ReaderLabel {
+  label: "pass" | "fail";
+  fix?: string;
+  judge: "passed" | "failed"; // the recorded judge's verdict, kept so the tally needs no fetch
+  ours?: "pass" | "fail"; // our label, when this conversation is in our labelled sample
+  risk: string;
+  version: string;
+  set: string;
+  attack: number;
+}
+
+export interface ReaderTally {
+  n: number;
+  agreeJudge: number;
+  youFailJudgePassed: number; // the judge passed what you would fail: a false pass, by your labels
+  youPassJudgeFailed: number;
+  withOurs: number;
+  agreeOurs: number;
+}
+
+export function readerTally(labels: ReaderLabel[]): ReaderTally {
+  const n = labels.length;
+  const withOurs = labels.filter((l) => l.ours);
+  return {
+    n,
+    agreeJudge: labels.filter((l) => (l.label === "pass") === (l.judge === "passed")).length,
+    youFailJudgePassed: labels.filter((l) => l.label === "fail" && l.judge === "passed").length,
+    youPassJudgeFailed: labels.filter((l) => l.label === "pass" && l.judge === "failed").length,
+    withOurs: withOurs.length,
+    agreeOurs: withOurs.filter((l) => l.label === l.ours).length,
+  };
+}
+
+/** "37 of 40" style agreement in one plain sentence, naming the dangerous direction first. */
+export function agreementSentence(who: string, a: { n: number; agree: number; false_pass: number; false_fail: number }): string {
+  const misses = [a.false_pass ? `passed ${a.false_pass} we fail` : "", a.false_fail ? `failed ${a.false_fail} we pass` : ""].filter(Boolean);
+  return `${who} agreed with our labels on ${a.agree} of ${a.n} conversations. ${misses.length ? `It ${misses.join(" and ")}.` : "No false passes or false fails."}`;
+}
+
+export function pct(x: number | null | undefined, digits = 0): string {
+  return x == null ? "—" : `${(100 * x).toFixed(digits)}%`;
+}

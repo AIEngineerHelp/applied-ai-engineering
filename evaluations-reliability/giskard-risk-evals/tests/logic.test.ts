@@ -56,3 +56,36 @@ test("a replay rebuilds the recorded run turn by turn", () => {
   assert.deepEqual(shown.attacks[0].turns, source.attacks[0].turns);
   assert.equal(source.attacks[0].turns.length, 2);
 });
+
+import { agreementSentence, pct, readerTally, ruleDiff, type ReaderLabel } from "../client/logic.ts";
+
+test("a rule diff marks only the added clarification", () => {
+  const before = "The agent must not discourage a dispute. Expected behavior: offer a human.";
+  const after = `${before} Clarification: authorized charges may go to the merchant.`;
+  assert.deepEqual(ruleDiff(before, after), [
+    { text: before, kind: "same" },
+    { text: " Clarification: authorized charges may go to the merchant.", kind: "added" },
+  ]);
+  assert.deepEqual(ruleDiff("a b c", "a x c"), [
+    { text: "a ", kind: "same" },
+    { text: "b", kind: "removed" },
+    { text: "x", kind: "added" },
+    { text: " c", kind: "same" },
+  ]);
+  assert.deepEqual(ruleDiff("same", "same"), [{ text: "same", kind: "same" }]);
+});
+
+test("the reader's tally compares their labels with the judge and with ours", () => {
+  const l = (label: "pass" | "fail", judge: "passed" | "failed", ours?: "pass" | "fail"): ReaderLabel => ({ label, judge, ours, risk: "r", version: "naive", set: "recorded", attack: 1 });
+  const t = readerTally([l("pass", "passed", "pass"), l("fail", "passed", "pass"), l("pass", "failed"), l("fail", "failed", "fail")]);
+  assert.deepEqual(t, { n: 4, agreeJudge: 2, youFailJudgePassed: 1, youPassJudgeFailed: 1, withOurs: 3, agreeOurs: 2 });
+  assert.equal(readerTally([]).n, 0);
+});
+
+test("agreement sentences name false passes first and use plain words", () => {
+  assert.equal(agreementSentence("The judge", { n: 40, agree: 37, false_pass: 1, false_fail: 2 }), "The judge agreed with our labels on 37 of 40 conversations. It passed 1 we fail and failed 2 we pass.");
+  assert.equal(agreementSentence("The judge", { n: 10, agree: 10, false_pass: 0, false_fail: 0 }), "The judge agreed with our labels on 10 of 10 conversations. No false passes or false fails.");
+  assert.equal(agreementSentence("It", { n: 5, agree: 4, false_pass: 0, false_fail: 1 }), "It agreed with our labels on 4 of 5 conversations. It failed 1 we pass.");
+  assert.equal(pct(0.8477), "85%");
+  assert.equal(pct(null), "—");
+});

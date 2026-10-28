@@ -1,6 +1,6 @@
 """The demo app: `uv run python -m riskdemo serve`, then open http://127.0.0.1:4330.
 
-Recorded runs are replayed from results/recorded/ with no API key. A live run starts only when you press
+Recorded runs are replayed from results/seeded/ and results/recorded/ with no API key; /article is the README. A live run starts only when you press
 "Run live" in the page, and only when GEMINI_API_KEY is set; one live run can be active at a time.
 """
 
@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from riskdemo import config
-from riskdemo.catalog import AGENTS, RISKS, VERSIONS
+from riskdemo.catalog import AGENTS, REVISIONS, RISKS, VERSIONS
 
 STATIC = Path(__file__).parent / "static"
 
@@ -27,15 +27,15 @@ _live: dict[str, dict] = {}  # run id -> run state, for runs started in this pro
 _tasks: set[asyncio.Task] = set()
 
 
-def recorded_path(risk_id: str, version: str) -> Path:
-    return config.RECORDED / f"{risk_id}--{version}.json"
+def recorded_path(risk_id: str, version: str, set_name: str = "recorded") -> Path:
+    return config.SETS[set_name] / f"{risk_id}--{version}.json"
 
 
-def recorded_summaries() -> dict:
+def recorded_summaries(set_name: str = "recorded") -> dict:
     out: dict = {}
     for risk_id in RISKS:
         for version in VERSIONS:
-            path = recorded_path(risk_id, version)
+            path = recorded_path(risk_id, version, set_name)
             if path.exists():
                 run = json.loads(path.read_text())
                 out.setdefault(risk_id, {})[version] = {
@@ -49,6 +49,12 @@ def recorded_summaries() -> dict:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC / "index.html")
+
+
+@app.get("/article")
+def article() -> FileResponse:
+    """The README, rendered by `npm run build` (scripts/article.ts)."""
+    return FileResponse(STATIC / "article.html")
 
 
 @app.get("/api/catalog")
@@ -71,7 +77,9 @@ def catalog() -> dict:
         },
         "risks": {r.id: r.to_dict() for r in RISKS.values()},
         "versions": VERSIONS,
-        "recorded": recorded_summaries(),
+        "recorded": recorded_summaries("recorded"),
+        "sets": {name: recorded_summaries(name) for name in config.SETS},
+        "revisions": {k: [r.to_dict() for r in revs] for k, revs in REVISIONS.items()},
         "live": {
             "available": settings.live_available,
             "attacks": settings.attacks_per_run,
@@ -92,10 +100,30 @@ def review_notes() -> dict:
 
 
 @app.get("/api/recorded/{risk_id}/{version}")
-def recorded(risk_id: str, version: str) -> dict:
-    path = recorded_path(risk_id, version)
-    if risk_id not in RISKS or version not in VERSIONS or not path.exists():
+def recorded(risk_id: str, version: str, set: str = "recorded") -> dict:
+    if set not in config.SETS or risk_id not in RISKS or version not in VERSIONS:
         raise HTTPException(404, "No recorded run for this risk and prompt version.")
+    path = recorded_path(risk_id, version, set)
+    if not path.exists():
+        raise HTTPException(404, "No recorded run for this risk and prompt version.")
+    return json.loads(path.read_text())
+
+
+@app.get("/api/study")
+def study() -> dict:
+    """Judge agreement, diversity, keyword check and the loop, from `riskdemo study analyze`."""
+    path = config.STUDY / "summary.json"
+    if not path.exists():
+        raise HTTPException(404, "Run `uv run python -m riskdemo study analyze` first.")
+    return json.loads(path.read_text())
+
+
+@app.get("/api/loop/{name}")
+def loop_run(name: str) -> dict:
+    """A rerun with a revised rule, e.g. dispute-recourse--naive--seeded-r2."""
+    path = config.LOOP / f"{name}.json"
+    if "/" in name or ".." in name or not path.exists():
+        raise HTTPException(404, "No such loop run.")
     return json.loads(path.read_text())
 
 
@@ -145,7 +173,19 @@ def list_runs() -> list[dict]:
                 except (OSError, json.JSONDecodeError):
                     continue
     keys = ("id", "risk", "version", "started_at", "status", "summary")
-    listing = [{k: r.get(k) for k in keys} for r in runs.values() if r.get("risk") in RISKS]
+    listing = []
+    for r in runs.values():
+        if r.get("risk") not in RISKS:
+            continue
+        row = {k: r.get(k) for k in keys}
+        scored = sum(a.get("status") in ("passed", "failed") for a in r.get("attacks", []))
+        # A run saved as "running" by a process that has since stopped will never finish.
+        if r["status"] == "running" and r["id"] not in _live:
+            row["status"] = "interrupted"
+        if scored == 0 and row["status"] != "running":
+            continue  # nothing to show: an empty or failed-to-start run
+        row["scored"] = scored
+        listing.append(row)
     return sorted(listing, key=lambda r: r["started_at"] or "", reverse=True)
 
 
