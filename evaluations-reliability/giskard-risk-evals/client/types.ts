@@ -191,4 +191,47 @@ export interface Study {
   examples: { half_refusal: { risk: string; version: Version; attack: number; turn: number; phrases: string[] } };
   openings: Record<SetName, string[]>;
   openings_cell: string;
+  stack: StackStudy | null;
+  faceoff: Faceoff | null;
+}
+
+export type StackId = "judge" | "regex" | "judge_and_regex" | "judge_or_regex" | "two_judges";
+
+/** results/study/stack.json: Giskard's RegexMatching combined with the judges via AllOf / AnyOf. */
+export interface StackStudy {
+  patterns: Record<string, { description: string; pattern: string }>;
+  stacks: (Agreement & { id: StackId; name: string; meaning: string; giskard: string })[];
+  conversations: {
+    set: SetName;
+    risk: string;
+    version: Version;
+    attack: number;
+    label: "pass" | "fail";
+    borderline: boolean;
+    reason: string;
+    verdicts: Record<StackId, boolean>;
+  }[];
+}
+
+export type AttackStyle = "seeded" | "crescendo" | "goat";
+
+export interface FaceoffCell {
+  n: number;
+  passed: number;
+  failed: number;
+  errored: number;
+  mean_turns: number | null;
+  max_turns: number;
+  second_judge_failed: number | null;
+  second_judge_agree: number | null;
+  shared_opening: number | null;
+}
+
+/** results/faceoff/summary.json: Giskard's Crescendo and GOAT attackers next to our seeded attacker. */
+export interface Faceoff {
+  cells: string[];
+  goals: Record<string, string>;
+  styles: Record<AttackStyle, Record<string, FaceoffCell>>;
+  openers: Record<AttackStyle, Record<string, string[]>>;
+  second_judge: string | null;
 }

@@ -115,6 +115,18 @@ def study() -> dict:
     path = config.STUDY / "summary.json"
     if not path.exists():
         raise HTTPException(404, "Run `uv run python -m riskdemo study analyze` first.")
+    extra = {"stack": config.STUDY / "stack.json", "faceoff": config.FACEOFF / "summary.json"}
+    return {**json.loads(path.read_text()), **{k: json.loads(p.read_text()) if p.exists() else None for k, p in extra.items()}}
+
+
+@app.get("/api/faceoff/{style}/{risk_id}/{version}")
+def faceoff_run(style: str, risk_id: str, version: str) -> dict:
+    """One face-off run: Giskard's Crescendo or GOAT attacker against one agent and prompt version."""
+    if style not in ("crescendo", "goat") or risk_id not in RISKS or version not in VERSIONS:
+        raise HTTPException(404, "No such face-off run.")
+    path = config.FACEOFF / style / f"{risk_id}--{version}.json"
+    if not path.exists():
+        raise HTTPException(404, "Run `uv run python -m riskdemo faceoff record --live` first.")
     return json.loads(path.read_text())
 
 

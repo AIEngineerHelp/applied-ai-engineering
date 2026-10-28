@@ -443,4 +443,8 @@ def add_parser(sub) -> None:
     q.set_defaults(func=loop)
     q = s.add_parser("analyze")
     q.set_defaults(func=analyze)
+    from riskdemo.stack import stack
+
+    q = s.add_parser("stack", help="combine Giskard's RegexMatching with the judges (free)")
+    q.set_defaults(func=stack)
 

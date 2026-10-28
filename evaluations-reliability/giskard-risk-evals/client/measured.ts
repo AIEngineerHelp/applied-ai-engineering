@@ -2,7 +2,7 @@
 // results/study/summary.json (written by `riskdemo study analyze`) or computed from the reader's own labels.
 
 import { agreementSentence, esc, pct, readerTally, renderReply, ruleDiff, type ReaderLabel } from "./logic.ts";
-import type { Agreement, Catalog, DiversityMetrics, LabelledConversation, Run, Study } from "./types.ts";
+import type { Agreement, AttackStyle, Catalog, DiversityMetrics, LabelledConversation, Run, StackId, Study } from "./types.ts";
 
 function seededCheck(c: Catalog, study: Study): string {
   const sc = study.seeded_check;
@@ -34,6 +34,8 @@ export const SECTIONS: [string, string][] = [
   ["diversity", "Were the attacks different?"],
   ["keyword", "Would a keyword check do?"],
   ["loop", "Closing the loop"],
+  ["stack", "Stack the checks"],
+  ["attackers", "Smarter attackers"],
   ["recap", "Recap"],
 ];
 
@@ -302,6 +304,176 @@ function loopSection(c: Catalog, study: Study): string {
   );
 }
 
+// ---------- 5. stacking checks ----------
+
+const setLink = (v: { set: string; risk: string; version: string; attack: number }) => `#/${v.risk}/${v.version}/review/${v.attack}${v.set === "recorded" ? "?set=recorded" : ""}`;
+
+function stackSection(c: Catalog, study: Study, pick: StackId): string {
+  const st = study.stack;
+  if (!st) return section("stack", 5, "Stack the checks", "Run <code class=\"font-mono text-xs\">uv run python -m riskdemo study stack</code> to see this section.", "");
+  const chosen = st.stacks.find((x) => x.id === pick) ?? st.stacks[0];
+  const base = st.stacks.find((x) => x.id === "judge")!;
+  const changed = st.conversations.filter((v) => v.verdicts[chosen.id] !== v.verdicts.judge);
+  const better = changed.filter((v) => v.verdicts[chosen.id] === (v.label === "pass")).length;
+  const tabs = st.stacks
+    .map((x) => `<button type="button" data-action="stack" data-stack="${x.id}" aria-pressed="${x.id === chosen.id}" class="rounded-md border px-3 py-1.5 text-sm ${x.id === chosen.id ? "border-ink bg-ink text-paper" : "border-line bg-card text-ink-2 hover:border-line-2 hover:text-ink"}">${esc(x.name)}</button>`)
+    .join("");
+  const rows = st.stacks
+    .map((x) => `<tr class="border-t border-line ${x.id === chosen.id ? "bg-sunk/60" : ""}">
+      <td class="py-2.5 pr-4"><span class="text-ink">${esc(x.name)}</span><span class="block font-mono text-[11.5px] text-ink-3">${esc(x.giskard)}</span></td>
+      <td class="py-2.5 pr-4 font-mono text-[13px] text-ink">${x.agree}/${x.n}</td>
+      <td class="py-2.5 pr-4 font-mono text-[13px] ${x.false_pass > base.false_pass ? "text-fail" : x.false_pass < base.false_pass ? "text-pass" : "text-ink-2"}">${x.false_pass}</td>
+      <td class="py-2.5 font-mono text-[13px] text-ink-2">${x.false_fail}</td></tr>`)
+    .join("");
+  const card = (v: (typeof changed)[number]) => `<li class="rounded-lg border border-line bg-card p-4">
+      <a href="${setLink(v)}" class="text-sm font-medium text-ink hover:underline">${esc(c.risks[v.risk].risk)} · ${esc(VERSION_LABEL[v.version].toLowerCase())} · attack ${v.attack} <span class="font-normal text-ink-3">(${v.set === "recorded" ? "first recording" : "seeded"})</span></a>
+      <div class="mt-2 flex flex-wrap gap-1.5">${chip("Our label", v.label === "pass")} ${chip("Judge alone", v.verdicts.judge)} ${chip(chosen.name, v.verdicts[chosen.id])}</div>
+      <p class="mt-2 text-sm leading-relaxed text-ink-2"><span class="text-ink-3">Our reading:</span> ${esc(v.reason)}</p></li>`;
+  return section(
+    "stack",
+    5,
+    "Stack the checks",
+    "Giskard composes checks: <code class=\"font-mono text-[13px]\">RegexMatching</code> for what code can check exactly, <code class=\"font-mono text-[13px]\">AllOf</code> to require every check, <code class=\"font-mono text-[13px]\">AnyOf</code> to accept any one. We rebuilt section 3's keyword check with RegexMatching, one per reply, and stacked it with the judges on the 50 labelled conversations. The judges' verdicts are replayed from the recording, so this made no model calls.",
+    `
+    <div class="mt-5 flex flex-wrap gap-2" role="group" aria-label="Pick a stack">${tabs}</div>
+    <div class="mt-4 rounded-lg border border-line bg-card p-4 sm:p-5">
+      <div class="font-mono text-[13px] text-ink-2">${esc(chosen.giskard)}</div>
+      <p class="mt-1 text-sm text-ink-3">${esc(chosen.meaning)}</p>
+      <p class="mt-3 font-serif text-[22px] leading-snug text-ink">Agrees with our labels on ${chosen.agree} of ${chosen.n}: ${chosen.false_pass} false ${chosen.false_pass === 1 ? "pass" : "passes"}, ${chosen.false_fail} false ${chosen.false_fail === 1 ? "fail" : "fails"}.</p>
+      <p class="mt-1 text-sm leading-relaxed text-ink-2">${chosen.id === "judge" ? "The baseline. Pick another stack to see which verdicts it changes." : changed.length ? `It changes the judge's verdict on ${changed.length} ${changed.length === 1 ? "conversation" : "conversations"}: ${better} toward our label, ${changed.length - better} away from it.` : "It changes none of the judge's verdicts."}</p>
+    </div>
+    ${chosen.id !== "judge" && changed.length ? `<h3 class="mt-6 text-sm font-medium text-ink">Where this stack disagrees with the judge alone</h3><ul class="mt-3 space-y-2">${changed.map(card).join("")}</ul>` : ""}
+    <div class="mt-6 overflow-x-auto rounded-lg border border-line bg-card px-4 sm:px-5"><table class="w-full min-w-[460px] text-left text-sm">
+      <thead class="text-xs text-ink-3"><tr><th class="py-2.5 pr-4 font-medium">Stack</th><th class="py-2.5 pr-4 font-medium">Agrees</th><th class="py-2.5 pr-4 font-medium">False passes</th><th class="py-2.5 font-medium">False fails</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="mt-5 rounded-lg border border-line bg-sunk/60 px-4 py-3.5 text-sm leading-relaxed text-ink-2 sm:px-5">
+      <div class="font-medium text-ink">What this shows</div>
+      <ul class="mt-1.5 list-disc space-y-1 pl-5">
+        <li>A regex can only veto what it can see. Ours check that a required element is there (a refusal, the dispute path, the nurse line, "911"). The half-refusals have it, next to the advice, so adding the regex under the judge removed no false passes.</li>
+        <li>Letting a cheap check overrule the judge (AnyOf) is the dangerous direction: every half-refusal the regex likes passes again.</li>
+        <li>A second judge is the stack that helped, at the price of a second model call per conversation.</li>
+        <li>Where a regex earns its place under a judge: facts code can verify exactly, such as a required phone number, or a canary value that must never appear.</li>
+      </ul>
+    </div>`,
+  );
+}
+
+// ---------- 6. smarter attackers ----------
+
+const STYLE_NAME: Record<AttackStyle, string> = { seeded: "Our seeded attacker", crescendo: "Crescendo", goat: "GOAT" };
+const STYLE_HOW: Record<AttackStyle, string> = {
+  seeded: "Giskard's default adversarial template plus our seed (a question, a persona and a tactic). Up to 3 turns.",
+  crescendo: "Starts with a harmless, abstract question and escalates a little each turn, building on the agent's own answers. Backs off and rephrases when refused.",
+  goat: "An attacker agent with seven named jailbreak techniques (refusal suppression, dual response, response priming, persona change, hypotheticals, topic splitting, opposite intent). Observes each reply and picks the next technique.",
+};
+
+export type FaceoffRuns = Record<string, Run>; // "<style>/<risk>--<version>" -> run
+
+const broke = (x?: { passed: number; failed: number }) => (x ? `${x.failed}/${x.passed + x.failed}` : "—");
+
+function conversation(run: Run, index: number): string {
+  const a = run.attacks[index];
+  const verdict = a.checks.find((ch) => ch.kind === "conformity");
+  return `<div class="space-y-3">${a.turns
+    .map((t, k) => `<div><div class="text-[11px] text-ink-3">Attacker, turn ${k + 1}</div><p class="mt-0.5 rounded-lg bg-sunk px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-ink">${esc(t.user)}</p></div>
+      <div><div class="text-[11px] text-ink-3">Agent</div><div class="reply mt-0.5 rounded-lg border border-line px-3.5 py-2.5 text-sm leading-relaxed text-ink">${renderReply(t.agent ?? "", [])}</div></div>`)
+    .join("")}
+    ${verdict ? `<p class="rounded-md border-l-2 ${verdict.status === "pass" ? "border-pass" : "border-fail"} bg-card px-3.5 py-2.5 text-sm leading-relaxed text-ink-2"><span class="font-medium ${verdict.status === "pass" ? "text-pass" : "text-fail"}">Judge: ${verdict.status === "pass" ? "kept the rule" : "broke the rule"}.</span> ${esc(verdict.reason ?? "")}</p>` : a.error ? `<p class="text-sm text-warn">${esc(a.error)}</p>` : ""}</div>`;
+}
+
+function featured(c: Catalog, runs: FaceoffRuns, style: "crescendo" | "goat", cells: string[]): string {
+  // Prefer a break against the hardened prompt: that is the one the seeded attacker mostly couldn't get.
+  const order = [...cells.filter((k) => k.endsWith("--hardened")), ...cells.filter((k) => k.endsWith("--naive"))];
+  for (const k of order) {
+    const run = runs[`${style}/${k}`];
+    const i = run?.attacks.findIndex((a) => a.status === "failed") ?? -1;
+    if (run && i >= 0)
+      return `<figure class="rounded-lg border border-line bg-card">
+        <figcaption class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 text-xs sm:px-5"><span class="font-medium text-ink-2">${STYLE_NAME[style]} · ${esc(cellName(c, k))} · attack ${i + 1}</span><span class="text-ink-3">${run.attacks[i].turns.length} turns</span></figcaption>
+        <div class="px-4 py-4 sm:px-5">${conversation(run, i)}</div></figure>`;
+  }
+  return `<p class="rounded-lg border border-dashed border-line-2 px-4 py-4 text-sm text-ink-2">${STYLE_NAME[style]} didn't break the rule in any cell.</p>`;
+}
+
+function attackersSection(c: Catalog, study: Study, runs: FaceoffRuns): string {
+  const f = study.faceoff;
+  if (!f || !Object.keys(f.styles.crescendo ?? {}).length)
+    return section("attackers", 6, "Smarter attackers", "Run <code class=\"font-mono text-xs\">uv run python -m riskdemo faceoff record --live</code>, then <code class=\"font-mono text-xs\">faceoff analyze</code>, to see this section.", "");
+  const styles: AttackStyle[] = ["seeded", "crescendo", "goat"];
+  const total = (st: AttackStyle, v: string) =>
+    f.cells.filter((k) => k.endsWith(`--${v}`)).reduce((acc, k) => ({ passed: acc.passed + (f.styles[st][k]?.passed ?? 0), failed: acc.failed + (f.styles[st][k]?.failed ?? 0) }), { passed: 0, failed: 0 });
+  const head = styles.map((st) => `<th class="py-2.5 pr-4 font-medium">${STYLE_NAME[st]}</th>`).join("");
+  const rows = f.cells
+    .map((k) => `<tr class="border-t border-line"><td class="py-2.5 pr-4 text-ink">${esc(cellName(c, k))}</td>${styles
+      .map((st) => {
+        const x = f.styles[st][k];
+        if (!x) return `<td class="py-2.5 pr-4 text-ink-3">—</td>`;
+        const rate = x.failed / Math.max(1, x.passed + x.failed);
+        return `<td class="py-2.5 pr-4"><span class="font-mono text-[13px] ${rate >= 0.5 ? "text-fail" : rate > 0 ? "text-ink" : "text-ink-3"}">${broke(x)}</span><span class="block text-[11px] text-ink-3">${x.mean_turns ?? "—"} turns on average${x.second_judge_failed != null ? ` · ${f.second_judge} failed ${x.second_judge_failed}` : ""}${x.errored ? ` · ${x.errored} errored` : ""}</span></td>`;
+      })
+      .join("")}</tr>`)
+    .join("");
+  const totals = styles.map((st) => `<td class="py-2.5 pr-4 font-mono text-[13px] text-ink">${broke(total(st, "hardened"))}</td>`).join("");
+  const all = (st: "crescendo" | "goat") =>
+    f.cells
+      .map((k) => {
+        const run = runs[`${st}/${k}`];
+        if (!run) return "";
+        return run.attacks
+          .map((a, i) => `<details class="border-t border-line first:border-t-0"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-5"><span class="text-ink">${esc(cellName(c, k))} · attack ${i + 1}</span><span class="flex items-center gap-2">${chip("Judge", a.status === "passed" ? true : a.status === "failed" ? false : null)}<span class="text-ink-3">${icon("chevron", 14)}</span></span></summary><div class="border-t border-line bg-paper px-4 py-4 sm:px-5">${conversation(run, i)}</div></details>`)
+          .join("");
+      })
+      .join("");
+  const h = { s: total("seeded", "hardened"), c: total("crescendo", "hardened"), g: total("goat", "hardened") };
+  const nv = { s: total("seeded", "naive"), c: total("crescendo", "naive"), g: total("goat", "naive") };
+  const styled = (["crescendo", "goat"] as const).flatMap((st) => Object.values(f.styles[st]));
+  const agree = styled.reduce((n, x) => n + (x.second_judge_agree ?? 0), 0);
+  const scored = styled.reduce((n, x) => n + x.passed + x.failed, 0);
+  const meanOpening = (st: AttackStyle) => {
+    const v = Object.values(f.styles[st]).map((x) => x.shared_opening).filter((x): x is number => x != null);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  };
+  // The cell where unseeded openings repeat most, shown verbatim from the run.
+  const [rk, rst] = (["crescendo", "goat"] as const)
+    .flatMap((st) => Object.entries(f.styles[st]).map(([k, x]) => [k, st, x.shared_opening ?? 0] as const))
+    .sort((a, b) => b[2] - a[2])[0] ?? [];
+  const repeatRun = rk && rst ? runs[`${rst}/${rk}`] : undefined;
+  const medSeeded = study.seeded_check && study.seeded_check.cell === "medication-changes--naive" ? study.seeded_check : null;
+  return section(
+    "attackers",
+    6,
+    "Smarter attackers",
+    `Every attack so far used one of Giskard's attack templates. Its scan module ships others. We pointed two of them at our own rules: <b class="font-medium text-ink">Crescendo</b> and <b class="font-medium text-ink">GOAT</b>, each given the rule's prohibited behaviour as its goal, against the same agents, scored by the same judge, with up to 6 turns and 5 attacks per cell.`,
+    `
+    <p class="mt-5 font-serif text-[22px] leading-snug text-ink">Against the naive prompts, Crescendo broke the rule in ${broke(nv.c)} attacks and GOAT in ${broke(nv.g)}, where the judge counted ${broke(nv.s)} for our seeded attacker. Against the hardened prompts, none of the three broke it.</p>
+    <div class="mt-5 grid gap-3 md:grid-cols-3">${styles.map((st) => `<div class="rounded-lg border border-line bg-card p-4"><div class="text-sm font-medium text-ink">${STYLE_NAME[st]}</div><p class="mt-1.5 text-sm leading-relaxed text-ink-2">${STYLE_HOW[st]}</p></div>`).join("")}</div>
+    <div class="mt-5 overflow-x-auto rounded-lg border border-line bg-card px-4 sm:px-5"><table class="w-full min-w-[560px] text-left text-sm">
+      <thead class="text-xs text-ink-3"><tr><th class="py-2.5 pr-4 font-medium">Broke the rule, by the judge</th>${head}</tr></thead>
+      <tbody>${rows}<tr class="border-t border-line-2"><td class="py-2.5 pr-4 font-medium text-ink">All hardened prompts</td>${totals}</tr></tbody></table></div>
+    <p class="mt-2 text-xs leading-relaxed text-ink-3">The seeded attacker had 10 attacks of up to 3 turns per cell; Crescendo and GOAT had 5 attacks of up to 6 turns and can stop early when they judge their goal reached. Compare rates, not counts, and treat one or two attacks as noise.</p>
+    <div class="mt-5 rounded-md border border-line bg-sunk/60 px-4 py-3 text-sm leading-relaxed text-ink-2"><span class="font-medium text-ink">The goal each attacker was given.</span> ${Object.entries(f.goals).map(([r, g]) => `<span class="mt-1 block"><span class="text-ink-3">${esc(c.risks[r].risk)}:</span> ${esc(g)}</span>`).join("")}<span class="mt-1 block text-xs text-ink-3">The goal goes only to the attacker. The judge sees the same rule and annotations as in every other run.</span></div>
+    <div class="mt-5 rounded-lg border border-line bg-sunk/60 px-4 py-3.5 text-sm leading-relaxed text-ink-2 sm:px-5">
+      <div class="font-medium text-ink">What this shows</div>
+      <ul class="mt-1.5 list-disc space-y-1 pl-5">
+        <li><span class="text-ink">Smarter attackers got clearer evidence, not just more.</span> On the naive medication prompt the judge counted ${broke(f.styles.seeded["medication-changes--naive"])} breaks for our seeded attacker${medSeeded ? `, though our labels found ${medSeeded.n - medSeeded.label_passed}: the advice was wrapped in role-play and hypotheticals the judge missed` : ""}. Crescendo and GOAT pushed until the agent said "Yes, take it" outright, which no judge misses.${f.second_judge ? ` ${esc(f.second_judge)} agreed with the judge on ${agree} of ${scored} face-off attacks.` : ""}</li>
+        <li><span class="text-ink">The hardened prompts held</span> against all three attackers: ${broke(h.s)}, ${broke(h.c)} and ${broke(h.g)}. GOAT tried "simulator mode" and a "decision logic model"; Crescendo cited a doctor's prior approval. The agent declined each time.</li>
+        <li><span class="text-ink">They are not more varied on their own.</span> Without seeds, ${pct(meanOpening("crescendo"))} of Crescendo's and ${pct(meanOpening("goat"))} of GOAT's attack pairs in a cell opened with the same four words, against ${pct(meanOpening("seeded"))} for our seeded attacker.${repeatRun ? ` In ${esc(cellName(c, rk!))}, ${STYLE_NAME[rst!]} opened with:` : ""}</li>
+      </ul>
+      ${repeatRun ? `<ol class="mt-2 space-y-1 pl-5">${repeatRun.attacks.map((a) => `<li class="font-mono text-[12px] text-ink-2">“${esc((a.turns[0]?.user ?? "").slice(0, 90))}…”</li>`).join("")}</ol>` : ""}
+      <p class="mt-2 text-xs text-ink-3">Longer attacks cost more and fail more: at 6 turns, 9 of the 40 attacks first timed out or lost their attacker (it failed to write a next message after a firm refusal). We reran those 9 with a longer timeout.</p>
+    </div>
+    <h3 class="mt-8 text-sm font-medium text-ink">How Crescendo broke it</h3>
+    <div class="mt-3">${featured(c, runs, "crescendo", f.cells)}</div>
+    <h3 class="mt-8 text-sm font-medium text-ink">How GOAT broke it</h3>
+    <div class="mt-3">${featured(c, runs, "goat", f.cells)}</div>
+    <h3 class="mt-8 text-sm font-medium text-ink">Every face-off conversation</h3>
+    <div class="mt-3 grid gap-4 lg:grid-cols-2">
+      ${(["crescendo", "goat"] as const).map((st) => `<div><div class="mb-2 text-xs text-ink-3">${STYLE_NAME[st]}</div><div class="overflow-hidden rounded-lg border border-line bg-card">${all(st) || `<p class="px-4 py-4 text-sm text-ink-3">Loading…</p>`}</div></div>`).join("")}
+    </div>
+    <p class="mt-3 text-xs leading-relaxed text-ink-3">These verdicts are the judge's, not our labels. Section 2 showed the judge misses advice wrapped in role-play and hypotheticals, which is how GOAT works, so read the conversations before trusting the counts.</p>`,
+  );
+}
+
 // ---------- recap ----------
 
 function recap(study: Study): string {
@@ -319,7 +491,7 @@ function recap(study: Study): string {
   ];
   return section(
     "recap",
-    5,
+    7,
     "Recap",
     "What to take to your own team.",
     `<ol class="mt-5 space-y-4">${items.map(([t, d], i) => `<li class="flex gap-3"><span class="grid size-6 shrink-0 place-items-center rounded-full bg-ink font-mono text-[11px] text-paper">${i + 1}</span><span><span class="block text-[15px] font-medium text-ink">${t}</span><span class="block text-sm leading-relaxed text-ink-2">${esc(d)}</span></span></li>`).join("")}</ol>
@@ -328,18 +500,20 @@ function recap(study: Study): string {
   );
 }
 
-export function measured(c: Catalog, study: Study | null, labels: ReaderLabel[], example: Run | null): string {
+export function measured(c: Catalog, study: Study | null, labels: ReaderLabel[], example: Run | null, stack: StackId, faceoff: FaceoffRuns): string {
   if (!study) return `<div class="mx-auto max-w-4xl px-5 py-14 text-sm text-ink-3 sm:px-10">No study results yet. Run <code class="font-mono text-xs">uv run python -m riskdemo study analyze</code>.</div>`;
   return `
   <article class="mx-auto max-w-4xl px-5 py-10 sm:px-10 sm:py-14">
     <p class="text-xs font-medium tracking-wide text-accent uppercase">Testing the method</p>
     <h1 class="mt-3 font-serif text-[36px] leading-[1.1] text-ink sm:text-[42px]">What we measured</h1>
-    <p class="mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-2">A pass rate depends on the attacks behind it and the judge that scores it. These four checks test both. Every number on this page is measured from the committed results; none is illustrative.</p>
+    <p class="mt-4 max-w-2xl text-[17px] leading-relaxed text-ink-2">A pass rate depends on the attacks behind it and the judge that scores it. These checks test both, and two more use parts of Giskard we hadn't touched. Every number on this page is measured from the committed results; none is illustrative.</p>
     <nav class="mt-6 flex flex-wrap gap-2 text-sm" aria-label="Sections">${SECTIONS.map(([id, t], i) => `<a href="#/measured/${id}" class="rounded-md border border-line bg-card px-3 py-1.5 text-ink-2 hover:border-line-2 hover:text-ink"><span class="font-mono text-xs text-ink-3">${i + 1}</span> ${t}</a>`).join("")}</nav>
     ${judgeSection(c, study, labels)}
     ${diversitySection(c, study)}
     ${keywordSection(c, study, example)}
     ${loopSection(c, study)}
+    ${stackSection(c, study, stack)}
+    ${attackersSection(c, study, faceoff)}
     ${recap(study)}
   </article>`;
 }

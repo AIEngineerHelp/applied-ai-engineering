@@ -6,8 +6,8 @@
 
 import { home } from "./home.ts";
 import { applyEvent, blankRun, esc, orderFindings, quotedPhrases, renderReply, replaySchedule, seconds, tally, verdictSentence, type ReaderLabel, type ReplayEvent } from "./logic.ts";
-import { SECTIONS, measured } from "./measured.ts";
-import type { Attack, Catalog, LabelledConversation, Risk, Run, RunListing, SetName, Study, Version } from "./types.ts";
+import { SECTIONS, measured, type FaceoffRuns } from "./measured.ts";
+import type { Attack, Catalog, LabelledConversation, Risk, Run, RunListing, SetName, StackId, Study, Version } from "./types.ts";
 import { SET_HINT, SET_LABEL, VERSION_LABEL, agentShort, chip, icon, pill, raterName } from "./ui.ts";
 
 type Step = "policy" | "attack" | "review";
@@ -32,6 +32,9 @@ const S = {
   catalog: null as Catalog | null,
   study: null as Study | null,
   example: null as Run | null,
+  stack: "judge_and_regex" as StackId, // the stack shown in "Stack the checks"
+  faceoff: {} as FaceoffRuns,
+  faceoffLoading: false,
   recorded: new Map<string, Run>(),
   liveRuns: [] as RunListing[],
   route: { page: "home", set: "seeded" } as Route,
@@ -166,6 +169,7 @@ async function onRoute() {
     render();
     if (r.page === "measured") {
       void loadExample();
+      void loadFaceoff();
       // Scroll to the section once; the page is laid out in one pass, so nothing moves afterwards.
       const target = r.section ? document.getElementById(`m-${r.section}`) : null;
       if (target) target.scrollIntoView({ block: "start" });
@@ -217,6 +221,21 @@ async function loadExample() {
     }
   } catch {
     /* the figure keeps its link to the conversation */
+  }
+}
+
+/** The face-off conversations are only needed on the measured page; fetch them once, together. */
+async function loadFaceoff() {
+  const f = S.study?.faceoff;
+  if (!f || S.faceoffLoading || Object.keys(S.faceoff).length) return;
+  S.faceoffLoading = true;
+  const keys = (["crescendo", "goat"] as const).flatMap((st) => f.cells.filter((k) => f.styles[st]?.[k]).map((k) => `${st}/${k}`));
+  const runs = await Promise.all(keys.map((k) => getJSON<Run>(`/api/faceoff/${k.replace("--", "/")}`).catch(() => null)));
+  keys.forEach((k, i) => runs[i] && (S.faceoff[k] = runs[i]!));
+  if (S.route.page === "measured") {
+    const y = window.scrollY;
+    render();
+    window.scrollTo({ top: y }); // the reader's scroll position wins
   }
 }
 
@@ -308,7 +327,7 @@ function render() {
   const r = S.route;
   $("sidebar").innerHTML = sidebar(c);
   $("main").innerHTML =
-    r.page === "home" ? home(c, S.study, r.set) : r.page === "measured" ? measured(c, S.study, allReaderLabels(), S.example) : riskPage(c, r);
+    r.page === "home" ? home(c, S.study, r.set) : r.page === "measured" ? measured(c, S.study, allReaderLabels(), S.example, S.stack, S.faceoff) : riskPage(c, r);
   $("modal").innerHTML = S.confirming ? confirmModal(c) : "";
   document.title = r.page === "risk" ? `${c.risks[r.risk].risk} · Policy Red Team` : r.page === "measured" ? "What we measured · Policy Red Team" : "Policy Red Team";
 }
@@ -866,6 +885,13 @@ document.addEventListener("click", (e) => {
       return moveAttack(-1);
     case "next":
       return moveAttack(1);
+    case "stack": {
+      S.stack = el.dataset.stack as StackId;
+      const y = window.scrollY;
+      render();
+      window.scrollTo({ top: y }); // switching stacks never moves the page
+      return;
+    }
   }
 });
 

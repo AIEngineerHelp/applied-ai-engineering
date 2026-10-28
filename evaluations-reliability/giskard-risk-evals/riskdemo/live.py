@@ -75,17 +75,19 @@ async def live_run(
     on_change=None,
     *,
     seeded: bool = False,
+    style: str | None = None,
     risk: RiskDefinition | None = None,
 ) -> dict[str, Any]:
-    """Run n attacks. `seeded` gives each attack its own seed; `risk` overrides the definition (a revision)."""
+    """Run n attacks. `seeded` gives each attack its own seed; `style` picks Giskard's Crescendo or GOAT
+    attacker; `risk` overrides the definition (a revision)."""
     if not settings.live_available:
         raise RuntimeError("Set GEMINI_API_KEY to run live attacks.")
     risk = risk or RISKS[risk_id]
     agent = AGENTS[risk.agent]
     configure_giskard(settings)
     seeds = seeds_for(risk, n) if seeded else None
-    run = run or new_run(risk, version, n, "live", models(settings), seeds=seeds)
-    scenarios = build_scenarios(risk, agent, n, seeds=seeds)
+    run = run or new_run(risk, version, n, "live", models(settings), seeds=seeds, style=style)
+    scenarios = build_scenarios(risk, agent, n, seeds=seeds, style=style)
     return await run_attacks(
         run,
         scenarios,

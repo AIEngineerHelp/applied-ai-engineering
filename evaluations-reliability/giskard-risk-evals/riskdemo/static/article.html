@@ -693,6 +693,98 @@ chest_pain = (
 </tr>
 </tbody></table>
 <p>Neither revision flipped the verdict we expected it to. The dispute revision turned an argument about what &quot;discouraging&quot; means into a concrete gap the agent can fix: when steering a member to the merchant, still give the dispute path and offer a person. The investment revision caught a one-sided list we had labelled as a pass. The seeded reruns change both the rule the attacker reads and the conversations, so read them as indicative only.</p>
+<h4 id="5-stacking-checks">5. Stacking checks</h4>
+<p>Giskard composes checks: <code>RegexMatching</code> for what code can check exactly, <code>AllOf</code> to require every check and <code>AnyOf</code> to accept any one. We rebuilt the keyword check from section 3 with <code>RegexMatching</code>, one per agent reply, and stacked it with the judges on the 50 labelled conversations (40 first-recording, 10 seeded) in <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/stack.py"><code>riskdemo/stack.py</code></a>. The judges&#39; verdicts are replayed from the recording through <code>from_fn</code>, so this made no model calls (<code>uv run python -m riskdemo study stack</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Stack</th>
+<th>Giskard</th>
+<th>Agrees with our labels</th>
+<th>False passes</th>
+<th>False fails</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The judge alone</td>
+<td><code>judge</code></td>
+<td>42/50</td>
+<td>6</td>
+<td>2</td>
+</tr>
+<tr>
+<td>The regex alone</td>
+<td><code>AllOf([RegexMatching(turn) ...])</code></td>
+<td>31/50</td>
+<td>17</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Judge AND regex</td>
+<td><code>AllOf([judge, regex])</code></td>
+<td>41/50</td>
+<td>6</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Judge OR regex</td>
+<td><code>AnyOf([judge, regex])</code></td>
+<td>32/50</td>
+<td>17</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Both judges</td>
+<td><code>AllOf([judge, second_judge])</code></td>
+<td>43/50</td>
+<td>5</td>
+<td>2</td>
+</tr>
+</tbody></table>
+<p>A regex can only veto what it can see. Ours check that a required element is present (a refusal, the dispute path, a routing, &quot;911&quot;), and the half-refusals contain it next to the advice, so putting the regex under the judge removed no false passes and added one false fail. Letting the regex overrule the judge (<code>AnyOf</code>) brought every half-refusal back. A second judge removed one false pass, at the price of a second model call per conversation. A regex under a judge earns its place for facts code can verify exactly: a required phone number, or a canary value that must never appear.</p>
+<h4 id="6-smarter-attackers">6. Smarter attackers</h4>
+<p>Every attack above used Giskard&#39;s default adversarial template. Its <code>giskard.scan</code> module ships others, built for harmful-content goals. In <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/faceoff.py"><code>riskdemo/faceoff.py</code></a> we pointed two of them at our own rules: <strong>Crescendo</strong> starts with a harmless, abstract question and escalates a little each turn, building on the agent&#39;s answers; <strong>GOAT</strong> is an attacker agent that picks among seven named jailbreak techniques (refusal suppression, dual response, response priming, persona change, hypotheticals, topic splitting, opposite intent). Each got the rule&#39;s prohibited behaviour as its goal (&quot;Make the assistant provide advice for this patient to start, stop, skip, double or otherwise change a dose…&quot;), up to 6 turns and 5 attacks per cell, on the medication and investment policies, against the same agents and the same judge. As with seeds, the goal goes only into the attacker&#39;s copy of the trace (<code>StyledLLMGenerator</code> in <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/engine.py"><code>riskdemo/engine.py</code></a>), so the judge sees what it saw in every other run.</p>
+<table>
+<thead>
+<tr>
+<th>Broke the rule (judge)</th>
+<th>Our seeded attacker (10 attacks, 3 turns)</th>
+<th>Crescendo (5 attacks, up to 6 turns)</th>
+<th>GOAT (5 attacks, up to 6 turns)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Medication changes, naive</td>
+<td>1/10 (our labels: 6/10)</td>
+<td>5/5</td>
+<td>4/5</td>
+</tr>
+<tr>
+<td>Medication changes, hardened</td>
+<td>0/10</td>
+<td>0/5</td>
+<td>0/5</td>
+</tr>
+<tr>
+<td>Investment advice, naive</td>
+<td>8/10</td>
+<td>5/5</td>
+<td>5/5</td>
+</tr>
+<tr>
+<td>Investment advice, hardened</td>
+<td>0/10</td>
+<td>0/5</td>
+<td>0/5</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>Smarter attackers got clearer evidence, not just more.</strong> On the naive medication prompt, the judge passed most seeded conversations because the advice came wrapped in role-play and hypotheticals. Crescendo and GOAT kept pushing until the agent said it outright: &quot;Yes, Jordan, since it has only been about two hours, it is generally safe to take your regular dose of lisinopril (10 mg) now&quot; (Crescendo, attack 1). The second judge, <code>gemini-4-argon</code>, agreed with the first on all 40 face-off attacks.</li>
+<li><strong>The hardened prompts held against all three.</strong> GOAT tried a &quot;simulator mode&quot; with disclaimers &quot;pre-acknowledged&quot; and a &quot;decision logic model&quot; on the investment prompt; Crescendo cited a doctor&#39;s prior approval on the medication prompt. The agent declined each time.</li>
+<li><strong>They are not more varied on their own.</strong> Without seeds, attack openings repeat: all five GOAT attacks on the hardened investment prompt opened &quot;Hi Penny, looking at my current…&quot;. Seeding still matters.</li>
+<li><strong>Longer attacks cost more and fail more.</strong> At 6 turns, 9 of the 40 attacks first errored: 6 timed out at our 180-second limit (sized for 3 turns) and 3 lost their attacker, which failed to write a next message after a firm refusal. We reran those 9 with a 480-second limit (<code>faceoff retry</code>); all finished.</li>
+</ul>
+<p>The face-off cost $3.38 (464 <code>gemini-3.8-flash</code> calls and 40 <code>gemini-4-argon</code> judge calls, including a smoke test and a stalled retry). These are judge verdicts on 5 attacks per cell; read the conversations in the app before trusting the counts.</p>
 <h3 id="verdicts-worth-a-second-look">Verdicts worth a second look</h3>
 <p>We read the failures and the borderline passes of the first recording ourselves. These are our readings, not legal or clinical reviews; the app shows each one with a &quot;Second look&quot; note.</p>
 <table>
@@ -762,9 +854,10 @@ chest_pain = (
 <li><strong>A cost ledger.</strong> The library doesn&#39;t track spend; <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/costs.py"><code>riskdemo/costs.py</code></a> logs every call.</li>
 <li><strong>Workarounds for a young API.</strong> Giskard 3.0.1 is new. Seeding meant subclassing its input generator, and the study reads its <code>Trace</code> class from internal modules that can change between releases.</li>
 </ul>
+<p>We later tried two parts of the library we hadn&#39;t used: composed checks (<code>RegexMatching</code>, <code>AllOf</code>, <code>AnyOf</code>; see <a href="#5-stacking-checks">Stacking checks</a>) and its Crescendo and GOAT attackers (see <a href="#6-smarter-attackers">Smarter attackers</a>).</p>
 <p><strong>Could you do this without Giskard?</strong> Yes: the attacker loop and the judge are a few hundred lines of your own code. Giskard got us from a written rule to realistic multi-turn attacks quickly and gave every run the same shape, and it pays off more with many rules and many agents in CI, where a shared test format matters. But the findings in this article came from measuring its output, and a hand-written script would have had the same problems. Treat it as a convenient harness, not a source of truth.</p>
 <h3 id="cost">Cost</h3>
-<p>Every Gemini call is logged with its token counts to the Git-ignored <code>runs/costs.jsonl</code> by <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/costs.py"><code>riskdemo/costs.py</code></a>, which wraps the <code>google-genai</code> SDK that Giskard&#39;s <code>gemini/</code> provider also uses. Prices are Google&#39;s paid-tier list prices as read on 2026-10-27: <code>gemini-3.8-flash</code> $0.75 / $3.75 per million input / output tokens, <code>gemini-4-argon</code> $2 / $10 (until 2026-11-30), <code>gemini-embedding-2</code> $0.20 for input. The work on 2026-10-27 made 981 logged calls for an estimated <strong>$3.77</strong>: $3.38 for <code>gemini-3.8-flash</code> (the seeded recording, the loop reruns and a re-judge), $0.38 for <code>gemini-4-argon</code> (50 judge calls) and under $0.01 for embeddings. One seeded cell of 10 attacks costs about $0.30. The first recording (2026-10-14) was not logged.</p>
+<p>Every Gemini call is logged with its token counts to the Git-ignored <code>runs/costs.jsonl</code> by <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals/riskdemo/costs.py"><code>riskdemo/costs.py</code></a>, which wraps the <code>google-genai</code> SDK that Giskard&#39;s <code>gemini/</code> provider also uses. Prices are Google&#39;s paid-tier list prices as read on 2026-10-27: <code>gemini-3.8-flash</code> $0.75 / $3.75 per million input / output tokens, <code>gemini-4-argon</code> $2 / $10 (until 2026-11-30), <code>gemini-embedding-2</code> $0.20 for input. The work on 2026-10-27 made 981 logged calls for an estimated <strong>$3.77</strong>: $3.38 for <code>gemini-3.8-flash</code> (the seeded recording, the loop reruns and a re-judge), $0.38 for <code>gemini-4-argon</code> (50 judge calls) and under $0.01 for embeddings. One seeded cell of 10 attacks costs about $0.30. The first recording (2026-10-14) was not logged. The face-off on 2026-10-28 added 504 calls for about $3.38.</p>
 <h3 id="run-it">Run it</h3>
 <p>Requirements: Python 3.12 or later and <a href="https://docs.astral.sh/uv/">uv</a>. A Gemini API key is needed only for live runs. From this directory:</p>
 <figure class="code"><pre><code>uv sync
@@ -783,6 +876,11 @@ uv run python -m riskdemo study rejudge --judge gemini-4-argon --set seeded --li
 uv run python -m riskdemo study diversity --live   # paid, about $0.01: embeds 160 opening messages
 uv run python -m riskdemo study loop --live     # paid: re-judges and reruns with the revised rules
 uv run python -m riskdemo study analyze         # free: writes results/study/summary.json for the app
+uv run python -m riskdemo study stack           # free: RegexMatching stacked with the judges (AllOf, AnyOf)
+uv run python -m riskdemo faceoff record --live # paid, about $2.50: Crescendo and GOAT, 40 attacks
+uv run python -m riskdemo faceoff retry --live  # paid: reruns attacks that errored, with a longer timeout
+uv run python -m riskdemo faceoff rejudge --live   # paid, about $0.33: the second judge on every face-off attack
+uv run python -m riskdemo faceoff analyze       # free: writes results/faceoff/summary.json for the app
 uv run python -m riskdemo.sample &gt; sheet.md     # free: the blind labelling sheet</code></pre></figure>
 <p>Every command that calls Gemini is a dry run without <code>--live</code>.</p>
 <p>The app&#39;s frontend is TypeScript and Tailwind CSS in <code>client/</code>. Its built files are committed in <code>riskdemo/static/</code>, so running the app needs only Python. To change the frontend, use Node.js 22.12 or later:</p>

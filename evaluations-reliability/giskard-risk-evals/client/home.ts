@@ -103,6 +103,7 @@ function giskardRole(study: Study | null): string {
     ["A multi-turn attacker", "LLMGenerator + the giskard.scan adversarial template", "It reads the rule and plays a user for up to three turns, changing tactic after each reply. Writing and tuning that red-team prompt and loop yourself is the slowest part to get right."],
     ["One shape for every test", "Scenario + Conformity check + Trace", "A rule becomes a scenario with a judge; every turn is recorded as a trace. That shape is what lets this app replay the runs, and lets us score the same conversations again later."],
     ["Swappable parts", "set_default_generator, set_default_judge", "Changing the model is one line. That is how we re-scored every conversation with a second judge, and how we added seeds without rewriting the loop."],
+    ["More attackers and checks than we first used", "Crescendo, GOAT · RegexMatching, AllOf, AnyOf", "The scan module ships other attack strategies, and the checks module composes deterministic checks with judges. We tried both: see Stack the checks and Smarter attackers under What we measured."],
   ];
   const added: [string, string][] = [
     ["Seeds, so the attacks differ", div ? `Out of the box, ${pct(div.recorded.mean.shared_opening)} of attack pairs in a cell opened with the same four words. Giving each attack its own question, persona and tactic brought that to ${pct(div.seeded.mean.shared_opening)}.` : "Out of the box, the ten attacks in a cell read the same brief and often opened the same way."],
@@ -193,7 +194,7 @@ export function home(c: Catalog, study: Study | null, set: SetName): string {
 
     <section class="mt-14">
       <h2 class="font-serif text-2xl text-ink">What we measured</h2>
-      <p class="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-2">A pass rate is only as good as the attacks behind it and the judge that scores it. So we tested the method itself, four ways.</p>
+      <p class="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-2">A pass rate is only as good as the attacks behind it and the judge that scores it. So we tested the method itself four ways, then tried two parts of Giskard we hadn't used: stacked checks and smarter attackers.</p>
       ${findings(study)}
       <div class="mt-8 flex flex-wrap gap-3">
         <a href="#/measured" class="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-paper hover:bg-ink/90">See what we measured ${icon("arrow", 15)}</a>
