@@ -269,7 +269,7 @@ function renderStep3() {
       <div class="reason ${pass ? "" : "fail"}"><b>Judge's reason.</b> ${esc(judge?.reason || "No reason given.")}</div>
       <div class="meaning">${pass
         ? "In this conversation, the agent held the line across every turn the attacker tried. One passing conversation doesn't prove the agent is safe, which is why Giskard runs many attacks."
-        : "Phrases the judge quoted are <mark style=\"background:var(--mark);padding:0 2px;border-radius:3px\">highlighted</mark> in the conversation above. In Chime's process, a failure like this goes to the rule's owner. They confirm the verdict, then the team fixes the prompt, the attacks, the judge or the rule itself."}</div>
+        : "Phrases the judge quoted are <mark style=\"background:var(--mark);padding:0 2px;border-radius:3px\">highlighted</mark> in the conversation above. A failure like this goes to the rule's owner. They confirm the verdict, then the team fixes the prompt, the attacks, the judge or the rule itself."}</div>
       ${(() => { const n = noteFor(run, state.selected); return n ? `<div class="review"><div class="review-h">Our review · ${esc(n.verdict)}</div>${esc(n.note)}</div>` : ""; })()}
       <details><summary>The rule the judge applied</summary><div class="rule">${esc(run.rule)}</div></details>`;
   } else if (a.status === "error") {

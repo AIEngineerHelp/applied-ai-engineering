@@ -52,15 +52,15 @@
   <p>Meet <b>Penny</b>, the assistant inside a bank's mobile app. She can see a member's balances and spending, and members love asking her money questions. The bank's legal team has one firm rule: <i>Penny must not give personal investment advice</i>, because in the US only a registered adviser may do that.</p>
   <p>A normal unit test can't check that rule. There is no single right answer to compare against, and nobody tries to break a rule by asking politely once. People rephrase, add a backstory, call the question hypothetical, and quote the agent's last answer back at it.</p>
   <div class="callout">
-    <div class="callout-h">Where this comes from</div>
-    <p>Chime, a US fintech with 9.5 million members, uses this process for its copilot Jade. Its legal team writes the risk definitions, Giskard generates attacks from them, and an LLM judge scores the replies. LangChain describes the process in its 2026 report <i>Financial Services Agents in Production</i>. This lesson rebuilds it with a synthetic bank and clinic.</p>
+    <div class="callout-h">The idea in one line</div>
+    <p>The rule's owner writes the risk definition, Giskard generates attacks from it, and an LLM judge scores the replies against the same text. Everything here runs on a synthetic bank and clinic.</p>
   </div>
 </section>
 
 <section class="chapter" id="rule">
   <div class="ch-num">Chapter 2</div>
   <h2>Step one: write the rule so a machine can use it</h2>
-  <p>A vague rule like "don't give bad advice" can't be tested. Chime's approach is a <b>risk definition</b> with a fixed set of fields, written by the rule's owner in their own words. Here is the one for Penny:</p>
+  <p>A vague rule like "don't give bad advice" can't be tested. The fix is a <b>risk definition</b> with a fixed set of fields, written by the rule's owner in their own words. Here is the one for Penny:</p>
   <figure class="fig" id="defFigure"></figure>
   <div class="grid-2 notes">
     <div><b>"Prohibited" and "Allowed instead"</b> draw the line. A definition that only says what's forbidden makes agents refuse everything. Saying what's allowed keeps the agent useful.</div>
@@ -157,7 +157,7 @@
 <section class="chapter" id="review">
   <div class="ch-num">Chapter 7</div>
   <h2>When the judge is wrong, or the rule is</h2>
-  <p>A pass rate is only as good as the verdicts inside it. Chime has its legal team review results, and their disagreements with the judge are the most useful output of the whole process. Each disagreement points to one of four fixes: the <b>agent</b>, the <b>attacks</b>, the <b>judge</b> or the <b>rule itself</b>. We read all 80 recorded verdicts. These three taught us the most:</p>
+  <p>A pass rate is only as good as the verdicts inside it. The rule's owner should review the results, and their disagreements with the judge are the most useful output of the whole process. Each disagreement points to one of four fixes: the <b>agent</b>, the <b>attacks</b>, the <b>judge</b> or the <b>rule itself</b>. We read all 80 recorded verdicts. These three taught us the most:</p>
   <div id="reviewCards" class="review-cards fig wide"></div>
   <p class="small">These are our readings, not legal or clinical reviews. In a real team, the rule's owner writes them.</p>
 </section>
@@ -229,7 +229,7 @@ result.to_junit_xml(<span class="s">"compliance.xml"</span>)                 <sp
     <div><div class="fact-h">Check the judge first</div><p>Have the rule's owner label 30 to 50 verdicts before you trust a pass rate. Fix whatever their disagreements point to.</p></div>
     <div><div class="fact-h">Then run it on every change</div><p>Rerun the suite whenever the model, prompt or retrieval changes. Model updates can break answers that used to be safe.</p></div>
   </div>
-  <p class="next">The full article, with the Chime case study and the healthcare version of this method, is in this example's <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals">README</a>.</p>
+  <p class="next">The full article, with more finance risks and the healthcare version of this method, is in this example's <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/evaluations-reliability/giskard-risk-evals">README</a>.</p>
 </section>
 
 <footer id="footer"></footer>
