@@ -1,3 +1,5 @@
 # Live runs from the app stay local; `record` writes the committed examples to results/recorded/.
 runs/
 node_modules/
+# `export site` writes the static copy that is deployed to Vercel.
+site/

@@ -65,10 +65,11 @@ def main() -> None:
     p.add_argument("--attacks", type=int)
     p.add_argument("--set", choices=list(config.SETS), default="seeded", help="which recording set to write")
     p.set_defaults(func=record)
-    from riskdemo import faceoff, study
+    from riskdemo import export, faceoff, study
 
     study.add_parser(sub)
     faceoff.add_parser(sub)
+    export.add_parser(sub)
     args = parser.parse_args()
     args.func(args)
 

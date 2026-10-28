@@ -67,3 +67,18 @@ def test_committed_stack_results_match_the_labels():
         assert s["n"] == len(out["conversations"])
         fp = sum(c["verdicts"][s["id"]] and c["label"] == "fail" for c in out["conversations"])
         assert fp == s["false_pass"]
+
+
+def test_static_export_writes_every_file_the_page_reads_and_turns_live_runs_off(tmp_path):
+    from riskdemo.export import export_site
+
+    export_site(tmp_path)
+    assert 'data-static' in (tmp_path / "index.html").read_text()
+    catalog = json.loads((tmp_path / "data/catalog.json").read_text())
+    assert catalog["live"]["available"] is False and catalog["live"]["hosted"] is True
+    assert json.loads((tmp_path / "data/runs.json").read_text()) == []
+    for set_name in config.SETS:
+        for risk_id in RISKS:
+            assert (tmp_path / f"data/recorded/{set_name}/{risk_id}/naive.json").exists()
+    assert (tmp_path / "data/faceoff/goat/investment-advice/hardened.json").exists()
+    assert {p.name for p in (tmp_path / "data/loop").iterdir()} == {p.name for p in config.LOOP.glob("*.json")}

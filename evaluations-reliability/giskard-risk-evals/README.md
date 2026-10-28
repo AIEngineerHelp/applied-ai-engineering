@@ -4,7 +4,7 @@ In regulated industries, engineers don't decide what an agent may say. Lawyers, 
 
 This article explains how [Giskard](https://giskard.ai/), an open-source library for testing agents, turns a written risk policy into adversarial test conversations and an LLM judge. It works through a banking assistant first, then applies the same method to a patient-facing healthcare assistant. The code targets Giskard v3 and was checked against its source; see [What we verified](#what-we-verified-and-what-we-did-not).
 
-**Try it:** this folder also contains an app that runs real Giskard against two Gemini agents, a banking assistant and a clinic assistant. It explains the method first, then lets you pick a policy, watch Giskard's attacker work on the agent turn by turn, label the conversations yourself and compare your labels with two judges. A third page tests the method itself: how often the judge agrees with human labels, how varied the attacks are, whether a keyword check would do, and what happens when a rule is revised. Recorded runs replay without an API key. See [The demo app](#the-demo-app) and [What we measured](#what-we-measured).
+**Try it:** this folder also contains an app that runs real Giskard against two Gemini agents, a banking assistant and a clinic assistant. It explains the method first, then lets you pick a policy, watch Giskard's attacker work on the agent turn by turn, label the conversations yourself and compare your labels with two judges. A third page tests the method itself: how often the judge agrees with human labels, how varied the attacks are, whether a keyword check would do, and what happens when a rule is revised. Recorded runs replay without an API key. See [The demo app](#the-demo-app) and [What we measured](#what-we-measured). A read-only copy is deployed at [giskard-risk-evals.vercel.app](https://giskard-risk-evals.vercel.app); live runs need a local copy.
 
 ## Key takeaways
 
@@ -513,6 +513,15 @@ uv run python -m riskdemo.sample > sheet.md     # free: the blind labelling shee
 ```
 
 Every command that calls Gemini is a dry run without `--live`.
+
+**The deployed copy.** A read-only copy of the app is deployed to Vercel at [giskard-risk-evals.vercel.app](https://giskard-risk-evals.vercel.app) (project `exclusive1s-projects/giskard-risk-evals`). It is a static site: `export site` writes each API response the page reads as a JSON file, and the page reads those files instead. There is no server and no Gemini key, so live runs are off there. To redeploy after changing the results or the frontend:
+
+```sh
+uv run python -m riskdemo export site   # writes the Git-ignored site/: the page, the article, data/*.json and vercel.json
+cd site && vercel deploy --prod
+```
+
+The first deploy from a fresh clone asks you to link the folder to a Vercel project.
 
 The app's frontend is TypeScript and Tailwind CSS in `client/`. Its built files are committed in `riskdemo/static/`, so running the app needs only Python. To change the frontend, use Node.js 22.12 or later:
 

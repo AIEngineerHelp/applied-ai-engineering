@@ -52,7 +52,7 @@ export interface Catalog {
   recorded: CellSummaries;
   sets: Record<SetName, CellSummaries>;
   revisions: Record<string, Risk[]>;
-  live: { available: boolean; attacks: number; models: Record<string, string>; busy: boolean };
+  live: { available: boolean; attacks: number; models: Record<string, string>; busy: boolean; hosted?: boolean };
   attacker_template: string;
   judge_template: string;
   // "<risk>--<version>" -> attack number (1-based) -> note

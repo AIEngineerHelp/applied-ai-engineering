@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { applyEvent, blankRun, highlight, orderFindings, quotedPhrases, renderReply, replaySchedule, tally, verdictSentence } from "../client/logic.ts";
+import { applyEvent, blankRun, highlight, orderFindings, quotedPhrases, renderReply, replaySchedule, staticURL, tally, verdictSentence } from "../client/logic.ts";
 import type { Attack, Run } from "../client/types.ts";
 
 const attack = (index: number, status: Attack["status"], turns = 1): Attack => ({
@@ -88,4 +88,11 @@ test("agreement sentences name false passes first and use plain words", () => {
   assert.equal(agreementSentence("It", { n: 5, agree: 4, false_pass: 0, false_fail: 1 }), "It agreed with our labels on 4 of 5 conversations. It failed 1 we pass.");
   assert.equal(pct(0.8477), "85%");
   assert.equal(pct(null), "—");
+});
+
+test("the static copy maps each API call to its exported JSON file", () => {
+  assert.equal(staticURL("/api/catalog"), "/data/catalog.json");
+  assert.equal(staticURL("/api/recorded/medication-changes/naive?set=seeded"), "/data/recorded/seeded/medication-changes/naive.json");
+  assert.equal(staticURL("/api/faceoff/goat/investment-advice/hardened"), "/data/faceoff/goat/investment-advice/hardened.json");
+  assert.equal(staticURL("/api/loop/dispute-recourse--naive--seeded-r2"), "/data/loop/dispute-recourse--naive--seeded-r2.json");
 });

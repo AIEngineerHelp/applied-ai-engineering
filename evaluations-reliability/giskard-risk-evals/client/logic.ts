@@ -254,3 +254,11 @@ export function agreementSentence(who: string, a: { n: number; agree: number; fa
 export function pct(x: number | null | undefined, digits = 0): string {
   return x == null ? "—" : `${(100 * x).toFixed(digits)}%`;
 }
+
+/** The deployed copy (`riskdemo export site`) has no server: each API response is a JSON file under /data/. */
+export function staticURL(url: string): string {
+  const [path, query] = url.split("?");
+  const set = new URLSearchParams(query ?? "").get("set");
+  const file = path.replace(/^\/api\//, "/data/");
+  return `${set ? file.replace("/data/recorded/", `/data/recorded/${set}/`) : file}.json`;
+}

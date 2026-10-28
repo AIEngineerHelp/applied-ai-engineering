@@ -5,7 +5,7 @@
 //   #/<risk>/<version>/<step>/<attack>?set=<seeded|recorded>&run=<live run id>   the console
 
 import { home } from "./home.ts";
-import { applyEvent, blankRun, esc, orderFindings, quotedPhrases, renderReply, replaySchedule, seconds, tally, verdictSentence, type ReaderLabel, type ReplayEvent } from "./logic.ts";
+import { applyEvent, blankRun, esc, orderFindings, quotedPhrases, renderReply, replaySchedule, seconds, staticURL, tally, verdictSentence, type ReaderLabel, type ReplayEvent } from "./logic.ts";
 import { SECTIONS, measured, type FaceoffRuns } from "./measured.ts";
 import type { Attack, Catalog, LabelledConversation, Risk, Run, RunListing, SetName, StackId, Study, Version } from "./types.ts";
 import { SET_HINT, SET_LABEL, VERSION_LABEL, agentShort, chip, icon, pill, raterName } from "./ui.ts";
@@ -50,8 +50,10 @@ const $ = (id: string) => document.getElementById(id)!;
 
 // ---------- data ----------
 
+const STATIC = document.documentElement.hasAttribute("data-static");
+
 async function getJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  const res = await fetch(STATIC ? staticURL(url) : url, init);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.detail || `Request failed (${res.status}).`);
   return body as T;
@@ -422,7 +424,7 @@ function sidebar(c: Catalog): string {
       ${live.length ? `<div><div class="mb-1.5 px-2.5 text-xs font-medium text-ink">Your live runs</div><div class="space-y-0.5">${live.map((l) => liveRunRow(c, l, route)).join("")}</div></div>` : ""}
     </nav>
     <div class="mt-auto hidden space-y-1.5 px-2.5 pt-8 text-xs text-ink-3 lg:block">
-      <div class="flex items-center gap-2"><span class="size-1.5 rounded-full ${c.live.available ? "bg-pass" : "bg-line-2"}"></span>${c.live.available ? "Live runs on (Gemini key found)" : "Live runs off (no Gemini key)"}</div>
+      <div class="flex items-center gap-2"><span class="size-1.5 rounded-full ${c.live.available ? "bg-pass" : "bg-line-2"}"></span>${c.live.available ? "Live runs on (Gemini key found)" : c.live.hosted ? "Live runs off (run it locally)" : "Live runs off (no Gemini key)"}</div>
       <div>Scores: ${SET_LABEL[set].toLowerCase()}</div>
     </div>`;
 }
@@ -558,7 +560,7 @@ function runBar(c: Catalog, r: RiskRoute): string {
   const replaying = !!S.replay;
   const polling = !!S.poll;
   const liveOk = c.live.available && !c.live.busy && !polling;
-  const liveTitle = !c.live.available ? "Add GEMINI_API_KEY to .env to run live attacks" : c.live.busy || polling ? "A live run is already in progress" : "";
+  const liveTitle = c.live.hosted ? "Live runs need a local copy with GEMINI_API_KEY in .env" : !c.live.available ? "Add GEMINI_API_KEY to .env to run live attacks" : c.live.busy || polling ? "A live run is already in progress" : "";
   const source = run ? (run.mode === "live" ? `Live run · started ${new Date(run.started_at).toLocaleString()}` : `${SET_LABEL[r.set]} · ${run.started_at.slice(0, 10)}`) : "Loading…";
   const models = run ? [...new Set(Object.values(run.models))] : [];
   return `<div class="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
