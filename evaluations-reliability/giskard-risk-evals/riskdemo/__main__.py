@@ -22,19 +22,23 @@ def record(args: argparse.Namespace) -> None:
     max_calls = len(combos) * n * (2 * ATTACKER_MAX_TURNS + 1)
     print(f"{len(combos)} runs x {n} attacks; at most {max_calls} model calls")
     print(f"agent {settings.agent_model}, attacker {settings.attacker_model}, judge {settings.judge_model}")
+    target = config.SETS[args.set]
+    print(f"recording set: {args.set} -> {target.relative_to(config.ROOT)}")
     for risk_id, version in combos:
         print(f"  {risk_id:22} {version}")
     if not args.live:
         print("Dry run. Add --live to make these paid calls.")
         return
 
+    from riskdemo import costs
     from riskdemo.live import live_run, save
 
     async def go() -> None:
         for risk_id, version in combos:
-            run = await live_run(settings, risk_id, version, n)
+            costs.phase.set(f"record:{args.set}:{risk_id}--{version}")
+            run = await live_run(settings, risk_id, version, n, seeded=args.set == "seeded")
             run["mode"] = "recorded"
-            save(run, config.RECORDED / f"{risk_id}--{version}.json")
+            save(run, target / f"{risk_id}--{version}.json")
             s = run["summary"]
             print(f"{risk_id:22} {version:9} passed {s['passed']}/{s['total']}  errors {s['errored']}")
 
@@ -59,7 +63,11 @@ def main() -> None:
     p.add_argument("--risk", choices=list(RISKS))
     p.add_argument("--version", choices=list(VERSIONS))
     p.add_argument("--attacks", type=int)
+    p.add_argument("--set", choices=list(config.SETS), default="seeded", help="which recording set to write")
     p.set_defaults(func=record)
+    from riskdemo.study import add_parser
+
+    add_parser(sub)
     args = parser.parse_args()
     args.func(args)
 
