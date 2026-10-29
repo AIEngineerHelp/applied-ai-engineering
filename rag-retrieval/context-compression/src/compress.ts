@@ -8,7 +8,10 @@ export interface Unit extends Span {
   score: number;
   matches: string[];
 }
-export type Method = "relevance" | "truncate";
+export type Method = "relevance" | "mmr" | "words" | "truncate" | "semantic" | "llmlingua2" | "compresr";
+export const isModelMethod = (method: Method) => ["semantic", "llmlingua2", "compresr"].includes(method);
+export interface Scoring { units: Unit[]; description: string; separator?: string }
+
 export interface Options {
   query: string;
   focus?: string;
@@ -21,6 +24,7 @@ export interface Options {
   minFactor: number;
   maxFactor: number;
   threshold: number;
+  diversity?: number;
 }
 export const defaults: Options = {
   query: "", focus: "", useFocus: true, queryAware: true, granularity: "sentence",
@@ -39,6 +43,9 @@ export interface Result {
   removed: number;
   status: "compressed" | "small-input" | "empty";
   reason: string;
+  alignment?: "exact" | "unavailable";
+  backend?: { method: string; model: string; durationMs: number; fallback: boolean };
+
 }
 
 const STOP = new Set("a an the and or but for of in on at to from by with is are was were be been it its this that these those what which who how when where why does do did can could should would will our we as about any their they them per than then my i me please tell give has have had not".split(" "));
@@ -118,7 +125,24 @@ export function segmentsFor(source: string, spans: Span[]): Segment[] {
   return segments;
 }
 
-const render = (source: string, spans: Span[]) => mergeSpans(spans).map((s) => source.slice(s.start, s.end)).join("\n\n");
+export const renderSpans = (source: string, spans: Span[], separator = "\n\n") => mergeSpans(spans).map((s) => source.slice(s.start, s.end)).join(separator);
+
+export function wordUnits(source: string): Unit[] {
+  let previousEnd = 0;
+  return [...source.matchAll(/\S+/gu)].map((match, id) => {
+    const start = previousEnd;
+    const end = match.index! + match[0].length;
+    previousEnd = end;
+    return { id, start, end, text: source.slice(start, end), headings: [], score: 0, matches: [] };
+  });
+}
+
+export function jaccard(a: string, b: string): number {
+  const first = new Set(terms(a)); const second = new Set(terms(b));
+  const intersection = [...first].filter((word) => second.has(word)).length;
+  const union = new Set([...first, ...second]).size;
+  return union ? intersection / union : 0;
+}
 
 function scoreUnits(source: string, units: Unit[], query: string, aware: boolean): Unit[] {
   const queryTerms = terms(query);
@@ -136,18 +160,27 @@ function scoreUnits(source: string, units: Unit[], query: string, aware: boolean
   });
 }
 
-function validate(o: Options): void {
+export function validate(o: Options): void {
+  if (!["relevance", "mmr", "words", "truncate", "semantic", "llmlingua2", "compresr"].includes(o.method)) throw new Error("Unknown compression method.");
+  if (!["paragraph", "sentence"].includes(o.granularity)) throw new Error("Unknown unit size.");
+  if (typeof o.query !== "string" || o.query.length > 1000 || o.focus !== undefined && (typeof o.focus !== "string" || o.focus.length > 1000)) throw new Error("Question and focus must be text of at most 1,000 characters each.");
+  if (o.diversity !== undefined && (!Number.isFinite(o.diversity) || o.diversity < 0 || o.diversity > 1)) throw new Error("MMR relevance weight must be between 0 and 1.");
   if (o.method === "truncate" && o.dynamic) throw new Error("Prefix truncation uses fixed removal. Disable dynamic budgeting.");
   if (!Number.isFinite(o.remove) || o.remove < 0 || o.remove > 100) throw new Error("Removal must be between 0 and 100.");
   if (!Number.isFinite(o.threshold) || o.threshold < 0) throw new Error("Pass-through threshold must be non-negative.");
   if (!Number.isFinite(o.minFactor) || !Number.isFinite(o.maxFactor) || o.minFactor < 1 || o.maxFactor < o.minFactor) throw new Error("Dynamic multipliers must satisfy 1 ≤ min ≤ max.");
 }
 
-export function compress(source: string, options: Options): Result {
+export function compress(source: string, options: Options, scoring?: Scoring): Result {
   validate(options);
   const originalTokens = countTokens(source);
   const query = options.query + (options.useFocus && options.focus ? `\n${options.focus}` : "");
-  const units = scoreUnits(source, splitUnits(source, options.granularity), query, options.queryAware);
+  if (isModelMethod(options.method) && !scoring) throw new Error("This method requires an explicitly requested backend run.");
+  const words = options.method === "words" || options.method === "llmlingua2";
+  const separator = scoring?.separator ?? (words ? "" : "\n\n");
+  const render = (text: string, ranges: Span[]) => renderSpans(text, ranges, separator);
+  const units = scoring?.units ?? scoreUnits(source, options.method === "words" ? wordUnits(source) : splitUnits(source, options.granularity), query, options.queryAware);
+  if (units.some((u) => !Number.isFinite(u.score) || !Number.isInteger(u.start) || !Number.isInteger(u.end) || u.start < 0 || u.end > source.length || u.start >= u.end || u.text !== source.slice(u.start, u.end))) throw new Error("Invalid source-aligned model scores.");
   const ranked = [...units].sort((a, b) => b.score - a.score || a.start - b.start);
   let budget = Math.floor(originalTokens * (1 - options.remove / 100));
   let reason = `Fixed budget: keep at most ${budget} tokens (${100 - options.remove}% of source).`;
@@ -193,8 +226,17 @@ export function compress(source: string, options: Options): Result {
     selected.push(...units.filter((u) => u.end <= text.length).map((u) => u.id));
     reason += " Prefix truncation ignores relevance and may cut a sentence.";
   } else {
-    for (const unit of ranked) {
-      if (options.queryAware && unit.score === 0) continue;
+    const remaining = [...ranked];
+    const maxScore = Math.max(1e-12, ...units.map((u) => u.score));
+    while (remaining.length) {
+      // MMR recomputes a redundancy penalty after every accepted unit.
+      if (options.method === "mmr") {
+        const weight = options.diversity ?? 0.65;
+        const mmr = (u: Unit) => weight * u.score / maxScore - (1 - weight) * Math.max(0, ...units.filter((v) => selected.includes(v.id)).map((v) => jaccard(u.text, v.text)));
+        remaining.sort((a, b) => mmr(b) - mmr(a) || a.start - b.start);
+      }
+      const unit = remaining.shift()!;
+      if (options.queryAware && unit.score <= 0) continue;
       const candidate = mergeSpans([...spans, unit, ...unit.headings]);
       const candidateText = render(source, candidate);
       if (countTokens(candidateText) <= budget) {
@@ -203,6 +245,9 @@ export function compress(source: string, options: Options): Result {
     }
     if (!selected.length) reason += " No eligible whole unit fits; try a larger budget or sentence units.";
   }
+  if (options.method === "mmr") reason += ` MMR uses a ${options.diversity ?? 0.65} relevance weight and Jaccard redundancy penalty; inspector scores are the base relevance scores.`;
+  if (options.method === "words") reason += " Lexical word deletion: this is not a learned token classifier. Deletion can break grammar and remove negation.";
+  if (scoring) reason += ` ${scoring.description}`;
   const compressedTokens = countTokens(text);
   return { text, units, selected, spans, segments: segmentsFor(source, spans), originalTokens,
     compressedTokens, budget, removed: originalTokens ? 1 - compressedTokens / originalTokens : 0,

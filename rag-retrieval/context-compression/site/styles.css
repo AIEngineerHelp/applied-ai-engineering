@@ -1799,3 +1799,10 @@ footer p a {
     width:clamp(80px,24vw,100px);
   }
 }
+
+.model-controls { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.model-controls .check { align-items: flex-start; line-height: 1.6; }
+.model-controls input[type=checkbox] { margin-top: 3px; }
+.model-controls button { width: 100%; min-height: 44px; border: 1px solid var(--blue); background: var(--blue); color: white; border-radius: 5px; margin: 14px 0 6px; font-size: 12px; }
+.model-controls button:disabled { background: #e9edf5; color: #58657a; border-color: #cbd4e1; }
+@media(max-width:800px) { #method-description, #model-controls, #diversity-controls { grid-column: 1 / -1; } }

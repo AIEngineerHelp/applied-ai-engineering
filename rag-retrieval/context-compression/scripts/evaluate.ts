@@ -5,7 +5,7 @@ const rows = [];
 for (const scenario of scenarios) for (const question of scenario.questions) {
   const passages = scenario.id === "rag" ? retrieve(scenario.passages, question.text, 3).map((r) => r.passage) : scenario.passages;
   const source = formatPassages(passages);
-  for (const method of ["relevance", "truncate"] as const) for (const remove of [0, 25, 50, 75, 90]) {
+  for (const method of ["relevance", "mmr", "words", "truncate"] as const) for (const remove of [0, 25, 50, 75, 90]) {
     const result = compress(source, { ...defaults, query: question.text, focus: question.focus, remove, method });
     const facts = checkEvidence(source, result.spans, question.evidence);
     rows.push({ scenario: scenario.id, question: question.id, method, targetRemoval: remove,

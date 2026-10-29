@@ -82,9 +82,9 @@ test("query-agnostic mode ignores both question and focus", () => {
 test("dependencies, separators, and source order are counted inside every fixed budget", () => {
   for (const scenario of scenarios) {
     const source = formatPassages(scenario.passages);
-    for (const granularity of ["paragraph", "sentence"] as const) {
+    for (const method of ["relevance", "mmr", "words", "truncate"] as const) for (const granularity of ["paragraph", "sentence"] as const) {
       for (const remove of [0, 25, 50, 75, 90, 100]) {
-        const result = compress(source, opts({ query: scenario.questions[0].text, focus: scenario.questions[0].focus, granularity, remove }));
+        const result = compress(source, opts({ query: scenario.questions[0].text, focus: scenario.questions[0].focus, granularity, remove, method }));
         assert.ok(result.compressedTokens <= result.budget, `${scenario.id}/${granularity}/${remove}`);
         assert.equal(result.segments.map((s) => s.text).join(""), source);
         for (let i = 1; i < result.spans.length; i++) assert.ok(result.spans[i].start >= result.spans[i - 1].end);
