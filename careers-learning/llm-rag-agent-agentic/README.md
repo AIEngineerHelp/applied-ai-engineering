@@ -125,17 +125,15 @@ A useful test before you move up a level: write down a real request that fails a
 
 ## Run the code
 
-The snippets above live in [`code/`](code/). They need Python 3.11+.
+The snippets above live in [`code/`](code/). They need Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 cd careers-learning/llm-rag-agent-agentic/code
-python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-python test_rag.py    # RAG: mocked model, real Chroma retrieval; no API key or charges
-python test_mock.py   # agent loop: mocked model asks for get_order, then answers
+uv sync --locked      # Install dependencies from uv.lock
+uv run pytest         # Run both tests: RAG retrieval and agent loop, mocked model, no API charges
 ```
 
-Both tests replace the OpenAI HTTP transport with a mock, so they make no paid calls. Chroma downloads a small default embedding model (about 80 MB) on first run. To call a real model, set `OPENAI_API_KEY` and import `rag.answer` or `agent_loop.run_agent` directly; each call is charged by OpenAI. The model name `gpt-5-mini` in the snippets is configurable in the source.
+Both tests replace the OpenAI HTTP transport with a mock, so they make no paid calls. Chroma downloads a small default embedding model (about 80 MB) on first run. To call a real model, set `OPENAI_API_KEY` and import `rag.answer` or `agent_loop.run_agent` directly; each call is charged by OpenAI. The model name defaults to `gpt-5-mini` and can be configured with the `OPENAI_MODEL` environment variable.
 
 ## Files
 
@@ -144,7 +142,9 @@ Both tests replace the OpenAI HTTP transport with a mock, so they make no paid c
 | `docs/figure.gif` | Overview: the four benches |
 | `docs/fig-llm.gif`, `fig-rag.gif`, `fig-agent.gif`, `fig-agentic.gif` | One animated figure per level |
 | `code/rag.py`, `code/agent_loop.py` | The RAG and agent-loop snippets |
-| `code/test_rag.py`, `code/test_mock.py` | Offline checks with a mocked model |
+| `code/config.py` | Shared configuration for the OpenAI model name |
+| `code/test_rag.py`, `code/test_mock.py` | Offline pytest tests with a mocked model |
+| `code/pyproject.toml`, `code/uv.lock` | Dependencies managed with uv |
 
 ## Limitations
 
