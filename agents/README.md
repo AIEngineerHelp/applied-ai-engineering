@@ -20,6 +20,8 @@ Use this category for tool use, agent coordination, memory, context management, 
 | [Pharma research agent](pharma-research-agent/README.md) | A production-shaped research workspace: an orchestrator with a skills layer, parallel sub-agents over PubMed, ClinicalTrials.gov, openFDA and the web, a virtual file system, a synthesis agent, evals and traces; durable runs, Postgres, live streaming, PDF/DOCX export and share links | Runnable Next.js 16 app; offline mode needs no key |
 | [Wiki memory for agents](wiki-memory/README.md) | An agent that keeps an interlinked markdown wiki instead of re-reading raw chunks: ingest, query and lint, superseding outdated claims, and a comparison with chunk RAG on the same sources | Article with a runnable TypeScript web app; scripted pages, computed diffs, lint and retrieval, no API keys; [live](https://wiki-memory.vercel.app) |
 
+[Context Compression Lab](../rag-retrieval/context-compression/README.md) also demonstrates compressing a captured agent tool result using the task plus the focus of a read. Compare retained evidence as the focus and budget change (primary category: RAG & Retrieval; no live agent or API calls).
+
 ## Adding a contribution
 
 Create a descriptive kebab-case project directory with its own README. Document its purpose, dependencies, setup, verification, and relevant sources. Add it to this index and link its community discussion when one exists. Keep dependencies local to the project. See the [repository guide](../AGENTS.md) for the full conventions.
