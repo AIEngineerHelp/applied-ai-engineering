@@ -1,0 +1,57 @@
+@import "tailwindcss" source("../client");
+@source "../riskdemo/static/index.html";
+
+/* Editorial palette: warm paper, ink, one muted accent. Pass, fail and warn are the only other colours. */
+@theme {
+  --color-paper: #f6f4ee;
+  --color-card: #fdfcf9;
+  --color-sunk: #eeebe3;
+  --color-line: #e2ded3;
+  --color-line-2: #cfc9bb;
+  --color-ink: #1d1c19;
+  --color-ink-2: #55514a;
+  --color-ink-3: #8a857a;
+  --color-accent: #2f4f75;
+  --color-accent-soft: #e5eaf0;
+  --color-pass: #3d7553;
+  --color-pass-soft: #e6efe7;
+  --color-fail: #a4473b;
+  --color-fail-soft: #f5e6e2;
+  --color-warn: #8f6519;
+  --color-warn-soft: #f4ebd7;
+  --color-mark: #f0dd9c;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html { background: var(--color-paper); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
+  body { font-family: var(--font-sans); }
+  mark { background: var(--color-mark); color: inherit; border-radius: 2px; padding: 0 2px; }
+  summary::-webkit-details-marker { display: none; }
+}
+
+/* Agent replies arrive as light markdown. */
+.reply p + p, .reply p + ul, .reply ul + p { margin-top: 0.6em; }
+.reply ul { list-style: disc; padding-left: 1.2em; margin-top: 0.4em; }
+.reply li + li { margin-top: 0.25em; }
+.reply strong { font-weight: 600; }
+.reply h4 { margin-top: 0.9em; font-weight: 600; }
+.reply h4:first-child { margin-top: 0; }
+.reply hr { margin: 0.9em 0; border-color: var(--color-line); }
+.reply table { margin-top: 0.6em; width: 100%; border-collapse: collapse; font-size: 14px; }
+.reply th, .reply td { border: 1px solid var(--color-line); padding: 0.35em 0.6em; text-align: left; vertical-align: top; }
+.reply th { background: var(--color-paper); font-weight: 500; }
+.reply p + table, .reply table + p, .reply ul + h4, .reply p + h4 { margin-top: 0.8em; }
+
+/* "Someone is typing" dots. */
+.typing { display: inline-flex; gap: 3px; }
+.typing i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: typing 1.2s infinite ease-in-out; }
+.typing i:nth-child(2) { animation-delay: 0.15s; }
+.typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .typing i, .animate-pulse { animation: none; }
+}

@@ -1,0 +1,24 @@
+[project]
+name = "giskard-risk-evals"
+version = "0.1.0"
+description = "A demo app that shows Giskard turning a written risk definition into adversarial conversations and an LLM-judge verdict"
+requires-python = ">=3.12"
+dependencies = [
+  "giskard[scan,google]==3.0.1",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "python-dotenv>=1,<2",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.28,<1", "pytest>=8,<10", "ruff>=0.12,<1"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

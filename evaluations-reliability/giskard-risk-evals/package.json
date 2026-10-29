@@ -1,0 +1,24 @@
+{
+  "name": "giskard-risk-evals-console",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The red-team console's frontend; the built files in riskdemo/static/ are committed, so running the app needs only Python",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "npm run check && esbuild client/app.ts --bundle --format=esm --minify --outfile=riskdemo/static/app.js && tailwindcss -i client/styles.css -o riskdemo/static/app.css --minify && node --import=tsx scripts/article.ts",
+    "check": "tsc --noEmit",
+    "test": "node --import=tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "marked": "17.0.1",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}
