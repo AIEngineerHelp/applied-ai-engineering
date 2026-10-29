@@ -1,58 +1,79 @@
 import json
-import os
-import httpx
-import pytest
+import math
+import re
+
 import chromadb
+import httpx
+
+DOCS = [
+    "Refunds go back to the original card within 5-7 business days.",
+    "You can request a refund within 30 days of purchase from Orders > Refund.",
+    "To reset your password, use the Forgot password link on the sign-in page.",
+]
+
+# A tiny, fixed embedding so the retrieval check never depends on a downloaded
+# model or a Chroma release. Each dimension is a topic; a text's vector counts
+# how many of that topic's words it contains. Same input, same vector, always.
+TOPICS = [
+    {"refund", "refunds", "money", "back", "card", "purchase"},
+    {"days", "long", "within", "business", "time"},
+    {"password", "reset", "forgot", "sign", "account"},
+]
+
+
+class FixedTopicEmbedding(chromadb.EmbeddingFunction):
+    def __init__(self):
+        pass
+
+    def __call__(self, input):
+        vectors = []
+        for text in input:
+            words = re.findall(r"[a-z]+", text.lower())
+            vec = [float(sum(w in topic for w in words)) for topic in TOPICS]
+            norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+            vectors.append([v / norm for v in vec])
+        return vectors
+
+    @staticmethod
+    def name():
+        return "fixed-topic-test"
+
 
 def test_rag_retrieval(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-    
+
     seen = []
+
     def handler(req):
         body = json.loads(req.content)
         seen.append(body)
-        return httpx.Response(200, json={"id": "c", "object": "chat.completion", "created": 0, "model": body["model"], "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+        return httpx.Response(200, json={"id": "c", "object": "chat.completion", "created": 0, "model": body["model"],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
             "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "Within 30 days, from Orders > Refund."}}]})
-    
-    # Monkeypatch the OpenAI client to use mock transport
+
+    # Route the OpenAI client through a mock transport: no network, no charges.
     from openai import OpenAI
     original_init = OpenAI.__init__
+
     def patched_init(self, *args, **kwargs):
         kwargs["http_client"] = httpx.Client(transport=httpx.MockTransport(handler))
         original_init(self, *args, **kwargs)
-    
+
     monkeypatch.setattr(OpenAI, "__init__", patched_init)
-    
-    # Create a fresh collection with default embedding - this will use Chroma's default
-    # which is ONNX Runtime with all-MiniLM-L6-v2, deterministic once downloaded
-    client = chromadb.Client()
-    collection = client.get_or_create_collection("help_docs_test")
-    collection.add(
-        ids=["refund-1", "refund-2", "acct-1"],
-        documents=["Refunds go back to the original card within 5-7 business days.",
-                   "You can request a refund within 30 days of purchase from Orders > Refund.",
-                   "To reset your password, use the Forgot password link on the sign-in page."],
-    )
-    
-    # Manually test the retrieval to avoid import-time collection creation
+
+    # Real Chroma retrieval, but with the fixed embedding above (no model download).
+    collection = chromadb.Client().get_or_create_collection(
+        "help_docs_test", embedding_function=FixedTopicEmbedding(), metadata={"hnsw:space": "cosine"})
+    collection.add(ids=["refund-1", "refund-2", "acct-1"], documents=DOCS)
+
     question = "How long do I have to ask for my money back?"
-    hits = collection.query(query_texts=[question], n_results=2)
-    context = "\n".join(hits["documents"][0])
-    
-    # Check that retrieval found the refund chunks and not the password one
-    assert "30 days" in context, f"Expected '30 days' in context, got: {context}"
-    assert "password" not in context, f"Did not expect 'password' in context, got: {context}"
-    
-    # Now test the full answer function with the mocked client
+    context = "\n".join(collection.query(query_texts=[question], n_results=2)["documents"][0])
+    assert "30 days" in context, context
+    assert "password" not in context, context
+
     import rag
-    # Monkey-patch the collection getter to use our test collection
     monkeypatch.setattr(rag, "_get_collection", lambda: collection)
-    
-    answer = rag.answer(question)
-    print(f"RAG answer: {answer}")
-    
-    # Verify the prompt sent to the model included the right context
+    rag.answer(question)
+
     prompt = seen[0]["messages"][1]["content"]
-    print(f"Prompt sent to model:\n{prompt}")
-    assert "30 days" in prompt, f"Expected '30 days' in prompt, got: {prompt}"
-    assert "password" not in prompt, f"Did not expect 'password' in prompt, got: {prompt}"
+    assert "30 days" in prompt and "password" not in prompt, prompt

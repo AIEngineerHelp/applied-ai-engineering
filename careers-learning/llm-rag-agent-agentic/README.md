@@ -133,7 +133,7 @@ uv sync --locked      # Install dependencies from uv.lock
 uv run pytest         # Run both tests: RAG retrieval and agent loop, mocked model, no API charges
 ```
 
-Both tests replace the OpenAI HTTP transport with a mock, so they make no paid calls. Chroma downloads a small default embedding model (about 80 MB) on first run. To call a real model, set `OPENAI_API_KEY` and import `rag.answer` or `agent_loop.run_agent` directly; each call is charged by OpenAI. The model name defaults to `gpt-5-mini` and can be configured with the `OPENAI_MODEL` environment variable.
+Both tests replace the OpenAI HTTP transport with a mock, so they make no paid calls. The RAG test gives Chroma a tiny fixed embedding function, so its retrieval check is deterministic and downloads nothing; `rag.py` itself uses Chroma's default embedding model, which downloads about 80 MB on first use. To call a real model, set `OPENAI_API_KEY` and import `rag.answer` or `agent_loop.run_agent` directly; each call is charged by OpenAI. The model name defaults to `gpt-5-mini` and can be configured with the `OPENAI_MODEL` environment variable.
 
 ## Files
 
