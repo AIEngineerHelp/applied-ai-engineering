@@ -1,0 +1,25 @@
+[project]
+name = "validation-playground"
+version = "0.1.0"
+description = "Interactive Streamlit demo of K-fold cross validation, data leakage and choosing a validation plan"
+requires-python = ">=3.12"
+dependencies = [
+  "streamlit>=1.50,<2",
+  "scikit-learn>=1.5,<2",
+  "plotly>=5.24,<7",
+  "pandas>=2.2,<3",
+  "numpy>=1.26,<3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+
+[tool.ruff]
+line-length = 130
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
