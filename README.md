@@ -55,6 +55,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [Knowledge graphs for AI engineers](rag-retrieval/knowledge-graphs/README.md) explains what a knowledge graph is, how an LLM extracts one from text, how entity resolution merges names like "Varnell Semi" and "Varnell Semiconductor", and the GraphRAG retrieval patterns. Gemini extracted a graph from 25 synthetic documents three times, rules, an LLM and a person merged the names, and Neo4j answered 15 questions: on the multi-hop question chunk search found 0 of 4 customers and Gemini-written Cypher 4 of 4, while on a prose question chunk search won. The app replays the recorded runs, real model mistakes included, with no keys; locally, with Neo4j and a Gemini key, it also answers your own questions.
 
+[LLM vs RAG vs AI agent vs agentic AI](careers-learning/llm-rag-agent-agentic/README.md) explains the four terms as layers, each the previous one plus one capability: retrieval, tools in a loop, then coordination of several agents. Animated figures show each level as a bench, short Python snippets show RAG and an agent loop, and a table helps you pick the lowest level that does the job. The snippets' tests use a mocked model and need no API key. Written by Nagaraju Poralla.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.
