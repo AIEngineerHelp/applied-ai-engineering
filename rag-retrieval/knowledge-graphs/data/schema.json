@@ -1,0 +1,36 @@
+{
+  "description": "The knowledge-graph schema for the Corvane Instruments corpus. The same file builds the extraction prompt, the structured-output JSON schema, the validation rules and the text-to-Cypher prompt.",
+  "entities": {
+    "Person": "A named employee or contact, e.g. a team lead or account manager.",
+    "Team": "An internal team, e.g. the Firmware team.",
+    "Service": "Software Corvane runs, e.g. a cloud service or web dashboard.",
+    "Product": "A device Corvane sells to customers.",
+    "Component": "A part that goes into a product, e.g. a chip, module, cell or enclosure.",
+    "Company": "An outside company that is not a customer, e.g. a supplier or a logistics provider.",
+    "Customer": "An organisation that buys or uses Corvane products.",
+    "Site": "A plant or building where products are made.",
+    "Incident": "A named problem or outage that has an incident review."
+  },
+  "relations": {
+    "LEADS": { "from": ["Person"], "to": ["Team", "Site"], "description": "The person leads the team or manages the site.", "properties": ["since"] },
+    "MEMBER_OF": { "from": ["Person"], "to": ["Team"], "description": "The person works in the team.", "properties": [] },
+    "MANAGES_ACCOUNT": { "from": ["Person"], "to": ["Customer"], "description": "The person is the account manager for the customer.", "properties": ["since"] },
+    "OWNS": { "from": ["Team"], "to": ["Service", "Product"], "description": "The team owns the service or the product design.", "properties": ["since", "until"] },
+    "CONNECTS_VIA": { "from": ["Product"], "to": ["Service"], "description": "The product sends data or receives updates through the service.", "properties": [] },
+    "READS_FROM": { "from": ["Service"], "to": ["Service"], "description": "The service reads data from another service.", "properties": [] },
+    "PART_OF": { "from": ["Component"], "to": ["Product"], "description": "The component goes into the product.", "properties": ["since", "until"] },
+    "SUPPLIES": { "from": ["Company"], "to": ["Component"], "description": "The company makes or supplies the component.", "properties": ["role", "since"] },
+    "REPLACES": { "from": ["Component"], "to": ["Component"], "description": "The first component replaces the second.", "properties": ["since"] },
+    "USES": { "from": ["Customer"], "to": ["Product"], "description": "The customer runs, ordered or uses the product.", "properties": ["units", "since"] },
+    "ASSEMBLED_AT": { "from": ["Product"], "to": ["Site"], "description": "The product is assembled or built at the site.", "properties": [] },
+    "AFFECTED": { "from": ["Incident"], "to": ["Component", "Product", "Service", "Customer"], "description": "The incident affected the component, product, service or customer.", "properties": ["date"] },
+    "INVOLVES": { "from": ["Incident"], "to": ["Company", "Team"], "description": "The incident involved the company or team, e.g. the supplier that caused it.", "properties": ["date"] }
+  },
+  "properties": {
+    "since": "An ISO date (YYYY-MM-DD) from which the fact holds, when the text gives one.",
+    "until": "An ISO date (YYYY-MM-DD) until which the fact held, when the text gives one.",
+    "role": "For SUPPLIES: 'sole', 'main' or 'second source', when the text says so.",
+    "units": "For USES: the number of units, when the text gives one.",
+    "date": "An ISO date (YYYY-MM-DD) of the incident, when the text gives one."
+  }
+}

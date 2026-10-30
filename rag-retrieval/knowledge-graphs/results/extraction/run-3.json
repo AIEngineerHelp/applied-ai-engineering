@@ -1,0 +1,1602 @@
+{
+ "run": 3,
+ "runId": "extract-3-2026-10-23T03-01-54",
+ "model": "gemini-3.8-flash",
+ "at": "2026-10-23T03:02:23.092Z",
+ "docs": [
+  {
+   "doc": "supplier-register",
+   "entities": [
+    {
+     "name": "Varnell Semi",
+     "type": "Company"
+    },
+    {
+     "name": "QX-7 radio chip",
+     "type": "Component"
+    },
+    {
+     "name": "Tessaly Plastics",
+     "type": "Company"
+    },
+    {
+     "name": "IP68 enclosure",
+     "type": "Component"
+    },
+    {
+     "name": "Hallam Cells",
+     "type": "Company"
+    },
+    {
+     "name": "LX-4 lithium cell",
+     "type": "Component"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Varnell Semi",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "QX-7 radio chip",
+     "targetType": "Component",
+     "properties": {
+      "role": "sole"
+     },
+     "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+    },
+    {
+     "source": "Tessaly Plastics",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "IP68 enclosure",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Tessaly Plastics supplies the IP68 enclosure."
+    },
+    {
+     "source": "Hallam Cells",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "LX-4 lithium cell",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Hallam Cells supplies the LX-4 lithium cell."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "supplier-register",
+    "model": "gemini-3.8-flash",
+    "input": 947,
+    "output": 432,
+    "thought": 0,
+    "cost": 0.00233025,
+    "ms": 4421
+   }
+  },
+  {
+   "doc": "atlas-3-brief",
+   "entities": [
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "QX-7",
+     "type": "Component"
+    },
+    {
+     "name": "IP68 enclosure",
+     "type": "Component"
+    },
+    {
+     "name": "LX-4",
+     "type": "Component"
+    },
+    {
+     "name": "Tartu plant",
+     "type": "Site"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Atlas-3",
+     "sourceType": "Product",
+     "relation": "CONNECTS_VIA",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "The Atlas-3 is a battery-powered water-quality sensor. It sends readings every 15 minutes through the Telemetry Gateway."
+    },
+    {
+     "source": "QX-7",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The Atlas-3 main board uses the QX-7 radio chip for its cellular link."
+    },
+    {
+     "source": "IP68 enclosure",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The housing is the IP68 enclosure"
+    },
+    {
+     "source": "LX-4",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The Atlas-3 runs on one LX-4 lithium cell."
+    },
+    {
+     "source": "Atlas-3",
+     "sourceType": "Product",
+     "relation": "ASSEMBLED_AT",
+     "target": "Tartu plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "Atlas-3 units are assembled at the Tartu plant."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "atlas-3-brief",
+    "model": "gemini-3.8-flash",
+    "input": 978,
+    "output": 588,
+    "thought": 0,
+    "cost": 0.0029385,
+    "ms": 5096
+   }
+  },
+  {
+   "doc": "teams-q1",
+   "entities": [
+    {
+     "name": "Priya Raman",
+     "type": "Person"
+    },
+    {
+     "name": "Firmware team",
+     "type": "Team"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "OTA Update Service",
+     "type": "Service"
+    },
+    {
+     "name": "Tomas Berg",
+     "type": "Person"
+    },
+    {
+     "name": "Hardware team",
+     "type": "Team"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Borealis controller",
+     "type": "Product"
+    },
+    {
+     "name": "Ines Okafor",
+     "type": "Person"
+    },
+    {
+     "name": "Customer Support",
+     "type": "Team"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Priya Raman",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Firmware team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Priya Raman leads the Firmware team."
+    },
+    {
+     "source": "Firmware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "The Firmware team owns the Telemetry Gateway"
+    },
+    {
+     "source": "Firmware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "OTA Update Service",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices, and the OTA Update Service."
+    },
+    {
+     "source": "Tomas Berg",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Hardware team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Tomas Berg leads the Hardware team."
+    },
+    {
+     "source": "Hardware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The Hardware team owns the Atlas-3 design"
+    },
+    {
+     "source": "Hardware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Borealis controller",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The Hardware team owns the Atlas-3 design and the Borealis controller design."
+    },
+    {
+     "source": "Ines Okafor",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Customer Support",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Ines Okafor leads Customer Support."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "teams-q1",
+    "model": "gemini-3.8-flash",
+    "input": 963,
+    "output": 765,
+    "thought": 0,
+    "cost": 0.003591,
+    "ms": 6105
+   }
+  },
+  {
+   "doc": "key-accounts",
+   "entities": [
+    {
+     "name": "Osterby Water Utility",
+     "type": "Customer"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Calder Grain Co-op",
+     "type": "Customer"
+    },
+    {
+     "name": "Atlas 3",
+     "type": "Product"
+    },
+    {
+     "name": "Pellham Labs",
+     "type": "Customer"
+    },
+    {
+     "name": "Borealis controller",
+     "type": "Product"
+    },
+    {
+     "name": "Lena Vik",
+     "type": "Person"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Osterby Water Utility",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {
+      "units": 420
+     },
+     "quote": "Osterby Water Utility runs 420 Atlas-3 units across its reservoirs and treatment plants."
+    },
+    {
+     "source": "Calder Grain Co-op",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Atlas 3",
+     "targetType": "Product",
+     "properties": {
+      "units": 60
+     },
+     "quote": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units."
+    },
+    {
+     "source": "Pellham Labs",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Borealis controller",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "Pellham Labs uses the Borealis controller to run its environmental test chambers."
+    },
+    {
+     "source": "Lena Vik",
+     "sourceType": "Person",
+     "relation": "MANAGES_ACCOUNT",
+     "target": "Osterby Water Utility",
+     "targetType": "Customer",
+     "properties": {},
+     "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+    },
+    {
+     "source": "Lena Vik",
+     "sourceType": "Person",
+     "relation": "MANAGES_ACCOUNT",
+     "target": "Calder Grain Co-op",
+     "targetType": "Customer",
+     "properties": {},
+     "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "key-accounts",
+    "model": "gemini-3.8-flash",
+    "input": 943,
+    "output": 681,
+    "thought": 0,
+    "cost": 0.003261,
+    "ms": 5657
+   }
+  },
+  {
+   "doc": "borealis-release-2-4",
+   "entities": [
+    {
+     "name": "Borealis",
+     "type": "Product"
+    },
+    {
+     "name": "PM-2",
+     "type": "Component"
+    },
+    {
+     "name": "PM-1",
+     "type": "Component"
+    },
+    {
+     "name": "Varnell",
+     "type": "Company"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "T. Berg",
+     "type": "Person"
+    },
+    {
+     "name": "Hardware team",
+     "type": "Team"
+    },
+    {
+     "name": "Brno plant",
+     "type": "Site"
+    }
+   ],
+   "triples": [
+    {
+     "source": "PM-2",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Borealis",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The Borealis controller now takes power from the PM-2 power module"
+    },
+    {
+     "source": "PM-2",
+     "sourceType": "Component",
+     "relation": "REPLACES",
+     "target": "PM-1",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "PM-2 power module, which replaces the older PM-1"
+    },
+    {
+     "source": "Varnell",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "PM-2",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "The PM-2 power module is made by Varnell"
+    },
+    {
+     "source": "Borealis",
+     "sourceType": "Product",
+     "relation": "CONNECTS_VIA",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "Firmware updates for the controller are delivered through the Telemetry Gateway"
+    },
+    {
+     "source": "Hardware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Borealis",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "The controller design is maintained by T. Berg and the Hardware team"
+    },
+    {
+     "source": "Borealis",
+     "sourceType": "Product",
+     "relation": "ASSEMBLED_AT",
+     "target": "Brno plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "Borealis controllers are built at the Brno plant"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "borealis-release-2-4",
+    "model": "gemini-3.8-flash",
+    "input": 961,
+    "output": 696,
+    "thought": 0,
+    "cost": 0.00333075,
+    "ms": 6839
+   }
+  },
+  {
+   "doc": "meridian-launch",
+   "entities": [
+    {
+     "name": "Meridian",
+     "type": "Product"
+    },
+    {
+     "name": "TGW",
+     "type": "Service"
+    },
+    {
+     "name": "QX7",
+     "type": "Component"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "FS-9",
+     "type": "Component"
+    },
+    {
+     "name": "Kerrin Sensors",
+     "type": "Company"
+    },
+    {
+     "name": "Tartu plant",
+     "type": "Site"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Meridian",
+     "sourceType": "Product",
+     "relation": "CONNECTS_VIA",
+     "target": "TGW",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "It reports flow and pressure every five minutes through TGW, our telemetry gateway."
+    },
+    {
+     "source": "QX7",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Meridian",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "Meridian uses the same QX7 modem as the Atlas-3 for its cellular link."
+    },
+    {
+     "source": "QX7",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "Meridian uses the same QX7 modem as the Atlas-3 for its cellular link."
+    },
+    {
+     "source": "FS-9",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Meridian",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "Its flow element is the FS-9 sensing element, supplied by Kerrin Sensors."
+    },
+    {
+     "source": "Kerrin Sensors",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "FS-9",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "FS-9 sensing element, supplied by Kerrin Sensors"
+    },
+    {
+     "source": "Meridian",
+     "sourceType": "Product",
+     "relation": "ASSEMBLED_AT",
+     "target": "Tartu plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "Meridian units are assembled at the Tartu plant"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "meridian-launch",
+    "model": "gemini-3.8-flash",
+    "input": 957,
+    "output": 649,
+    "thought": 0,
+    "cost": 0.0031515,
+    "ms": 5561
+   }
+  },
+  {
+   "doc": "incident-qx7",
+   "entities": [
+    {
+     "name": "Incident review: QX-7 shipment delay",
+     "type": "Incident"
+    },
+    {
+     "name": "Varnell Semiconductor",
+     "type": "Company"
+    },
+    {
+     "name": "QX-7",
+     "type": "Component"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Incident review: QX-7 shipment delay",
+     "sourceType": "Incident",
+     "relation": "INVOLVES",
+     "target": "Varnell Semiconductor",
+     "targetType": "Company",
+     "properties": {
+      "date": "2026-03-03"
+     },
+     "quote": "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage."
+    },
+    {
+     "source": "Incident review: QX-7 shipment delay",
+     "sourceType": "Incident",
+     "relation": "AFFECTED",
+     "target": "QX-7",
+     "targetType": "Component",
+     "properties": {
+      "date": "2026-03-03"
+     },
+     "quote": "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage."
+    },
+    {
+     "source": "Varnell Semiconductor",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "QX-7",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Varnell Semiconductor told us that QX-7 shipments would slip"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "incident-qx7",
+    "model": "gemini-3.8-flash",
+    "input": 952,
+    "output": 461,
+    "thought": 0,
+    "cost": 0.00244275,
+    "ms": 3871
+   }
+  },
+  {
+   "doc": "northmoor-pilot",
+   "entities": [
+    {
+     "name": "Northmoor Irrigation District",
+     "type": "Customer"
+    },
+    {
+     "name": "Meridian",
+     "type": "Product"
+    },
+    {
+     "name": "Lena Vik",
+     "type": "Person"
+    },
+    {
+     "name": "sales team",
+     "type": "Team"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Northmoor Irrigation District",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Meridian",
+     "targetType": "Product",
+     "properties": {
+      "units": 150
+     },
+     "quote": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters"
+    },
+    {
+     "source": "Lena Vik",
+     "sourceType": "Person",
+     "relation": "MANAGES_ACCOUNT",
+     "target": "Northmoor Irrigation District",
+     "targetType": "Customer",
+     "properties": {},
+     "quote": "Lena Vik takes over the Northmoor Irrigation District account"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "northmoor-pilot",
+    "model": "gemini-3.8-flash",
+    "input": 919,
+    "output": 306,
+    "thought": 0,
+    "cost": 0.00183675,
+    "ms": 3564
+   }
+  },
+  {
+   "doc": "brightwater-order",
+   "entities": [
+    {
+     "name": "Brightwater Aquaculture",
+     "type": "Customer"
+    },
+    {
+     "name": "A3",
+     "type": "Product"
+    },
+    {
+     "name": "Tartu",
+     "type": "Site"
+    },
+    {
+     "name": "Support",
+     "type": "Team"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Brightwater Aquaculture",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "A3",
+     "targetType": "Product",
+     "properties": {
+      "units": 80
+     },
+     "quote": "Brightwater Aquaculture has ordered 80 A3 sensors"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "brightwater-order",
+    "model": "gemini-3.8-flash",
+    "input": 924,
+    "output": 216,
+    "thought": 0,
+    "cost": 0.001503,
+    "ms": 3227
+   }
+  },
+  {
+   "doc": "cafeteria-memo",
+   "entities": [
+    {
+     "name": "Tartu plant",
+     "type": "Site"
+    }
+   ],
+   "triples": [],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "cafeteria-memo",
+    "model": "gemini-3.8-flash",
+    "input": 923,
+    "output": 42,
+    "thought": 28,
+    "cost": 0.00095475,
+    "ms": 2332
+   }
+  },
+  {
+   "doc": "battery-switch",
+   "entities": [
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Sundra C2",
+     "type": "Component"
+    },
+    {
+     "name": "Sundra Power",
+     "type": "Company"
+    },
+    {
+     "name": "LX-4",
+     "type": "Component"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Sundra Power",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "Sundra C2",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Sundra C2 cell from Sundra Power"
+    },
+    {
+     "source": "Sundra C2",
+     "sourceType": "Component",
+     "relation": "REPLACES",
+     "target": "LX-4",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell."
+    },
+    {
+     "source": "Sundra C2",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "the Atlas-3 uses the Sundra C2 cell from Sundra Power"
+    },
+    {
+     "source": "LX-4",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "battery-switch",
+    "model": "gemini-3.8-flash",
+    "input": 962,
+    "output": 442,
+    "thought": 0,
+    "cost": 0.002379,
+    "ms": 4475
+   }
+  },
+  {
+   "doc": "kerrin-second-source",
+   "entities": [
+    {
+     "name": "Marco Feld",
+     "type": "Person"
+    },
+    {
+     "name": "Supply Chain",
+     "type": "Team"
+    },
+    {
+     "name": "Kerrin Sensors",
+     "type": "Company"
+    },
+    {
+     "name": "QX-7",
+     "type": "Component"
+    },
+    {
+     "name": "Varnell",
+     "type": "Company"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Marco Feld",
+     "sourceType": "Person",
+     "relation": "MEMBER_OF",
+     "target": "Supply Chain",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Marco Feld here, from Supply Chain."
+    },
+    {
+     "source": "Kerrin Sensors",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "QX-7",
+     "targetType": "Component",
+     "properties": {
+      "role": "second source"
+     },
+     "quote": "Kerrin Sensors is qualified as a second source for the QX-7 radio chip."
+    },
+    {
+     "source": "Varnell",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "QX-7",
+     "targetType": "Component",
+     "properties": {
+      "role": "main"
+     },
+     "quote": "Varnell remains the main supplier"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "kerrin-second-source",
+    "model": "gemini-3.8-flash",
+    "input": 934,
+    "output": 421,
+    "thought": 0,
+    "cost": 0.00227925,
+    "ms": 4096
+   }
+  },
+  {
+   "doc": "incident-gateway",
+   "entities": [
+    {
+     "name": "Telemetry Gateway outage",
+     "type": "Incident"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Borealis",
+     "type": "Product"
+    },
+    {
+     "name": "Meridian",
+     "type": "Product"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Telemetry Gateway outage",
+     "sourceType": "Incident",
+     "relation": "AFFECTED",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {
+      "date": "2026-05-14"
+     },
+     "quote": "On 14 May 2026, the Telemetry Gateway rejected device connections for three hours."
+    },
+    {
+     "source": "Telemetry Gateway outage",
+     "sourceType": "Incident",
+     "relation": "AFFECTED",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {
+      "date": "2026-05-14"
+     },
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+    },
+    {
+     "source": "Telemetry Gateway outage",
+     "sourceType": "Incident",
+     "relation": "AFFECTED",
+     "target": "Borealis",
+     "targetType": "Product",
+     "properties": {
+      "date": "2026-05-14"
+     },
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+    },
+    {
+     "source": "Telemetry Gateway outage",
+     "sourceType": "Incident",
+     "relation": "AFFECTED",
+     "target": "Meridian",
+     "targetType": "Product",
+     "properties": {
+      "date": "2026-05-14"
+     },
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "incident-gateway",
+    "model": "gemini-3.8-flash",
+    "input": 959,
+    "output": 621,
+    "thought": 0,
+    "cost": 0.003048,
+    "ms": 5332
+   }
+  },
+  {
+   "doc": "supply-chain-standup",
+   "entities": [
+    {
+     "name": "M. Feld",
+     "type": "Person"
+    },
+    {
+     "name": "Supply Chain team",
+     "type": "Team"
+    },
+    {
+     "name": "Tomas Berg",
+     "type": "Person"
+    },
+    {
+     "name": "Priya Raman",
+     "type": "Person"
+    },
+    {
+     "name": "QX-7",
+     "type": "Component"
+    },
+    {
+     "name": "Kerrin",
+     "type": "Company"
+    },
+    {
+     "name": "Varnell",
+     "type": "Company"
+    },
+    {
+     "name": "PM-2",
+     "type": "Component"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Borealis",
+     "type": "Product"
+    },
+    {
+     "name": "Hallam",
+     "type": "Company"
+    }
+   ],
+   "triples": [
+    {
+     "source": "M. Feld",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Supply Chain team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "M. Feld (Supply Chain team lead)"
+    },
+    {
+     "source": "Varnell",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "PM-2",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Varnell also makes the PM-2"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "supply-chain-standup",
+    "model": "gemini-3.8-flash",
+    "input": 970,
+    "output": 334,
+    "thought": 0,
+    "cost": 0.00198,
+    "ms": 3740
+   }
+  },
+  {
+   "doc": "newsletter-june",
+   "entities": [
+    {
+     "name": "Atlas Logistics",
+     "type": "Company"
+    },
+    {
+     "name": "Atlas",
+     "type": "Team"
+    }
+   ],
+   "triples": [],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "newsletter-june",
+    "model": "gemini-3.8-flash",
+    "input": 918,
+    "output": 63,
+    "thought": 0,
+    "cost": 0.00092475,
+    "ms": 2132
+   }
+  },
+  {
+   "doc": "varnell-bay-order",
+   "entities": [
+    {
+     "name": "Varnell Bay Marina",
+     "type": "Customer"
+    },
+    {
+     "name": "Borealis",
+     "type": "Product"
+    },
+    {
+     "name": "Jonas Lind",
+     "type": "Person"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Varnell Bay Marina",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Borealis",
+     "targetType": "Product",
+     "properties": {
+      "units": 12
+     },
+     "quote": "Varnell Bay Marina has ordered 12 Borealis controllers"
+    },
+    {
+     "source": "Jonas Lind",
+     "sourceType": "Person",
+     "relation": "MANAGES_ACCOUNT",
+     "target": "Varnell Bay Marina",
+     "targetType": "Customer",
+     "properties": {},
+     "quote": "Jonas Lind manages the Varnell Bay Marina account."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "varnell-bay-order",
+    "model": "gemini-3.8-flash",
+    "input": 919,
+    "output": 275,
+    "thought": 0,
+    "cost": 0.0017205,
+    "ms": 3257
+   }
+  },
+  {
+   "doc": "pellham-qbr",
+   "entities": [
+    {
+     "name": "Pellham Labs",
+     "type": "Customer"
+    },
+    {
+     "name": "Borealis",
+     "type": "Product"
+    },
+    {
+     "name": "Jonas Lind",
+     "type": "Person"
+    },
+    {
+     "name": "PM-2",
+     "type": "Component"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Pellham Labs",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Borealis",
+     "targetType": "Product",
+     "properties": {
+      "units": 34
+     },
+     "quote": "Pellham Labs now runs 34 Borealis units"
+    },
+    {
+     "source": "Jonas Lind",
+     "sourceType": "Person",
+     "relation": "MANAGES_ACCOUNT",
+     "target": "Pellham Labs",
+     "targetType": "Customer",
+     "properties": {},
+     "quote": "Jonas Lind manages the Pellham Labs account"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "pellham-qbr",
+    "model": "gemini-3.8-flash",
+    "input": 923,
+    "output": 264,
+    "thought": 0,
+    "cost": 0.00168225,
+    "ms": 3404
+   }
+  },
+  {
+   "doc": "tartu-plant",
+   "entities": [
+    {
+     "name": "Tartu plant",
+     "type": "Site"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Meridian",
+     "type": "Product"
+    },
+    {
+     "name": "Elin Saar",
+     "type": "Person"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Atlas-3",
+     "sourceType": "Product",
+     "relation": "ASSEMBLED_AT",
+     "target": "Tartu plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "The Tartu plant assembles the Atlas-3"
+    },
+    {
+     "source": "Meridian",
+     "sourceType": "Product",
+     "relation": "ASSEMBLED_AT",
+     "target": "Tartu plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "The Tartu plant assembles the Atlas-3 and the Meridian flow meter."
+    },
+    {
+     "source": "Elin Saar",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Tartu plant",
+     "targetType": "Site",
+     "properties": {},
+     "quote": "Elin Saar is the plant manager."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "tartu-plant",
+    "model": "gemini-3.8-flash",
+    "input": 909,
+    "output": 355,
+    "thought": 0,
+    "cost": 0.002013,
+    "ms": 4043
+   }
+  },
+  {
+   "doc": "fleet-console",
+   "entities": [
+    {
+     "name": "Fleet Console",
+     "type": "Service"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "Data Platform team",
+     "type": "Team"
+    },
+    {
+     "name": "Ana Duarte",
+     "type": "Person"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Fleet Console",
+     "sourceType": "Service",
+     "relation": "READS_FROM",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "It reads all device data from the Telemetry Gateway."
+    },
+    {
+     "source": "Data Platform team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Fleet Console",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "Fleet Console is owned by the Data Platform team"
+    },
+    {
+     "source": "Ana Duarte",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Data Platform team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Data Platform team, which Ana Duarte leads."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "fleet-console",
+    "model": "gemini-3.8-flash",
+    "input": 911,
+    "output": 325,
+    "thought": 0,
+    "cost": 0.001902,
+    "ms": 4873
+   }
+  },
+  {
+   "doc": "osterby-qbr",
+   "entities": [
+    {
+     "name": "Osterby Water",
+     "type": "Customer"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    },
+    {
+     "name": "Lena Vik",
+     "type": "Person"
+    },
+    {
+     "name": "Fleet Console",
+     "type": "Service"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Osterby Water",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "Atlas-3",
+     "targetType": "Product",
+     "properties": {
+      "units": 510
+     },
+     "quote": "Osterby Water now runs 510 Atlas-3 units."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "osterby-qbr",
+    "model": "gemini-3.8-flash",
+    "input": 915,
+    "output": 186,
+    "thought": 0,
+    "cost": 0.00138375,
+    "ms": 3689
+   }
+  },
+  {
+   "doc": "calder-email",
+   "entities": [
+    {
+     "name": "Calder Grain Co-op",
+     "type": "Customer"
+    },
+    {
+     "name": "QX-7",
+     "type": "Product"
+    },
+    {
+     "name": "Lena Vik",
+     "type": "Person"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Calder Grain Co-op",
+     "sourceType": "Customer",
+     "relation": "USES",
+     "target": "QX-7",
+     "targetType": "Product",
+     "properties": {
+      "units": 60
+     },
+     "quote": "Calder Grain Co-op is happy with its 60 sensors and asked whether the QX-7 delay in March would affect spare parts."
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "calder-email",
+    "model": "gemini-3.8-flash",
+    "input": 919,
+    "output": 220,
+    "thought": 1517,
+    "cost": 0.007203,
+    "ms": 13084
+   }
+  },
+  {
+   "doc": "reorg-memo",
+   "entities": [
+    {
+     "name": "Telemetry Gateway",
+     "type": "Service"
+    },
+    {
+     "name": "Firmware team",
+     "type": "Team"
+    },
+    {
+     "name": "Data Platform team",
+     "type": "Team"
+    },
+    {
+     "name": "Ana Duarte",
+     "type": "Person"
+    },
+    {
+     "name": "Priya Raman",
+     "type": "Person"
+    },
+    {
+     "name": "OTA Update Service",
+     "type": "Service"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Firmware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {
+      "until": "2026-09-01"
+     },
+     "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team"
+    },
+    {
+     "source": "Data Platform team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "Telemetry Gateway",
+     "targetType": "Service",
+     "properties": {
+      "since": "2026-09-01"
+     },
+     "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team"
+    },
+    {
+     "source": "Ana Duarte",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Data Platform team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Data Platform team, led by Ana Duarte"
+    },
+    {
+     "source": "Priya Raman",
+     "sourceType": "Person",
+     "relation": "LEADS",
+     "target": "Firmware team",
+     "targetType": "Team",
+     "properties": {},
+     "quote": "Priya Raman's Firmware team"
+    },
+    {
+     "source": "Firmware team",
+     "sourceType": "Team",
+     "relation": "OWNS",
+     "target": "OTA Update Service",
+     "targetType": "Service",
+     "properties": {},
+     "quote": "Firmware team keeps the OTA Update Service"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "reorg-memo",
+    "model": "gemini-3.8-flash",
+    "input": 927,
+    "output": 570,
+    "thought": 0,
+    "cost": 0.00283275,
+    "ms": 5125
+   }
+  },
+  {
+   "doc": "office-move",
+   "entities": [
+    {
+     "name": "Hardware team",
+     "type": "Team"
+    },
+    {
+     "name": "Firmware team",
+     "type": "Team"
+    }
+   ],
+   "triples": [],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "office-move",
+    "model": "gemini-3.8-flash",
+    "input": 915,
+    "output": 65,
+    "thought": 255,
+    "cost": 0.00188625,
+    "ms": 4239
+   }
+  },
+  {
+   "doc": "hallam-note",
+   "entities": [
+    {
+     "name": "Hallam Cells",
+     "type": "Company"
+    },
+    {
+     "name": "LX-4",
+     "type": "Component"
+    },
+    {
+     "name": "Borealis controller",
+     "type": "Product"
+    },
+    {
+     "name": "Atlas-3",
+     "type": "Product"
+    }
+   ],
+   "triples": [
+    {
+     "source": "Hallam Cells",
+     "sourceType": "Company",
+     "relation": "SUPPLIES",
+     "target": "LX-4",
+     "targetType": "Component",
+     "properties": {},
+     "quote": "Hallam Cells remains the supplier of the LX-4 lithium cell"
+    },
+    {
+     "source": "LX-4",
+     "sourceType": "Component",
+     "relation": "PART_OF",
+     "target": "Borealis controller",
+     "targetType": "Product",
+     "properties": {},
+     "quote": "LX-4 lithium cell for the Borealis controller's backup supply"
+    }
+   ],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "hallam-note",
+    "model": "gemini-3.8-flash",
+    "input": 919,
+    "output": 284,
+    "thought": 531,
+    "cost": 0.0037455,
+    "ms": 7380
+   }
+  },
+  {
+   "doc": "board-update-q3",
+   "entities": [
+    {
+     "name": "Meridian",
+     "type": "Product"
+    },
+    {
+     "name": "Osterby",
+     "type": "Customer"
+    },
+    {
+     "name": "Brno plant",
+     "type": "Site"
+    }
+   ],
+   "triples": [],
+   "rejects": [],
+   "usage": {
+    "step": "extract-run-3",
+    "label": "board-update-q3",
+    "model": "gemini-3.8-flash",
+    "input": 917,
+    "output": 89,
+    "thought": 0,
+    "cost": 0.0010215,
+    "ms": 2570
+   }
+  }
+ ]
+}

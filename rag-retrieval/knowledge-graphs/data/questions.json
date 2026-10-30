@@ -1,0 +1,792 @@
+[
+  {
+    "id": "qx7-customers",
+    "kind": "Multi-hop",
+    "question": "Which customers would be affected by a delay in QX-7 radio chip shipments?",
+    "answer": "Osterby Water Utility, Calder Grain Co-op and Brightwater Aquaculture, through the Atlas-3, and Northmoor Irrigation District, through the Meridian flow meter. Both products use the QX-7.",
+    "items": [
+      {
+        "label": "Osterby Water Utility (Atlas-3)",
+        "match": [
+          "Osterby"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Osterby Water Utility runs 420 Atlas-3 units"
+          }
+        ]
+      },
+      {
+        "label": "Calder Grain Co-op (Atlas-3)",
+        "match": [
+          "Calder"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units."
+          }
+        ]
+      },
+      {
+        "label": "Brightwater Aquaculture (Atlas-3)",
+        "match": [
+          "Brightwater"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "brightwater-order",
+            "quote": "Brightwater Aquaculture has ordered 80 A3 sensors"
+          }
+        ]
+      },
+      {
+        "label": "Northmoor Irrigation District (Meridian)",
+        "match": [
+          "Northmoor"
+        ],
+        "support": [
+          {
+            "doc": "meridian-launch",
+            "quote": "Meridian uses the same QX7 modem as the Atlas-3"
+          },
+          {
+            "doc": "northmoor-pilot",
+            "quote": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters"
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (c:Customer)-[:USES]->(p:Product)<-[:PART_OF]-(k:Component)\nWHERE toLower(k.name) CONTAINS 'qx'\nRETURN DISTINCT c.name AS customer, p.name AS product\nORDER BY customer"
+  },
+  {
+    "id": "varnell-customers",
+    "kind": "Aggregation",
+    "question": "How many customers depend on parts made by Varnell Semiconductor?",
+    "answer": "Six. Osterby Water Utility, Calder Grain Co-op, Brightwater Aquaculture and Northmoor Irrigation District through the QX-7 chip (in the Atlas-3 and the Meridian), and Pellham Labs and Varnell Bay Marina through the PM-2 power module in the Borealis controller.",
+    "items": [
+      {
+        "label": "Osterby Water Utility",
+        "match": [
+          "Osterby"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          },
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Osterby Water Utility runs 420 Atlas-3 units"
+          }
+        ]
+      },
+      {
+        "label": "Calder Grain Co-op",
+        "match": [
+          "Calder"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          },
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units."
+          }
+        ]
+      },
+      {
+        "label": "Brightwater Aquaculture",
+        "match": [
+          "Brightwater"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          },
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "brightwater-order",
+            "quote": "Brightwater Aquaculture has ordered 80 A3 sensors"
+          }
+        ]
+      },
+      {
+        "label": "Northmoor Irrigation District",
+        "match": [
+          "Northmoor"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          },
+          {
+            "doc": "meridian-launch",
+            "quote": "Meridian uses the same QX7 modem as the Atlas-3"
+          },
+          {
+            "doc": "northmoor-pilot",
+            "quote": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters"
+          }
+        ]
+      },
+      {
+        "label": "Pellham Labs",
+        "match": [
+          "Pellham"
+        ],
+        "support": [
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The PM-2 power module is made by Varnell."
+          },
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The Borealis controller now takes power from the PM-2 power module"
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Pellham Labs uses the Borealis controller"
+          }
+        ]
+      },
+      {
+        "label": "Varnell Bay Marina",
+        "match": [
+          "Varnell Bay"
+        ],
+        "support": [
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The PM-2 power module is made by Varnell."
+          },
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The Borealis controller now takes power from the PM-2 power module"
+          },
+          {
+            "doc": "varnell-bay-order",
+            "quote": "Varnell Bay Marina has ordered 12 Borealis controllers"
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (s:Company)-[:SUPPLIES]->(k:Component)-[:PART_OF]->(p:Product)<-[:USES]-(c:Customer)\nWHERE toLower(s.name) STARTS WITH 'varnell'\nRETURN count(DISTINCT c) AS customers, collect(DISTINCT c.name) AS names",
+    "count": 6
+  },
+  {
+    "id": "upload-ticket",
+    "kind": "Multi-hop, changed over time",
+    "question": "Osterby Water Utility says its sensors stopped uploading readings. Which team, and which team lead, should get the ticket today?",
+    "answer": "The Data Platform team, led by Ana Duarte. Osterby runs the Atlas-3, which uploads through the Telemetry Gateway, and the gateway moved from the Firmware team to the Data Platform team on 1 September 2026.",
+    "items": [
+      {
+        "label": "Data Platform team",
+        "match": [
+          "Data Platform"
+        ],
+        "support": [
+          {
+            "doc": "key-accounts",
+            "quote": "Osterby Water Utility runs 420 Atlas-3 units"
+          },
+          {
+            "doc": "atlas-3-brief",
+            "quote": "It sends readings every 15 minutes through the Telemetry Gateway."
+          },
+          {
+            "doc": "reorg-memo",
+            "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team, led by Ana Duarte."
+          }
+        ]
+      },
+      {
+        "label": "Ana Duarte",
+        "match": [
+          "Ana Duarte"
+        ],
+        "support": [
+          {
+            "doc": "key-accounts",
+            "quote": "Osterby Water Utility runs 420 Atlas-3 units"
+          },
+          {
+            "doc": "atlas-3-brief",
+            "quote": "It sends readings every 15 minutes through the Telemetry Gateway."
+          },
+          {
+            "doc": "reorg-memo",
+            "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team, led by Ana Duarte."
+          }
+        ]
+      }
+    ],
+    "wrong": [
+      {
+        "label": "Firmware team / Priya Raman (owner before 1 September)",
+        "match": [
+          "Priya Raman"
+        ]
+      }
+    ],
+    "cypher": "MATCH (c:Customer)-[:USES]->(:Product)-[:CONNECTS_VIA]->(s:Service)<-[o:OWNS]-(t:Team)\nWHERE toLower(c.name) CONTAINS 'osterby'\nOPTIONAL MATCH (lead:Person)-[:LEADS]->(t)\nRETURN s.name AS service, t.name AS team, lead.name AS lead, coalesce(o.since, o.last_seen) AS since\nORDER BY since DESC\nLIMIT 1"
+  },
+  {
+    "id": "pellham-varnell",
+    "kind": "Connection",
+    "question": "How is Pellham Labs connected to Varnell Semiconductor?",
+    "answer": "Pellham Labs uses the Borealis controller, the Borealis takes power from the PM-2 power module, and Varnell makes the PM-2.",
+    "items": [
+      {
+        "label": "Pellham uses the Borealis controller",
+        "match": [
+          "Borealis"
+        ],
+        "support": [
+          {
+            "doc": "key-accounts",
+            "quote": "Pellham Labs uses the Borealis controller"
+          }
+        ]
+      },
+      {
+        "label": "The PM-2 is part of the Borealis",
+        "match": [
+          "PM-2"
+        ],
+        "support": [
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The Borealis controller now takes power from the PM-2 power module"
+          }
+        ]
+      },
+      {
+        "label": "Varnell makes the PM-2",
+        "match": [
+          "Varnell"
+        ],
+        "support": [
+          {
+            "doc": "borealis-release-2-4",
+            "quote": "The PM-2 power module is made by Varnell."
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (c:Customer), (s:Company)\nWHERE toLower(c.name) CONTAINS 'pellham' AND toLower(s.name) STARTS WITH 'varnell'\nMATCH p = shortestPath((c)-[*..5]-(s))\nRETURN [n IN nodes(p) | n.name] AS path, [r IN relationships(p) | type(r)] AS relations"
+  },
+  {
+    "id": "firmware-lead",
+    "kind": "Single fact",
+    "question": "Who leads the Firmware team?",
+    "answer": "Priya Raman.",
+    "items": [
+      {
+        "label": "Priya Raman",
+        "match": [
+          "Priya Raman"
+        ],
+        "support": [
+          {
+            "doc": "teams-q1",
+            "quote": "Priya Raman leads the Firmware team."
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (p:Person)-[:LEADS]->(t:Team)\nWHERE toLower(t.name) CONTAINS 'firmware'\nRETURN p.name AS lead"
+  },
+  {
+    "id": "qx7-recommendations",
+    "kind": "Detail in prose",
+    "question": "What did the QX-7 incident review recommend?",
+    "answer": "Qualify a second radio-chip supplier by the end of Q3, and keep eight weeks of chip stock on hand.",
+    "items": [
+      {
+        "label": "Qualify a second radio-chip supplier by the end of Q3",
+        "match": [
+          "second radio-chip supplier"
+        ],
+        "support": [
+          {
+            "doc": "incident-qx7",
+            "quote": "The review recommended qualifying a second radio-chip supplier by the end of Q3"
+          }
+        ]
+      },
+      {
+        "label": "Keep eight weeks of chip stock",
+        "match": [
+          "eight weeks"
+        ],
+        "support": [
+          {
+            "doc": "incident-qx7",
+            "quote": "keeping eight weeks of chip stock on hand"
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (i:Incident)-[r]-(n)\nWHERE toLower(i.name) CONTAINS 'qx'\nRETURN i.name AS incident, type(r) AS relation, n.name AS entity, r.quotes AS quotes"
+  },
+  {
+    "id": "supply-risks",
+    "kind": "Global",
+    "question": "What are the main supply risks across these documents?",
+    "answer": "The QX-7 radio chip depends almost entirely on Varnell Semiconductor until Kerrin Sensors ramps up in Q4, and its shipments already slipped six weeks in March. Varnell also makes the PM-2, so one supplier problem would hit the Atlas-3, the Meridian and the Borealis at once. The LX-4 cell lost capacity in the cold, which is why the Atlas-3 moved to the Sundra C2. The enclosure is low risk because Corvane owns the tooling.",
+    "items": [
+      {
+        "label": "The QX-7 is (mostly) single-sourced from Varnell",
+        "match": [
+          "single",
+          "sole",
+          "Varnell"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          },
+          {
+            "doc": "supply-chain-standup",
+            "quote": "the QX-7 is still mostly single-sourced until Kerrin volumes ramp"
+          }
+        ]
+      },
+      {
+        "label": "Varnell also makes the PM-2: one supplier for two products",
+        "match": [
+          "PM-2"
+        ],
+        "support": [
+          {
+            "doc": "supply-chain-standup",
+            "quote": "Varnell also makes the PM-2, so a problem at Varnell would hit both the Atlas-3 and the Borealis at once."
+          }
+        ]
+      },
+      {
+        "label": "QX-7 shipments already slipped six weeks",
+        "match": [
+          "six weeks",
+          "delay",
+          "wafer"
+        ],
+        "support": [
+          {
+            "doc": "incident-qx7",
+            "quote": "QX-7 shipments would slip by six weeks because of a wafer shortage."
+          }
+        ]
+      },
+      {
+        "label": "The LX-4 cell lost capacity in the cold",
+        "match": [
+          "LX-4",
+          "cold",
+          "capacity"
+        ],
+        "support": [
+          {
+            "doc": "battery-switch",
+            "quote": "the LX-4 lost a third of its capacity below minus ten degrees"
+          }
+        ]
+      }
+    ],
+    "judge": true,
+    "cypher": "MATCH (s:Company)-[r:SUPPLIES]->(k:Component)\nOPTIONAL MATCH (k)-[:PART_OF]->(p:Product)\nWITH k, collect(DISTINCT s.name) AS suppliers, collect(DISTINCT p.name) AS products\nRETURN k.name AS component, suppliers, size(suppliers) AS supplier_count, products\nORDER BY supplier_count, component"
+  },
+  {
+    "id": "osterby-units",
+    "kind": "Single fact, changed over time",
+    "question": "How many Atlas-3 units does Osterby Water Utility run?",
+    "answer": "510, after the reservoir expansion (August 2026). In February it was 420.",
+    "items": [
+      {
+        "label": "510 units (August 2026)",
+        "match": [
+          "510"
+        ],
+        "support": [
+          {
+            "doc": "osterby-qbr",
+            "quote": "After the reservoir expansion, Osterby Water now runs 510 Atlas-3 units."
+          }
+        ]
+      }
+    ],
+    "wrong": [
+      {
+        "label": "420 units (February, out of date)",
+        "match": [
+          "420"
+        ]
+      }
+    ],
+    "cypher": "MATCH (c:Customer)-[u:USES]->(p:Product)\nWHERE toLower(c.name) CONTAINS 'osterby'\nRETURN p.name AS product, u.units AS units, u.doc_dates AS stated_on"
+  },
+  {
+    "id": "atlas3-parts",
+    "kind": "Aggregation",
+    "question": "Which components go into the Atlas-3 today, and who supplies each?",
+    "answer": "The QX-7 radio chip (Varnell Semiconductor, with Kerrin Sensors as a second source), the IP68 enclosure (Tessaly Plastics) and, since the May build, the Sundra C2 cell (Sundra Power), which replaced the LX-4.",
+    "items": [
+      {
+        "label": "QX-7 radio chip",
+        "match": [
+          "QX-7",
+          "QX7"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          }
+        ]
+      },
+      {
+        "label": "IP68 enclosure from Tessaly Plastics",
+        "match": [
+          "Tessaly"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The housing is the IP68 enclosure"
+          },
+          {
+            "doc": "supplier-register",
+            "quote": "Tessaly Plastics supplies the IP68 enclosure."
+          }
+        ]
+      },
+      {
+        "label": "Sundra C2 cell from Sundra Power",
+        "match": [
+          "Sundra"
+        ],
+        "support": [
+          {
+            "doc": "battery-switch",
+            "quote": "From the May build, the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell."
+          }
+        ]
+      },
+      {
+        "label": "Kerrin Sensors as second source for the QX-7",
+        "match": [
+          "Kerrin"
+        ],
+        "support": [
+          {
+            "doc": "atlas-3-brief",
+            "quote": "The Atlas-3 main board uses the QX-7 radio chip"
+          },
+          {
+            "doc": "kerrin-second-source",
+            "quote": "Kerrin Sensors is qualified as a second source for the QX-7 radio chip."
+          }
+        ]
+      }
+    ],
+    "wrong": [
+      {
+        "label": "LX-4 cell (no longer used in the Atlas-3)",
+        "match": [
+          "LX-4"
+        ]
+      }
+    ],
+    "cypher": "MATCH (k:Component)-[r:PART_OF]->(p:Product)\nWHERE toLower(p.name) CONTAINS 'atlas'\nOPTIONAL MATCH (s:Company)-[:SUPPLIES]->(k)\nRETURN k.name AS component, r.until AS until, collect(DISTINCT s.name) AS suppliers"
+  },
+  {
+    "id": "qx7-sources",
+    "kind": "Single hop, changed over time",
+    "question": "Which companies can supply the QX-7 radio chip?",
+    "answer": "Varnell Semiconductor, and since May 2026 Kerrin Sensors as a second source.",
+    "items": [
+      {
+        "label": "Varnell Semiconductor",
+        "match": [
+          "Varnell"
+        ],
+        "support": [
+          {
+            "doc": "supplier-register",
+            "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip."
+          }
+        ]
+      },
+      {
+        "label": "Kerrin Sensors",
+        "match": [
+          "Kerrin"
+        ],
+        "support": [
+          {
+            "doc": "kerrin-second-source",
+            "quote": "Kerrin Sensors is qualified as a second source for the QX-7 radio chip."
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (s:Company)-[r:SUPPLIES]->(k:Component)\nWHERE toLower(k.name) CONTAINS 'qx'\nRETURN s.name AS supplier, r.role AS role"
+  },
+  {
+    "id": "outage-customers",
+    "kind": "Multi-hop",
+    "question": "Which customers were affected by the Telemetry Gateway outage on 14 May 2026?",
+    "answer": "Osterby Water Utility, Calder Grain Co-op and Brightwater Aquaculture (Atlas-3), Northmoor Irrigation District (Meridian) and Pellham Labs (Borealis). Varnell Bay Marina only became a customer in June.",
+    "items": [
+      {
+        "label": "Osterby Water Utility",
+        "match": [
+          "Osterby"
+        ],
+        "support": [
+          {
+            "doc": "incident-gateway",
+            "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Osterby Water Utility runs 420 Atlas-3 units"
+          }
+        ]
+      },
+      {
+        "label": "Calder Grain Co-op",
+        "match": [
+          "Calder"
+        ],
+        "support": [
+          {
+            "doc": "incident-gateway",
+            "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units."
+          }
+        ]
+      },
+      {
+        "label": "Brightwater Aquaculture",
+        "match": [
+          "Brightwater"
+        ],
+        "support": [
+          {
+            "doc": "incident-gateway",
+            "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+          },
+          {
+            "doc": "brightwater-order",
+            "quote": "Brightwater Aquaculture has ordered 80 A3 sensors"
+          }
+        ]
+      },
+      {
+        "label": "Northmoor Irrigation District",
+        "match": [
+          "Northmoor"
+        ],
+        "support": [
+          {
+            "doc": "incident-gateway",
+            "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+          },
+          {
+            "doc": "northmoor-pilot",
+            "quote": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters"
+          }
+        ]
+      },
+      {
+        "label": "Pellham Labs",
+        "match": [
+          "Pellham"
+        ],
+        "support": [
+          {
+            "doc": "incident-gateway",
+            "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed."
+          },
+          {
+            "doc": "key-accounts",
+            "quote": "Pellham Labs uses the Borealis controller"
+          }
+        ]
+      }
+    ],
+    "wrong": [
+      {
+        "label": "Varnell Bay Marina (became a customer in June)",
+        "match": [
+          "Varnell Bay"
+        ]
+      }
+    ],
+    "cypher": "MATCH (c:Customer)-[u:USES]->(p:Product)-[:CONNECTS_VIA]->(s:Service)\nWHERE toLower(s.name) CONTAINS 'gateway' AND u.first_seen <= '2026-05-14'\nRETURN DISTINCT c.name AS customer, p.name AS product, u.first_seen AS customer_since"
+  },
+  {
+    "id": "lena-accounts",
+    "kind": "Aggregation",
+    "question": "Which accounts does Lena Vik manage?",
+    "answer": "Osterby Water Utility, Calder Grain Co-op and Northmoor Irrigation District.",
+    "items": [
+      {
+        "label": "Osterby Water Utility",
+        "match": [
+          "Osterby"
+        ],
+        "support": [
+          {
+            "doc": "key-accounts",
+            "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+          }
+        ]
+      },
+      {
+        "label": "Calder Grain Co-op",
+        "match": [
+          "Calder"
+        ],
+        "support": [
+          {
+            "doc": "key-accounts",
+            "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts."
+          }
+        ]
+      },
+      {
+        "label": "Northmoor Irrigation District",
+        "match": [
+          "Northmoor"
+        ],
+        "support": [
+          {
+            "doc": "northmoor-pilot",
+            "quote": "Lena Vik takes over the Northmoor Irrigation District account from the sales team."
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (p:Person)-[:MANAGES_ACCOUNT]->(c:Customer)\nWHERE toLower(p.name) CONTAINS 'lena'\nRETURN c.name AS account"
+  },
+  {
+    "id": "battery-reason",
+    "kind": "Detail in prose",
+    "question": "Why did the Atlas-3 switch to a different battery cell?",
+    "answer": "Because the LX-4 lost a third of its capacity below minus ten degrees in the Osterby winter trials, which would have cut battery life to under three years for northern customers.",
+    "items": [
+      {
+        "label": "The LX-4 lost a third of its capacity in the cold",
+        "match": [
+          "capacity",
+          "minus ten",
+          "cold"
+        ],
+        "support": [
+          {
+            "doc": "battery-switch",
+            "quote": "the LX-4 lost a third of its capacity below minus ten degrees in the Osterby winter trials"
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (n:Component)-[r:REPLACES]-(m:Component)\nRETURN n.name AS component, m.name AS replaced, r.quotes AS quotes"
+  },
+  {
+    "id": "hardware-products",
+    "kind": "Multi-hop",
+    "question": "Which products does the team led by Tomas Berg own?",
+    "answer": "The Atlas-3 and the Borealis controller (the Hardware team).",
+    "items": [
+      {
+        "label": "Atlas-3",
+        "match": [
+          "Atlas"
+        ],
+        "support": [
+          {
+            "doc": "teams-q1",
+            "quote": "Tomas Berg leads the Hardware team."
+          },
+          {
+            "doc": "teams-q1",
+            "quote": "The Hardware team owns the Atlas-3 design and the Borealis controller design."
+          }
+        ]
+      },
+      {
+        "label": "Borealis controller",
+        "match": [
+          "Borealis"
+        ],
+        "support": [
+          {
+            "doc": "teams-q1",
+            "quote": "Tomas Berg leads the Hardware team."
+          },
+          {
+            "doc": "teams-q1",
+            "quote": "The Hardware team owns the Atlas-3 design and the Borealis controller design."
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (p:Person)-[:LEADS]->(t:Team)-[:OWNS]->(x:Product)\nWHERE toLower(p.name) CONTAINS 'berg'\nRETURN t.name AS team, collect(DISTINCT x.name) AS products"
+  },
+  {
+    "id": "meridian-plant",
+    "kind": "Single fact",
+    "question": "Where is the Meridian flow meter assembled?",
+    "answer": "At the Tartu plant.",
+    "items": [
+      {
+        "label": "Tartu plant",
+        "match": [
+          "Tartu"
+        ],
+        "support": [
+          {
+            "doc": "meridian-launch",
+            "quote": "Meridian units are assembled at the Tartu plant"
+          }
+        ]
+      }
+    ],
+    "cypher": "MATCH (p:Product)-[:ASSEMBLED_AT]->(s:Site)\nWHERE toLower(p.name) CONTAINS 'meridian'\nRETURN s.name AS site"
+  }
+]

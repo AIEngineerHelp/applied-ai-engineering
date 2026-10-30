@@ -1,0 +1,1424 @@
+{
+ "run": "extract-1-2026-10-23T03-00-55",
+ "nodes": [
+  {
+   "id": "company:atlas-logistics",
+   "name": "Atlas Logistics",
+   "type": "Company",
+   "aliases": [],
+   "docs": [
+    "newsletter-june"
+   ]
+  },
+  {
+   "id": "company:hallam-cells",
+   "name": "Hallam Cells",
+   "type": "Company",
+   "aliases": [
+    "Hallam"
+   ],
+   "docs": [
+    "supplier-register",
+    "hallam-note",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "company:kerrin-sensors",
+   "name": "Kerrin Sensors",
+   "type": "Company",
+   "aliases": [
+    "Kerrin"
+   ],
+   "docs": [
+    "meridian-launch",
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "company:sundra-power",
+   "name": "Sundra Power",
+   "type": "Company",
+   "aliases": [],
+   "docs": [
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "company:tessaly-plastics",
+   "name": "Tessaly Plastics",
+   "type": "Company",
+   "aliases": [],
+   "docs": [
+    "supplier-register"
+   ]
+  },
+  {
+   "id": "company:varnell-semiconductor",
+   "name": "Varnell Semiconductor",
+   "type": "Company",
+   "aliases": [
+    "Varnell Semi",
+    "Varnell"
+   ],
+   "docs": [
+    "incident-qx7",
+    "supplier-register",
+    "borealis-release-2-4",
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "component:fs-9",
+   "name": "FS-9",
+   "type": "Component",
+   "aliases": [],
+   "docs": [
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "component:ip68-enclosure",
+   "name": "IP68 enclosure",
+   "type": "Component",
+   "aliases": [],
+   "docs": [
+    "supplier-register",
+    "atlas-3-brief"
+   ]
+  },
+  {
+   "id": "component:lx-4-lithium-cell",
+   "name": "LX-4 lithium cell",
+   "type": "Component",
+   "aliases": [
+    "LX-4"
+   ],
+   "docs": [
+    "supplier-register",
+    "hallam-note",
+    "atlas-3-brief",
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "component:pm-1",
+   "name": "PM-1",
+   "type": "Component",
+   "aliases": [],
+   "docs": [
+    "borealis-release-2-4"
+   ]
+  },
+  {
+   "id": "component:pm-2-power-module",
+   "name": "PM-2 power module",
+   "type": "Component",
+   "aliases": [
+    "PM-2"
+   ],
+   "docs": [
+    "borealis-release-2-4",
+    "supply-chain-standup",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "component:qx-7-radio-chip",
+   "name": "QX-7 radio chip",
+   "type": "Component",
+   "aliases": [
+    "QX-7",
+    "QX7"
+   ],
+   "docs": [
+    "supplier-register",
+    "atlas-3-brief",
+    "incident-qx7",
+    "kerrin-second-source",
+    "supply-chain-standup",
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "component:sundra-c2",
+   "name": "Sundra C2",
+   "type": "Component",
+   "aliases": [],
+   "docs": [
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "customer:brightwater-aquaculture",
+   "name": "Brightwater Aquaculture",
+   "type": "Customer",
+   "aliases": [
+    "Brightwater"
+   ],
+   "docs": [
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "customer:calder-grain-co-op",
+   "name": "Calder Grain Co-op",
+   "type": "Customer",
+   "aliases": [
+    "Calder"
+   ],
+   "docs": [
+    "key-accounts",
+    "calder-email"
+   ]
+  },
+  {
+   "id": "customer:meridian",
+   "name": "Meridian",
+   "type": "Customer",
+   "aliases": [],
+   "docs": [
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "customer:northmoor-irrigation-district",
+   "name": "Northmoor Irrigation District",
+   "type": "Customer",
+   "aliases": [],
+   "docs": [
+    "northmoor-pilot"
+   ]
+  },
+  {
+   "id": "customer:osterby-water-utility",
+   "name": "Osterby Water Utility",
+   "type": "Customer",
+   "aliases": [
+    "Osterby Water",
+    "Osterby"
+   ],
+   "docs": [
+    "key-accounts",
+    "osterby-qbr",
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "customer:pellham-labs",
+   "name": "Pellham Labs",
+   "type": "Customer",
+   "aliases": [],
+   "docs": [
+    "key-accounts",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "customer:varnell-bay-marina",
+   "name": "Varnell Bay Marina",
+   "type": "Customer",
+   "aliases": [],
+   "docs": [
+    "varnell-bay-order"
+   ]
+  },
+  {
+   "id": "incident:qx-7-shipment-delay",
+   "name": "QX-7 shipment delay",
+   "type": "Incident",
+   "aliases": [],
+   "docs": [
+    "incident-qx7"
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage",
+   "name": "Telemetry Gateway outage",
+   "type": "Incident",
+   "aliases": [],
+   "docs": [
+    "incident-gateway"
+   ]
+  },
+  {
+   "id": "person:ana-duarte",
+   "name": "Ana Duarte",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "fleet-console",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "person:elin-saar",
+   "name": "Elin Saar",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "tartu-plant"
+   ]
+  },
+  {
+   "id": "person:ines-okafor",
+   "name": "Ines Okafor",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "teams-q1"
+   ]
+  },
+  {
+   "id": "person:jonas-lind",
+   "name": "Jonas Lind",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "varnell-bay-order",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "person:lena-vik",
+   "name": "Lena Vik",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "key-accounts",
+    "northmoor-pilot",
+    "osterby-qbr",
+    "calder-email"
+   ]
+  },
+  {
+   "id": "person:marco-feld",
+   "name": "Marco Feld",
+   "type": "Person",
+   "aliases": [
+    "M. Feld"
+   ],
+   "docs": [
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "person:priya-raman",
+   "name": "Priya Raman",
+   "type": "Person",
+   "aliases": [],
+   "docs": [
+    "teams-q1",
+    "supply-chain-standup",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "person:tomas-berg",
+   "name": "Tomas Berg",
+   "type": "Person",
+   "aliases": [
+    "T. Berg"
+   ],
+   "docs": [
+    "teams-q1",
+    "supply-chain-standup",
+    "borealis-release-2-4"
+   ]
+  },
+  {
+   "id": "product:atlas-3",
+   "name": "Atlas-3",
+   "type": "Product",
+   "aliases": [
+    "Atlas 3",
+    "A3"
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "teams-q1",
+    "key-accounts",
+    "meridian-launch",
+    "battery-switch",
+    "incident-gateway",
+    "supply-chain-standup",
+    "tartu-plant",
+    "osterby-qbr",
+    "hallam-note",
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "product:borealis-controller",
+   "name": "Borealis controller",
+   "type": "Product",
+   "aliases": [
+    "Borealis"
+   ],
+   "docs": [
+    "borealis-release-2-4",
+    "teams-q1",
+    "key-accounts",
+    "incident-gateway",
+    "supply-chain-standup",
+    "varnell-bay-order",
+    "pellham-qbr",
+    "hallam-note"
+   ]
+  },
+  {
+   "id": "product:meridian",
+   "name": "Meridian",
+   "type": "Product",
+   "aliases": [],
+   "docs": [
+    "meridian-launch",
+    "northmoor-pilot",
+    "incident-gateway",
+    "tartu-plant"
+   ]
+  },
+  {
+   "id": "product:qx-7",
+   "name": "QX-7",
+   "type": "Product",
+   "aliases": [],
+   "docs": [
+    "calder-email"
+   ]
+  },
+  {
+   "id": "service:fleet-console",
+   "name": "Fleet Console",
+   "type": "Service",
+   "aliases": [],
+   "docs": [
+    "fleet-console",
+    "osterby-qbr"
+   ]
+  },
+  {
+   "id": "service:ota-update-service",
+   "name": "OTA Update Service",
+   "type": "Service",
+   "aliases": [],
+   "docs": [
+    "teams-q1",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "service:telemetry-gateway",
+   "name": "Telemetry Gateway",
+   "type": "Service",
+   "aliases": [
+    "TGW"
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "teams-q1",
+    "borealis-release-2-4",
+    "incident-gateway",
+    "fleet-console",
+    "reorg-memo",
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "site:brno-plant",
+   "name": "Brno plant",
+   "type": "Site",
+   "aliases": [],
+   "docs": [
+    "borealis-release-2-4",
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "site:harbour-street",
+   "name": "Harbour Street",
+   "type": "Site",
+   "aliases": [],
+   "docs": [
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "site:tartu-plant",
+   "name": "Tartu plant",
+   "type": "Site",
+   "aliases": [
+    "Tartu"
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "cafeteria-memo",
+    "tartu-plant",
+    "meridian-launch",
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "team:atlas-team",
+   "name": "Atlas team",
+   "type": "Team",
+   "aliases": [],
+   "docs": [
+    "newsletter-june"
+   ]
+  },
+  {
+   "id": "team:customer-support",
+   "name": "Customer Support",
+   "type": "Team",
+   "aliases": [
+    "Support"
+   ],
+   "docs": [
+    "teams-q1",
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "team:data-platform-team",
+   "name": "Data Platform team",
+   "type": "Team",
+   "aliases": [
+    "Data Platform"
+   ],
+   "docs": [
+    "reorg-memo",
+    "fleet-console"
+   ]
+  },
+  {
+   "id": "team:firmware-team",
+   "name": "Firmware team",
+   "type": "Team",
+   "aliases": [],
+   "docs": [
+    "teams-q1",
+    "reorg-memo",
+    "office-move"
+   ]
+  },
+  {
+   "id": "team:hardware-team",
+   "name": "Hardware team",
+   "type": "Team",
+   "aliases": [],
+   "docs": [
+    "teams-q1",
+    "borealis-release-2-4",
+    "office-move"
+   ]
+  },
+  {
+   "id": "team:sales-team",
+   "name": "sales team",
+   "type": "Team",
+   "aliases": [],
+   "docs": [
+    "northmoor-pilot"
+   ]
+  },
+  {
+   "id": "team:supply-chain",
+   "name": "Supply Chain",
+   "type": "Team",
+   "aliases": [],
+   "docs": [
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "id": "company:varnell-semiconductor|SUPPLIES|component:qx-7-radio-chip",
+   "source": "company:varnell-semiconductor",
+   "type": "SUPPLIES",
+   "target": "component:qx-7-radio-chip",
+   "mentions": [
+    {
+     "doc": "supplier-register",
+     "date": "2026-01-08",
+     "quote": "Varnell Semi is the sole supplier of the QX-7 radio chip",
+     "properties": {
+      "role": "sole"
+     }
+    },
+    {
+     "doc": "incident-qx7",
+     "date": "2026-03-12",
+     "quote": "Varnell Semiconductor told us that QX-7 shipments would slip",
+     "properties": {}
+    },
+    {
+     "doc": "kerrin-second-source",
+     "date": "2026-05-06",
+     "quote": "Varnell remains the main supplier",
+     "properties": {
+      "role": "main"
+     }
+    }
+   ]
+  },
+  {
+   "id": "company:tessaly-plastics|SUPPLIES|component:ip68-enclosure",
+   "source": "company:tessaly-plastics",
+   "type": "SUPPLIES",
+   "target": "component:ip68-enclosure",
+   "mentions": [
+    {
+     "doc": "supplier-register",
+     "date": "2026-01-08",
+     "quote": "Tessaly Plastics supplies the IP68 enclosure",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "company:hallam-cells|SUPPLIES|component:lx-4-lithium-cell",
+   "source": "company:hallam-cells",
+   "type": "SUPPLIES",
+   "target": "component:lx-4-lithium-cell",
+   "mentions": [
+    {
+     "doc": "supplier-register",
+     "date": "2026-01-08",
+     "quote": "Hallam Cells supplies the LX-4 lithium cell",
+     "properties": {}
+    },
+    {
+     "doc": "hallam-note",
+     "date": "2026-09-22",
+     "quote": "Hallam Cells remains the supplier of the LX-4 lithium cell",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:atlas-3|CONNECTS_VIA|service:telemetry-gateway",
+   "source": "product:atlas-3",
+   "type": "CONNECTS_VIA",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "atlas-3-brief",
+     "date": "2026-01-20",
+     "quote": "It sends readings every 15 minutes through the Telemetry Gateway.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:qx-7-radio-chip|PART_OF|product:atlas-3",
+   "source": "component:qx-7-radio-chip",
+   "type": "PART_OF",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "atlas-3-brief",
+     "date": "2026-01-20",
+     "quote": "The Atlas-3 main board uses the QX-7 radio chip",
+     "properties": {}
+    },
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "Meridian uses the same QX7 modem as the Atlas-3 for its cellular link.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:ip68-enclosure|PART_OF|product:atlas-3",
+   "source": "component:ip68-enclosure",
+   "type": "PART_OF",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "atlas-3-brief",
+     "date": "2026-01-20",
+     "quote": "The housing is the IP68 enclosure",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:lx-4-lithium-cell|PART_OF|product:atlas-3",
+   "source": "component:lx-4-lithium-cell",
+   "type": "PART_OF",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "atlas-3-brief",
+     "date": "2026-01-20",
+     "quote": "The Atlas-3 runs on one LX-4 lithium cell.",
+     "properties": {}
+    },
+    {
+     "doc": "battery-switch",
+     "date": "2026-04-28",
+     "quote": "the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:atlas-3|ASSEMBLED_AT|site:tartu-plant",
+   "source": "product:atlas-3",
+   "type": "ASSEMBLED_AT",
+   "target": "site:tartu-plant",
+   "mentions": [
+    {
+     "doc": "atlas-3-brief",
+     "date": "2026-01-20",
+     "quote": "Atlas-3 units are assembled at the Tartu plant.",
+     "properties": {}
+    },
+    {
+     "doc": "tartu-plant",
+     "date": "2026-07-07",
+     "quote": "The Tartu plant assembles the Atlas-3",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:priya-raman|LEADS|team:firmware-team",
+   "source": "person:priya-raman",
+   "type": "LEADS",
+   "target": "team:firmware-team",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "Priya Raman leads the Firmware team.",
+     "properties": {}
+    },
+    {
+     "doc": "reorg-memo",
+     "date": "2026-09-01",
+     "quote": "Priya Raman's Firmware team",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "team:firmware-team|OWNS|service:telemetry-gateway",
+   "source": "team:firmware-team",
+   "type": "OWNS",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "The Firmware team owns the Telemetry Gateway",
+     "properties": {}
+    },
+    {
+     "doc": "reorg-memo",
+     "date": "2026-09-01",
+     "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team",
+     "properties": {
+      "until": "2026-09-01"
+     }
+    }
+   ]
+  },
+  {
+   "id": "team:firmware-team|OWNS|service:ota-update-service",
+   "source": "team:firmware-team",
+   "type": "OWNS",
+   "target": "service:ota-update-service",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "The Firmware team owns the Telemetry Gateway, the cloud service that receives data from our devices, and the OTA Update Service.",
+     "properties": {}
+    },
+    {
+     "doc": "reorg-memo",
+     "date": "2026-09-01",
+     "quote": "Firmware team keeps the OTA Update Service",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:tomas-berg|LEADS|team:hardware-team",
+   "source": "person:tomas-berg",
+   "type": "LEADS",
+   "target": "team:hardware-team",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "Tomas Berg leads the Hardware team.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "team:hardware-team|OWNS|product:atlas-3",
+   "source": "team:hardware-team",
+   "type": "OWNS",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "The Hardware team owns the Atlas-3 design",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "team:hardware-team|OWNS|product:borealis-controller",
+   "source": "team:hardware-team",
+   "type": "OWNS",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "The Hardware team owns the Atlas-3 design and the Borealis controller design.",
+     "properties": {}
+    },
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "The controller design is maintained by T. Berg and the Hardware team",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:ines-okafor|LEADS|team:customer-support",
+   "source": "person:ines-okafor",
+   "type": "LEADS",
+   "target": "team:customer-support",
+   "mentions": [
+    {
+     "doc": "teams-q1",
+     "date": "2026-02-02",
+     "quote": "Ines Okafor leads Customer Support.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "customer:osterby-water-utility|USES|product:atlas-3",
+   "source": "customer:osterby-water-utility",
+   "type": "USES",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "key-accounts",
+     "date": "2026-02-10",
+     "quote": "Osterby Water Utility runs 420 Atlas-3 units",
+     "properties": {
+      "units": 420
+     }
+    },
+    {
+     "doc": "osterby-qbr",
+     "date": "2026-08-05",
+     "quote": "Osterby Water now runs 510 Atlas-3 units",
+     "properties": {
+      "units": 510
+     }
+    }
+   ]
+  },
+  {
+   "id": "customer:calder-grain-co-op|USES|product:atlas-3",
+   "source": "customer:calder-grain-co-op",
+   "type": "USES",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "key-accounts",
+     "date": "2026-02-10",
+     "quote": "Calder Grain Co-op monitors silo humidity with 60 Atlas 3 units.",
+     "properties": {
+      "units": 60
+     }
+    }
+   ]
+  },
+  {
+   "id": "customer:pellham-labs|USES|product:borealis-controller",
+   "source": "customer:pellham-labs",
+   "type": "USES",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "key-accounts",
+     "date": "2026-02-10",
+     "quote": "Pellham Labs uses the Borealis controller",
+     "properties": {}
+    },
+    {
+     "doc": "pellham-qbr",
+     "date": "2026-06-25",
+     "quote": "Pellham Labs now runs 34 Borealis units",
+     "properties": {
+      "units": 34
+     }
+    }
+   ]
+  },
+  {
+   "id": "person:lena-vik|MANAGES_ACCOUNT|customer:osterby-water-utility",
+   "source": "person:lena-vik",
+   "type": "MANAGES_ACCOUNT",
+   "target": "customer:osterby-water-utility",
+   "mentions": [
+    {
+     "doc": "key-accounts",
+     "date": "2026-02-10",
+     "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:lena-vik|MANAGES_ACCOUNT|customer:calder-grain-co-op",
+   "source": "person:lena-vik",
+   "type": "MANAGES_ACCOUNT",
+   "target": "customer:calder-grain-co-op",
+   "mentions": [
+    {
+     "doc": "key-accounts",
+     "date": "2026-02-10",
+     "quote": "Lena Vik manages the Osterby Water Utility and Calder Grain Co-op accounts.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:pm-2-power-module|PART_OF|product:borealis-controller",
+   "source": "component:pm-2-power-module",
+   "type": "PART_OF",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "The Borealis controller now takes power from the PM-2 power module",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:pm-2-power-module|REPLACES|component:pm-1",
+   "source": "component:pm-2-power-module",
+   "type": "REPLACES",
+   "target": "component:pm-1",
+   "mentions": [
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "PM-2 power module, which replaces the older PM-1",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "company:varnell-semiconductor|SUPPLIES|component:pm-2-power-module",
+   "source": "company:varnell-semiconductor",
+   "type": "SUPPLIES",
+   "target": "component:pm-2-power-module",
+   "mentions": [
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "The PM-2 power module is made by Varnell",
+     "properties": {}
+    },
+    {
+     "doc": "supply-chain-standup",
+     "date": "2026-05-20",
+     "quote": "Varnell also makes the PM-2",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:borealis-controller|CONNECTS_VIA|service:telemetry-gateway",
+   "source": "product:borealis-controller",
+   "type": "CONNECTS_VIA",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "Firmware updates for the controller are delivered through the Telemetry Gateway",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:borealis-controller|ASSEMBLED_AT|site:brno-plant",
+   "source": "product:borealis-controller",
+   "type": "ASSEMBLED_AT",
+   "target": "site:brno-plant",
+   "mentions": [
+    {
+     "doc": "borealis-release-2-4",
+     "date": "2026-02-24",
+     "quote": "Borealis controllers are built at the Brno plant",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:meridian|CONNECTS_VIA|service:telemetry-gateway",
+   "source": "product:meridian",
+   "type": "CONNECTS_VIA",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "It reports flow and pressure every five minutes through TGW, our telemetry gateway.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:qx-7-radio-chip|PART_OF|product:meridian",
+   "source": "component:qx-7-radio-chip",
+   "type": "PART_OF",
+   "target": "product:meridian",
+   "mentions": [
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "Meridian uses the same QX7 modem as the Atlas-3 for its cellular link.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:fs-9|PART_OF|product:meridian",
+   "source": "component:fs-9",
+   "type": "PART_OF",
+   "target": "product:meridian",
+   "mentions": [
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "Its flow element is the FS-9 sensing element, supplied by Kerrin Sensors.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "company:kerrin-sensors|SUPPLIES|component:fs-9",
+   "source": "company:kerrin-sensors",
+   "type": "SUPPLIES",
+   "target": "component:fs-9",
+   "mentions": [
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "FS-9 sensing element, supplied by Kerrin Sensors",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "product:meridian|ASSEMBLED_AT|site:tartu-plant",
+   "source": "product:meridian",
+   "type": "ASSEMBLED_AT",
+   "target": "site:tartu-plant",
+   "mentions": [
+    {
+     "doc": "meridian-launch",
+     "date": "2026-03-03",
+     "quote": "Meridian units are assembled at the Tartu plant",
+     "properties": {}
+    },
+    {
+     "doc": "tartu-plant",
+     "date": "2026-07-07",
+     "quote": "The Tartu plant assembles the Atlas-3 and the Meridian flow meter",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "incident:qx-7-shipment-delay|INVOLVES|company:varnell-semiconductor",
+   "source": "incident:qx-7-shipment-delay",
+   "type": "INVOLVES",
+   "target": "company:varnell-semiconductor",
+   "mentions": [
+    {
+     "doc": "incident-qx7",
+     "date": "2026-03-12",
+     "quote": "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage.",
+     "properties": {
+      "date": "2026-03-03"
+     }
+    }
+   ]
+  },
+  {
+   "id": "incident:qx-7-shipment-delay|AFFECTED|component:qx-7-radio-chip",
+   "source": "incident:qx-7-shipment-delay",
+   "type": "AFFECTED",
+   "target": "component:qx-7-radio-chip",
+   "mentions": [
+    {
+     "doc": "incident-qx7",
+     "date": "2026-03-12",
+     "quote": "On 3 March 2026, Varnell Semiconductor told us that QX-7 shipments would slip by six weeks because of a wafer shortage.",
+     "properties": {
+      "date": "2026-03-03"
+     }
+    }
+   ]
+  },
+  {
+   "id": "customer:northmoor-irrigation-district|USES|product:meridian",
+   "source": "customer:northmoor-irrigation-district",
+   "type": "USES",
+   "target": "product:meridian",
+   "mentions": [
+    {
+     "doc": "northmoor-pilot",
+     "date": "2026-03-19",
+     "quote": "Northmoor Irrigation District has signed for a pilot of 150 Meridian flow meters",
+     "properties": {
+      "units": 150
+     }
+    }
+   ]
+  },
+  {
+   "id": "person:lena-vik|MANAGES_ACCOUNT|customer:northmoor-irrigation-district",
+   "source": "person:lena-vik",
+   "type": "MANAGES_ACCOUNT",
+   "target": "customer:northmoor-irrigation-district",
+   "mentions": [
+    {
+     "doc": "northmoor-pilot",
+     "date": "2026-03-19",
+     "quote": "Lena Vik takes over the Northmoor Irrigation District account",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "customer:brightwater-aquaculture|USES|product:atlas-3",
+   "source": "customer:brightwater-aquaculture",
+   "type": "USES",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "brightwater-order",
+     "date": "2026-04-02",
+     "quote": "Brightwater Aquaculture has ordered 80 A3 sensors",
+     "properties": {
+      "units": 80
+     }
+    }
+   ]
+  },
+  {
+   "id": "component:sundra-c2|PART_OF|product:atlas-3",
+   "source": "component:sundra-c2",
+   "type": "PART_OF",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "battery-switch",
+     "date": "2026-04-28",
+     "quote": "From the May build, the Atlas-3 uses the Sundra C2 cell",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "company:sundra-power|SUPPLIES|component:sundra-c2",
+   "source": "company:sundra-power",
+   "type": "SUPPLIES",
+   "target": "component:sundra-c2",
+   "mentions": [
+    {
+     "doc": "battery-switch",
+     "date": "2026-04-28",
+     "quote": "Sundra C2 cell from Sundra Power",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "component:sundra-c2|REPLACES|component:lx-4-lithium-cell",
+   "source": "component:sundra-c2",
+   "type": "REPLACES",
+   "target": "component:lx-4-lithium-cell",
+   "mentions": [
+    {
+     "doc": "battery-switch",
+     "date": "2026-04-28",
+     "quote": "the Atlas-3 uses the Sundra C2 cell from Sundra Power instead of the LX-4 lithium cell",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:marco-feld|MEMBER_OF|team:supply-chain",
+   "source": "person:marco-feld",
+   "type": "MEMBER_OF",
+   "target": "team:supply-chain",
+   "mentions": [
+    {
+     "doc": "kerrin-second-source",
+     "date": "2026-05-06",
+     "quote": "Marco Feld here, from Supply Chain",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "company:kerrin-sensors|SUPPLIES|component:qx-7-radio-chip",
+   "source": "company:kerrin-sensors",
+   "type": "SUPPLIES",
+   "target": "component:qx-7-radio-chip",
+   "mentions": [
+    {
+     "doc": "kerrin-second-source",
+     "date": "2026-05-06",
+     "quote": "Kerrin Sensors is qualified as a second source for the QX-7 radio chip",
+     "properties": {
+      "role": "second source"
+     }
+    }
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage|AFFECTED|service:telemetry-gateway",
+   "source": "incident:telemetry-gateway-outage",
+   "type": "AFFECTED",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "incident-gateway",
+     "date": "2026-05-15",
+     "quote": "On 14 May 2026, the Telemetry Gateway rejected device connections for three hours.",
+     "properties": {
+      "date": "2026-05-14"
+     }
+    }
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage|AFFECTED|product:atlas-3",
+   "source": "incident:telemetry-gateway-outage",
+   "type": "AFFECTED",
+   "target": "product:atlas-3",
+   "mentions": [
+    {
+     "doc": "incident-gateway",
+     "date": "2026-05-15",
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed.",
+     "properties": {
+      "date": "2026-05-14"
+     }
+    }
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage|AFFECTED|product:borealis-controller",
+   "source": "incident:telemetry-gateway-outage",
+   "type": "AFFECTED",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "incident-gateway",
+     "date": "2026-05-15",
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed.",
+     "properties": {
+      "date": "2026-05-14"
+     }
+    }
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage|AFFECTED|product:meridian",
+   "source": "incident:telemetry-gateway-outage",
+   "type": "AFFECTED",
+   "target": "product:meridian",
+   "mentions": [
+    {
+     "doc": "incident-gateway",
+     "date": "2026-05-15",
+     "quote": "Uploads from Atlas-3 sensors, Borealis controllers and Meridian flow meters all failed.",
+     "properties": {
+      "date": "2026-05-14"
+     }
+    }
+   ]
+  },
+  {
+   "id": "person:marco-feld|LEADS|team:supply-chain",
+   "source": "person:marco-feld",
+   "type": "LEADS",
+   "target": "team:supply-chain",
+   "mentions": [
+    {
+     "doc": "supply-chain-standup",
+     "date": "2026-05-20",
+     "quote": "M. Feld (Supply Chain team lead)",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "customer:varnell-bay-marina|USES|product:borealis-controller",
+   "source": "customer:varnell-bay-marina",
+   "type": "USES",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "varnell-bay-order",
+     "date": "2026-06-11",
+     "quote": "Varnell Bay Marina has ordered 12 Borealis controllers",
+     "properties": {
+      "units": 12
+     }
+    }
+   ]
+  },
+  {
+   "id": "person:jonas-lind|MANAGES_ACCOUNT|customer:varnell-bay-marina",
+   "source": "person:jonas-lind",
+   "type": "MANAGES_ACCOUNT",
+   "target": "customer:varnell-bay-marina",
+   "mentions": [
+    {
+     "doc": "varnell-bay-order",
+     "date": "2026-06-11",
+     "quote": "Jonas Lind manages the Varnell Bay Marina account",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:jonas-lind|MANAGES_ACCOUNT|customer:pellham-labs",
+   "source": "person:jonas-lind",
+   "type": "MANAGES_ACCOUNT",
+   "target": "customer:pellham-labs",
+   "mentions": [
+    {
+     "doc": "pellham-qbr",
+     "date": "2026-06-25",
+     "quote": "Jonas Lind manages the Pellham Labs account.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:elin-saar|LEADS|site:tartu-plant",
+   "source": "person:elin-saar",
+   "type": "LEADS",
+   "target": "site:tartu-plant",
+   "mentions": [
+    {
+     "doc": "tartu-plant",
+     "date": "2026-07-07",
+     "quote": "Elin Saar is the plant manager",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "service:fleet-console|READS_FROM|service:telemetry-gateway",
+   "source": "service:fleet-console",
+   "type": "READS_FROM",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "fleet-console",
+     "date": "2026-07-21",
+     "quote": "It reads all device data from the Telemetry Gateway.",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "team:data-platform-team|OWNS|service:fleet-console",
+   "source": "team:data-platform-team",
+   "type": "OWNS",
+   "target": "service:fleet-console",
+   "mentions": [
+    {
+     "doc": "fleet-console",
+     "date": "2026-07-21",
+     "quote": "Fleet Console is owned by the Data Platform team",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "person:ana-duarte|LEADS|team:data-platform-team",
+   "source": "person:ana-duarte",
+   "type": "LEADS",
+   "target": "team:data-platform-team",
+   "mentions": [
+    {
+     "doc": "fleet-console",
+     "date": "2026-07-21",
+     "quote": "the Data Platform team, which Ana Duarte leads",
+     "properties": {}
+    },
+    {
+     "doc": "reorg-memo",
+     "date": "2026-09-01",
+     "quote": "Data Platform team, led by Ana Duarte",
+     "properties": {}
+    }
+   ]
+  },
+  {
+   "id": "team:data-platform-team|OWNS|service:telemetry-gateway",
+   "source": "team:data-platform-team",
+   "type": "OWNS",
+   "target": "service:telemetry-gateway",
+   "mentions": [
+    {
+     "doc": "reorg-memo",
+     "date": "2026-09-01",
+     "quote": "From 1 September 2026, the Telemetry Gateway moves from the Firmware team to the Data Platform team",
+     "properties": {
+      "since": "2026-09-01"
+     }
+    }
+   ]
+  },
+  {
+   "id": "component:lx-4-lithium-cell|PART_OF|product:borealis-controller",
+   "source": "component:lx-4-lithium-cell",
+   "type": "PART_OF",
+   "target": "product:borealis-controller",
+   "mentions": [
+    {
+     "doc": "hallam-note",
+     "date": "2026-09-22",
+     "quote": "LX-4 lithium cell for the Borealis controller's backup supply",
+     "properties": {}
+    }
+   ]
+  }
+ ],
+ "dropped": []
+}

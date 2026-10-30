@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Graphs</title>
+<meta name="description" content="What a knowledge graph is, explained with one question and real model output: facts stored as entity → relation → entity, so code can follow connections across documents that chunk search can't join.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="build/app.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script>
+  (() => {
+    let t = new URLSearchParams(location.search).get("theme");
+    if (t !== "light" && t !== "dark") { t = null; try { t = localStorage.getItem("kg-theme"); } catch {} }
+    document.documentElement.dataset.theme = t === "dark" ? "dark" : "light";
+  })();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap flex h-14 items-center justify-between gap-4">
+    <a class="wordmark" href="#problem">Knowledge graphs</a>
+    <nav class="flex items-center gap-5 text-[13.5px]">
+      <a class="nav hidden sm:inline" href="#idea">The idea</a>
+      <a class="nav hidden sm:inline" href="#theatre">Walkthrough</a>
+      <a class="nav hidden md:inline" href="#payoff">Results</a>
+      <a class="nav hidden lg:inline" href="#query">The query</a>
+      <a class="nav hidden lg:inline" href="#loses">When it loses</a>
+      <a class="nav hidden lg:inline" href="#production">Production</a>
+      <a class="nav hidden sm:inline" href="#recap">Recap</a>
+      <a class="nav" href="article">Article</a>
+      <button id="theme" type="button" class="nav" aria-label="Switch between light and dark">Dark</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 1. The problem -->
+  <section id="problem" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">1 · The problem</p>
+      <h1 class="title">Knowledge graphs, explained with one question</h1>
+      <div id="ask" class="ask ask-top"></div>
+      <p class="lede">A company has 25 short documents: org updates, product briefs, a supplier register, account notes, incident reviews and emails. Here is what ordinary search returns when someone asks a question whose answer is spread across four of them.</p>
+
+      <div class="question"><span class="label">The question</span><p id="q-text"></p></div>
+      <p class="caption mt-6">Chunk search splits the documents into 62 paragraphs, embeds them with Gemini, and returns the three closest to the question:</p>
+      <div id="problem-hits" class="hits"></div>
+      <p id="problem-tally" class="tally"></p>
+      <p class="punch">Search finds passages that look like the question; it can't follow a chain of facts across documents.</p>
+      <p class="caption mt-3">The answer needs a chain: the QX-7 chip goes into two products, and four customers use those products. Those sentences are in documents about products and accounts that never mention a delay, so they are not similar to the question:</p>
+      <div id="problem-facts" class="mt-3"></div>
+      <p class="caption mt-4"><span class="tag-measured">measured</span> Retrieval and scores are real runs (Gemini <code>gemini-embedding-2</code>). The correct answer and the facts it needs were written by hand before any model ran.</p>
+    </div>
+  </section>
+
+  <!-- 2. The idea -->
+  <section id="idea" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">2 · The idea</p>
+      <h2 class="title">What is a knowledge graph?</h2>
+      <p class="lede">Instead of searching for passages, store the facts themselves, and follow them.</p>
+      <div class="prose">
+        <p>A knowledge graph stores facts as <em>entity → relation → entity</em>: QX-7 radio chip → part of → Atlas-3; Osterby Water Utility → uses → Atlas-3. An LLM reads each document once and extracts facts like these, each with the sentence it came from, and names that mean the same thing are merged into one entity.</p>
+        <p>To answer a question, code starts at the entity the question names and follows the relations, one hop at a time. Each hop can come from a different document, so the graph joins facts that no single passage holds.</p>
+      </div>
+
+      <figure class="diagram" aria-label="Without and with a knowledge graph">
+        <div class="lane">
+          <div class="lane-name">Without</div>
+          <div class="flow">
+            <span class="box">Question</span><span class="arr">→</span>
+            <span class="box">Search 62 paragraphs</span><span class="arr">→</span>
+            <span class="box bad">Passages about chip suppliers and the delay; none names a customer</span>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="lane-name">With</div>
+          <div class="flow">
+            <span class="box">Document</span><span class="arr">→</span>
+            <span class="box">LLM extracts entity → relation → entity</span><span class="arr">→</span>
+            <span class="box">Merge names</span><span class="arr">→</span>
+            <span class="box">Graph</span>
+          </div>
+          <div class="flow mt-2">
+            <span class="box">Question</span><span class="arr">→</span>
+            <span class="box">Start at QX-7 radio chip</span><span class="arr">→</span>
+            <span class="box">Follow part of, then used by</span><span class="arr">→</span>
+            <span class="box good">Four customers, with every fact on the path</span>
+          </div>
+        </div>
+        <figcaption class="caption">The work moves from question time to the moment a document arrives: facts are extracted once, and every later question can follow them.</figcaption>
+      </figure>
+
+      <h3 class="sub">Six words used below</h3>
+      <dl class="terms">
+        <div><dt>Entity</dt><dd>A thing the documents talk about: a person, team, product, part, supplier or customer. In the drawings, its shape shows its type.</dd></div>
+        <div><dt>Relation</dt><dd>A typed link between two entities, such as <code>SUPPLIES</code>, <code>PART_OF</code> or <code>USES</code>.</dd></div>
+        <div><dt>Triple</dt><dd>One fact, written entity → relation → entity, kept with the exact sentence it came from.</dd></div>
+        <div><dt>Entity resolution</dt><dd>Deciding that two names, such as “Varnell Semi” and “Varnell Semiconductor”, are the same entity, and merging them.</dd></div>
+        <div><dt>Traversal</dt><dd>Answering by following relations from one entity to the next, one hop at a time. Here, a Cypher query run on Neo4j.</dd></div>
+        <div><dt>Schema</dt><dd>The allowed entity types and relations, and which types each relation may connect. The extractor must follow it; code rejects anything outside it.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 3. The walkthrough -->
+  <section id="theatre" class="theatre" aria-label="The walkthrough">
+    <div class="wrap theatre-intro"><p class="eyebrow">3 · The walkthrough</p><p class="theatre-lede">Six of the 25 documents, one at a time. On the left, the document; on the right, the facts Gemini extracted from it, as recorded. A number joins each highlighted sentence to the fact it produced. Then the names are merged, and the question is asked again. It plays by itself; pause or step through at any time.</p></div>
+    <div class="wrap theatre-head">
+      <div class="flex items-baseline gap-3">
+        <span class="eyebrow" id="act-num">Step one</span>
+        <h2 id="act-title" class="act-title">Extract</h2>
+      </div>
+      <ol id="chapters" class="chapters" aria-label="Scenes"></ol>
+    </div>
+
+    <div class="wrap stage">
+      <div class="reader">
+        <div id="caption" class="subtitle" aria-live="polite"></div>
+        <div id="did" class="didstrip"></div>
+        <div class="panes">
+          <section class="pane" aria-label="Source">
+            <div class="pane-label"><span id="src-label">Document</span><span id="src-path" class="mono"></span></div>
+            <div id="src" class="doc"></div>
+          </section>
+          <section class="pane" aria-label="Derived">
+            <div class="pane-label"><span id="out-label">Extracted facts</span><span id="out-path" class="mono"></span></div>
+            <div id="out" class="doc"></div>
+          </section>
+        </div>
+        <p id="doc-note" class="caption mt-3"></p>
+      </div>
+      <aside class="margin" aria-label="The graph so far">
+        <div class="tabs"><span class="tab" aria-selected="true" id="margin-title">The graph so far</span></div>
+        <div id="margin-body" class="margin-body"></div>
+      </aside>
+    </div>
+
+    <div class="wrap transport">
+      <button id="play" type="button" class="playbtn" aria-pressed="false"></button>
+      <button id="prev" type="button" class="tbtn">← Previous</button>
+      <button id="next" type="button" class="tbtn">Next →</button>
+      <div id="speed" class="speed" role="group" aria-label="Playback speed"></div>
+      <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+    </div>
+  </section>
+
+  <!-- 4. The payoff -->
+  <section id="payoff" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">4 · The payoff</p>
+        <h2 class="title">Ask the same question again</h2>
+        <p class="lede">Gemini turns the question into a Cypher query, Neo4j runs it on the graph, and the answer comes back with every fact on the path. Chunk search still returns the same three paragraphs.</p>
+      </div>
+      <div id="payoff-body" class="compare"></div>
+      <h3 class="sub mt-14">All 15 questions, five ways</h3>
+      <p class="caption mt-1"><span class="tag-measured">measured</span> Facts the correct answer needs, found in what each method retrieved, scored by code. The global question is graded by an LLM judge. ⚠ marks an outdated or wrong value that appeared.</p>
+      <div id="questions-table" class="table-wrap mt-4"></div>
+      <p class="caption mt-6">Want to try a question of your own? <a class="link" href="#problem">Ask the graph at the top of the page</a>.</p>
+    </div>
+  </section>
+
+  <!-- 5. Who writes the query -->
+  <section id="query" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">5 · Who writes the query?</p>
+        <h2 class="title">Neo4j runs Cypher, not questions</h2>
+        <p class="lede">The database can't read “who manages the Pellham Labs account?”. Something outside it has to turn the question into a query. Here that is Gemini, and what it knows about the graph is exactly what the prompt tells it.</p>
+      </div>
+      <div id="query-body"></div>
+    </div>
+  </section>
+
+  <!-- 6. When the graph loses -->
+  <section id="loses" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">6 · When the graph loses</p>
+        <h2 class="title">Some answers never become edges</h2>
+        <p class="lede">Ask what the QX-7 incident review recommended. The answer is a sentence of prose, not a relation between two entities, so it never became an edge.</p>
+      </div>
+      <div id="loses-body" class="compare"></div>
+      <div class="when">
+        <div><h3 class="sub">Use the graph when</h3><p>The answer is a chain of facts across documents: impact (“who is affected if…”), ownership, dependencies, “how is X connected to Y”, or a count over many entities. And when you can say in advance which relations matter, so a schema can capture them.</p></div>
+        <div><h3 class="sub">Chunk search is enough when</h3><p>The answer sits in one passage: a recommendation, a reason, a definition, a number in prose. Or when questions are open-ended and no schema could anticipate them.</p></div>
+      </div>
+      <p id="hybrid-note" class="kg"></p>
+      <h3 class="sub mt-14">Where the model went wrong</h3>
+      <p class="caption mt-1">Real mistakes from the recorded runs, found by the author's review and by the tests. None of them is staged.</p>
+      <div id="mistakes" class="mt-4"></div>
+    </div>
+  </section>
+
+  <!-- 7. When extraction goes wrong -->
+  <section id="extraction" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">7 · When extraction goes wrong</p>
+        <h2 class="title">The graph only knows what extraction put in</h2>
+        <p class="lede">Every answer the graph gives is built from extracted facts. When extraction misses a fact, misreads one or merges the wrong names, the graph doesn't know, and its answers look just as sure.</p>
+      </div>
+      <div id="extraction-body" class="mt-8"></div>
+    </div>
+  </section>
+
+  <!-- 8. Who does what -->
+  <section id="roles" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">8 · Who does what</p>
+        <h2 class="title">The LLM, the code and a person</h2>
+        <p class="lede">A knowledge graph is not just a prompt. The LLM turns text into facts and questions into queries; code checks the facts and runs the queries; a person decides what the graph may hold and settles what neither can.</p>
+      </div>
+      <div class="roles">
+        <div><h3 class="sub">The LLM</h3><ul>
+          <li>Extracts entities and relations from each document, against the schema, as structured output.</li>
+          <li>Quotes the sentence each relation came from.</li>
+          <li>Checks merges the rules can't decide, with the sentences for context.</li>
+          <li>Translates questions into Cypher (text-to-Cypher), and repairs a query that returns nothing.</li>
+          <li>Writes the answer from the query and its rows.</li></ul></div>
+        <div><h3 class="sub">Code</h3><ul>
+          <li>Validates every triple against the schema.</li>
+          <li>Checks that every quote exists verbatim in its source.</li>
+          <li>Merges names by deterministic rules, within a type, and refuses ambiguous ones.</li>
+          <li>Loads the graph with provenance on every edge: document, date, quote, run.</li>
+          <li>Blocks any query that could write or run unbounded, then runs it read-only with a timeout.</li>
+          <li>Scores every answer against the facts it needs.</li></ul></div>
+        <div><h3 class="sub">A person</h3><ul>
+          <li>Designs the schema and changes it as needs change.</li>
+          <li>Decides the merges the LLM was unsure about.</li>
+          <li>Reviews extraction mistakes and which queries may run, with which permissions.</li></ul></div>
+      </div>
+      <p id="roles-note" class="caption mt-6"></p>
+    </div>
+  </section>
+
+  <!-- 9. Production -->
+  <section id="production" class="sec">
+    <div class="wrap">
+      <div class="narrow-l">
+        <p class="eyebrow">9 · Taking it to production</p>
+        <h2 class="title">From 25 documents to millions of facts</h2>
+        <p class="lede">This demo extracts 25 short documents once. Real systems extract continuously from large documents, keep the graph current, and let people query it safely, so the same idea needs a pipeline around it.</p>
+        <p class="caption mt-3"><span class="tag-scripted">guidance</span> Design guidance with sources. This demo does not test it.</p>
+      </div>
+      <div id="production-body" class="mt-8"></div>
+    </div>
+  </section>
+
+  <!-- 10. Recap -->
+  <section id="recap" class="sec">
+    <div class="wrap narrow">
+      <p class="eyebrow">10 · Recap</p>
+      <h2 class="title">So what is a knowledge graph?</h2>
+      <ul class="takeaways">
+        <li><strong>It stores facts as entity → relation → entity,</strong> each with the sentence it came from, instead of storing passages.</li>
+        <li><strong>An LLM extracts the facts once and writes the queries; code checks and follows them.</strong> A traversal joins facts from documents that never mention each other, which chunk search can't do. Neo4j only runs Cypher, so what the model knows about the graph is <a href="#query">what its prompt tells it</a>.</li>
+        <li><strong>It only knows what extraction captured, and <a href="#extraction">extraction makes mistakes</a>.</strong> Reasons and recommendations stay in the text, so most systems combine the graph with chunk search, and a person reviews what the model is unsure about.</li>
+      </ul>
+      <p class="kg"><strong>Not wiki memory.</strong> A knowledge graph stores typed facts that code traverses. <a href="https://wiki-memory.vercel.app">Wiki memory</a> stores pages of prose that an agent reads and rewrites.</p>
+      <p class="kg"><strong>This is a teaching demo, not a production system.</strong> Twenty-five short synthetic documents, one recorded extraction, and a person's review written by the author. See <a href="#production">Taking it to production</a>.</p>
+      <p class="mt-8"><a class="link-arrow" href="article">Read the full article: the patterns, the measured results, the research and how to run it in production</a></p>
+      <p class="caption mt-2">Also on GitHub: <a href="https://github.com/AIEngineerHelp/applied-ai-engineering/tree/main/rag-retrieval/knowledge-graphs#readme">Full article on GitHub</a></p>
+    </div>
+  </section>
+
+  <section id="about" class="sec about">
+    <div class="wrap narrow prose">
+      <h3 class="sub">About this demo</h3>
+      <p id="about-text"></p>
+      <p class="caption mt-6">Sources: <a href="https://arxiv.org/abs/2404.16130">Edge et al., GraphRAG</a> · <a href="https://microsoft.github.io/graphrag/">Microsoft GraphRAG docs</a> · <a href="https://arxiv.org/abs/2502.11371">RAG vs. GraphRAG</a> · <a href="https://arxiv.org/abs/2506.05690">When to use graphs in RAG</a> · <a href="https://neo4j.com/docs/javascript-manual/current/transactions/">Neo4j JavaScript driver</a> · <a href="https://ai.google.dev/gemini-api/docs/structured-output">Gemini structured output</a> · <a href="https://ai.google.dev/gemini-api/docs/embeddings">Gemini embeddings</a>. Part of <a href="https://github.com/AIEngineerHelp/applied-ai-engineering">AI Engineer Help</a>; discuss it in <a href="https://aiengineer.help/c/rag-retrieval/6">RAG &amp; Retrieval</a>.</p>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="build/app.js"></script>
+</body>
+</html>

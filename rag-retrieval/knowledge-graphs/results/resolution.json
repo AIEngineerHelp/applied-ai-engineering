@@ -1,0 +1,3095 @@
+{
+ "clusters": [
+  {
+   "id": "company:atlas-logistics",
+   "name": "Atlas Logistics",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Atlas Logistics",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "newsletter-june"
+   ]
+  },
+  {
+   "id": "company:hallam-cells",
+   "name": "Hallam Cells",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Hallam Cells",
+     "how": "first"
+    },
+    {
+     "name": "Hallam",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "supplier-register",
+    "hallam-note",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "company:kerrin-sensors",
+   "name": "Kerrin Sensors",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Kerrin Sensors",
+     "how": "first"
+    },
+    {
+     "name": "Kerrin",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "meridian-launch",
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "company:sundra-power",
+   "name": "Sundra Power",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Sundra Power",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "company:tessaly-plastics",
+   "name": "Tessaly Plastics",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Tessaly Plastics",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "supplier-register"
+   ]
+  },
+  {
+   "id": "company:varnell-semiconductor",
+   "name": "Varnell Semiconductor",
+   "type": "Company",
+   "members": [
+    {
+     "name": "Varnell Semiconductor",
+     "how": "first"
+    },
+    {
+     "name": "Varnell Semi",
+     "how": "rule: abbreviation or initial"
+    },
+    {
+     "name": "Varnell",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "incident-qx7",
+    "supplier-register",
+    "borealis-release-2-4",
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "component:fs-9",
+   "name": "FS-9",
+   "type": "Component",
+   "members": [
+    {
+     "name": "FS-9",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "component:ip68-enclosure",
+   "name": "IP68 enclosure",
+   "type": "Component",
+   "members": [
+    {
+     "name": "IP68 enclosure",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "supplier-register",
+    "atlas-3-brief"
+   ]
+  },
+  {
+   "id": "component:lx-4-lithium-cell",
+   "name": "LX-4 lithium cell",
+   "type": "Component",
+   "members": [
+    {
+     "name": "LX-4 lithium cell",
+     "how": "first"
+    },
+    {
+     "name": "LX-4",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "supplier-register",
+    "hallam-note",
+    "atlas-3-brief",
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "component:pm-1",
+   "name": "PM-1",
+   "type": "Component",
+   "members": [
+    {
+     "name": "PM-1",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "borealis-release-2-4"
+   ]
+  },
+  {
+   "id": "component:pm-2-power-module",
+   "name": "PM-2 power module",
+   "type": "Component",
+   "members": [
+    {
+     "name": "PM-2 power module",
+     "how": "first"
+    },
+    {
+     "name": "PM-2",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "borealis-release-2-4",
+    "supply-chain-standup",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "component:qx-7-radio-chip",
+   "name": "QX-7 radio chip",
+   "type": "Component",
+   "members": [
+    {
+     "name": "QX-7 radio chip",
+     "how": "first"
+    },
+    {
+     "name": "QX-7",
+     "how": "rule: abbreviation or initial"
+    },
+    {
+     "name": "QX7",
+     "how": "llm: confirmed",
+     "detail": "cosine 0.912: Both names refer to the cellular link component used in the Atlas-3 product, indicating QX-7 radio chip and QX7 are the same component."
+    }
+   ],
+   "docs": [
+    "supplier-register",
+    "atlas-3-brief",
+    "incident-qx7",
+    "kerrin-second-source",
+    "supply-chain-standup",
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "component:sundra-c2",
+   "name": "Sundra C2",
+   "type": "Component",
+   "members": [
+    {
+     "name": "Sundra C2",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "battery-switch"
+   ]
+  },
+  {
+   "id": "customer:brightwater-aquaculture",
+   "name": "Brightwater Aquaculture",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Brightwater Aquaculture",
+     "how": "first"
+    },
+    {
+     "name": "Brightwater",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "customer:calder-grain-co-op",
+   "name": "Calder Grain Co-op",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Calder Grain Co-op",
+     "how": "first"
+    },
+    {
+     "name": "Calder",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "key-accounts",
+    "calder-email"
+   ]
+  },
+  {
+   "id": "customer:meridian",
+   "name": "Meridian",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Meridian",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "customer:northmoor-irrigation-district",
+   "name": "Northmoor Irrigation District",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Northmoor Irrigation District",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "northmoor-pilot"
+   ]
+  },
+  {
+   "id": "customer:osterby-water-utility",
+   "name": "Osterby Water Utility",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Osterby Water Utility",
+     "how": "first"
+    },
+    {
+     "name": "Osterby Water",
+     "how": "rule: abbreviation or initial"
+    },
+    {
+     "name": "Osterby",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "key-accounts",
+    "osterby-qbr",
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "customer:pellham-labs",
+   "name": "Pellham Labs",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Pellham Labs",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "key-accounts",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "customer:varnell-bay-marina",
+   "name": "Varnell Bay Marina",
+   "type": "Customer",
+   "members": [
+    {
+     "name": "Varnell Bay Marina",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "varnell-bay-order"
+   ]
+  },
+  {
+   "id": "incident:qx-7-shipment-delay",
+   "name": "QX-7 shipment delay",
+   "type": "Incident",
+   "members": [
+    {
+     "name": "QX-7 shipment delay",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "incident-qx7"
+   ]
+  },
+  {
+   "id": "incident:telemetry-gateway-outage",
+   "name": "Telemetry Gateway outage",
+   "type": "Incident",
+   "members": [
+    {
+     "name": "Telemetry Gateway outage",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "incident-gateway"
+   ]
+  },
+  {
+   "id": "person:ana-duarte",
+   "name": "Ana Duarte",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Ana Duarte",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "fleet-console",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "person:elin-saar",
+   "name": "Elin Saar",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Elin Saar",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "tartu-plant"
+   ]
+  },
+  {
+   "id": "person:ines-okafor",
+   "name": "Ines Okafor",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Ines Okafor",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1"
+   ]
+  },
+  {
+   "id": "person:jonas-lind",
+   "name": "Jonas Lind",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Jonas Lind",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "varnell-bay-order",
+    "pellham-qbr"
+   ]
+  },
+  {
+   "id": "person:lena-vik",
+   "name": "Lena Vik",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Lena Vik",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "key-accounts",
+    "northmoor-pilot",
+    "osterby-qbr",
+    "calder-email"
+   ]
+  },
+  {
+   "id": "person:marco-feld",
+   "name": "Marco Feld",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Marco Feld",
+     "how": "first"
+    },
+    {
+     "name": "M. Feld",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "person:priya-raman",
+   "name": "Priya Raman",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Priya Raman",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1",
+    "supply-chain-standup",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "person:tomas-berg",
+   "name": "Tomas Berg",
+   "type": "Person",
+   "members": [
+    {
+     "name": "Tomas Berg",
+     "how": "first"
+    },
+    {
+     "name": "T. Berg",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "teams-q1",
+    "supply-chain-standup",
+    "borealis-release-2-4"
+   ]
+  },
+  {
+   "id": "product:a3",
+   "name": "A3",
+   "type": "Product",
+   "members": [
+    {
+     "name": "A3",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "product:atlas-3",
+   "name": "Atlas-3",
+   "type": "Product",
+   "members": [
+    {
+     "name": "Atlas-3",
+     "how": "first"
+    },
+    {
+     "name": "Atlas 3",
+     "how": "rule: same name after normalizing"
+    }
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "teams-q1",
+    "key-accounts",
+    "meridian-launch",
+    "battery-switch",
+    "incident-gateway",
+    "supply-chain-standup",
+    "tartu-plant",
+    "osterby-qbr",
+    "hallam-note"
+   ]
+  },
+  {
+   "id": "product:borealis-controller",
+   "name": "Borealis controller",
+   "type": "Product",
+   "members": [
+    {
+     "name": "Borealis controller",
+     "how": "first"
+    },
+    {
+     "name": "Borealis",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "borealis-release-2-4",
+    "teams-q1",
+    "key-accounts",
+    "incident-gateway",
+    "supply-chain-standup",
+    "varnell-bay-order",
+    "pellham-qbr",
+    "hallam-note"
+   ]
+  },
+  {
+   "id": "product:meridian",
+   "name": "Meridian",
+   "type": "Product",
+   "members": [
+    {
+     "name": "Meridian",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "meridian-launch",
+    "northmoor-pilot",
+    "incident-gateway",
+    "tartu-plant"
+   ]
+  },
+  {
+   "id": "product:qx-7",
+   "name": "QX-7",
+   "type": "Product",
+   "members": [
+    {
+     "name": "QX-7",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "calder-email"
+   ]
+  },
+  {
+   "id": "service:fleet-console",
+   "name": "Fleet Console",
+   "type": "Service",
+   "members": [
+    {
+     "name": "Fleet Console",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "fleet-console",
+    "osterby-qbr"
+   ]
+  },
+  {
+   "id": "service:ota-update-service",
+   "name": "OTA Update Service",
+   "type": "Service",
+   "members": [
+    {
+     "name": "OTA Update Service",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1",
+    "reorg-memo"
+   ]
+  },
+  {
+   "id": "service:telemetry-gateway",
+   "name": "Telemetry Gateway",
+   "type": "Service",
+   "members": [
+    {
+     "name": "Telemetry Gateway",
+     "how": "first"
+    },
+    {
+     "name": "TGW",
+     "how": "llm: confirmed",
+     "detail": "cosine 0.841: The launch note explicitly defines 'TGW' as 'our telemetry gateway', confirming it is an abbreviation for the Telemetry Gateway service."
+    }
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "teams-q1",
+    "borealis-release-2-4",
+    "incident-gateway",
+    "fleet-console",
+    "reorg-memo",
+    "meridian-launch"
+   ]
+  },
+  {
+   "id": "site:brno-plant",
+   "name": "Brno plant",
+   "type": "Site",
+   "members": [
+    {
+     "name": "Brno plant",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "borealis-release-2-4",
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "site:harbour-street",
+   "name": "Harbour Street",
+   "type": "Site",
+   "members": [
+    {
+     "name": "Harbour Street",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "board-update-q3"
+   ]
+  },
+  {
+   "id": "site:tartu-plant",
+   "name": "Tartu plant",
+   "type": "Site",
+   "members": [
+    {
+     "name": "Tartu plant",
+     "how": "first"
+    },
+    {
+     "name": "Tartu",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "atlas-3-brief",
+    "cafeteria-memo",
+    "tartu-plant",
+    "meridian-launch",
+    "brightwater-order"
+   ]
+  },
+  {
+   "id": "team:atlas-team",
+   "name": "Atlas team",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Atlas team",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "newsletter-june"
+   ]
+  },
+  {
+   "id": "team:customer-support",
+   "name": "Customer Support",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Customer Support",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1"
+   ]
+  },
+  {
+   "id": "team:data-platform-team",
+   "name": "Data Platform team",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Data Platform team",
+     "how": "first"
+    },
+    {
+     "name": "Data Platform",
+     "how": "rule: abbreviation or initial"
+    }
+   ],
+   "docs": [
+    "reorg-memo",
+    "fleet-console"
+   ]
+  },
+  {
+   "id": "team:firmware-team",
+   "name": "Firmware team",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Firmware team",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1",
+    "reorg-memo",
+    "office-move"
+   ]
+  },
+  {
+   "id": "team:hardware-team",
+   "name": "Hardware team",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Hardware team",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "teams-q1",
+    "borealis-release-2-4",
+    "office-move"
+   ]
+  },
+  {
+   "id": "team:sales-team",
+   "name": "sales team",
+   "type": "Team",
+   "members": [
+    {
+     "name": "sales team",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "northmoor-pilot"
+   ]
+  },
+  {
+   "id": "team:supply-chain",
+   "name": "Supply Chain",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Supply Chain",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "kerrin-second-source",
+    "supply-chain-standup"
+   ]
+  },
+  {
+   "id": "team:support",
+   "name": "Support",
+   "type": "Team",
+   "members": [
+    {
+     "name": "Support",
+     "how": "first"
+    }
+   ],
+   "docs": [
+    "brightwater-order"
+   ]
+  }
+ ],
+ "ambiguous": [],
+ "pairs": [
+  {
+   "a": "Customer Support",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.935,
+   "decision": "unsure",
+   "reason": "While 'Support' often refers to 'Customer Support', it could also refer to technical support, IT support, or product support, and the contexts do not provide enough detail to confirm they are the same team."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Hardware team",
+   "type": "Team",
+   "cosine": 0.924,
+   "decision": "different",
+   "reason": "The Firmware team and the Hardware team have distinct team leaders and manage entirely different product domains and projects."
+  },
+  {
+   "a": "QX-7 radio chip",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.912,
+   "decision": "same",
+   "reason": "Both names refer to the cellular link component used in the Atlas-3 product, indicating QX-7 radio chip and QX7 are the same component."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.874,
+   "decision": "different",
+   "reason": "The release notes explicitly state that the PM-2 power module replaces the older PM-1, confirming they are distinct component models."
+  },
+  {
+   "a": "Tartu plant",
+   "b": "Brno plant",
+   "type": "Site",
+   "cosine": 0.872,
+   "decision": "different",
+   "reason": "Tartu and Brno are distinct cities in different countries, indicating these refer to separate manufacturing facilities."
+  },
+  {
+   "a": "Customer Support",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.859,
+   "decision": "different",
+   "reason": "Customer Support and the sales team represent distinct operational functions within a company."
+  },
+  {
+   "a": "FS-9",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.859,
+   "decision": "different",
+   "reason": "FS-9 is a sensing element supplied by Kerrin Sensors, whereas PM-1 is an older power module."
+  },
+  {
+   "a": "Atlas-3",
+   "b": "A3",
+   "type": "Product",
+   "cosine": 0.852,
+   "decision": "unsure",
+   "reason": "While 'A3' may plausibly be an abbreviation for the 'Atlas-3' water-quality sensor, the provided contexts do not explicitly confirm they are the same product."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Firmware team",
+   "type": "Team",
+   "cosine": 0.851,
+   "decision": "different",
+   "reason": "The contexts clearly distinguish them as separate teams with different leaders and document a transfer of ownership between them."
+  },
+  {
+   "a": "Hardware team",
+   "b": "Supply Chain",
+   "type": "Team",
+   "cosine": 0.848,
+   "decision": "different",
+   "reason": "The Hardware team is led by Tomas Berg, whereas the Supply Chain team is led by Marco Feld, representing distinct functional departments."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.846,
+   "decision": "different",
+   "reason": "The Firmware team is an engineering and development group, whereas Support is a customer- or client-facing assistance team."
+  },
+  {
+   "a": "sales team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.846,
+   "decision": "different",
+   "reason": "Sales and support are distinct functional teams within an organization with separate responsibilities."
+  },
+  {
+   "a": "Hardware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.843,
+   "decision": "unsure",
+   "reason": "While the Hardware team owns the Atlas-3 design, there is insufficient evidence to determine whether the Atlas team is identical to the Hardware team or a separate group."
+  },
+  {
+   "a": "Atlas team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.843,
+   "decision": "unsure",
+   "reason": "There is no context connecting the Atlas team to the generic Support team."
+  },
+  {
+   "a": "Telemetry Gateway",
+   "b": "TGW",
+   "type": "Service",
+   "cosine": 0.841,
+   "decision": "same",
+   "reason": "The launch note explicitly defines 'TGW' as 'our telemetry gateway', confirming it is an abbreviation for the Telemetry Gateway service."
+  },
+  {
+   "a": "Hardware team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.841,
+   "decision": "different",
+   "reason": "The Hardware team is an engineering unit responsible for product design, whereas Support is a customer-facing service team handling order inquiries."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.84,
+   "decision": "different",
+   "reason": "The memo explicitly distinguishes Support from the Data Platform team by instructing Support to route tickets to them."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Hardware team",
+   "type": "Team",
+   "cosine": 0.836,
+   "decision": "different",
+   "reason": "The Data Platform team and the Hardware team have distinct leadership (Ana Duarte vs. Tomas Berg) and entirely separate areas of product ownership."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.836,
+   "decision": "unsure",
+   "reason": "There is no contextual information connecting the Atlas team to the Data Platform team or proving they are distinct entities."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Supply Chain",
+   "type": "Team",
+   "cosine": 0.835,
+   "decision": "different",
+   "reason": "Customer Support and Supply Chain are distinct functional business units led by different individuals."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Supply Chain",
+   "type": "Team",
+   "cosine": 0.832,
+   "decision": "different",
+   "reason": "The Firmware team is an engineering unit led by Priya Raman, whereas Supply Chain is an operational team led by Marco Feld."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.832,
+   "decision": "unsure",
+   "reason": "There is no information linking the Firmware team to the Atlas team or indicating they are the same entity."
+  },
+  {
+   "a": "Supply Chain",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.832,
+   "decision": "different",
+   "reason": "Supply Chain and the sales team represent distinct operational and commercial functions within the company."
+  },
+  {
+   "a": "Brightwater Aquaculture",
+   "b": "Pellham Labs",
+   "type": "Customer",
+   "cosine": 0.831,
+   "decision": "different",
+   "reason": "Brightwater Aquaculture and Pellham Labs have distinct names and operate in entirely different industries with different products."
+  },
+  {
+   "a": "Osterby Water Utility",
+   "b": "Brightwater Aquaculture",
+   "type": "Customer",
+   "cosine": 0.83,
+   "decision": "different",
+   "reason": "The entities have entirely different names and operate in completely different sectors (a municipal water utility versus a fish pen aquaculture company)."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Firmware team",
+   "type": "Team",
+   "cosine": 0.83,
+   "decision": "different",
+   "reason": "Customer Support and the Firmware team have different leaders and handle distinct functional areas within the company."
+  },
+  {
+   "a": "Firmware team",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.829,
+   "decision": "different",
+   "reason": "The Firmware team is an engineering unit responsible for software and services, whereas the sales team handles client accounts."
+  },
+  {
+   "a": "Hardware team",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.829,
+   "decision": "different",
+   "reason": "The Hardware team is an engineering group focused on product design, whereas the sales team handles commercial client accounts."
+  },
+  {
+   "a": "Pellham Labs",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.828,
+   "decision": "different",
+   "reason": "Pellham Labs is a client entity using Corvane products, whereas Meridian is a product manufactured by Corvane rather than a customer."
+  },
+  {
+   "a": "Northmoor Irrigation District",
+   "b": "Osterby Water Utility",
+   "type": "Customer",
+   "cosine": 0.826,
+   "decision": "different",
+   "reason": "Northmoor Irrigation District and Osterby Water Utility have entirely distinct names and operations, sharing only the same account manager, Lena Vik."
+  },
+  {
+   "a": "Atlas-3",
+   "b": "Meridian",
+   "type": "Product",
+   "cosine": 0.825,
+   "decision": "different",
+   "reason": "The context clearly identifies Atlas-3 as a water-quality sensor and Meridian as a distinct flow meter assembled on an adjacent line."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Supply Chain",
+   "type": "Team",
+   "cosine": 0.824,
+   "decision": "different",
+   "reason": "The Data Platform team is led by Ana Duarte and owns software tools, while Supply Chain is a distinct business function led by Marco Feld."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Hardware team",
+   "type": "Team",
+   "cosine": 0.822,
+   "decision": "different",
+   "reason": "The entities represent distinct teams led by different individuals (Ines Okafor leads Customer Support, while Tomas Berg leads the Hardware team)."
+  },
+  {
+   "a": "Sundra C2",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.821,
+   "decision": "different",
+   "reason": "Sundra C2 is a battery cell used in the Atlas-3, while PM-1 is an older power module replaced in the Borealis controller."
+  },
+  {
+   "a": "Supply Chain",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.82,
+   "decision": "different",
+   "reason": "Supply Chain and Support perform distinctly different business functions within the company."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Customer Support",
+   "type": "Team",
+   "cosine": 0.818,
+   "decision": "different",
+   "reason": "The Data Platform team and Customer Support have completely distinct functions, names, and leaders (Ana Duarte versus Ines Okafor)."
+  },
+  {
+   "a": "Jonas Lind",
+   "b": "Tomas Berg",
+   "type": "Person",
+   "cosine": 0.816,
+   "decision": "different",
+   "reason": "The two names have entirely different first and last names and work in distinct roles (account management versus hardware engineering)."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Brightwater Aquaculture",
+   "type": "Customer",
+   "cosine": 0.814,
+   "decision": "different",
+   "reason": "Calder Grain Co-op is an agricultural co-op monitoring grain silos with 60 Atlas 3 units, whereas Brightwater Aquaculture is a fish farming business purchasing 80 A3 sensors for oxygen monitoring in fish pens."
+  },
+  {
+   "a": "Brightwater Aquaculture",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.814,
+   "decision": "different",
+   "reason": "Brightwater Aquaculture is a customer ordering sensors, whereas Meridian is a proprietary flow meter product developed and manufactured by Corvane Instruments."
+  },
+  {
+   "a": "Atlas team",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.814,
+   "decision": "unsure",
+   "reason": "There is not enough information to determine whether the Atlas team and the sales team are the same entity or separate teams within the company."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Northmoor Irrigation District",
+   "type": "Customer",
+   "cosine": 0.813,
+   "decision": "different",
+   "reason": "Calder Grain Co-op and Northmoor Irrigation District are distinct entities with different names, business domains (grain silos vs. irrigation canals), and purchased equipment, despite sharing the same account manager."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.812,
+   "decision": "different",
+   "reason": "The Data Platform team is a technical product and engineering group, whereas the sales team handles commercial client accounts."
+  },
+  {
+   "a": "Varnell Bay Marina",
+   "b": "Brightwater Aquaculture",
+   "type": "Customer",
+   "cosine": 0.81,
+   "decision": "different",
+   "reason": "The entities have distinct names, different lines of business (a marina with floating docks versus aquaculture with fish pens), and separate orders."
+  },
+  {
+   "a": "PM-1",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.809,
+   "decision": "different",
+   "reason": "PM-1 is an older power module, whereas QX7 is a cellular modem component."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.807,
+   "decision": "unsure",
+   "reason": "There is no information linking the Atlas team to Customer Support."
+  },
+  {
+   "a": "Telemetry Gateway",
+   "b": "Fleet Console",
+   "type": "Service",
+   "cosine": 0.806,
+   "decision": "different",
+   "reason": "Telemetry Gateway is a device data ingestion and firmware delivery cloud service owned by the Firmware team, whereas Fleet Console is a customer-facing web dashboard owned by the Data Platform team."
+  },
+  {
+   "a": "FS-9",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.803,
+   "decision": "different",
+   "reason": "The FS-9 is identified as a flow-sensing element, whereas the QX7 is a modem used for cellular connectivity."
+  },
+  {
+   "a": "Varnell Bay Marina",
+   "b": "Pellham Labs",
+   "type": "Customer",
+   "cosine": 0.802,
+   "decision": "different",
+   "reason": "Varnell Bay Marina and Pellham Labs are distinct customers with entirely different facilities and operations, merely sharing the same account manager."
+  },
+  {
+   "a": "Meridian",
+   "b": "A3",
+   "type": "Product",
+   "cosine": 0.802,
+   "decision": "different",
+   "reason": "Meridian is an irrigation flow meter, whereas the A3 is an oxygen sensor used in aquaculture."
+  },
+  {
+   "a": "Osterby Water Utility",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.801,
+   "decision": "different",
+   "reason": "Osterby Water Utility is a client account managing water infrastructure, whereas Meridian is a product (a flow meter) manufactured by Corvane Instruments."
+  },
+  {
+   "a": "Northmoor Irrigation District",
+   "b": "Brightwater Aquaculture",
+   "type": "Customer",
+   "cosine": 0.8,
+   "decision": "different",
+   "reason": "The two entities have entirely distinct names and operate in completely different industries (irrigation canals versus aquaculture fish pens)."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Pellham Labs",
+   "type": "Customer",
+   "cosine": 0.799,
+   "decision": "different",
+   "reason": "Calder Grain Co-op and Pellham Labs have distinct names, operate in completely different domains with different equipment, and are managed by different account managers."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "PM-2 power module",
+   "type": "Component",
+   "cosine": 0.799,
+   "decision": "different",
+   "reason": "The LX-4 lithium cell and PM-2 power module have distinct model designations, different manufacturers (Hallam Cells vs. Varnell), and serve different power roles."
+  },
+  {
+   "a": "Supply Chain",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.799,
+   "decision": "unsure",
+   "reason": "There is no context linking the Atlas team to the Supply Chain team to determine if they are related or distinct."
+  },
+  {
+   "a": "Osterby Water Utility",
+   "b": "Pellham Labs",
+   "type": "Customer",
+   "cosine": 0.797,
+   "decision": "different",
+   "reason": "Osterby Water Utility and Pellham Labs are distinct organizations with different operations, facilities, equipment, and account managers."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "Meridian",
+   "type": "Product",
+   "cosine": 0.792,
+   "decision": "different",
+   "reason": "Borealis is a controller manufactured at the Brno plant, whereas Meridian is a flow meter assembled at the Tartu plant."
+  },
+  {
+   "a": "Varnell Bay Marina",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.791,
+   "decision": "different",
+   "reason": "Varnell Bay Marina is an account and customer entity, whereas Meridian is a flow meter product manufactured by Corvane Instruments."
+  },
+  {
+   "a": "Sundra C2",
+   "b": "FS-9",
+   "type": "Component",
+   "cosine": 0.791,
+   "decision": "different",
+   "reason": "Sundra C2 is a battery cell manufactured by Sundra Power, whereas FS-9 is a flow sensing element supplied by Kerrin Sensors."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.789,
+   "decision": "different",
+   "reason": "Calder Grain Co-op is a customer account, whereas Meridian is a flow meter product manufactured by the company."
+  },
+  {
+   "a": "Jonas Lind",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.789,
+   "decision": "different",
+   "reason": "Jonas Lind and Lena Vik are entirely distinct names with no overlapping context or evidence suggesting they are the same person."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.785,
+   "decision": "different",
+   "reason": "The LX-4 is a lithium battery cell, whereas the QX7 is a cellular modem."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.785,
+   "decision": "different",
+   "reason": "The PM-2 is a power module manufactured by Varnell, whereas the QX7 is a cellular modem."
+  },
+  {
+   "a": "Northmoor Irrigation District",
+   "b": "Meridian",
+   "type": "Customer",
+   "cosine": 0.785,
+   "decision": "different",
+   "reason": "Northmoor Irrigation District is a customer organization, whereas Meridian is a flow meter product manufactured and sold by Corvane Instruments."
+  },
+  {
+   "a": "OTA Update Service",
+   "b": "Telemetry Gateway",
+   "type": "Service",
+   "cosine": 0.783,
+   "decision": "different",
+   "reason": "The Q1 engineering update explicitly coordinates them as distinct services owned by the Firmware team."
+  },
+  {
+   "a": "Atlas-3",
+   "b": "QX-7",
+   "type": "Product",
+   "cosine": 0.783,
+   "decision": "different",
+   "reason": "The Atlas-3 is a complete water-quality sensor, whereas the QX-7 is a radio chip used as a component on the sensor's main board."
+  },
+  {
+   "a": "Fleet Console",
+   "b": "TGW",
+   "type": "Service",
+   "cosine": 0.782,
+   "decision": "different",
+   "reason": "Fleet Console is a customer-facing web dashboard, whereas TGW is a telemetry gateway used by devices to report data."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "QX-7 radio chip",
+   "type": "Component",
+   "cosine": 0.781,
+   "decision": "different",
+   "reason": "The LX-4 is a lithium battery cell supplied by Hallam Cells, whereas the QX-7 is a semiconductor radio chip supplied by Varnell Semi and Kerrin Sensors."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "Sundra C2",
+   "type": "Component",
+   "cosine": 0.781,
+   "decision": "different",
+   "reason": "The PM-2 is a power module manufactured by Varnell for the Borealis controller, whereas the Sundra C2 is a battery cell made by Sundra Power for the Atlas-3."
+  },
+  {
+   "a": "QX-7",
+   "b": "A3",
+   "type": "Product",
+   "cosine": 0.781,
+   "decision": "different",
+   "reason": "QX-7 and A3 are distinct model designations for sensors ordered by different customers, with no evidence suggesting they are the same product."
+  },
+  {
+   "a": "Sundra C2",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.779,
+   "decision": "different",
+   "reason": "The Sundra C2 is a battery cell, whereas the QX7 is a cellular modem."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Osterby Water Utility",
+   "type": "Customer",
+   "cosine": 0.777,
+   "decision": "different",
+   "reason": "The contexts explicitly contrast them as two separate accounts managed by Lena Vik, with different facilities and instrument counts."
+  },
+  {
+   "a": "Calder Grain Co-op",
+   "b": "Varnell Bay Marina",
+   "type": "Customer",
+   "cosine": 0.777,
+   "decision": "different",
+   "reason": "Calder Grain Co-op and Varnell Bay Marina are distinct customers in different industries with different account managers and equipment needs."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Ana Duarte",
+   "type": "Person",
+   "cosine": 0.777,
+   "decision": "different",
+   "reason": "Ines Okafor and Ana Duarte have completely different names and lead entirely separate departments within the company."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "Atlas-3",
+   "type": "Product",
+   "cosine": 0.776,
+   "decision": "different",
+   "reason": "The documents explicitly distinguish the two products by noting that the Hardware team owns both the Atlas-3 design and the Borealis controller design."
+  },
+  {
+   "a": "QX-7",
+   "b": "Meridian",
+   "type": "Product",
+   "cosine": 0.775,
+   "decision": "different",
+   "reason": "The Meridian is a complete flow meter product that incorporates the QX7 modem as a component, making them distinct items."
+  },
+  {
+   "a": "Varnell Semiconductor",
+   "b": "Kerrin Sensors",
+   "type": "Company",
+   "cosine": 0.773,
+   "decision": "different",
+   "reason": "Varnell Semiconductor and Kerrin Sensors have distinct names and are described as primary and second sources for the QX-7 chip, respectively."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "FS-9",
+   "type": "Component",
+   "cosine": 0.772,
+   "decision": "different",
+   "reason": "The PM-2 is a power module manufactured by Varnell, whereas the FS-9 is a flow sensing element supplied by Kerrin Sensors."
+  },
+  {
+   "a": "Elin Saar",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.77,
+   "decision": "different",
+   "reason": "Elin Saar and Lena Vik have completely different names and hold distinct roles with no evidence connecting them as the same person."
+  },
+  {
+   "a": "Osterby Water Utility",
+   "b": "Varnell Bay Marina",
+   "type": "Customer",
+   "cosine": 0.769,
+   "decision": "different",
+   "reason": "The entities have distinct names, operate in completely different industries (water utility vs. marina), use different equipment, and are managed by different account managers."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "QX-7 radio chip",
+   "type": "Component",
+   "cosine": 0.768,
+   "decision": "different",
+   "reason": "The PM-2 is a power module used for supplying power, whereas the QX-7 is an entirely different type of component serving as a radio chip for cellular links."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.764,
+   "decision": "different",
+   "reason": "The LX-4 is a backup lithium cell, whereas the PM-1 is a replaced primary power module."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "Sundra C2",
+   "type": "Component",
+   "cosine": 0.763,
+   "decision": "different",
+   "reason": "The engineering note explicitly contrasts the two components by stating that the Sundra C2 replaced the LX-4 lithium cell."
+  },
+  {
+   "a": "Tomas Berg",
+   "b": "Marco Feld",
+   "type": "Person",
+   "cosine": 0.763,
+   "decision": "different",
+   "reason": "The documents identify Tomas Berg and Marco Feld as distinct individuals working on different teams, with both listed as attendees in the same meeting notes."
+  },
+  {
+   "a": "Tomas Berg",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.763,
+   "decision": "different",
+   "reason": "Tomas Berg and Lena Vik have completely different names, roles, and departmental contexts within the company."
+  },
+  {
+   "a": "Varnell Semiconductor",
+   "b": "Hallam Cells",
+   "type": "Company",
+   "cosine": 0.762,
+   "decision": "different",
+   "reason": "Varnell Semiconductor produces semiconductor wafers/chips, whereas Hallam Cells manufactures lithium battery cells, indicating they are distinct supplier companies."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "QX-7",
+   "type": "Product",
+   "cosine": 0.762,
+   "decision": "unsure",
+   "reason": "There is no contextual evidence or overlapping information connecting the Borealis controller to the QX-7 product."
+  },
+  {
+   "a": "Jonas Lind",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.762,
+   "decision": "different",
+   "reason": "The entities have entirely different names and distinct roles with no indication that they refer to the same individual."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "A3",
+   "type": "Product",
+   "cosine": 0.76,
+   "decision": "different",
+   "reason": "The Borealis controller is a controller module, whereas the A3 is an oxygen sensor (likely related to Atlas-3, but clearly distinct from the Borealis controller)."
+  },
+  {
+   "a": "Varnell Semiconductor",
+   "b": "Sundra Power",
+   "type": "Company",
+   "cosine": 0.759,
+   "decision": "different",
+   "reason": "Varnell Semiconductor and Sundra Power have completely distinct names and supply unrelated products (semiconductor wafers versus battery cells)."
+  },
+  {
+   "a": "Kerrin Sensors",
+   "b": "Hallam Cells",
+   "type": "Company",
+   "cosine": 0.759,
+   "decision": "different",
+   "reason": "Kerrin Sensors and Hallam Cells have entirely distinct names and supply completely different component types (sensors/radio chips versus lithium cells)."
+  },
+  {
+   "a": "QX-7 shipment delay",
+   "b": "Telemetry Gateway outage",
+   "type": "Incident",
+   "cosine": 0.758,
+   "decision": "different",
+   "reason": "A logistics issue involving a product shipment delay is fundamentally different from a technical service outage of a telemetry gateway."
+  },
+  {
+   "a": "Northmoor Irrigation District",
+   "b": "Pellham Labs",
+   "type": "Customer",
+   "cosine": 0.758,
+   "decision": "different",
+   "reason": "Northmoor Irrigation District and Pellham Labs have distinct names, operate in completely different domains (irrigation vs. laboratory testing), use different products, and are managed by different account managers."
+  },
+  {
+   "a": "Jonas Lind",
+   "b": "Marco Feld",
+   "type": "Person",
+   "cosine": 0.758,
+   "decision": "different",
+   "reason": "Jonas Lind and Marco Feld have completely different names and hold different roles within the company."
+  },
+  {
+   "a": "Kerrin Sensors",
+   "b": "Sundra Power",
+   "type": "Company",
+   "cosine": 0.757,
+   "decision": "different",
+   "reason": "Kerrin Sensors and Sundra Power have completely distinct names and supply entirely different components (sensors/radio chips versus battery cells) with no indication of shared identity."
+  },
+  {
+   "a": "OTA Update Service",
+   "b": "TGW",
+   "type": "Service",
+   "cosine": 0.755,
+   "decision": "different",
+   "reason": "The documents distinguish the Telemetry Gateway (abbreviated as TGW) from the OTA Update Service as two separate entities owned by the Firmware team."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "IP68 enclosure",
+   "type": "Component",
+   "cosine": 0.754,
+   "decision": "different",
+   "reason": "The LX-4 lithium cell is a battery supplied by Hallam Cells, whereas the IP68 enclosure is a protective housing supplied by Tessaly Plastics."
+  },
+  {
+   "a": "PM-2 power module",
+   "b": "IP68 enclosure",
+   "type": "Component",
+   "cosine": 0.752,
+   "decision": "different",
+   "reason": "The PM-2 is a power supply module manufactured by Varnell, whereas the IP68 enclosure is a protective plastic housing supplied by Tessaly Plastics."
+  },
+  {
+   "a": "OTA Update Service",
+   "b": "Fleet Console",
+   "type": "Service",
+   "cosine": 0.752,
+   "decision": "different",
+   "reason": "The OTA Update Service is managed by the Firmware team, whereas Fleet Console is a customer-facing web dashboard owned by the Data Platform team."
+  },
+  {
+   "a": "Varnell Semiconductor",
+   "b": "Tessaly Plastics",
+   "type": "Company",
+   "cosine": 0.75,
+   "decision": "different",
+   "reason": "Varnell Semiconductor and Tessaly Plastics have completely distinct names and supply entirely different components."
+  },
+  {
+   "a": "Hallam Cells",
+   "b": "Sundra Power",
+   "type": "Company",
+   "cosine": 0.75,
+   "decision": "different",
+   "reason": "Hallam Cells and Sundra Power are distinct suppliers providing competing battery cells, with Sundra Power's C2 cell replacing Hallam Cells' LX-4 cell."
+  },
+  {
+   "a": "Northmoor Irrigation District",
+   "b": "Varnell Bay Marina",
+   "type": "Customer",
+   "cosine": 0.748,
+   "decision": "different",
+   "reason": "The entities have completely different names, distinct facilities (irrigation canals vs. marina docks), separate product orders, and different account managers."
+  },
+  {
+   "a": "Atlas Logistics",
+   "b": "Sundra Power",
+   "type": "Company",
+   "cosine": 0.748,
+   "decision": "different",
+   "reason": "Atlas Logistics is a shipping and freight company, whereas Sundra Power is a battery manufacturer."
+  },
+  {
+   "a": "Tessaly Plastics",
+   "b": "Hallam Cells",
+   "type": "Company",
+   "cosine": 0.747,
+   "decision": "different",
+   "reason": "Tessaly Plastics and Hallam Cells have entirely distinct names and supply completely different components in the supplier register."
+  },
+  {
+   "a": "IP68 enclosure",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.747,
+   "decision": "different",
+   "reason": "An IP68 enclosure is a protective plastic housing, whereas the PM-1 is a power supply module."
+  },
+  {
+   "a": "Tessaly Plastics",
+   "b": "Atlas Logistics",
+   "type": "Company",
+   "cosine": 0.745,
+   "decision": "different",
+   "reason": "Tessaly Plastics and Atlas Logistics have completely different names and operate in entirely distinct industries (plastics manufacturing versus logistics and shipping)."
+  },
+  {
+   "a": "QX-7 radio chip",
+   "b": "PM-1",
+   "type": "Component",
+   "cosine": 0.744,
+   "decision": "different",
+   "reason": "The QX-7 is a radio chip used for cellular connectivity, whereas the PM-1 is a legacy power module."
+  },
+  {
+   "a": "LX-4 lithium cell",
+   "b": "FS-9",
+   "type": "Component",
+   "cosine": 0.743,
+   "decision": "different",
+   "reason": "The LX-4 is a lithium battery cell supplied by Hallam Cells, whereas the FS-9 is a flow sensing element supplied by Kerrin Sensors."
+  },
+  {
+   "a": "IP68 enclosure",
+   "b": "QX7",
+   "type": "Component",
+   "cosine": 0.741,
+   "decision": "different",
+   "reason": "An IP68 enclosure is a protective physical housing, whereas the QX7 is a cellular modem."
+  },
+  {
+   "a": "QX-7 radio chip",
+   "b": "FS-9",
+   "type": "Component",
+   "cosine": 0.74,
+   "decision": "different",
+   "reason": "The QX-7 is a cellular radio chip, whereas the FS-9 is a flow-sensing element."
+  },
+  {
+   "a": "IP68 enclosure",
+   "b": "Sundra C2",
+   "type": "Component",
+   "cosine": 0.74,
+   "decision": "different",
+   "reason": "The IP68 enclosure is a plastic housing, whereas the Sundra C2 is a battery cell."
+  },
+  {
+   "a": "Harbour Street",
+   "b": "Tartu plant",
+   "type": "Site",
+   "cosine": 0.74,
+   "decision": "unsure",
+   "reason": "There is no information linking the Harbour Street location to the Tartu plant."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Jonas Lind",
+   "type": "Person",
+   "cosine": 0.74,
+   "decision": "different",
+   "reason": "The names Ines Okafor and Jonas Lind are completely distinct with no indication that they refer to the same individual."
+  },
+  {
+   "a": "Tessaly Plastics",
+   "b": "Kerrin Sensors",
+   "type": "Company",
+   "cosine": 0.739,
+   "decision": "different",
+   "reason": "Tessaly Plastics and Kerrin Sensors have completely distinct names and supply unrelated components (plastic enclosures versus sensor elements and radio chips)."
+  },
+  {
+   "a": "Tessaly Plastics",
+   "b": "Sundra Power",
+   "type": "Company",
+   "cosine": 0.738,
+   "decision": "different",
+   "reason": "Tessaly Plastics supplies plastic enclosures, whereas Sundra Power is a distinct company that manufactures battery cells."
+  },
+  {
+   "a": "Tomas Berg",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.736,
+   "decision": "different",
+   "reason": "Tomas Berg and Elin Saar have entirely different names and distinct organizational roles within the company."
+  },
+  {
+   "a": "Ana Duarte",
+   "b": "Marco Feld",
+   "type": "Person",
+   "cosine": 0.735,
+   "decision": "different",
+   "reason": "Ana Duarte and Marco Feld are completely different names associated with different roles and departments within the company."
+  },
+  {
+   "a": "Ana Duarte",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.735,
+   "decision": "different",
+   "reason": "Ana Duarte and Elin Saar have entirely different names and hold distinct positions within the company."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.731,
+   "decision": "different",
+   "reason": "The two names are completely different and refer to individuals with distinct roles within the company."
+  },
+  {
+   "a": "Ana Duarte",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.731,
+   "decision": "different",
+   "reason": "Ana Duarte leads an engineering team while Lena Vik manages client accounts, with entirely distinct names and responsibilities."
+  },
+  {
+   "a": "IP68 enclosure",
+   "b": "FS-9",
+   "type": "Component",
+   "cosine": 0.729,
+   "decision": "different",
+   "reason": "Name A is an external housing supplied by Tessaly Plastics, whereas Name B is a flow sensing element supplied by Kerrin Sensors."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.729,
+   "decision": "different",
+   "reason": "Ines Okafor and Elin Saar have entirely different names and distinct roles within the organization."
+  },
+  {
+   "a": "Marco Feld",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.728,
+   "decision": "different",
+   "reason": "The two names are completely different and refer to individuals with distinct roles within the organization."
+  },
+  {
+   "a": "Marco Feld",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.727,
+   "decision": "different",
+   "reason": "The names Marco Feld and Lena Vik are distinct individuals with completely different roles and identities at the company."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Marco Feld",
+   "type": "Person",
+   "cosine": 0.723,
+   "decision": "different",
+   "reason": "Ines Okafor and Marco Feld have completely distinct names and work in different roles/departments within the company."
+  },
+  {
+   "a": "Ana Duarte",
+   "b": "Jonas Lind",
+   "type": "Person",
+   "cosine": 0.723,
+   "decision": "different",
+   "reason": "Ana Duarte and Jonas Lind have completely different names and perform entirely different roles within the organization."
+  },
+  {
+   "a": "QX-7 radio chip",
+   "b": "IP68 enclosure",
+   "type": "Component",
+   "cosine": 0.722,
+   "decision": "different",
+   "reason": "The QX-7 radio chip is an electronic semiconductor component for connectivity, whereas the IP68 enclosure is a protective mechanical housing."
+  },
+  {
+   "a": "QX-7 radio chip",
+   "b": "Sundra C2",
+   "type": "Component",
+   "cosine": 0.717,
+   "decision": "different",
+   "reason": "The QX-7 radio chip is a cellular radio integrated circuit, whereas the Sundra C2 is a battery cell."
+  },
+  {
+   "a": "Varnell Semiconductor",
+   "b": "Atlas Logistics",
+   "type": "Company",
+   "cosine": 0.717,
+   "decision": "different",
+   "reason": "The entities have distinct names and operate in entirely different industries (semiconductor manufacturing versus freight logistics)."
+  },
+  {
+   "a": "Atlas Logistics",
+   "b": "Hallam Cells",
+   "type": "Company",
+   "cosine": 0.717,
+   "decision": "different",
+   "reason": "Atlas Logistics is a freight shipping company, whereas Hallam Cells is a component supplier providing lithium battery cells."
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Lena Vik",
+   "type": "Person",
+   "cosine": 0.716,
+   "decision": "different",
+   "reason": "The two names are entirely distinct and refer to different individuals with different roles: Priya Raman leads the Firmware team, while Lena Vik manages client accounts."
+  },
+  {
+   "a": "Ines Okafor",
+   "b": "Tomas Berg",
+   "type": "Person",
+   "cosine": 0.711,
+   "decision": "different",
+   "reason": "Ines Okafor and Tomas Berg have completely distinct names and are referenced as leading two different teams within the same document."
+  },
+  {
+   "a": "Ana Duarte",
+   "b": "Tomas Berg",
+   "type": "Person",
+   "cosine": 0.711,
+   "decision": "different",
+   "reason": "Ana Duarte and Tomas Berg have completely different names and lead different teams within the company."
+  },
+  {
+   "a": "Harbour Street",
+   "b": "Brno plant",
+   "type": "Site",
+   "cosine": 0.709,
+   "decision": "different",
+   "reason": "The board update references moving to Harbour Street alongside an upgrade to the Brno plant, indicating they are distinct sites."
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Elin Saar",
+   "type": "Person",
+   "cosine": 0.707,
+   "decision": "different",
+   "reason": "Priya Raman and Elin Saar have entirely different names and distinct roles within the company, with nothing suggesting they are the same person."
+  },
+  {
+   "a": "Atlas Logistics",
+   "b": "Kerrin Sensors",
+   "type": "Company",
+   "cosine": 0.706,
+   "decision": "different",
+   "reason": "Atlas Logistics is a freight and shipping company, whereas Kerrin Sensors is a hardware component manufacturer supplying sensing elements and radio chips."
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Ana Duarte",
+   "type": "Person",
+   "cosine": 0.699,
+   "decision": "not checked"
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Ines Okafor",
+   "type": "Person",
+   "cosine": 0.685,
+   "decision": "not checked"
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Tomas Berg",
+   "type": "Person",
+   "cosine": 0.667,
+   "decision": "not checked"
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Marco Feld",
+   "type": "Person",
+   "cosine": 0.666,
+   "decision": "not checked"
+  },
+  {
+   "a": "Priya Raman",
+   "b": "Jonas Lind",
+   "type": "Person",
+   "cosine": 0.663,
+   "decision": "not checked"
+  }
+ ],
+ "queue": [
+  {
+   "a": "Customer Support",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.935,
+   "decision": "unsure",
+   "reason": "While 'Support' often refers to 'Customer Support', it could also refer to technical support, IT support, or product support, and the contexts do not provide enough detail to confirm they are the same team."
+  },
+  {
+   "a": "Atlas-3",
+   "b": "A3",
+   "type": "Product",
+   "cosine": 0.852,
+   "decision": "unsure",
+   "reason": "While 'A3' may plausibly be an abbreviation for the 'Atlas-3' water-quality sensor, the provided contexts do not explicitly confirm they are the same product."
+  },
+  {
+   "a": "Hardware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.843,
+   "decision": "unsure",
+   "reason": "While the Hardware team owns the Atlas-3 design, there is insufficient evidence to determine whether the Atlas team is identical to the Hardware team or a separate group."
+  },
+  {
+   "a": "Atlas team",
+   "b": "Support",
+   "type": "Team",
+   "cosine": 0.843,
+   "decision": "unsure",
+   "reason": "There is no context connecting the Atlas team to the generic Support team."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.836,
+   "decision": "unsure",
+   "reason": "There is no contextual information connecting the Atlas team to the Data Platform team or proving they are distinct entities."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.832,
+   "decision": "unsure",
+   "reason": "There is no information linking the Firmware team to the Atlas team or indicating they are the same entity."
+  },
+  {
+   "a": "Atlas team",
+   "b": "sales team",
+   "type": "Team",
+   "cosine": 0.814,
+   "decision": "unsure",
+   "reason": "There is not enough information to determine whether the Atlas team and the sales team are the same entity or separate teams within the company."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.807,
+   "decision": "unsure",
+   "reason": "There is no information linking the Atlas team to Customer Support."
+  },
+  {
+   "a": "Supply Chain",
+   "b": "Atlas team",
+   "type": "Team",
+   "cosine": 0.799,
+   "decision": "unsure",
+   "reason": "There is no context linking the Atlas team to the Supply Chain team to determine if they are related or distinct."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "QX-7",
+   "type": "Product",
+   "cosine": 0.762,
+   "decision": "unsure",
+   "reason": "There is no contextual evidence or overlapping information connecting the Borealis controller to the QX-7 product."
+  },
+  {
+   "a": "Harbour Street",
+   "b": "Tartu plant",
+   "type": "Site",
+   "cosine": 0.74,
+   "decision": "unsure",
+   "reason": "There is no information linking the Harbour Street location to the Tartu plant."
+  }
+ ],
+ "evaluation": {
+  "surfaces": 68,
+  "clusters": 49,
+  "goldEntitiesSeen": 42,
+  "falseMerges": [],
+  "falseSplits": [
+   {
+    "gold": "Atlas-3",
+    "clusters": [
+     "A3",
+     "Atlas-3"
+    ]
+   },
+   {
+    "gold": "Customer Support",
+    "clusters": [
+     "Customer Support",
+     "Support"
+    ]
+   }
+  ],
+  "unmapped": [
+   {
+    "name": "Harbour Street",
+    "type": "Site",
+    "docs": [
+     "board-update-q3"
+    ]
+   },
+   {
+    "name": "Atlas team",
+    "type": "Team",
+    "docs": [
+     "newsletter-june"
+    ]
+   },
+   {
+    "name": "sales team",
+    "type": "Team",
+    "docs": [
+     "northmoor-pilot"
+    ]
+   }
+  ],
+  "typeErrors": [
+   {
+    "name": "Meridian",
+    "extractedAs": "Customer",
+    "goldType": "Product",
+    "docs": [
+     "board-update-q3"
+    ]
+   },
+   {
+    "name": "QX-7",
+    "extractedAs": "Product",
+    "goldType": "Component",
+    "docs": [
+     "calder-email"
+    ]
+   }
+  ]
+ },
+ "review": [
+  {
+   "a": "Customer Support",
+   "b": "Support",
+   "type": "Team",
+   "decision": "same",
+   "note": "In the org update, \"Support escalates any defect\" refers to Customer Support, the team named in the sentence before."
+  },
+  {
+   "a": "Atlas-3",
+   "b": "A3",
+   "type": "Product",
+   "decision": "same",
+   "note": "Brightwater orders \"A3 sensors\" for oxygen monitoring; Corvane's only water-quality sensor is the Atlas-3."
+  },
+  {
+   "a": "Hardware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "decision": "different",
+   "note": "\"The Atlas team photo\" in the newsletter is a social mention, not a team. It should not be in the graph at all; it stays as an isolated node here so the mistake is visible."
+  },
+  {
+   "a": "Atlas team",
+   "b": "Support",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Data Platform team",
+   "b": "Atlas team",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Firmware team",
+   "b": "Atlas team",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Atlas team",
+   "b": "sales team",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Customer Support",
+   "b": "Atlas team",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Supply Chain",
+   "b": "Atlas team",
+   "type": "Team",
+   "decision": "different",
+   "note": "See above."
+  },
+  {
+   "a": "Borealis controller",
+   "b": "QX-7",
+   "type": "Product",
+   "decision": "different",
+   "note": "\"QX-7\" here is the radio chip, wrongly typed as a Product in the Calder email. The fix is to correct the type, not to merge."
+  },
+  {
+   "a": "Harbour Street",
+   "b": "Tartu plant",
+   "type": "Site",
+   "decision": "different",
+   "note": "Harbour Street is the new head office, not a plant."
+  }
+ ],
+ "reviewed": {
+  "clusters": [
+   {
+    "id": "company:atlas-logistics",
+    "name": "Atlas Logistics",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Atlas Logistics",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "newsletter-june"
+    ]
+   },
+   {
+    "id": "company:hallam-cells",
+    "name": "Hallam Cells",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Hallam Cells",
+      "how": "first"
+     },
+     {
+      "name": "Hallam",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "supplier-register",
+     "hallam-note",
+     "supply-chain-standup"
+    ]
+   },
+   {
+    "id": "company:kerrin-sensors",
+    "name": "Kerrin Sensors",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Kerrin Sensors",
+      "how": "first"
+     },
+     {
+      "name": "Kerrin",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "meridian-launch",
+     "kerrin-second-source",
+     "supply-chain-standup"
+    ]
+   },
+   {
+    "id": "company:sundra-power",
+    "name": "Sundra Power",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Sundra Power",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "battery-switch"
+    ]
+   },
+   {
+    "id": "company:tessaly-plastics",
+    "name": "Tessaly Plastics",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Tessaly Plastics",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "supplier-register"
+    ]
+   },
+   {
+    "id": "company:varnell-semiconductor",
+    "name": "Varnell Semiconductor",
+    "type": "Company",
+    "members": [
+     {
+      "name": "Varnell Semiconductor",
+      "how": "first"
+     },
+     {
+      "name": "Varnell Semi",
+      "how": "rule: abbreviation or initial"
+     },
+     {
+      "name": "Varnell",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "incident-qx7",
+     "supplier-register",
+     "borealis-release-2-4",
+     "kerrin-second-source",
+     "supply-chain-standup"
+    ]
+   },
+   {
+    "id": "component:fs-9",
+    "name": "FS-9",
+    "type": "Component",
+    "members": [
+     {
+      "name": "FS-9",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "meridian-launch"
+    ]
+   },
+   {
+    "id": "component:ip68-enclosure",
+    "name": "IP68 enclosure",
+    "type": "Component",
+    "members": [
+     {
+      "name": "IP68 enclosure",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "supplier-register",
+     "atlas-3-brief"
+    ]
+   },
+   {
+    "id": "component:lx-4-lithium-cell",
+    "name": "LX-4 lithium cell",
+    "type": "Component",
+    "members": [
+     {
+      "name": "LX-4 lithium cell",
+      "how": "first"
+     },
+     {
+      "name": "LX-4",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "supplier-register",
+     "hallam-note",
+     "atlas-3-brief",
+     "battery-switch"
+    ]
+   },
+   {
+    "id": "component:pm-1",
+    "name": "PM-1",
+    "type": "Component",
+    "members": [
+     {
+      "name": "PM-1",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "borealis-release-2-4"
+    ]
+   },
+   {
+    "id": "component:pm-2-power-module",
+    "name": "PM-2 power module",
+    "type": "Component",
+    "members": [
+     {
+      "name": "PM-2 power module",
+      "how": "first"
+     },
+     {
+      "name": "PM-2",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "borealis-release-2-4",
+     "supply-chain-standup",
+     "pellham-qbr"
+    ]
+   },
+   {
+    "id": "component:qx-7-radio-chip",
+    "name": "QX-7 radio chip",
+    "type": "Component",
+    "members": [
+     {
+      "name": "QX-7 radio chip",
+      "how": "first"
+     },
+     {
+      "name": "QX-7",
+      "how": "rule: abbreviation or initial"
+     },
+     {
+      "name": "QX7",
+      "how": "llm: confirmed",
+      "detail": "cosine 0.912: Both names refer to the cellular link component used in the Atlas-3 product, indicating QX-7 radio chip and QX7 are the same component."
+     }
+    ],
+    "docs": [
+     "supplier-register",
+     "atlas-3-brief",
+     "incident-qx7",
+     "kerrin-second-source",
+     "supply-chain-standup",
+     "meridian-launch"
+    ]
+   },
+   {
+    "id": "component:sundra-c2",
+    "name": "Sundra C2",
+    "type": "Component",
+    "members": [
+     {
+      "name": "Sundra C2",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "battery-switch"
+    ]
+   },
+   {
+    "id": "customer:brightwater-aquaculture",
+    "name": "Brightwater Aquaculture",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Brightwater Aquaculture",
+      "how": "first"
+     },
+     {
+      "name": "Brightwater",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "brightwater-order"
+    ]
+   },
+   {
+    "id": "customer:calder-grain-co-op",
+    "name": "Calder Grain Co-op",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Calder Grain Co-op",
+      "how": "first"
+     },
+     {
+      "name": "Calder",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "key-accounts",
+     "calder-email"
+    ]
+   },
+   {
+    "id": "customer:meridian",
+    "name": "Meridian",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Meridian",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "board-update-q3"
+    ]
+   },
+   {
+    "id": "customer:northmoor-irrigation-district",
+    "name": "Northmoor Irrigation District",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Northmoor Irrigation District",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "northmoor-pilot"
+    ]
+   },
+   {
+    "id": "customer:osterby-water-utility",
+    "name": "Osterby Water Utility",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Osterby Water Utility",
+      "how": "first"
+     },
+     {
+      "name": "Osterby Water",
+      "how": "rule: abbreviation or initial"
+     },
+     {
+      "name": "Osterby",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "key-accounts",
+     "osterby-qbr",
+     "board-update-q3"
+    ]
+   },
+   {
+    "id": "customer:pellham-labs",
+    "name": "Pellham Labs",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Pellham Labs",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "key-accounts",
+     "pellham-qbr"
+    ]
+   },
+   {
+    "id": "customer:varnell-bay-marina",
+    "name": "Varnell Bay Marina",
+    "type": "Customer",
+    "members": [
+     {
+      "name": "Varnell Bay Marina",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "varnell-bay-order"
+    ]
+   },
+   {
+    "id": "incident:qx-7-shipment-delay",
+    "name": "QX-7 shipment delay",
+    "type": "Incident",
+    "members": [
+     {
+      "name": "QX-7 shipment delay",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "incident-qx7"
+    ]
+   },
+   {
+    "id": "incident:telemetry-gateway-outage",
+    "name": "Telemetry Gateway outage",
+    "type": "Incident",
+    "members": [
+     {
+      "name": "Telemetry Gateway outage",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "incident-gateway"
+    ]
+   },
+   {
+    "id": "person:ana-duarte",
+    "name": "Ana Duarte",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Ana Duarte",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "fleet-console",
+     "reorg-memo"
+    ]
+   },
+   {
+    "id": "person:elin-saar",
+    "name": "Elin Saar",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Elin Saar",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "tartu-plant"
+    ]
+   },
+   {
+    "id": "person:ines-okafor",
+    "name": "Ines Okafor",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Ines Okafor",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "teams-q1"
+    ]
+   },
+   {
+    "id": "person:jonas-lind",
+    "name": "Jonas Lind",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Jonas Lind",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "varnell-bay-order",
+     "pellham-qbr"
+    ]
+   },
+   {
+    "id": "person:lena-vik",
+    "name": "Lena Vik",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Lena Vik",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "key-accounts",
+     "northmoor-pilot",
+     "osterby-qbr",
+     "calder-email"
+    ]
+   },
+   {
+    "id": "person:marco-feld",
+    "name": "Marco Feld",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Marco Feld",
+      "how": "first"
+     },
+     {
+      "name": "M. Feld",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "kerrin-second-source",
+     "supply-chain-standup"
+    ]
+   },
+   {
+    "id": "person:priya-raman",
+    "name": "Priya Raman",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Priya Raman",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "supply-chain-standup",
+     "reorg-memo"
+    ]
+   },
+   {
+    "id": "person:tomas-berg",
+    "name": "Tomas Berg",
+    "type": "Person",
+    "members": [
+     {
+      "name": "Tomas Berg",
+      "how": "first"
+     },
+     {
+      "name": "T. Berg",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "supply-chain-standup",
+     "borealis-release-2-4"
+    ]
+   },
+   {
+    "id": "product:atlas-3",
+    "name": "Atlas-3",
+    "type": "Product",
+    "members": [
+     {
+      "name": "Atlas-3",
+      "how": "first"
+     },
+     {
+      "name": "Atlas 3",
+      "how": "rule: same name after normalizing"
+     },
+     {
+      "name": "A3",
+      "how": "person: approved",
+      "detail": "Brightwater orders \"A3 sensors\" for oxygen monitoring; Corvane's only water-quality sensor is the Atlas-3."
+     }
+    ],
+    "docs": [
+     "atlas-3-brief",
+     "teams-q1",
+     "key-accounts",
+     "meridian-launch",
+     "battery-switch",
+     "incident-gateway",
+     "supply-chain-standup",
+     "tartu-plant",
+     "osterby-qbr",
+     "hallam-note",
+     "brightwater-order"
+    ]
+   },
+   {
+    "id": "product:borealis-controller",
+    "name": "Borealis controller",
+    "type": "Product",
+    "members": [
+     {
+      "name": "Borealis controller",
+      "how": "first"
+     },
+     {
+      "name": "Borealis",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "borealis-release-2-4",
+     "teams-q1",
+     "key-accounts",
+     "incident-gateway",
+     "supply-chain-standup",
+     "varnell-bay-order",
+     "pellham-qbr",
+     "hallam-note"
+    ]
+   },
+   {
+    "id": "product:meridian",
+    "name": "Meridian",
+    "type": "Product",
+    "members": [
+     {
+      "name": "Meridian",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "meridian-launch",
+     "northmoor-pilot",
+     "incident-gateway",
+     "tartu-plant"
+    ]
+   },
+   {
+    "id": "product:qx-7",
+    "name": "QX-7",
+    "type": "Product",
+    "members": [
+     {
+      "name": "QX-7",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "calder-email"
+    ]
+   },
+   {
+    "id": "service:fleet-console",
+    "name": "Fleet Console",
+    "type": "Service",
+    "members": [
+     {
+      "name": "Fleet Console",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "fleet-console",
+     "osterby-qbr"
+    ]
+   },
+   {
+    "id": "service:ota-update-service",
+    "name": "OTA Update Service",
+    "type": "Service",
+    "members": [
+     {
+      "name": "OTA Update Service",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "reorg-memo"
+    ]
+   },
+   {
+    "id": "service:telemetry-gateway",
+    "name": "Telemetry Gateway",
+    "type": "Service",
+    "members": [
+     {
+      "name": "Telemetry Gateway",
+      "how": "first"
+     },
+     {
+      "name": "TGW",
+      "how": "llm: confirmed",
+      "detail": "cosine 0.841: The launch note explicitly defines 'TGW' as 'our telemetry gateway', confirming it is an abbreviation for the Telemetry Gateway service."
+     }
+    ],
+    "docs": [
+     "atlas-3-brief",
+     "teams-q1",
+     "borealis-release-2-4",
+     "incident-gateway",
+     "fleet-console",
+     "reorg-memo",
+     "meridian-launch"
+    ]
+   },
+   {
+    "id": "site:brno-plant",
+    "name": "Brno plant",
+    "type": "Site",
+    "members": [
+     {
+      "name": "Brno plant",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "borealis-release-2-4",
+     "board-update-q3"
+    ]
+   },
+   {
+    "id": "site:harbour-street",
+    "name": "Harbour Street",
+    "type": "Site",
+    "members": [
+     {
+      "name": "Harbour Street",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "board-update-q3"
+    ]
+   },
+   {
+    "id": "site:tartu-plant",
+    "name": "Tartu plant",
+    "type": "Site",
+    "members": [
+     {
+      "name": "Tartu plant",
+      "how": "first"
+     },
+     {
+      "name": "Tartu",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "atlas-3-brief",
+     "cafeteria-memo",
+     "tartu-plant",
+     "meridian-launch",
+     "brightwater-order"
+    ]
+   },
+   {
+    "id": "team:atlas-team",
+    "name": "Atlas team",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Atlas team",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "newsletter-june"
+    ]
+   },
+   {
+    "id": "team:customer-support",
+    "name": "Customer Support",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Customer Support",
+      "how": "first"
+     },
+     {
+      "name": "Support",
+      "how": "person: approved",
+      "detail": "In the org update, \"Support escalates any defect\" refers to Customer Support, the team named in the sentence before."
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "brightwater-order"
+    ]
+   },
+   {
+    "id": "team:data-platform-team",
+    "name": "Data Platform team",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Data Platform team",
+      "how": "first"
+     },
+     {
+      "name": "Data Platform",
+      "how": "rule: abbreviation or initial"
+     }
+    ],
+    "docs": [
+     "reorg-memo",
+     "fleet-console"
+    ]
+   },
+   {
+    "id": "team:firmware-team",
+    "name": "Firmware team",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Firmware team",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "reorg-memo",
+     "office-move"
+    ]
+   },
+   {
+    "id": "team:hardware-team",
+    "name": "Hardware team",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Hardware team",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "teams-q1",
+     "borealis-release-2-4",
+     "office-move"
+    ]
+   },
+   {
+    "id": "team:sales-team",
+    "name": "sales team",
+    "type": "Team",
+    "members": [
+     {
+      "name": "sales team",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "northmoor-pilot"
+    ]
+   },
+   {
+    "id": "team:supply-chain",
+    "name": "Supply Chain",
+    "type": "Team",
+    "members": [
+     {
+      "name": "Supply Chain",
+      "how": "first"
+     }
+    ],
+    "docs": [
+     "kerrin-second-source",
+     "supply-chain-standup"
+    ]
+   }
+  ],
+  "evaluation": {
+   "surfaces": 68,
+   "clusters": 47,
+   "goldEntitiesSeen": 42,
+   "falseMerges": [],
+   "falseSplits": [],
+   "unmapped": [
+    {
+     "name": "Harbour Street",
+     "type": "Site",
+     "docs": [
+      "board-update-q3"
+     ]
+    },
+    {
+     "name": "Atlas team",
+     "type": "Team",
+     "docs": [
+      "newsletter-june"
+     ]
+    },
+    {
+     "name": "sales team",
+     "type": "Team",
+     "docs": [
+      "northmoor-pilot"
+     ]
+    }
+   ],
+   "typeErrors": [
+    {
+     "name": "Meridian",
+     "extractedAs": "Customer",
+     "goldType": "Product",
+     "docs": [
+      "board-update-q3"
+     ]
+    },
+    {
+     "name": "QX-7",
+     "extractedAs": "Product",
+     "goldType": "Component",
+     "docs": [
+      "calder-email"
+     ]
+    }
+   ]
+  }
+ },
+ "withoutTypeGuard": [
+  {
+   "cluster": "Telemetry Gateway outage",
+   "members": [
+    {
+     "name": "Telemetry Gateway outage",
+     "gold": "Telemetry Gateway outage",
+     "goldType": "Incident"
+    },
+    {
+     "name": "Telemetry Gateway",
+     "gold": "Telemetry Gateway",
+     "goldType": "Service"
+    }
+   ]
+  }
+ ],
+ "ambiguousWithoutTypeGuard": [
+  {
+   "name": "QX-7",
+   "type": "Any",
+   "candidates": [
+    "QX-7 shipment delay",
+    "QX-7 radio chip"
+   ]
+  },
+  {
+   "name": "Varnell",
+   "type": "Any",
+   "candidates": [
+    "Varnell Bay Marina",
+    "Varnell Semiconductor"
+   ]
+  }
+ ]
+}

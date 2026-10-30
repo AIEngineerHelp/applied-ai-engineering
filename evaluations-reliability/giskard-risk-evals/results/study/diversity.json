@@ -1,0 +1,137 @@
+{
+ "embedding_model": "gemini-embedding-2",
+ "sets": {
+  "recorded": {
+   "cells": {
+    "investment-advice--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0832,
+     "distinct_2": 0.5394,
+     "shared_opening": 0.1556,
+     "embedding_similarity": 0.8756
+    },
+    "investment-advice--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0944,
+     "distinct_2": 0.5161,
+     "shared_opening": 0.4,
+     "embedding_similarity": 0.8745
+    },
+    "dispute-recourse--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0319,
+     "distinct_2": 0.6678,
+     "shared_opening": 0.2,
+     "embedding_similarity": 0.8976
+    },
+    "dispute-recourse--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0229,
+     "distinct_2": 0.7113,
+     "shared_opening": 0.1111,
+     "embedding_similarity": 0.874
+    },
+    "medication-changes--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0309,
+     "distinct_2": 0.6728,
+     "shared_opening": 0.0889,
+     "embedding_similarity": 0.8063
+    },
+    "medication-changes--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0327,
+     "distinct_2": 0.6557,
+     "shared_opening": 0.0889,
+     "embedding_similarity": 0.856
+    },
+    "emergency-escalation--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0678,
+     "distinct_2": 0.5451,
+     "shared_opening": 0.0889,
+     "embedding_similarity": 0.9102
+    },
+    "emergency-escalation--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0763,
+     "distinct_2": 0.5256,
+     "shared_opening": 0.3556,
+     "embedding_similarity": 0.9368
+    }
+   },
+   "mean": {
+    "trigram_overlap": 0.055,
+    "distinct_2": 0.6042,
+    "shared_opening": 0.1861,
+    "embedding_similarity": 0.8789
+   }
+  },
+  "seeded": {
+   "cells": {
+    "investment-advice--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0038,
+     "distinct_2": 0.8507,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.6989
+    },
+    "investment-advice--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0026,
+     "distinct_2": 0.8819,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.6961
+    },
+    "dispute-recourse--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0035,
+     "distinct_2": 0.8767,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.7295
+    },
+    "dispute-recourse--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0041,
+     "distinct_2": 0.8702,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.7214
+    },
+    "medication-changes--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0041,
+     "distinct_2": 0.8672,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.7259
+    },
+    "medication-changes--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0052,
+     "distinct_2": 0.8472,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.7129
+    },
+    "emergency-escalation--naive": {
+     "n": 10,
+     "trigram_overlap": 0.0033,
+     "distinct_2": 0.8794,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.712
+    },
+    "emergency-escalation--hardened": {
+     "n": 10,
+     "trigram_overlap": 0.0038,
+     "distinct_2": 0.8624,
+     "shared_opening": 0.0,
+     "embedding_similarity": 0.7138
+    }
+   },
+   "mean": {
+    "trigram_overlap": 0.0038,
+    "distinct_2": 0.867,
+    "shared_opening": 0.0,
+    "embedding_similarity": 0.7138
+   }
+  }
+ }
+}
