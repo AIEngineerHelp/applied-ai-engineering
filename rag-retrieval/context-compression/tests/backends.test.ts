@@ -133,6 +133,15 @@ test("HTTP API enforces same-origin JSON and loopback Host before invoking a run
     assert.equal(caps.localModelsEnabled, false);
     const result = await fetch(base + "/api/compress", { method: "POST", headers: { "Content-Type": "application/json", Origin: base, "X-Compression-Lab": "1" }, body: JSON.stringify(request("semantic")) });
     assert.equal(result.status, 200); assert.equal(calls, 1);
+    const experiment = { mode: "fixture", kind: "agent", source, scenarioId: "document", options: { ...defaults, query: "refunds" }, maxSteps: 4, judge: true };
+    const blockedExperiment = await fetch(base + "/api/experiment", { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://example.com", "X-Compression-Lab": "1" }, body: JSON.stringify(experiment) });
+    assert.equal(blockedExperiment.status, 403);
+    const workflow = await fetch(base + "/api/experiment", { method: "POST", headers: { "Content-Type": "application/json", Origin: base, "X-Compression-Lab": "1" }, body: JSON.stringify(experiment) });
+    assert.equal(workflow.status, 200);
+    const trace = await workflow.json() as { mode: string; full: { status: string; steps: unknown[] }; compressed: { status: string }; disclaimer: string };
+    assert.equal(trace.mode, "fixture"); assert.equal(trace.full.status, "complete"); assert.equal(trace.compressed.status, "complete");
+    assert.equal(trace.full.steps.length, 2); assert.match(trace.disclaimer, /Scripted/);
+    assert.equal(calls, 1); // Scripted workflows never invoke the optional inference runner.
     const rebinding = await new Promise<number>((resolve, reject) => {
       const req = httpRequest(base + "/api/capabilities", { headers: { Host: "attacker.example" } }, (res) => { res.resume(); resolve(res.statusCode!); });
       req.on("error", reject); req.end();

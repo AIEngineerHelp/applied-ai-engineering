@@ -21,14 +21,14 @@ export function semanticScoring(source: string, units: Unit[], scores: unknown, 
     description: `Semantic cosine similarity from ${model}; scores are not correctness probabilities. Embeddings are computed independently per unit.` };
 }
 
-export function hostedResult(source: string, text: string, options: Options, model: string, durationMs: number): Result {
+export function hostedResult(source: string, text: string, options: Options, model: string, durationMs: number, method = "compresr"): Result {
   const originalTokens = countTokens(source);
   const compressedTokens = countTokens(text);
   return { text, units: [], selected: [], spans: [], segments: [], originalTokens, compressedTokens,
     budget: Math.floor(originalTokens * (1 - options.remove / 100)), removed: originalTokens ? 1 - compressedTokens / originalTokens : 0,
     status: "compressed", alignment: "unavailable",
     reason: `${model} returned text without source offsets. Exact dropped-span attribution is unavailable. API removal is approximate; token counts here use cl100k_base.`,
-    backend: { method: "compresr", model, durationMs, fallback: false } };
+    backend: { method, model, durationMs, fallback: false } };
 }
 
 export function rawFallback(source: string, options: Options, method: string, durationMs: number): Result {

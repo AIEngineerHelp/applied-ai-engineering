@@ -40,10 +40,13 @@ def run(payload: dict) -> dict:
     # This gate precedes importing torch/transformers or loading any model.
     if os.environ.get("ENABLE_LOCAL_MODELS") != "1":
         raise RuntimeError("Local model execution is disabled")
-    if payload.get("method") not in {"semantic", "llmlingua2"}:
+    if payload.get("method") not in {"semantic", "llmlingua2", "llmlingua", "longllmlingua"}:
         raise ValueError("Unsupported model method")
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    if payload["method"] in {"llmlingua", "longllmlingua"}:
+        from reference import run_reference
+        return run_reference(payload)
     import torch
     from transformers import AutoModel, AutoModelForTokenClassification, AutoTokenizer
 

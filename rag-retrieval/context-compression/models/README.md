@@ -43,3 +43,20 @@ Sources reviewed 2026-10-29:
 - [LLMLingua-2 checkpoint and license](https://huggingface.co/microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank)
 - [LLMLingua-2 paper](https://arxiv.org/abs/2403.12968)
 - [Reference implementation: class-1 probabilities and word pooling](https://github.com/microsoft/LLMLingua/blob/main/llmlingua/prompt_compressor.py)
+
+## Reference LLMLingua and LongLLMLingua adapters (added 2026-11-01)
+
+These are **gated integrations of the reference library**, not a home-grown approximation of perplexity scoring. They remain disabled and have been tested only with a fake compressor; no local model inference or weight downloads have occurred.
+
+The optional `perplexity/` project has its own manifest and lockfile. It pins LLMLingua 0.2.2 and Transformers 4.38.2 to use the reference causal-LM cache interfaces, independently of the BGE/LLMLingua-2 environment. Resolving the lockfile does not install dependencies. Do not sync this environment or provision weights until the laptop owner authorizes it.
+
+Both methods use cached `microsoft/phi-2` weights as the causal scorer (a model supported by the reference library, not a reproduction of the papers' original model/hardware settings). The caller's removal percentage becomes the library's **keep rate**: removing 40% sends `rate=0.6`. Returned model-token/cl100k_base removal is approximate. Library retokenization and optional reordering mean no exact source-offset dropped view is claimed.
+
+- **LLMLingua:** task-agnostic perplexity pruning, using the whole source as context. Question is excluded from scoring/output in this adapter.
+- **LongLLMLingua:** the library's `rank_method="longllmlingua"`, `condition_in_question="after_condition"`, `condition_compare=True`, `reorder_context="sort"`, `dynamic_context_compression_ratio=0.3`, and `context_budget="+100"`. Units with their headings are passed as contexts; this enables the reference context-ranking, query-conditioned pruning, budget allocation and reordering paths. The question is not concatenated into the returned compressed text.
+
+The library is imported only after `ENABLE_LOCAL_MODELS=1`. All Hugging Face loads require local files and safetensors; socket connections are blocked during import/initialization/compression so missing auxiliary tokenizer assets fail instead of downloading. Runtime is bounded by the existing 90-second subprocess timeout. Source+question is conservatively checked against the cached scorer's position window with 256 tokens of headroom. This teaching adapter rejects overflow instead of claiming arbitrary long-context support. Phi-2 is a multi-billion-parameter model with substantial RAM/storage needs; no claim is made that it fits or performs acceptably on this laptop.
+
+After future explicit authorization, `PERPLEXITY_PYTHON` may identify the separate environment; otherwise its path defaults to `models/perplexity/.venv/bin/python`. Its dependency setup is `uv sync --locked` **inside `models/perplexity/`**, but this document is not authorization to run it.
+
+Sources checked 2026-11-01: [reference compressor source](https://github.com/microsoft/LLMLingua/blob/main/llmlingua/prompt_compressor.py), [usage documentation](https://github.com/microsoft/LLMLingua/blob/main/DOCUMENT.md). The source's `rate` parameter is used; older documentation snippets using `ratio` are not copied blindly.

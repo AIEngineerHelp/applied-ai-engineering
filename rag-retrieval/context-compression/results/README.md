@@ -16,3 +16,9 @@ Some instructive results:
 The UI's “Two sources required” preset also lets you reduce retrieval to top-k=1 to observe a retrieval miss. That setting is a separate interactive experiment; this saved sweep uses top-k=3 throughout.
 
 The added MMR and word-deletion rows involve no models. In the refund example at a 50% target, MMR retains both annotated facts in 198 tokens; lexical word deletion keeps only 28 tokens and retains neither complete fact. This is a deliberately simple lexical baseline: large token reduction alone is not evidence of successful compression. The sweep contains no BGE, LLMLingua-2 or Compresr measurements; their adapters have only been tested with mocks.
+
+## Workflow fixtures (2026-11-01)
+
+`workflow-fixtures.json` records 12 scripted control-flow cases: three corpora × paired/agent workflows × lexical/word-deletion compressors. Regenerate with `node --import=tsx scripts/workflow-evaluate.ts > results/workflow-fixtures.json` or inspect with `npm run eval:workflows`.
+
+These cases execute the orchestration code, parallel lane dispatch, bounded tool loops and blind A/B mapping, **not LLM inference**. The fixture answer driver extracts lexical matches; its judge checks exact string equality or reports uncertain. It is not a semantic judge, model comparison, calibration study or answer-quality benchmark. Times are omitted and A/B order is fixed only in this deterministic export. Interactive/live runs randomize judge order independently.

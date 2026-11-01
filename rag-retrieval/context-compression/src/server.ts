@@ -2,6 +2,8 @@ import { createServer, type IncomingMessage } from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve, sep, extname } from "node:path";
 import { capabilities, configFromEnv, parseRequest, runBackend, type BackendConfig, type BackendRequest } from "./backends.ts";
+import { generationFromEnv, generationReady } from "./generation.ts";
+import { parseExperiment, runExperiment } from "./experiments.ts";
 import type { Result } from "./compress.ts";
 
 async function readJson(req: IncomingMessage): Promise<unknown> {
@@ -18,6 +20,7 @@ const types: Record<string, string> = { ".html": "text/html; charset=utf-8", ".c
 
 export function createAppServer(root: string, config: BackendConfig = configFromEnv(), runner: (request: BackendRequest, config: BackendConfig) => Promise<Result> = runBackend) {
   let busy = false;
+  const generation = generationFromEnv();
   return createServer(async (req, res) => {
     const json = (status: number, value: object) => res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store", "x-content-type-options": "nosniff" }).end(JSON.stringify(value));
     // Reject DNS rebinding as well as cross-origin browser requests.
@@ -25,13 +28,15 @@ export function createAppServer(root: string, config: BackendConfig = configFrom
     if (!/^127\.0\.0\.1:\d+$/.test(host) && !/^localhost:\d+$/.test(host)) { json(403, { error: "Loopback host required." }); return; }
     try {
       const path = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
-      if (path === "/api/capabilities" && req.method === "GET") { json(200, capabilities(config)); return; }
-      if (path === "/api/compress" && req.method === "POST") {
+      if (path === "/api/capabilities" && req.method === "GET") { json(200, { ...capabilities(config), experiments: { liveReady: generationReady(generation), answerModel: generation.answerModel ?? null, judgeModel: generation.judgeModel ?? null } }); return; }
+      if (["/api/compress", "/api/experiment"].includes(path) && req.method === "POST") {
         if (req.headers.origin !== `http://${host}` || req.headers["x-compression-lab"] !== "1" || !req.headers["content-type"]?.startsWith("application/json")) { json(403, { error: "Same-origin JSON request required." }); return; }
         if (busy) { json(429, { error: "A compression call is already running. Wait for it to finish." }); return; }
-        const request = parseRequest(await readJson(req));
+        const body = await readJson(req);
+        if (busy) { json(429, { error: "Another request started while this body was being read." }); return; }
+        const request = path === "/api/compress" ? parseRequest(body) : parseExperiment(body);
         busy = true;
-        try { json(200, await runner(request, config)); }
+        try { json(200, path === "/api/compress" ? await runner(request as ReturnType<typeof parseRequest>, config) : await runExperiment(request as ReturnType<typeof parseExperiment>, config, generation)); }
         finally { busy = false; }
         return;
       }

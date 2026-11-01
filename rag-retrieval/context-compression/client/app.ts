@@ -1,4 +1,5 @@
 import { checkEvidence, compress, defaults, isModelMethod, type Options, type Result } from "../src/compress.ts";
+import type { ExperimentResult, Lane } from "../src/experiments.ts";
 import { formatPassages, retrieve, scenarios, type Question } from "../src/fixtures.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => {
@@ -28,7 +29,11 @@ let pending = false;
 let browserQueryAware = true;
 let previousMethod: Options["method"] = "relevance";
 let running = false;
-let backendCapabilities = { localModelsEnabled: false, compresrConfigured: false };
+let backendCapabilities = { localModelsEnabled: false, compresrConfigured: false, layaConfigured: false,
+  experiments: { liveReady: false, answerModel: null as string | null, judgeModel: null as string | null } };
+let serverAvailable = false;
+let comparisonRunning = false;
+let comparisonResult: ExperimentResult | null = null;
 const modelResults = new Map<string, Result>();
 const methodHelp: Record<string, string> = {
   relevance: "Lexical overlap ranks whole units. Fast and inspectable; misses synonyms.",
@@ -37,6 +42,9 @@ const methodHelp: Record<string, string> = {
   truncate: "Keep a prefix. It ignores both the question and the reading focus.",
   semantic: "BGE embeddings compare the question with each unit using cosine similarity. Requires explicitly enabled local inference and cached weights. No downloads occur.",
   llmlingua2: "Published LLMLingua-2 token-classification checkpoint. Keep probabilities are averaged per whitespace word and packed by our budget controller. Task-agnostic: question and focus are ignored. Requires explicitly enabled local inference.",
+  laya: "Public Laya remote semantic-unit scoring via its typed-decision API, followed by our heading-aware budget packer. Requires an explicitly configured remote HTTPS server and remote-call consent. Not Compresr’s private Laya demo.",
+  llmlingua: "Reference LLMLingua library: task-agnostic causal-LM perplexity pruning using cached Phi-2 weights. Disabled until local inference is explicitly authorized. Returned text may be retokenized; no exact dropped view.",
+  longllmlingua: "Reference LongLLMLingua library: query-conditioned perplexity pruning, context ranking, reordering and dynamic budget allocation. Disabled until local inference is authorized. Not the lexical heuristic above.",
   compresr: "Hosted Latte v2.1. Your source and question leave this device. A configured server key and explicit paid-call consent are required. The API returns text, not source offsets.",
 };
 const labels: Record<string, string> = {
@@ -53,9 +61,9 @@ function getOptions(): Options {
     if (!isModelMethod(method)) input("aware").checked = browserQueryAware;
     previousMethod = method;
   }
-  if (["truncate", "llmlingua2"].includes(method)) select("budget-mode").value = "fixed";
-  if (method === "semantic" || method === "compresr") input("aware").checked = true;
-  if (method === "llmlingua2") input("aware").checked = false;
+  if (["truncate", "llmlingua2", "llmlingua", "longllmlingua"].includes(method)) select("budget-mode").value = "fixed";
+  if (["semantic", "compresr", "laya", "longllmlingua"].includes(method)) input("aware").checked = true;
+  if (["llmlingua2", "llmlingua"].includes(method)) input("aware").checked = false;
   return {
     ...defaults, query: textarea("question").value, focus: scenario.id === "agent" ? textarea("focus").value : "",
     useFocus: input("use-focus").checked, queryAware: input("aware").checked,
@@ -95,21 +103,21 @@ function update() {
       ? compress(source, { ...options, method: "relevance", remove: 0, dynamic: false })
       : modelResults.get(currentKey) ?? compress(source, options);
     $("model-controls").hidden = !isModelMethod(options.method);
-    $("paid-consent").hidden = options.method !== "compresr";
+    $("paid-consent").hidden = !["compresr", "laya"].includes(options.method);
     $("method-description").textContent = methodHelp[options.method];
     $("diversity-controls").hidden = options.method !== "mmr";
     $("diversity-value").textContent = Number(options.diversity).toFixed(2);
-    const available = options.method === "compresr" ? backendCapabilities.compresrConfigured : backendCapabilities.localModelsEnabled;
-    $("backend-status").textContent = options.method === "compresr"
+    const available = options.method === "compresr" ? backendCapabilities.compresrConfigured : options.method === "laya" ? backendCapabilities.layaConfigured : backendCapabilities.localModelsEnabled;
+    $("backend-status").textContent = options.method === "laya" ? available ? "Remote Laya service configured. This run sends the text to that service." : "Remote Laya is disabled. Configure ENABLE_LAYA_REMOTE and LAYA_BASE_URL; no laptop model service is used." : options.method === "compresr"
       ? available ? "Server key configured. This call may incur API charges." : "Not configured. Set COMPRESR_API_KEY on the server to use hosted compression."
       : available ? "Local inference explicitly enabled by server configuration. Cached weights only." : "Local inference is disabled. Do not enable it until the laptop owner authorizes it.";
-    $<HTMLButtonElement>("run-model").disabled = running || !available;
+    $<HTMLButtonElement>("run-model").disabled = running || comparisonRunning || !available;
     $("run-model").textContent = running ? "Compression running…" : "Run compression";
     const outputOnly = result.alignment === "unavailable";
     const sizes = select("granularity").options;
     sizes[0].text = options.method === "compresr" ? "Fine · API token-level" : options.method === "llmlingua2" ? "Word spans · token classifier" : options.method === "words" ? "Word spans · lexical" : "Sentence · more precise";
     sizes[1].text = options.method === "compresr" ? "Coarse · API paragraphs" : "Paragraph · more context";
-    $("ranking-description").textContent = options.method === "semantic"
+    $("ranking-description").textContent = options.method === "laya" ? "Public Laya relevance judgments per independent source unit. These scores are not guarantees of correctness or full context coverage." : ["llmlingua", "longllmlingua"].includes(options.method) ? "Reference causal-LM perplexity compression returns retokenized text without source offsets. Per-unit score inspection and exact dropped-span attribution are unavailable." : options.method === "semantic"
       ? "Cosine similarities from independent BGE unit embeddings, not probabilities or a correctness guarantee."
       : options.method === "llmlingua2" ? "Checkpoint token keep probabilities averaged per whitespace word; our packer enforces the displayed budget."
       : "Lexical overlap with an inverse-document-frequency weight, divided by √unique terms. Heading words count too. MMR adds a changing redundancy penalty during selection; displayed scores are base relevance. Evidence labels never influence selection.";
@@ -124,10 +132,10 @@ function update() {
     $("remove-value").textContent = `${options.remove}%`;
     $("top-k-value").textContent = String(k);
     select("granularity").disabled = ["truncate", "words", "llmlingua2"].includes(options.method);
-    select("budget-mode").disabled = ["truncate", "llmlingua2"].includes(options.method);
-    input("aware").disabled = ["truncate", "semantic", "llmlingua2", "compresr"].includes(options.method);
-    $("aware-hint").textContent = options.method === "llmlingua2" ? "Task-agnostic checkpoint; question and focus are ignored." : options.method === "truncate" ? "Truncation takes a prefix; relevance scoring is ignored." : options.queryAware ? "Rank units by overlap with the question." : "Rank by generic term rarity. The question is ignored.";
-    $("source-meta").innerHTML = `<div><span class="eyebrow">${custom !== null ? "YOUR DOCUMENT" : escape(scenario.kind.toUpperCase())}</span><h3>${custom !== null ? "Custom context" : escape(scenario.origin)}</h3><p>${custom !== null ? options.method === "compresr" ? "Custom text is sent to Compresr only when you explicitly run hosted compression." : "Your text stays on this device." : escape(scenario.description)}</p>${retrieved && custom === null ? `<div class="retrieved">${retrieved.map((r) => `<span title="Lexical overlap: ${r.score} terms">${escape(r.passage.id)} · ${r.score} matches</span>`).join("")}</div>` : ""}</div><button id="export-trace" type="button" class="text-button" ${pending ? "disabled" : ""}>Export trace ↓</button>`;
+    select("budget-mode").disabled = ["truncate", "llmlingua2", "llmlingua", "longllmlingua"].includes(options.method);
+    input("aware").disabled = ["truncate", "semantic", "llmlingua2", "compresr", "laya", "llmlingua", "longllmlingua"].includes(options.method);
+    $("aware-hint").textContent = ["llmlingua2", "llmlingua"].includes(options.method) ? "Task-agnostic checkpoint; question and focus are ignored." : options.method === "truncate" ? "Truncation takes a prefix; relevance scoring is ignored." : options.queryAware ? "Rank units by overlap with the question." : "Rank by generic term rarity. The question is ignored.";
+    $("source-meta").innerHTML = `<div><span class="eyebrow">${custom !== null ? "YOUR DOCUMENT" : escape(scenario.kind.toUpperCase())}</span><h3>${custom !== null ? "Custom context" : escape(scenario.origin)}</h3><p>${custom !== null ? ["compresr", "laya"].includes(options.method) ? "Custom text is sent remotely only when you explicitly run this method or a live experiment." : "Your text stays on this device." : escape(scenario.description)}</p>${retrieved && custom === null ? `<div class="retrieved">${retrieved.map((r) => `<span title="Lexical overlap: ${r.score} terms">${escape(r.passage.id)} · ${r.score} matches</span>`).join("")}</div>` : ""}</div><button id="export-trace" type="button" class="text-button" ${pending ? "disabled" : ""}>Export trace ↓</button>`;
     const ratio = result.compressedTokens ? `${(result.originalTokens / result.compressedTokens).toFixed(1)}×` : "—";
     $("metrics").innerHTML = `<div><span>Original tokens</span><strong>${number(result.originalTokens)}</strong></div><div><span>Kept tokens</span><strong class="blue-text">${number(result.compressedTokens)}<small> / ${number(result.budget)} budget</small></strong></div><div><span>Actual removal</span><strong>${Math.round(result.removed * 100)}<small>%</small></strong></div><div><span>Compression factor</span><strong>${ratio}</strong></div>`;
     if (pending) $("metrics").innerHTML = `<div><span>Original tokens</span><strong>${number(result.originalTokens)}</strong></div><div><span>Kept tokens</span><strong>—</strong></div><div><span>Actual removal</span><strong>—</strong></div><div><span>Method status</span><strong><small>Not run</small></strong></div>`;
@@ -138,7 +146,7 @@ function update() {
       : seg.text.trim() ? `<details class="cut"><summary>${dropLabel(seg.text)} <span aria-hidden="true">+</span></summary><div class="dropped-text">${escape(seg.text)}</div></details>` : "").join("") : `<p class="empty">Nothing to compress yet.</p>`;
     if (outputOnly) {
       $("original").textContent = source;
-      $("compressed").innerHTML = `<p class="hint">Hosted output · no source offsets supplied. Expandable cuts are unavailable.</p><span class="kept-span">${escape(result.text)}</span>`;
+      $("compressed").innerHTML = `<p class="hint">Model-returned text · no source offsets supplied. Expandable cuts are unavailable.</p><span class="kept-span">${escape(result.text)}</span>`;
     }
     if (pending) $("original").textContent = source;
     if (pending) $("compressed").innerHTML = `<p class="empty">${escape(methodHelp[options.method])}<br><br>Compression has not run. Use the explicit run button in settings when this backend is enabled.</p>`;
@@ -152,15 +160,17 @@ function update() {
     $("evidence").innerHTML = pending ? "" : facts.map((fact) => `<div class="fact ${fact.kept ? "pass" : "warn"}"><span class="fact-icon" aria-hidden="true">${fact.kept ? "✓" : "!"}</span><div><strong>${escape(fact.label)}</strong><blockquote>${escape(fact.quote)}</blockquote></div><span class="fact-status">${fact.kept ? "Retained" : fact.present ? "Dropped" : "Not retrieved"}</span></div>`).join("");
     $("lesson").hidden = pending || !annotations.length;
     $("lesson").textContent = question.lesson;
-    $("ranking").innerHTML = pending || outputOnly ? `<p class="hint">${pending ? "Run the selected method to see its scores." : "Compresr does not return per-unit scores through this endpoint."}</p>` : `<table><caption class="sr-only">Source units ranked by relevance</caption><thead><tr><th scope="col">Unit / matching terms</th><th scope="col">Score</th><th scope="col">Decision</th></tr></thead><tbody>${[...result.units].sort((a, b) => b.score - a.score || a.id - b.id).map((unit) => `<tr><td><strong>#${unit.id + 1}</strong> ${escape(unit.text)}<small>${["semantic", "llmlingua2"].includes(options.method) ? "Model score" : options.queryAware ? unit.matches.length ? `Matches: ${escape(unit.matches.join(", "))}` : "No matching terms" : "Query awareness off"}</small></td><td>${unit.score.toFixed(3)}</td><td>${result.selected.includes(unit.id) ? "Kept" : result.spans.some((s) => s.start < unit.end && s.end > unit.start) ? "Partial" : "Dropped"}</td></tr>`).join("")}</tbody></table>`;
+    $("ranking").innerHTML = pending || outputOnly ? `<p class="hint">${pending ? "Run the selected method to see its scores." : "This text-returning adapter does not return per-unit scores."}</p>` : `<table><caption class="sr-only">Source units ranked by relevance</caption><thead><tr><th scope="col">Unit / matching terms</th><th scope="col">Score</th><th scope="col">Decision</th></tr></thead><tbody>${[...result.units].sort((a, b) => b.score - a.score || a.id - b.id).map((unit) => `<tr><td><strong>#${unit.id + 1}</strong> ${escape(unit.text)}<small>${["semantic", "llmlingua2", "laya"].includes(options.method) ? "Model score" : options.queryAware ? unit.matches.length ? `Matches: ${escape(unit.matches.join(", "))}` : "No matching terms" : "Query awareness off"}</small></td><td>${unit.score.toFixed(3)}</td><td>${result.selected.includes(unit.id) ? "Kept" : result.spans.some((s) => s.start < unit.end && s.end > unit.start) ? "Partial" : "Dropped"}</td></tr>`).join("")}</tbody></table>`;
     exportTrace = { version: 1, scenario: scenario.id, custom: custom !== null, encoding: "cl100k_base", options, source, result, evidence: facts, pending, disclaimer: "Evidence retention is not answer accuracy. Backend metadata distinguishes model runs from offline baselines." };
     $("sweep-section").hidden = true;
     $("error").hidden = true;
     $<HTMLButtonElement>("copy").disabled = pending;
+    comparisonAvailability();
   } catch (error) {
     $("error").textContent = (error instanceof Error ? error.message : "Could not compress the text.") + " Showing the last valid result.";
     $("error").hidden = false;
     $<HTMLButtonElement>("copy").disabled = true;
+    comparisonAvailability();
     announce("Settings are invalid. The displayed result is from the last valid settings.");
   }
 }
@@ -209,7 +219,7 @@ $("toggle-settings").addEventListener("click", () => {
   $("toggle-settings").textContent = collapsed ? "Adjust compression settings +" : "Hide compression settings −";
 });
 $("run-model").addEventListener("click", async () => {
-  if (running) return;
+  if (running || comparisonRunning) return;
   update();
   if (!$("error").hidden) return;
   const key = currentKey;
@@ -232,6 +242,73 @@ $("run-model").addEventListener("click", async () => {
 });
 setScenario("document");
 fetch("/api/capabilities").then(async (response) => {
-  if (response.ok) backendCapabilities = await response.json();
+  if (response.ok) { backendCapabilities = await response.json(); serverAvailable = true; }
   update();
 }).catch(() => { /* Static export: offline methods remain available. */ });
+
+
+function comparisonAvailability() {
+  const mode = select("comparison-mode").value;
+  const kind = select("comparison-kind").value;
+  const maxCalls = (kind === "paired" ? 2 : Number(input("agent-steps").value) * 2) + (input("use-judge").checked ? 1 : 0);
+  $("comparison-consent").hidden = mode !== "live";
+  $("agent-step-control").hidden = kind !== "agent";
+  $("comparison-cap").textContent = mode === "fixture" ? "Scripted fixture only. No models, API calls, semantic judgment or quality measurements. Uses the selected browser compressor."
+    : `At most ${maxCalls} Gemini generation calls, plus at most ${kind === "paired" ? 1 : Number(input("agent-steps").value)} compression runs. Each remote Laya run may score up to 64 units in a batch. No retries. Answer model: ${backendCapabilities.experiments?.answerModel ?? "not configured"}; judge: ${backendCapabilities.experiments?.judgeModel ?? "not configured"}.`;
+  const blockedMethod = mode === "fixture" && isModelMethod(select("method").value as Options["method"]);
+  $<HTMLButtonElement>("run-comparison").disabled = comparisonRunning || running || !serverAvailable || blockedMethod || mode === "live" && !backendCapabilities.experiments?.liveReady;
+  $("run-comparison").textContent = comparisonRunning ? "Running both lanes…" : "Run both lanes";
+  $("comparison-help").textContent = !serverAvailable ? "Workflow runs need the local Node server (npm start). The static export supports the browser compression lesson."
+    : blockedMethod ? "Choose a browser method above for the scripted workflow. Model adapters are never executed by fixtures."
+    : mode === "live" && !backendCapabilities.experiments?.liveReady ? "Live generation is not configured. Set a server-side Gemini key and explicit answer/judge model names."
+    : kind === "agent" ? "Each lane starts with the same synthetic corpus and independently chooses search, read and finish. Each tool result in the right lane is compressed before the next turn."
+    : "Both answering calls start together after compression, using the same question, model and settings. Only their context differs.";
+}
+function renderLane(lane: Lane, label: string) {
+  const calls = lane.calls.length + lane.failedCalls;
+  const usage = lane.calls.every((call) => call.usage.totalTokens !== null) && lane.calls.length
+    ? String(lane.calls.reduce((sum, call) => sum + call.usage.totalTokens!, 0)) : "unavailable";
+  return `<article class="run-lane"><h3>${label}</h3><p class="run-status">${escape(lane.status)} · ${calls} attempted generation calls · ${Math.round(lane.durationMs)} ms</p>${lane.compressionDurationMs !== undefined ? `<p class="hint">Compression preparation: ${Math.round(lane.compressionDurationMs)} ms, before the two parallel answering calls.</p>` : ""}<p class="hint">Provider-reported total tokens: ${usage}${lane.failedCalls ? "; failed-call usage may be missing" : ""}. Local fixture usage is unavailable.</p>
+    ${lane.error ? `<p class="error">${escape(lane.error)}</p>` : ""}
+    <div class="run-answer">${escape(lane.answer?.answer ?? "No final answer. A failed or limited run is not scored as equivalent.")}</div>
+    ${lane.answer?.citations.length ? `<p class="hint">Citations: ${escape(lane.answer.citations.join(", "))}</p>` : ""}
+    ${lane.compression ? `<details><summary>Context sent to the answering model · ${lane.compression.compressedTokens} tokens</summary><pre>${escape(lane.compression.text)}</pre></details>` : ""}
+    ${lane.steps.map((step) => `<details><summary>Step ${step.index}: ${step.action} · ${step.originalTokens} → ${step.keptTokens} tokens</summary><p class="hint">Arguments: ${escape(JSON.stringify(step.args))}</p><h4>Raw tool result</h4><pre>${escape(step.raw)}</pre><h4>Context the next model turn saw</h4><pre>${escape(step.seen)}</pre>${step.compression ? `<p class="hint">${escape(step.compression.reason)}</p>` : ""}</details>`).join("")}
+    <details><summary>Inspect generation responses and usage</summary><pre>${escape(JSON.stringify(lane.calls, null, 2))}</pre></details></article>`;
+}
+function renderComparison(data: ExperimentResult) {
+  $("comparison-results").innerHTML = `<p class="run-disclaimer">${escape(data.disclaimer)}</p><p class="hint">Saved run snapshot: ${escape(data.kind)} · ${escape(data.options.method)} · question: ${escape(data.question)}. Total orchestration ${Math.round(data.durationMs)} ms.</p>
+    <div class="run-lanes">${renderLane(data.full, "Full context")}${renderLane(data.compressed, "Compressed context")}</div>
+    <div class="judge-result"><h3>Blind judge: ${escape(data.judge.verdict ?? data.judge.status)}</h3><p>${escape(data.judge.reason)}</p>
+    ${data.judge.order ? `<p class="hint">Audit mapping, revealed after judging: A = ${data.judge.order.A}; B = ${data.judge.order.B}. The judge saw only the question, source and A/B answer strings.</p>` : ""}
+    ${data.judge.call ? `<details><summary>Judge response and provider usage</summary><pre>${escape(JSON.stringify(data.judge.call, null, 2))}</pre></details>` : ""}</div>
+    <details><summary>Frozen source used for evaluation</summary><pre>${escape(data.source)}</pre></details>
+    <button id="export-comparison" type="button">Export experiment JSON ↓</button>`;
+}
+for (const id of ["comparison-mode", "comparison-kind", "use-judge", "agent-steps"]) $(id).addEventListener("change", comparisonAvailability);
+$("run-comparison").addEventListener("click", async () => {
+  if (comparisonRunning || running) return;
+  update();
+  if (!$("error").hidden) return;
+  if (select("comparison-kind").value === "agent" && custom !== null) { $("comparison-error").textContent = "Agent runs use the selected synthetic corpus. Restore the example or choose paired answers for custom text."; $("comparison-error").hidden = false; return; }
+  const payload = { mode: select("comparison-mode").value, kind: select("comparison-kind").value, scenarioId: scenario.id, source, options: latestOptions,
+    maxSteps: Number(input("agent-steps").value), judge: input("use-judge").checked, allowPaid: input("allow-comparison-paid").checked, failOpen: input("fail-open").checked };
+  comparisonRunning = true; comparisonAvailability(); $<HTMLButtonElement>("run-model").disabled = true;
+  $("comparison-error").hidden = true;
+  try {
+    const response = await fetch("/api/experiment", { method: "POST", headers: { "Content-Type": "application/json", "X-Compression-Lab": "1" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(540000) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Experiment failed.");
+    comparisonResult = data as ExperimentResult; renderComparison(comparisonResult);
+    announce("Both lanes finished. Inspect completion status and the judge separately.");
+  } catch (error) {
+    $("comparison-error").textContent = (error instanceof Error ? error.message : "Experiment failed.") + " No new successful result is claimed; any visible snapshot is from the previous run.";
+    $("comparison-error").hidden = false;
+  } finally { comparisonRunning = false; update(); }
+});
+$("comparison-results").addEventListener("click", (event) => {
+  if (!(event.target as HTMLElement).closest("#export-comparison") || !comparisonResult) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(comparisonResult, null, 2)], { type: "application/json" }));
+  const link = document.createElement("a"); link.href = url; link.download = `compression-${comparisonResult.kind}-${comparisonResult.mode}.json`; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});

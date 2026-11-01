@@ -1,7 +1,12 @@
 {
-  "name": "context-compression", "version": "0.1.0", "private": true, "type": "module",
+  "name": "context-compression",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "description": "A transparent, offline lab for learning query-aware context compression",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "build:client": "esbuild client/app.ts --bundle --format=esm --outdir=site/build --entry-names=app --minify",
     "build": "npm run check && npm run build:client",
@@ -9,8 +14,16 @@
     "check": "tsc --noEmit",
     "test": "node --import=tsx --test tests/*.test.ts",
     "eval": "node --import=tsx scripts/evaluate.ts",
-    "export": "npm run build && node --import=tsx scripts/export.ts"
+    "export": "npm run build && node --import=tsx scripts/export.ts",
+    "eval:workflows": "node --import=tsx scripts/workflow-evaluate.ts"
   },
-  "dependencies": { "js-tiktoken": "1.0.21" },
-  "devDependencies": { "@types/node": "^26.6.2", "esbuild": "^0.28.2", "tsx": "^4.23.13", "typescript": "^7.0.2" }
+  "dependencies": {
+    "js-tiktoken": "1.0.21"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
 }

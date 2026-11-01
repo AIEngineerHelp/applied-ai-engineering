@@ -8,8 +8,8 @@ export interface Unit extends Span {
   score: number;
   matches: string[];
 }
-export type Method = "relevance" | "mmr" | "words" | "truncate" | "semantic" | "llmlingua2" | "compresr";
-export const isModelMethod = (method: Method) => ["semantic", "llmlingua2", "compresr"].includes(method);
+export type Method = "relevance" | "mmr" | "words" | "truncate" | "semantic" | "llmlingua2" | "compresr" | "laya" | "llmlingua" | "longllmlingua";
+export const isModelMethod = (method: Method) => ["semantic", "llmlingua2", "compresr", "laya", "llmlingua", "longllmlingua"].includes(method);
 export interface Scoring { units: Unit[]; description: string; separator?: string }
 
 export interface Options {
@@ -161,7 +161,7 @@ function scoreUnits(source: string, units: Unit[], query: string, aware: boolean
 }
 
 export function validate(o: Options): void {
-  if (!["relevance", "mmr", "words", "truncate", "semantic", "llmlingua2", "compresr"].includes(o.method)) throw new Error("Unknown compression method.");
+  if (!["relevance", "mmr", "words", "truncate", "semantic", "llmlingua2", "compresr", "laya", "llmlingua", "longllmlingua"].includes(o.method)) throw new Error("Unknown compression method.");
   if (!["paragraph", "sentence"].includes(o.granularity)) throw new Error("Unknown unit size.");
   if (typeof o.query !== "string" || o.query.length > 1000 || o.focus !== undefined && (typeof o.focus !== "string" || o.focus.length > 1000)) throw new Error("Question and focus must be text of at most 1,000 characters each.");
   if (o.diversity !== undefined && (!Number.isFinite(o.diversity) || o.diversity < 0 || o.diversity > 1)) throw new Error("MMR relevance weight must be between 0 and 1.");

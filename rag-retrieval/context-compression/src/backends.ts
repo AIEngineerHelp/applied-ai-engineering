@@ -2,9 +2,10 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { compress, defaults, isModelMethod, splitUnits, validate, type Options, type Result } from "./compress.ts";
 import { hostedResult, rawFallback, scoredUnits, semanticScoring } from "./model-results.ts";
+import { layaEndpoint, scoreWithLaya, type LayaConfig } from "./laya.ts";
 import { countTokens } from "./tokens.ts";
 
-export interface BackendConfig { enableLocal: boolean; python: string; apiKey?: string }
+export interface BackendConfig { enableLocal: boolean; python: string; apiKey?: string; perplexityPython?: string; laya?: LayaConfig }
 export interface BackendRequest { source: string; options: Options; allowPaid: boolean; failOpen: boolean }
 export type LocalRunner = (payload: object, python: string) => Promise<Record<string, unknown>>;
 const worker = fileURLToPath(new URL("../models/worker.py", import.meta.url));
@@ -12,9 +13,11 @@ export const configFromEnv = (): BackendConfig => ({
   enableLocal: process.env.ENABLE_LOCAL_MODELS === "1",
   python: process.env.COMPRESSION_PYTHON ?? fileURLToPath(new URL("../models/.venv/bin/python", import.meta.url)),
   apiKey: process.env.COMPRESR_API_KEY,
+  perplexityPython: process.env.PERPLEXITY_PYTHON ?? fileURLToPath(new URL("../models/perplexity/.venv/bin/python", import.meta.url)),
+  laya: { enabled: process.env.ENABLE_LAYA_REMOTE === "1", baseUrl: process.env.LAYA_BASE_URL, key: process.env.LAYA_API_KEY },
 });
 export const capabilities = (config: BackendConfig) => ({
-  localModelsEnabled: config.enableLocal, compresrConfigured: Boolean(config.apiKey),
+  localModelsEnabled: config.enableLocal, compresrConfigured: Boolean(config.apiKey), layaConfigured: Boolean(config.laya?.enabled && config.laya.baseUrl),
   note: "Local model execution is disabled unless ENABLE_LOCAL_MODELS=1 is explicitly set. Models are never downloaded by the app.",
 });
 
@@ -50,28 +53,45 @@ export function parseRequest(raw: unknown): BackendRequest {
   return { source: value.source, options, allowPaid: value.allowPaid === true, failOpen: value.failOpen === true };
 }
 
-export async function runBackend(request: BackendRequest, config: BackendConfig, dependencies: { local?: LocalRunner; fetch?: typeof fetch } = {}): Promise<Result> {
-  const { source, options, allowPaid, failOpen } = request;
+export function assertBackendAccess(options: Options, config: BackendConfig, allowPaid: boolean): void {
   validate(options);
   const method = options.method;
-  // Configuration and consent failures are never disguised as successful fallbacks.
-  if (method === "compresr") {
+  if (method === "laya") {
+    layaEndpoint(config.laya ?? { enabled: false });
+    if (!allowPaid) throw new Error("Explicit remote-call consent is required for Laya.");
+    if (!options.queryAware || !options.query.trim()) throw new Error("Laya requires a question and query-aware mode.");
+  } else if (method === "compresr") {
     if (!config.apiKey) throw new Error("COMPRESR_API_KEY is not configured on the server.");
     if (!allowPaid) throw new Error("Explicit paid-call consent is required for Compresr.");
     if (!options.query.trim()) throw new Error("Compresr requires a non-empty question.");
     if (!options.queryAware) throw new Error("Compresr requires query-aware mode.");
   } else {
-    if (!["semantic", "llmlingua2"].includes(method)) throw new Error("Unknown model method.");
+    if (!["semantic", "llmlingua2", "llmlingua", "longllmlingua"].includes(method)) throw new Error("Unknown model method.");
     if (!config.enableLocal) throw new Error("Local model execution is disabled. Do not enable it until the laptop owner authorizes inference.");
     if (method === "semantic" && (!options.queryAware || !options.query.trim())) throw new Error("Semantic selection requires a question and query-aware mode.");
+    if (["llmlingua", "longllmlingua"].includes(method) && options.dynamic) throw new Error("Reference perplexity methods use their own rate/budget controller, not our dynamic heuristic.");
+    if (method === "llmlingua" && options.queryAware) throw new Error("LLMLingua is task-agnostic in this adapter; use LongLLMLingua for query-aware pruning.");
+    if (method === "longllmlingua" && (!options.queryAware || !options.query.trim())) throw new Error("LongLLMLingua requires query-aware mode and a question.");
     if (method === "llmlingua2" && (options.dynamic || options.queryAware)) throw new Error("LLMLingua-2 uses fixed, task-agnostic word selection in this lab.");
   }
+}
+
+export async function runBackend(request: BackendRequest, config: BackendConfig, dependencies: { local?: LocalRunner; fetch?: typeof fetch } = {}): Promise<Result> {
+  const { source, options, allowPaid, failOpen } = request;
+  validate(options);
+  const method = options.method;
+  assertBackendAccess(options, config, allowPaid);
   const started = performance.now();
   if (!source || countTokens(source) < options.threshold || options.remove === 0 && !options.dynamic) {
     const result = compress(source, { ...options, method: "relevance" });
     return { ...result, backend: { method, model: "pass-through", durationMs: 0, fallback: false } };
   }
   try {
+    if (method === "laya") {
+      const scoring = await scoreWithLaya(source, splitUnits(source, options.granularity), options.query + (options.useFocus && options.focus ? `\n${options.focus}` : ""), config.laya!, dependencies.fetch);
+      const result = compress(source, options, scoring);
+      return { ...result, backend: { method, model: "Laya remote/multilingual", durationMs: performance.now() - started, fallback: false } };
+    }
     if (method === "compresr") {
       const body: Record<string, unknown> = { context: source, query: options.query + (options.useFocus && options.focus ? `\nFocus of this read: ${options.focus}` : ""),
         compression_model_name: "latte_v2.1", coarse: options.granularity === "paragraph", disable_placeholders: true };
@@ -89,8 +109,15 @@ export async function runBackend(request: BackendRequest, config: BackendConfig,
     }
     const units = splitUnits(source, options.granularity);
     if (method === "semantic" && units.length > 256) throw new Error("Semantic mode supports at most 256 units. Use paragraph units or shorter text.");
-    const payload = { method, source, query: options.query + (options.useFocus && options.focus ? `\n${options.focus}` : ""), units: units.map((u) => u.headings.map((h) => source.slice(h.start, h.end)).join("") + u.text) };
-    const output = await (dependencies.local ?? runLocal)(payload, config.python);
+    const payload = { method, source, remove: options.remove, query: options.query + (options.useFocus && options.focus ? `\n${options.focus}` : ""), units: units.map((u) => u.headings.map((h) => source.slice(h.start, h.end)).join("") + u.text) };
+    const reference = ["llmlingua", "longllmlingua"].includes(method);
+    const output = await (dependencies.local ?? runLocal)(payload, reference ? config.perplexityPython ?? config.python : config.python);
+    if (reference) {
+      if (typeof output.text !== "string" || output.text.length > 24000 || typeof output.model !== "string") throw new Error("Invalid reference compressor response.");
+      const result = hostedResult(source, output.text, options, output.model, performance.now() - started, method);
+      result.reason = `Reference ${method} library output. Causal-LM perplexity pruning with its own budget controller; cl100k_base removal is approximate. Retokenization${method === "longllmlingua" ? " and context reordering" : ""} prevent exact dropped-span attribution. ${typeof output.warning === "string" ? output.warning : ""}`;
+      return result;
+    }
     if (typeof output.model !== "string") throw new Error("Missing local model identity.");
     const scoring = method === "semantic"
       ? semanticScoring(source, units, output.scores, output.model)
