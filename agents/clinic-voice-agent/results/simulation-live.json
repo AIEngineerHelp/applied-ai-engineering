@@ -1,0 +1,718 @@
+{
+  "ran_at": "2026-11-01T19:47:29+05:30",
+  "mode": "live",
+  "model": "gemini-3.8-flash",
+  "callers": "model (gemini-3.8-flash)",
+  "agent_cost_usd": 0.0594,
+  "caller_cost_usd": 0.0074,
+  "passed": 12,
+  "total": 12,
+  "results": [
+    {
+      "scenario": "book-known-patient",
+      "title": "A known patient books a visit",
+      "call_id": "call_3efa0e6862a2",
+      "passed": true,
+      "checks": [
+        {
+          "check": "pre-call lookup",
+          "passed": true,
+          "detail": "expected matched, got matched"
+        },
+        {
+          "check": "find_open_slots succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "book_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected resolved, got resolved"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 1 new, got 1"
+        }
+      ],
+      "seconds": 30.73,
+      "cost_usd": 0.007532,
+      "caller": "model",
+      "caller_usage": {
+        "input": 1092,
+        "output": 95
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "Hi, I'd like to book an appointment for a sore throat."
+        },
+        {
+          "role": "assistant",
+          "text": "I see you already have an annual check-up with Dr. Rao tomorrow at 10 am. Would you like to discuss it then, or book an earlier time like 9 am or 9:20 am?"
+        },
+        {
+          "role": "user",
+          "text": "I'd like to book 9 am for the sore throat, please, and keep my 10 am check-up as it is."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, should I go ahead and book Monday, November 2nd at 9:00 am with Dr. Rao for your sore throat?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please book that for me."
+        },
+        {
+          "role": "assistant",
+          "text": "You're all set for tomorrow, Monday at 9:00 am with Dr. Rao for your sore throat. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "That's all I needed. Thank you, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "reschedule",
+      "title": "A patient moves an existing appointment",
+      "call_id": "call_033b201bbf84",
+      "passed": true,
+      "checks": [
+        {
+          "check": "find_open_slots succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "reschedule_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected resolved, got resolved"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 0 new, got 0"
+        }
+      ],
+      "seconds": 29.76,
+      "cost_usd": 0.00794,
+      "caller": "model",
+      "caller_usage": {
+        "input": 1022,
+        "output": 67
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Arjun, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I need to reschedule my appointment."
+        },
+        {
+          "role": "assistant",
+          "text": "I can help with that. Dr. Patel has openings tomorrow, Monday, November 2nd at 9:00, 9:20, or 9:40 in the morning. Would one of those work, or did you have another day in mind?"
+        },
+        {
+          "role": "user",
+          "text": "Tomorrow at 9:00 AM works best, please."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, would you like to move your appointment with Dr. Patel to tomorrow, Monday, November 2nd at 9:00 am?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, that's correct."
+        },
+        {
+          "role": "assistant",
+          "text": "You're all set for tomorrow, Monday, November 2nd at 9:00 am with Dr. Patel. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "That's everything, thank you. Goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "cancel",
+      "title": "A patient cancels",
+      "call_id": "call_54c6f7afd3d6",
+      "passed": true,
+      "checks": [
+        {
+          "check": "cancel_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected resolved, got resolved"
+        }
+      ],
+      "seconds": 21.16,
+      "cost_usd": 0.004226,
+      "caller": "model",
+      "caller_usage": {
+        "input": 578,
+        "output": 43
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Lakshmi, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I want to cancel my appointment please."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, you'd like to cancel your annual check-up with Dr. Rao on Monday, November 2nd at 1:20 pm?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, that's right. Please cancel it."
+        },
+        {
+          "role": "assistant",
+          "text": "I've cancelled that appointment for you. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "No, that's all. Thank you, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "clinic-question",
+      "title": "An unknown caller asks about hours and parking",
+      "call_id": "call_83b8ea13d44a",
+      "passed": true,
+      "checks": [
+        {
+          "check": "pre-call lookup",
+          "passed": true,
+          "detail": "expected no_match, got no_match"
+        },
+        {
+          "check": "search_clinic_info succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "book_appointment not called",
+          "passed": true,
+          "detail": "called 0 times"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected resolved, got resolved"
+        }
+      ],
+      "seconds": 24.26,
+      "cost_usd": 0.006018,
+      "caller": "model",
+      "caller_usage": {
+        "input": 581,
+        "output": 46
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "What are your hours on Saturday?"
+        },
+        {
+          "role": "assistant",
+          "text": "We're open on Saturdays from 9:00 AM to 1:00 PM. Is there anything else I can help you with?"
+        },
+        {
+          "role": "user",
+          "text": "Great, thank you. Do you have parking available at the clinic?"
+        },
+        {
+          "role": "assistant",
+          "text": "Yes, free parking is available behind our building. How else can I assist you today?"
+        },
+        {
+          "role": "user",
+          "text": "That's all I needed. Thank you, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "emergency-guard",
+      "title": "Chest pain goes to the nurse line, not the model",
+      "call_id": "call_3e41e9151bd3",
+      "passed": true,
+      "checks": [
+        {
+          "check": "find_open_slots not called",
+          "passed": true,
+          "detail": "called 0 times"
+        },
+        {
+          "check": "book_appointment not called",
+          "passed": true,
+          "detail": "called 0 times"
+        },
+        {
+          "check": "search_clinic_info not called",
+          "passed": true,
+          "detail": "called 0 times"
+        },
+        {
+          "check": "guard fired",
+          "passed": true,
+          "detail": "expected emergency, got emergency"
+        },
+        {
+          "check": "transferred",
+          "passed": true,
+          "detail": "expected nurse_line, got nurse_line"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected transferred, got transferred"
+        }
+      ],
+      "seconds": 6.64,
+      "cost_usd": 0.0,
+      "caller": "model",
+      "caller_usage": {
+        "input": 0,
+        "output": 0
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Rahul, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I have chest pain and my left arm feels numb."
+        },
+        {
+          "role": "assistant",
+          "text": "That sounds urgent. If this is a medical emergency, hang up and call 911. I'm connecting you to our nurse line right now."
+        }
+      ]
+    },
+    {
+      "scenario": "unknown-caller-cannot-book",
+      "title": "An unregistered caller cannot book",
+      "call_id": "call_ea3ee4541681",
+      "passed": true,
+      "checks": [
+        {
+          "check": "pre-call lookup",
+          "passed": true,
+          "detail": "expected no_match, got no_match"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 0 new, got 0"
+        }
+      ],
+      "seconds": 13.5,
+      "cost_usd": 0.002087,
+      "caller": "model",
+      "caller_usage": {
+        "input": 293,
+        "output": 21
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I'd like to book an appointment."
+        },
+        {
+          "role": "assistant",
+          "text": "I don't have a record linked to this phone number, so you'll need to be registered first to book an appointment. Would you like me to transfer you to the front desk so they can get you set up?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please transfer me. Thank you, goodbye."
+        },
+        {
+          "role": "assistant",
+          "text": "I'm transferring you to the front desk now. Please hold."
+        }
+      ]
+    },
+    {
+      "scenario": "billing-transfer",
+      "title": "A billing question is transferred",
+      "call_id": "call_998d1736fea5",
+      "passed": true,
+      "checks": [
+        {
+          "check": "transferred",
+          "passed": true,
+          "detail": "expected billing, got billing"
+        },
+        {
+          "check": "end status",
+          "passed": true,
+          "detail": "expected transferred, got transferred"
+        }
+      ],
+      "seconds": 14.53,
+      "cost_usd": 0.002161,
+      "caller": "model",
+      "caller_usage": {
+        "input": 0,
+        "output": 0
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I have a question about my bill from last month."
+        },
+        {
+          "role": "assistant",
+          "text": "I'm transferring you to the billing office now. Please hold."
+        }
+      ]
+    },
+    {
+      "scenario": "crm-down",
+      "title": "The CRM is down for the whole call",
+      "call_id": "call_ffadbbd439d1",
+      "passed": true,
+      "checks": [
+        {
+          "check": "pre-call lookup",
+          "passed": true,
+          "detail": "expected crm_unavailable, got crm_unavailable"
+        },
+        {
+          "check": "transferred",
+          "passed": true,
+          "detail": "expected front_desk, got front_desk"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 0 new, got 0"
+        }
+      ],
+      "seconds": 19.54,
+      "cost_usd": 0.003305,
+      "caller": "model",
+      "caller_usage": {
+        "input": 281,
+        "output": 21
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. Our records system is slow right now, so I may ask for a few details. How can I help?"
+        },
+        {
+          "role": "user",
+          "text": "I'd like to book an appointment."
+        },
+        {
+          "role": "assistant",
+          "text": "I'm sorry, our records system is currently unavailable. Would you like me to transfer you to the front desk so someone can help you book?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please transfer me. Thank you, goodbye."
+        },
+        {
+          "role": "assistant",
+          "text": "I'm transferring you to the front desk now. Please hold."
+        }
+      ]
+    },
+    {
+      "scenario": "crm-500-then-ok",
+      "title": "One 500 from the CRM is retried",
+      "call_id": "call_e2a7388e30d4",
+      "passed": true,
+      "checks": [
+        {
+          "check": "find_open_slots succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "book_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 1 new, got 1"
+        },
+        {
+          "check": "CRM retries",
+          "passed": true,
+          "detail": "expected at least 1, got 1"
+        }
+      ],
+      "seconds": 36.1,
+      "cost_usd": 0.007475,
+      "caller": "model",
+      "caller_usage": {
+        "input": 1031,
+        "output": 61
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "Hi, I'd like to book an appointment for a sprained wrist."
+        },
+        {
+          "role": "assistant",
+          "text": "I have openings tomorrow morning with Dr. Rao at 9:00, 9:20, or 9:40 am. Would one of those times work for you?"
+        },
+        {
+          "role": "user",
+          "text": "9:00 am works great, thank you."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, you'd like to book tomorrow, Monday, November 2nd at 9:00 am with Dr. Rao for your sprained wrist?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, that's right."
+        },
+        {
+          "role": "assistant",
+          "text": "You're all set for tomorrow at 9:00 am with Dr. Rao. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "That's all I need. Thank you, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "crm-rate-limited",
+      "title": "A 429 with Retry-After is waited out",
+      "call_id": "call_499880fea212",
+      "passed": true,
+      "checks": [
+        {
+          "check": "find_open_slots succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "book_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 1 new, got 1"
+        },
+        {
+          "check": "CRM retries",
+          "passed": true,
+          "detail": "expected at least 1, got 1"
+        }
+      ],
+      "seconds": 31.01,
+      "cost_usd": 0.007603,
+      "caller": "model",
+      "caller_usage": {
+        "input": 1035,
+        "output": 70
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Arjun, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "Do you have any appointments available? I need one for a rash."
+        },
+        {
+          "role": "assistant",
+          "text": "We have openings tomorrow, Monday, November 2nd with Dr. Patel at 9:00 am, 9:20 am, or 9:40 am. Would any of those work for you?"
+        },
+        {
+          "role": "user",
+          "text": "9:00 am works for me, please."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, would you like me to book you with Dr. Patel tomorrow, Monday, November 2nd at 9:00 am for your rash?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please, that works for me."
+        },
+        {
+          "role": "assistant",
+          "text": "You're all set for tomorrow, Monday, November 2nd at 9:00 am with Dr. Patel. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "That's all for today. Thank you, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "lost-response-no-double-booking",
+      "title": "A booking whose response is lost is retried without booking twice",
+      "call_id": "call_6c60744a952b",
+      "passed": true,
+      "checks": [
+        {
+          "check": "book_appointment succeeded",
+          "passed": true,
+          "detail": "called and succeeded"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 1 new, got 1"
+        },
+        {
+          "check": "CRM retries",
+          "passed": true,
+          "detail": "expected at least 1, got 1"
+        }
+      ],
+      "seconds": 33.45,
+      "cost_usd": 0.007713,
+      "caller": "model",
+      "caller_usage": {
+        "input": 1031,
+        "output": 68
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Lakshmi, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "I'd like to book a separate appointment for my blood pressure."
+        },
+        {
+          "role": "assistant",
+          "text": "I have openings with Dr. Rao tomorrow, Monday, November 2nd at 9:00 am, 9:20 am, or 9:40 am. Would any of those work for you?"
+        },
+        {
+          "role": "user",
+          "text": "Tomorrow at 9:00 am works perfectly, thank you."
+        },
+        {
+          "role": "assistant",
+          "text": "Just to confirm, would you like me to book you for Monday, November 2nd at 9:00 am with Dr. Rao for your blood pressure?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please, that would be great."
+        },
+        {
+          "role": "assistant",
+          "text": "You're all set for Monday, November 2nd at 9:00 am with Dr. Rao. Is there anything else I can help you with today?"
+        },
+        {
+          "role": "user",
+          "text": "That's all for today. Thank you so much, goodbye!"
+        }
+      ]
+    },
+    {
+      "scenario": "crm-bad-data",
+      "title": "Malformed CRM data is caught, not read out",
+      "call_id": "call_d9a50c2d276d",
+      "passed": true,
+      "checks": [
+        {
+          "check": "find_open_slots -> crm_bad_data",
+          "passed": true,
+          "detail": "got ['crm_bad_data']"
+        },
+        {
+          "check": "transferred",
+          "passed": true,
+          "detail": "expected front_desk, got front_desk"
+        },
+        {
+          "check": "CRM bookings",
+          "passed": true,
+          "detail": "expected 0 new, got 0"
+        }
+      ],
+      "seconds": 18.5,
+      "cost_usd": 0.003308,
+      "caller": "model",
+      "caller_usage": {
+        "input": 281,
+        "output": 25
+      },
+      "transcript": [
+        {
+          "role": "assistant",
+          "text": "Hi Rahul, this is Meera at Birchwood Family Clinic. How can I help you today?"
+        },
+        {
+          "role": "user",
+          "text": "Can I book a follow-up appointment for my knee?"
+        },
+        {
+          "role": "assistant",
+          "text": "I'm sorry, our records system is currently unavailable so I can't check open appointment times. Would you like me to transfer you to the front desk?"
+        },
+        {
+          "role": "user",
+          "text": "Yes, please transfer me to the front desk. Thank you, goodbye."
+        },
+        {
+          "role": "assistant",
+          "text": "I'm transferring you to the front desk now. Please hold."
+        }
+      ]
+    }
+  ]
+}

@@ -73,13 +73,13 @@ uv run python -m voiceagent serve           # terminal 1
 uv run python -m voiceagent.worker dev      # terminal 2: the agent
 ```
 
-Open http://127.0.0.1:4331, pick who you are calling as, and press **Start call**. Every call makes paid Gemini requests (see [Costs](#costs)). The trace appears under **Calls** while you talk.
+Open http://127.0.0.1:4331, enter a name and a phone number under **Call as yourself** (or choose a **Sample patient**), and press **Call Meera**. Your name and number are added to the mock CRM as a patient with one upcoming check-up, so the agent greets you by name and can book, move or cancel. That record lives in memory and is gone when the server restarts; nothing is dialled. Every call makes paid Gemini requests (see [Costs](#costs)). The live transcript shows beside the agent, and the trace appears under **Calls** while you talk.
 
-For the cascade pipeline, set `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to a LiveKit Cloud project instead of the local server, and download the VAD model once: `uv run python -m voiceagent.worker download-files`.
+Calls use the realtime pipeline by default. For the cascade pipeline, set `VOICE_PIPELINE=cascade` in `.env`, point `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` at a LiveKit Cloud project instead of the local server, and download the VAD model once: `uv run python -m voiceagent.worker download-files`.
 
 ### Break the CRM
 
-The **Break the CRM** panel switches the mock CRM's failure mode while a call is running: slow responses (past the pre-call budget), one 500, 429 with `Retry-After`, a booking that commits but whose response is lost, malformed slot data, or a 503 on everything. Each scenario in the simulation does the same thing on purpose. In the lost-response case, the trace shows the first `POST /appointments` time out, the retry go out with the same idempotency key, and the CRM replay the original booking, so exactly one appointment is created.
+The **Break the CRM** switch under the call switches the mock CRM's failure mode while a call is running: slow responses (past the pre-call budget), one 500, 429 with `Retry-After`, a booking that commits but whose response is lost, malformed slot data, or a 503 on everything. Each scenario in the simulation does the same thing on purpose. In the lost-response case, the trace shows the first `POST /appointments` time out, the retry go out with the same idempotency key, and the CRM replay the original booking, so exactly one appointment is created.
 
 ### Phone calls
 
@@ -104,7 +104,7 @@ PASS  crm-bad-data                           0.01s
 
 ### Fixed callers
 
-The first live run, on 2026-10-29, had `gemini-3.8-flash` play the agent in text mode against the 12 fixed caller scripts (now `simulate --live --fixed-callers`): **5 of 12 passed**, for $0.04 in model usage. The full report, with every transcript, is in [`results/simulation-live-fixed-callers.json`](results/simulation-live-fixed-callers.json).
+The first live run, on 2026-10-29, had `gemini-3.8-flash` play the agent in text mode against the 12 fixed caller scripts (now `simulate --live --fixed-callers`): **5 of 12 passed**, for $0.04 in model usage. The full report, with every transcript, is in [`results/simulation-live-fixed-callers.json`](results/simulation-live-fixed-callers.json). It was recorded before the fictional people were renamed, so its transcripts use the earlier names (Robin, Maya, Dr. Lin and others).
 
 The 7 failures are mostly a problem with the test, not the agent. The caller lines were written for the scripted model, which books on the first "yes". Gemini asked one more question first, then the caller's next fixed line ("That's all, bye") ended the call before anything was booked:
 
@@ -120,12 +120,23 @@ The lesson for a voice deployment: fixed caller scripts are a good regression te
 
 ### Model callers
 
-Not run yet. `simulate --live` will run the 12 scenarios with a model playing each caller; results will go in `results/simulation-live.json`.
+The second live run, on 2026-11-01, had `gemini-3.8-flash` play the agent and a second `gemini-3.8-flash` play each caller from a persona and a goal (`simulate --live`): **12 of 12 passed**, for $0.059 of agent usage and $0.007 of caller usage. Each call took 7 to 36 seconds and 1 to 4 caller turns. The report, with every transcript, is in [`results/simulation-live.json`](results/simulation-live.json).
+
+With callers that answer what was asked, the CRM fault scenarios the fixed run never reached were exercised end to end:
+
+- **Lost response** (`lost-response-no-double-booking`): the caller picked 9:00, confirmed, and was booked. The first `POST /appointments` committed but its response was lost; the client retried with the same idempotency key and the CRM replayed the booking, so exactly 1 appointment was created.
+- **One 500** (`crm-500-then-ok`): the client retried once and the booking went through; the caller never heard about the error.
+- **Bad data** (`crm-bad-data`): the slot listing failed validation, so instead of offering times the agent apologised and transferred to the front desk.
+- **CRM down** (`crm-down`): the pre-call lookup failed, the greeting said the records system was slow, and the agent transferred instead of promising a booking.
+
+The agent kept the habits the fixed run showed: it confirmed every write before making it, and in `book-known-patient` it pointed out the caller's existing check-up the next day before booking a separate visit, which the caller declined. The emergency guard again transferred chest pain to the nurse line with no tool calls.
+
+Two limits on what this shows. The model caller's goals are cooperative ("take the first time offered"), so the run does not test hostile, confused or silent callers. And for `unknown-caller-cannot-book` the model refused up front and offered a transfer, so the scenario checks only that nothing was booked; the code-level refusal is covered by the offline run. Live pass counts can change between runs.
 
 ## Check it
 
 ```bash
-uv run pytest                               # 38 tests: CRM client, guards, KB, pricing, webhooks, API, callers, all 12 scenarios
+uv run pytest                               # 39 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, all 12 scenarios
 uv run ruff check voiceagent tests
 uv run mypy voiceagent
 (cd web && npm run check && npm test)
