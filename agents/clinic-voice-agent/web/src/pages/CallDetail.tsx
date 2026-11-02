@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, type CallDetail, type CallEvent } from "../api";
 import { Badge, Card, DownloadMenu, Mono, Skeleton, Stat, outcomeTone, statusTone } from "../components/ui";
+import { useHosted } from "../hosted";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
 const HIDDEN = new Set(["agent_say", "metric", "trace"]);
@@ -10,6 +11,7 @@ export function CallDetailPage({ id }: { id: string }) {
   const [missing, setMissing] = useState(false);
   const [showCrm, setShowCrm] = useState(true);
   const [traceUi, setTraceUi] = useState("");
+  const hosted = useHosted();
 
   useEffect(() => {
     api.config().then((c) => setTraceUi(c.tracing?.ui_url ?? ""), () => undefined);
@@ -75,11 +77,11 @@ export function CallDetailPage({ id }: { id: string }) {
                 hint: "Events, CRM attempts, latency, cost and outcome. No transcript, phone number or tool payloads.",
                 href: `/api/calls/${call.id}/export`,
               },
-              {
+              ...(hosted ? [] : [{
                 label: "Everything, with transcript",
                 hint: "Adds what was said, the phone number and tool arguments. Contains patient details.",
                 href: `/api/calls/${call.id}/export?content=true`,
-              },
+              }]),
             ]}
           />
           {traceId && traceUi && (
@@ -186,7 +188,7 @@ function Note({ children, tone = "neutral" }: { children: ReactNode; tone?: "neu
   return <div className={`rounded-lg border px-3 py-2 text-[13.5px] ${styles}`}>{children}</div>;
 }
 
-function EventRow({ event: e }: { event: CallEvent }) {
+export function EventRow({ event: e }: { event: CallEvent }) {
   const d = e.data;
   switch (e.kind) {
     case "transcript":
@@ -259,6 +261,19 @@ function EventRow({ event: e }: { event: CallEvent }) {
       return (
         <Note tone="warn">
           Guard <b className="font-medium">{d.name}</b> matched “{d.phrase}”: the model was skipped and the call goes to {d.destination.replaceAll("_", " ")}.
+        </Note>
+      );
+    case "crm_fault":
+      return (
+        <Note tone={d.mode === "none" ? "good" : "warn"}>
+          {d.mode === "none" ? (
+            "The caller switched the CRM back to healthy."
+          ) : (
+            <>
+              The caller broke the CRM: <b className="font-medium">{String(d.mode).replaceAll("_", " ")}</b>
+              {d.count ? ` for the next ${d.count} request${d.count > 1 ? "s" : ""}` : ""}.
+            </>
+          )}
         </Note>
       );
     case "transfer":

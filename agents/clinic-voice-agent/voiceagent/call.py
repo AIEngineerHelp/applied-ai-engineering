@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -46,6 +47,9 @@ class CallState:
     ended_by_agent: bool = False
     meter: UsageMeter = field(default_factory=UsageMeter)
     span: Any = None  # the call's OpenTelemetry root span, when tracing is on
+    # Called with every event as it is logged; the worker uses it to stream the trace to
+    # the caller's browser, so a hosted call shows its trace without a shared database.
+    on_event: Callable[[str, float, dict[str, Any]], None] | None = None
 
     def __post_init__(self) -> None:
         self.store.start_call(
@@ -58,8 +62,11 @@ class CallState:
         return time.monotonic() - self.started
 
     def event(self, kind: str, **data: Any) -> None:
-        self.store.add_event(self.call_id, self.at(), kind, data)
+        at = self.at()
+        self.store.add_event(self.call_id, at, kind, data)
         telemetry.record(self, kind, data)
+        if self.on_event is not None:
+            self.on_event(kind, at, data)
 
     def _crm_attempt(self, attempt: Attempt) -> None:
         self.event("crm_attempt", method=attempt.method, path=attempt.path,

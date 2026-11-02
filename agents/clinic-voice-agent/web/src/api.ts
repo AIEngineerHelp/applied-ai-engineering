@@ -66,6 +66,9 @@ export type Config = {
   callers: { phone: string; name: string; patient_id: string | null }[];
   prices: { checked: string; table: Record<string, Record<string, number>> };
   tracing: { enabled: boolean; content: boolean; ui_url: string };
+  // The deployed demo: a static snapshot plus live calls through a token function. There is
+  // no call log or fault API on the server; the fault switch travels with the call instead.
+  hosted?: boolean;
 };
 
 export type Check = { check: string; passed: boolean; detail: string };
@@ -128,10 +131,10 @@ export const api = {
   runSimulation: () => request<SimulationReport>("/api/simulations/run", { method: "POST", body: "{}" }),
   faults: () => request<{ fault: Fault; remaining: number; recent: { path: string; fault: string; method: string; at: string }[] }>("/api/faults"),
   setFault: (fault: Partial<Fault>) => request("/api/faults", { method: "PUT", body: JSON.stringify(fault) }),
-  session: (pipeline: string, caller_phone: string | null, caller_name?: string) =>
+  session: (pipeline: string, caller_phone: string | null, caller_name?: string, crm_fault?: Partial<Fault>) =>
     request<{ url: string; token: string; room: string }>("/api/session", {
       method: "POST",
-      body: JSON.stringify({ pipeline, caller_phone, caller_name }),
+      body: JSON.stringify({ pipeline, caller_phone, caller_name, crm_fault }),
     }),
   webhooks: () =>
     request<{
@@ -139,3 +142,10 @@ export const api = {
       outbox: { call_id: string; attempts: number; status: string; last_error: string | null; updated_at: number }[];
     }>("/api/webhooks"),
 };
+
+let configOnce: Promise<Config> | null = null;
+/** The config, fetched once and shared by the pages that need to know if this is the demo. */
+export function getConfig(): Promise<Config> {
+  configOnce ??= api.config();
+  return configOnce;
+}

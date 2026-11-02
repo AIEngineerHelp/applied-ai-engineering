@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type Mode, type Scenario, type SimulationReport } from "../api";
 import { usd } from "../format";
+import { useHosted } from "../hosted";
 
 const MODES: { key: Mode; label: string }[] = [
   { key: "scripted", label: "Offline (free)" },
@@ -36,6 +37,7 @@ export function SimulationPage() {
     }
   }
 
+  const hosted = useHosted();
   const report = reports[mode];
   const byName = new Map(report?.results.map((r) => [r.scenario, r]));
 
@@ -45,14 +47,16 @@ export function SimulationPage() {
         title="Simulation"
         lede="Simulated callers, played as text through the same agent, tools, guards and CRM client as a voice call. Each sets the CRM's fault switch and checks what must hold whatever the model says: which tools ran, whether a guard fired, how many bookings the CRM received, how the call ended. Offline, callers read fixed lines; live, a second model plays each caller towards a goal and answers what the agent actually asks."
         aside={
-          <Button onClick={run} disabled={running}>
-            {running ? "Running…" : "Run offline"}
-          </Button>
+          hosted ? undefined : (
+            <Button onClick={run} disabled={running}>
+              {running ? "Running…" : "Run offline"}
+            </Button>
+          )
         }
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex gap-1 rounded-lg border border-rule bg-card p-1">
+        <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-rule bg-card p-1">
           {MODES.map((m) => (
             <button
               key={m.key}

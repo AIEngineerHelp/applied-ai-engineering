@@ -4,6 +4,7 @@
   crm              the mock CRM alone
   simulate         run the simulated callers (add --live to use Gemini; paid)
   retry-webhooks   redeliver post-call webhooks that failed
+  export-site      write site/: the static demo plus the live-call function, for Vercel
 
 The voice agent itself runs separately: `uv run python -m voiceagent.worker dev`.
 """
@@ -27,6 +28,7 @@ def main() -> None:
                      help="with --live, callers read fixed lines instead of a model playing them")
     sim.add_argument("--only", nargs="*", help="scenario names to run")
     sub.add_parser("retry-webhooks")
+    sub.add_parser("export-site")
     args = parser.parse_args()
 
     if args.command == "serve":
@@ -47,6 +49,12 @@ def main() -> None:
         sys.exit(asyncio.run(simulate(args.live, not args.fixed_callers, args.only)))
     elif args.command == "retry-webhooks":
         asyncio.run(retry_webhooks())
+    elif args.command == "export-site":
+        from .site import SITE, export_site
+
+        done = export_site()
+        print(f"Wrote {SITE}: {done['calls']} simulated calls, {done['files']} files."
+              " Deploy with: cd site && vercel deploy --prod")
 
 
 async def simulate(live: bool, model_callers: bool, only: list[str] | None) -> int:

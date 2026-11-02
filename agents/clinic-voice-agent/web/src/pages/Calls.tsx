@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type Call, type Stats } from "../api";
 import { Badge, Card, DownloadMenu, Empty, Mono, PageHeader, Stat, outcomeTone, statusTone } from "../components/ui";
+import { useHosted } from "../hosted";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
 const SOURCES = [
@@ -25,6 +26,7 @@ export function CallsPage() {
     return () => clearInterval(t);
   }, [source]);
 
+  const hosted = useHosted();
   const shown = calls.filter((c) => !source || c.source === source);
   const pipelines = Object.entries(stats?.pipelines ?? {});
 
@@ -32,7 +34,11 @@ export function CallsPage() {
     <>
       <PageHeader
         title="Calls"
-        lede="Every call, voice or simulated, writes an event trace: pre-call lookup, each turn's latency by component, tool calls, CRM attempts, guards, transfers and the post-call record."
+        lede={
+          hosted
+            ? "Every call writes an event trace: pre-call lookup, each turn's latency by component, tool calls, CRM attempts, guards, transfers and the post-call record. This demo shows the recorded simulation runs; calls made here are not stored, but each one shows its own trace on the Talk page."
+            : "Every call, voice or simulated, writes an event trace: pre-call lookup, each turn's latency by component, tool calls, CRM attempts, guards, transfers and the post-call record."
+        }
         aside={
           <div className="flex flex-wrap items-center gap-3">
           <DownloadMenu
@@ -43,13 +49,14 @@ export function CallsPage() {
                 hint: "One row per call: outcome, intent, duration, reply latency, CRM failures, cost.",
                 href: `/api/calls.csv${source ? `?source=${source}` : ""}`,
               },
-              {
+              ...(hosted ? [] : [{
                 label: "With phone numbers",
                 hint: "Adds each caller's number. Contains patient details.",
                 href: `/api/calls.csv?content=true${source ? `&source=${source}` : ""}`,
-              },
+              }]),
             ]}
           />
+          {!hosted && (
           <div className="flex gap-1 rounded-lg border border-rule bg-card p-1">
             {SOURCES.map((s) => (
               <button
@@ -62,6 +69,7 @@ export function CallsPage() {
               </button>
             ))}
           </div>
+          )}
           </div>
         }
       />

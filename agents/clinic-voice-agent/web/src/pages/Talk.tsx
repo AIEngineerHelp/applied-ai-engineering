@@ -1,7 +1,8 @@
 import type { Participant, RemoteTrack, Room } from "livekit-client";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { api, type Config, type Fault } from "../api";
+import { api, type CallEvent, type Config, type Fault } from "../api";
 import { PageHeader } from "../components/ui";
+import { EventRow } from "./CallDetail";
 import { type Phase, VoiceStage } from "../components/VoiceStage";
 
 type Line = { id: string; role: "caller" | "agent"; text: string; final: boolean };
@@ -47,6 +48,12 @@ export function TalkPage({ config }: { config: Config | null }) {
   const [agentTrack, setAgentTrack] = useState<MediaStreamTrack | null>(null);
   const [micTrack, setMicTrack] = useState<MediaStreamTrack | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  // The agent streams each call-log event to the room; this is the call's trace, live.
+  const [events, setEvents] = useState<CallEvent[]>([]);
+  // On the hosted demo the fault switch travels with the call (dispatch metadata at the
+  // start, a participant attribute mid-call), since there is no shared CRM server.
+  const [fault, setFault] = useState<Partial<Fault>>({ mode: "none" });
+  const hosted = config?.hosted ?? false;
   const roomRef = useRef<Room | null>(null);
   const audioRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -77,6 +84,7 @@ export function TalkPage({ config }: { config: Config | null }) {
     setAgentTrack(null);
     setMicTrack(null);
     setStartedAt(null);
+    setEvents([]);
     setPhase("connecting");
     setAgentState("initializing");
     try {
@@ -87,8 +95,11 @@ export function TalkPage({ config }: { config: Config | null }) {
           /* private window: nothing to remember */
         }
       }
+      const crmFault = hosted && fault.mode !== "none" ? fault : undefined;
       const { url, token, room: name } =
-        who === "me" ? await api.session(pipeline, me.phone, me.name) : await api.session(pipeline, sample || null);
+        who === "me"
+          ? await api.session(pipeline, me.phone, me.name, crmFault)
+          : await api.session(pipeline, sample || null, undefined, crmFault);
       // Loaded on demand: the WebRTC client is most of the bundle and only this button needs it.
       const { Room, RoomEvent, Track } = await import("livekit-client");
       const room = new Room({ adaptiveStream: true, dynacast: true });
@@ -107,6 +118,15 @@ export function TalkPage({ config }: { config: Config | null }) {
         if (!p.isLocal) void room.disconnect();
       });
       room.on(RoomEvent.Disconnected, () => setPhase("ended"));
+      room.on(RoomEvent.DataReceived, (payload: Uint8Array, _p?: Participant, _k?: unknown, topic?: string) => {
+        if (topic !== "clinic.events") return;
+        try {
+          const e = JSON.parse(new TextDecoder().decode(payload)) as Omit<CallEvent, "seq">;
+          setEvents((prev) => [...prev, { ...e, seq: prev.length + 1 }]);
+        } catch {
+          /* not one of ours */
+        }
+      });
       // Agents publish live transcripts on this topic, one stream per segment.
       room.registerTextStreamHandler("lk.transcription", async (reader, info) => {
         const id = reader.info.attributes?.["lk.segment_id"] ?? reader.info.id;
@@ -185,7 +205,7 @@ export function TalkPage({ config }: { config: Config | null }) {
                 {phase === "idle" && "Front desk · Birchwood Family Clinic"}
                 {phase === "connecting" && `Calling as ${callingAs}`}
                 {phase === "live" && `On the line as ${callingAs}. Speak normally; you can interrupt.`}
-                {phase === "ended" && "The full trace is in the call log."}
+                {phase === "ended" && (hosted ? "This call's trace is below." : "The full trace is in the call log.")}
               </div>
             </div>
 
@@ -253,9 +273,11 @@ export function TalkPage({ config }: { config: Config | null }) {
                     {who === "me"
                       ? "You're added to the mock CRM with one upcoming check-up, in memory only. A made-up number is fine."
                       : "Sample patients each have one upcoming check-up to move or cancel."}{" "}
-                    Calls make paid Gemini requests.
+                    {hosted
+                      ? "Demo calls end after 3 minutes, and each visitor gets a few an hour. After a quiet spell, Meera can take 20 seconds to pick up."
+                      : "Calls make paid Gemini requests."}
                   </p>
-                  {phase === "ended" && roomName && (
+                  {phase === "ended" && roomName && !hosted && (
                     <a href={`#/calls/${roomName}`} className="block text-center text-[14px] font-medium text-accent hover:underline">
                       View this call's trace →
                     </a>
@@ -340,8 +362,21 @@ export function TalkPage({ config }: { config: Config | null }) {
       </section>
 
       <div className="rise mt-6" style={{ ["--i" as string]: 2 }}>
-        <FaultPanel />
+        <FaultPanel
+          hosted={hosted}
+          value={fault}
+          onChoose={(f) => {
+            setFault(f);
+            // Mid-call on the demo, the agent reads this attribute and breaks its own CRM.
+            const room = roomRef.current;
+            if (hosted && phase === "live" && room) {
+              void room.localParticipant.setAttributes({ "crm.fault": JSON.stringify({ count: 0, probability: 1, path_prefix: "", latency_ms: 2500, ...f }) });
+            }
+          }}
+        />
       </div>
+
+      {events.length > 0 && <LiveTrace events={events} room={roomName} live={phase === "live"} />}
     </>
   );
 }
@@ -415,24 +450,29 @@ const FAULTS: { mode: string; label: string; detail: string; fault: Partial<Faul
   { mode: "down", label: "Down", detail: "Every request returns 503.", fault: { mode: "down" } },
 ];
 
-function FaultPanel() {
+function FaultPanel({ hosted, value, onChoose }: { hosted: boolean; value: Partial<Fault>; onChoose: (f: Partial<Fault>) => void }) {
   const [current, setCurrent] = useState<{ fault: Fault; remaining: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const refresh = () => api.faults().then(setCurrent).catch(() => undefined);
   useEffect(() => {
+    if (hosted) return; // no shared CRM to poll on the demo
     void refresh();
     const t = setInterval(refresh, 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [hosted]);
 
   async function choose(f: Partial<Fault>) {
+    if (hosted) {
+      onChoose(f);
+      return;
+    }
     setBusy(true);
     await api.setFault({ count: 0, probability: 1, path_prefix: "", latency_ms: 2500, ...f }).catch(() => undefined);
     await refresh();
     setBusy(false);
   }
 
-  const active = current?.fault.mode ?? "none";
+  const active = hosted ? (value.mode ?? "none") : (current?.fault.mode ?? "none");
   const chosen = FAULTS.find((f) => f.mode === active);
   return (
     <section className="rounded-2xl border border-rule bg-card px-6 py-5">
@@ -470,6 +510,47 @@ function FaultPanel() {
           </p>
         </div>
       </div>
+    </section>
+  );
+}
+
+/** The call's trace as the agent logs it, streamed over the room: CRM attempts, tools,
+ * guards, transfers. On the demo, where calls are not stored, it can be saved as JSON. */
+function LiveTrace({ events, room, live }: { events: CallEvent[]; room: string | null; live: boolean }) {
+  const shown = events.filter((e) => !["trace", "agent_say"].includes(e.kind));
+  function download() {
+    const blob = new Blob([JSON.stringify({ call_id: room, events }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${room ?? "call"}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  return (
+    <section className="rise mt-6 rounded-2xl border border-rule bg-card">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-rule px-6 py-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[13px] font-medium tracking-wide text-ink-2 uppercase">This call's trace</h2>
+          {live && <span className="live-dot h-2 w-2 rounded-full bg-bad" />}
+        </div>
+        <button
+          type="button"
+          onClick={download}
+          className="lift cursor-pointer rounded-lg border border-rule-2 bg-card px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-paper"
+        >
+          Download JSON
+        </button>
+      </header>
+      <ol className="space-y-3 px-6 py-5">
+        {shown.map((e) => (
+          <li key={e.seq} className="bubble-in grid grid-cols-[52px_minmax(0,1fr)] gap-3">
+            <div className="pt-0.5 text-right font-mono text-[12px] text-ink-3 tabular-nums">+{e.at.toFixed(1)}s</div>
+            <div className="min-w-0">
+              <EventRow event={e} />
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

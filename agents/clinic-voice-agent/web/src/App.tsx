@@ -117,7 +117,15 @@ function Nav({ page }: { page: string }) {
 
 function SystemStatus({ config, error }: { config: Config | null; error: string | null }) {
   const ok = !error && config?.gemini_key;
-  const label = error ? "API offline" : !config ? "Connecting" : config.gemini_key ? "Agent ready" : "Offline mode";
+  const label = error
+    ? "API offline"
+    : !config
+      ? "Connecting"
+      : config.hosted
+        ? "Live demo"
+        : config.gemini_key
+          ? "Agent ready"
+          : "Offline mode";
   return (
     <div className="ml-auto hidden items-center gap-2 rounded-full border border-rule bg-card px-3 py-1 text-[12.5px] text-ink-2 md:flex">
       <span className={`h-2 w-2 rounded-full ${error ? "bg-bad" : ok ? "live-dot bg-accent" : "bg-warn"}`} />

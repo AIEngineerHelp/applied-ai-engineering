@@ -1,0 +1,18 @@
+# Only the worker goes into the image: voiceagent/, workflow/, knowledge/, the lockfile
+# and README.md (the package metadata reads it).
+.env
+.env.*
+.venv/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+runs/
+site/
+web/
+tests/
+results/
+simulation/
+docs/
+telephony/
+docker-compose.yml

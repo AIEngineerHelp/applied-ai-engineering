@@ -111,6 +111,31 @@ call                                   resolved · book · pt_1003
 
 On a call's page, **Download call** saves it as one JSON file: the call, its post-call record, every event in order and the latency of each turn. On **Calls**, **Export CSV** saves one row per call for the selected source: outcome, intent, transfer, duration, reply latency p50 and p95, tool calls, CRM attempts and failures, and cost. Both default to leaving out patient details (phone numbers, what was said, tool arguments and results, the summary); the second option in each menu includes them. The same files come from `GET /api/calls/{id}/export` and `GET /api/calls.csv`, with `?content=true` for the full version.
 
+### Deploy a public demo
+
+The public demo has two parts:
+
+- **Vercel** serves a static snapshot of the dashboard (the workflow, the three simulation runs with every transcript, the recorded call traces and exports) and one function, `POST /api/session`, that starts a live call ([`web/server/session.ts`](web/server/session.ts)).
+- **LiveKit Cloud** runs the agent from the [`Dockerfile`](Dockerfile) in hosted mode (`CRM_MODE=embedded`): each call gets its own in-memory mock CRM with the caller registered from the call's metadata, the fault switch arrives from the browser (at the start of the call, and mid-call as a participant attribute), every call ends after 3 minutes, and no webhooks go out. The agent streams each event of its call log to the caller's browser, so the page shows the call's trace without a shared database.
+
+Every visitor's call spends your Gemini key, so the function checks limits before it hands out a token: at most `MAX_CONCURRENT_CALLS` calls at once (default 2, counted from LiveKit's live rooms), and, when an Upstash Redis store is connected, `CALLS_PER_IP_PER_HOUR` per visitor (default 3) and `CALLS_PER_DAY` in total (default 40). If a limit cannot be checked, it refuses the call. Without Redis only the concurrency limit applies, so connect it before sharing the link, and set a spending cap on the Gemini key as well. At 40 calls of at most 3 minutes and Gemini Live's list prices, a full day costs a few dollars.
+
+1. Create a LiveKit Cloud project and log the CLI in: `lk cloud auth`.
+2. Deploy the agent from this directory, with the Gemini key in a secrets file that stays out of Git:
+   ```bash
+   printf 'GEMINI_API_KEY=%s\n' "<your key>" > .env.agent
+   lk agent create --secrets-file=.env.agent      # builds the Dockerfile; later: lk agent deploy
+   ```
+3. Build and export the site, then deploy it:
+   ```bash
+   (cd web && npm run build && npm run build:api)
+   uv run python -m voiceagent export-site        # writes site/; only simulated calls are included
+   cd site && vercel deploy --prod
+   ```
+4. In the Vercel project, set `LIVEKIT_URL` (`wss://<project>.livekit.cloud`), `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` from the LiveKit project, add an Upstash Redis store from the Vercel Marketplace (it sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`), optionally `RATE_LIMIT_SALT` and the three limits above, and redeploy.
+
+Without the LiveKit variables the function answers 503 and the Talk page says live calls are not configured; the rest of the snapshot works. On LiveKit Cloud's free plan the agent scales to zero when idle, so the first call after a quiet spell takes 10 to 20 seconds to be answered.
+
 ### Phone calls
 
 [`docs/telephony.md`](docs/telephony.md) shows how to point a Twilio or Telnyx number at the agent over LiveKit SIP. Nothing is provisioned by this example.
@@ -166,10 +191,10 @@ Two limits on what this shows. The model caller's goals are cooperative ("take t
 ## Check it
 
 ```bash
-uv run pytest                               # 42 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, the OpenTelemetry trace, exports, all 12 scenarios
+uv run pytest                               # 46 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, the OpenTelemetry trace, exports, hosted mode, all 12 scenarios
 uv run ruff check voiceagent tests
 uv run mypy voiceagent
-(cd web && npm run check && npm test)
+(cd web && npm run check && npm test)        # includes the token function's limits
 ```
 
 The tests make no network calls and need no key.
@@ -205,6 +230,7 @@ voiceagent/
   postcall.py             record, summary, signed webhook with outbox
   telemetry.py            OpenTelemetry export: one trace per call, content off by default
   export.py               a call as JSON and the call log as CSV, redacted by default
+  site.py                 export-site: the static snapshot for the public demo
   pricing.py, stats.py    cost and the dashboard aggregates
   store.py                SQLite call log (calls, events, webhook outbox and receipts)
   simulation.py           scripted callers through AgentSession in text mode
@@ -212,6 +238,8 @@ voiceagent/
   scripted_llm.py         the offline stand-in for the model
   api.py                  dashboard API, mounted CRM, demo webhook receiver
 web/                      Vite + React + TypeScript + Tailwind dashboard
+web/server/session.ts     the demo's token function: limits, then a LiveKit token that dispatches the agent
+Dockerfile                the agent image for LiveKit Cloud (hosted mode)
 ```
 
 ## Ways to extend it

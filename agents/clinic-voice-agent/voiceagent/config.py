@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     extraction_model: str = "gemini-3.8-flash"
     caller_model: str = "gemini-3.8-flash"  # plays the caller in live simulations
 
+    # "service": the worker calls the mock CRM served by `serve` (local runs, the fault
+    # switch on the dashboard). "embedded": each call gets its own in-process mock CRM, so a
+    # hosted worker needs nothing else; the caller's browser sends the fault switch.
+    crm_mode: Literal["service", "embedded"] = "service"
+    deliver_webhooks: bool = True
+    max_call_seconds: int | None = None  # overrides workflow/clinic.yaml, e.g. 180 when hosted
+
     crm_url: str = "http://127.0.0.1:4331/crm"
     crm_api_key: str = "dev-crm-key"
     webhook_url: str = "http://127.0.0.1:4331/api/webhooks/receiver"
