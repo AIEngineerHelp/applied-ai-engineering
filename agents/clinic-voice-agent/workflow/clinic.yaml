@@ -1,0 +1,77 @@
+# The call workflow for one customer, a fictional clinic. Everything a deployment
+# changes per customer lives here, not in code: who the agent is, what it may do,
+# which phrases bypass the model, what is extracted after the call and where it goes.
+clinic:
+  name: Birchwood Family Clinic
+  timezone: America/Chicago
+  agent_name: Meera
+
+greeting:
+  known_caller: "Hi {first_name}, this is Meera at Birchwood Family Clinic. How can I help you today?"
+  unknown_caller: "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
+  crm_unavailable: "Thanks for calling Birchwood Family Clinic, this is Meera. Our records system is slow right now, so I may ask for a few details. How can I help?"
+
+pre_call:
+  # Look the caller up by phone number before the agent says a word, so the greeting
+  # and every tool call can use their record. A slow CRM must not delay the greeting.
+  patient_lookup:
+    timeout_seconds: 1.5
+    on_failure: continue_without_record
+
+in_call:
+  tools:
+    - find_open_slots
+    - book_appointment
+    - reschedule_appointment
+    - cancel_appointment
+    - search_clinic_info
+    - transfer_call
+    - end_call
+  # Booking is only allowed for a caller matched to a patient record.
+  require_patient_for: [book_appointment, reschedule_appointment, cancel_appointment]
+  max_call_seconds: 600
+
+# Rules checked in code on every caller turn, before the model replies. A match takes
+# the decision away from the model: these are the cases where a wrong guess is costly.
+guards:
+  - name: emergency
+    phrases:
+      - chest pain
+      - can't breathe
+      - cannot breathe
+      - trouble breathing
+      - stroke
+      - unconscious
+      - severe bleeding
+      - suicidal
+      - overdose
+    action: transfer
+    destination: nurse_line
+    say: "That sounds urgent. If this is a medical emergency, hang up and call 911. I'm connecting you to our nurse line right now."
+  - name: asks_for_human
+    phrases: [speak to a person, talk to a human, real person, speak to someone, operator, representative]
+    action: transfer
+    destination: front_desk
+    say: "Of course. I'm transferring you to the front desk now."
+
+transfers:
+  nurse_line:
+    label: Nurse line
+    phone: "+15550100101"
+  front_desk:
+    label: Front desk
+    phone: "+15550100102"
+  billing:
+    label: Billing office
+    phone: "+15550100103"
+
+post_call:
+  # Facts (who, which appointment, which transfer) come from the tool-call record,
+  # not from the model. The model writes only the intent label and the summary.
+  extract:
+    intents: [book, reschedule, cancel, question, urgent, other]
+  webhook:
+    url_env: WEBHOOK_URL
+    secret_env: WEBHOOK_SECRET
+    timeout_seconds: 5
+    max_attempts: 4

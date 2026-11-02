@@ -1,0 +1,14 @@
+.env
+.env.agent
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+runs/
+web/node_modules/
+web/dist/
+web/dist-api/
+site/
+livekit.toml
+.vercel-link/

@@ -1,0 +1,11 @@
+{
+  "dispatch_rule": {
+    "rule": {
+      "dispatch_rule_individual": { "room_prefix": "call-" }
+    },
+    "name": "Birchwood clinic agent",
+    "room_config": {
+      "agents": [{ "agent_name": "clinic-agent" }]
+    }
+  }
+}

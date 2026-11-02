@@ -1,0 +1,184 @@
+import { type ReactNode, useEffect, useRef } from "react";
+
+export function Card({ title, aside, children, className = "" }: { title?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-xl border border-rule bg-card ${className}`}>
+      {title && (
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-rule px-5 py-3.5">
+          <h2 className="text-[13px] font-medium tracking-wide text-ink-2 uppercase">{title}</h2>
+          {aside && <div className="text-[13px] text-ink-3">{aside}</div>}
+        </header>
+      )}
+      <div className="p-5">{children}</div>
+    </section>
+  );
+}
+
+export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[12px] tracking-wide text-ink-3 uppercase">{label}</div>
+      <div className="mt-1 font-serif text-[30px] leading-tight text-ink tabular-nums">
+        {typeof value === "string" ? <AnimatedNumber value={value} /> : value}
+      </div>
+      {note && <div className="mt-0.5 text-[13px] text-ink-3">{note}</div>}
+    </div>
+  );
+}
+
+const TONES = {
+  neutral: "bg-paper text-ink-2 border-rule-2",
+  good: "bg-accent-soft text-accent border-transparent",
+  warn: "bg-warn-soft text-warn border-transparent",
+  bad: "bg-bad-soft text-bad border-transparent",
+} as const;
+
+export type Tone = keyof typeof TONES;
+
+export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[12px] font-medium whitespace-nowrap ${TONES[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+export function statusTone(status: string | null): Tone {
+  if (status === "resolved") return "good";
+  if (status === "transferred") return "neutral";
+  if (status === "error" || status === "timed_out") return "bad";
+  return "warn";
+}
+
+export function outcomeTone(outcome: string): Tone {
+  if (outcome === "ok") return "good";
+  if (outcome === "refused" || outcome === "retryable") return "warn";
+  return "bad";
+}
+
+export function PageHeader({ title, lede, aside }: { title: string; lede: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className="rise mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-2xl">
+        <h1 className="font-serif text-[34px] leading-tight text-ink">{title}</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{lede}</p>
+      </div>
+      {aside}
+    </div>
+  );
+}
+
+export function Button({
+  children,
+  onClick,
+  variant = "primary",
+  disabled,
+  type = "button",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "quiet" | "danger";
+  disabled?: boolean;
+  type?: "button" | "submit";
+}) {
+  const styles = {
+    primary: "bg-ink text-paper hover:bg-ink-2",
+    quiet: "border border-rule-2 bg-card text-ink hover:bg-paper",
+    danger: "bg-bad text-white hover:opacity-90",
+  }[variant];
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 lift rounded-lg px-4 py-2 text-[14px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${styles}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function Empty({ children }: { children: ReactNode }) {
+  return <div className="rounded-lg border border-dashed border-rule-2 px-5 py-8 text-center text-[14px] text-ink-3">{children}</div>;
+}
+
+export function Mono({ children }: { children: ReactNode }) {
+  return <span className="font-mono text-[12.5px] text-ink-2">{children}</span>;
+}
+
+/** Counts a formatted number ("82%", "$0.012", "640 ms") up to its value: from zero on
+ * mount, then from the previous value when polling changes it. Text without a number is
+ * shown as is. Writes to the DOM directly so the tween never re-renders the page. */
+export function AnimatedNumber({ value, ms = 700 }: { value: string; ms?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const from = useRef(0);
+  const match = value.match(/^([^\d-]*)(-?\d[\d,]*(?:\.\d+)?)(.*)$/);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !match) return;
+    const [, prefix, raw, suffix] = match;
+    const target = Number(raw.replaceAll(",", ""));
+    const decimals = raw.split(".")[1]?.length ?? 0;
+    const start = from.current;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || start === target) {
+      el.textContent = value;
+      from.current = target;
+      return;
+    }
+    const t0 = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / ms);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const n = start + (target - start) * eased;
+      el.textContent = t < 1 ? `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}` : value;
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      from.current = target;
+    };
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <span ref={ref}>{match ? "" : value}</span>;
+}
+
+export function Skeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-3" aria-label="Loading">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="shimmer h-4 rounded bg-rule" style={{ width: `${92 - i * 14}%` }} />
+      ))}
+    </div>
+  );
+}
+
+/** A download button with a short menu: the redacted file first, the full one second. */
+export function DownloadMenu({ label, options }: { label: string; options: { label: string; hint: string; href: string }[] }) {
+  return (
+    <details className="group relative">
+      <summary className="lift flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-rule-2 bg-card px-3 py-1.5 text-[13px] font-medium whitespace-nowrap text-ink hover:bg-paper [&::-webkit-details-marker]:hidden">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        </svg>
+        {label}
+        <span className="text-ink-3 transition-transform duration-200 group-open:rotate-180">▾</span>
+      </summary>
+      <div className="rise absolute right-0 z-20 mt-1.5 w-72 overflow-hidden rounded-xl border border-rule bg-card shadow-[0_18px_40px_-20px_rgb(28_27_25/0.35)]">
+        {options.map((o) => (
+          <a
+            key={o.href}
+            href={o.href}
+            download
+            onClick={(e) => (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open")}
+            className="block border-b border-rule px-4 py-2.5 last:border-b-0 hover:bg-paper"
+          >
+            <div className="text-[13.5px] font-medium text-ink">{o.label}</div>
+            <div className="text-[12.5px] leading-snug text-ink-3">{o.hint}</div>
+          </a>
+        ))}
+      </div>
+    </details>
+  );
+}
