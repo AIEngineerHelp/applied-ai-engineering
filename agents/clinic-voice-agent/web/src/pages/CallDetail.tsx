@@ -3,12 +3,17 @@ import { api, type CallDetail, type CallEvent } from "../api";
 import { Badge, Card, Mono, Skeleton, Stat, outcomeTone, statusTone } from "../components/ui";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
-const HIDDEN = new Set(["agent_say", "metric"]);
+const HIDDEN = new Set(["agent_say", "metric", "trace"]);
 
 export function CallDetailPage({ id }: { id: string }) {
   const [call, setCall] = useState<CallDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [showCrm, setShowCrm] = useState(true);
+  const [traceUi, setTraceUi] = useState("");
+
+  useEffect(() => {
+    api.config().then((c) => setTraceUi(c.tracing?.ui_url ?? ""), () => undefined);
+  }, []);
 
   useEffect(() => {
     let stop = false;
@@ -43,6 +48,7 @@ export function CallDetailPage({ id }: { id: string }) {
   );
   const usage = Object.entries(call.usage?.models ?? {}).filter(([, counts]) => Object.keys(counts).length > 0);
   const length = call.ended_at ? call.ended_at - call.started_at : null;
+  const traceId = call.events.find((e) => e.kind === "trace")?.data.trace_id as string | undefined;
 
   return (
     <>
@@ -60,7 +66,24 @@ export function CallDetailPage({ id }: { id: string }) {
             <span>{pipelineLabel(call.pipeline)}</span>
           </div>
         </div>
-        <Badge tone={statusTone(call.end_status)}>{statusLabel(call.end_status)}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          {traceId && traceUi && (
+            <a
+              href={traceUi.replace("{trace_id}", traceId)}
+              target="_blank"
+              rel="noreferrer"
+              className="lift rounded-lg border border-rule-2 bg-card px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-paper"
+            >
+              Open trace ↗
+            </a>
+          )}
+          {traceId && !traceUi && (
+            <span className="text-[12.5px] text-ink-3">
+              trace <Mono>{traceId}</Mono>
+            </span>
+          )}
+          <Badge tone={statusTone(call.end_status)}>{statusLabel(call.end_status)}</Badge>
+        </div>
       </div>
 
       <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

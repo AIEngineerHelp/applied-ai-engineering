@@ -23,6 +23,7 @@ from typing import Any, Literal
 import httpx
 from pydantic import BaseModel, Field
 
+from . import telemetry
 from .call import CallState
 from .config import settings
 from .pricing import CHECKED, cost_usd
@@ -142,6 +143,8 @@ async def finish_call(
         state.store.outbox_put(state.call_id, record)
         await deliver_webhook(state.store, state.call_id, record,
                               on_attempt=lambda **kw: state.event("webhook", **kw))
+    telemetry.end_call(state, end_status=status, intent=summary.intent, cost_usd=cost,
+                       duration_seconds=duration)
     return record
 
 

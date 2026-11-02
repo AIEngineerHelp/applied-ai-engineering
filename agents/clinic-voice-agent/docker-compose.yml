@@ -2,6 +2,10 @@
 #   docker compose up -d
 # Browser calls connect to ws://127.0.0.1:7880. For the cascade pipeline, or for phone
 # calls over SIP, use a LiveKit Cloud project instead (see the README).
+#
+# Optional: Jaeger, to see each call as an OpenTelemetry trace.
+#   docker compose --profile tracing up -d
+# then set OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 and open http://127.0.0.1:16686.
 services:
   livekit:
     image: livekit/livekit-server:v1.13.9
@@ -10,4 +14,12 @@ services:
       - "127.0.0.1:7880:7880"   # signalling (WebSocket)
       - "127.0.0.1:7881:7881"   # WebRTC over TCP
       - "127.0.0.1:7882:7882/udp"  # WebRTC over UDP
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    profiles: ["tracing"]
+    ports:
+      - "127.0.0.1:4318:4318"     # OTLP over HTTP (traces in)
+      - "127.0.0.1:16686:16686"   # Jaeger UI
     restart: unless-stopped

@@ -28,6 +28,8 @@ All of it is configured per customer in [`workflow/clinic.yaml`](workflow/clinic
 
 Each call records LiveKit's per-turn timings (end-of-turn decision, transcript, LLM first token, TTS first audio, and the end-to-end time from the caller going quiet to the agent speaking) and its token and audio usage, priced from a table with sources. The dashboard compares the pipelines on latency percentiles, end status and cost per minute.
 
+**Traces in your own tools.** With `OTEL_EXPORTER_OTLP_ENDPOINT` set, each call is also exported as one OpenTelemetry trace ([`telemetry.py`](voiceagent/telemetry.py)), so it can go to Langfuse, Grafana Tempo, Datadog or Jaeger. A root `call` span carries who called, the end status, intent and cost; LiveKit's own spans (session, turns, LLM, TTS, tools) nest under it, and each CRM attempt is a span inside the tool that made it, marked as an error when it failed. Every span carries the call id as `session.id`, so a backend groups them by call. Transcripts, phone numbers, tool arguments and summaries stay out of the export unless `TRACE_CONTENT=true`, and LiveKit's `allow_pii` follows the same setting.
+
 **Simulation before launch.** Twelve simulated callers in [`simulation/scenarios.yaml`](simulation/scenarios.yaml) run as text through the same agent, tools, guards and CRM client, using LiveKit's `AgentSession` in text mode. Each sets the CRM's fault switch and checks what must hold whatever the model says: which tools succeeded, whether a guard fired, how many bookings the CRM received, how the call ended.
 
 A caller is one of two kinds ([`callers.py`](voiceagent/callers.py)). A **fixed caller** reads lines written in advance: deterministic and free, so it is the regression test for the workflow, but it does not listen. A **model caller** is a second Gemini call playing a person with a goal, such as *book a separate visit for a sore throat, take the first time offered*. It opens with the scenario's first line and then answers whatever the agent actually asks, so a live run measures whether the agent gets callers to their goal. A few checks, such as "booking was refused in code", only make sense when the caller is forced down that path; those live under `fixed_expect` and are asserted only with fixed callers.
@@ -40,7 +42,7 @@ A caller is one of two kinds ([`callers.py`](voiceagent/callers.py)). A **fixed 
 - **Guards are phrase lists.** They catch the listed phrases, not every way of describing an emergency. In the realtime pipeline they act on Gemini's transcript after it has started replying, and interrupt it.
 - **Transfers.** A phone call transfers over SIP (`transfer_sip_participant`). A browser call has no phone line, so the transfer is recorded and the call ends.
 - **Cost** covers model usage at list prices checked on 2026-10-28 ([`pricing.py`](voiceagent/pricing.py)). It leaves out telephony minutes, LiveKit Cloud minutes and cache discounts. Gemini TTS input tokens are estimated from characters.
-- **SQLite** stands in for the Kafka + ClickHouse pipeline a platform would use; the event shape is the same.
+- **SQLite** stands in for the Kafka + ClickHouse pipeline a platform would use; the event shape is the same. The OpenTelemetry export sends the same calls to a real tracing backend, but there are no alerts, dashboards or retention rules set up there.
 
 ## Requirements
 
@@ -80,6 +82,30 @@ Calls use the realtime pipeline by default. For the cascade pipeline, set `VOICE
 ### Break the CRM
 
 The **Break the CRM** switch under the call switches the mock CRM's failure mode while a call is running: slow responses (past the pre-call budget), one 500, 429 with `Retry-After`, a booking that commits but whose response is lost, malformed slot data, or a 503 on everything. Each scenario in the simulation does the same thing on purpose. In the lost-response case, the trace shows the first `POST /appointments` time out, the retry go out with the same idempotency key, and the CRM replay the original booking, so exactly one appointment is created.
+
+### See calls as traces
+
+```bash
+docker compose --profile tracing up -d      # Jaeger: OTLP in on :4318, UI on http://127.0.0.1:16686
+```
+
+In `.env`, set `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` and `TRACE_UI_URL=http://127.0.0.1:16686/trace/{trace_id}`, then restart `serve` and the worker. Every call, including each simulated one, appears in Jaeger under the service `clinic-voice-agent`, and a call's page in the dashboard gets an **Open trace** link. For Langfuse, point the endpoint at `https://cloud.langfuse.com/api/public/otel` with the auth header shown in [`.env.example`](.env.example); any other backend that accepts OTLP over HTTP works the same way.
+
+A call to the lost-response scenario looks like this in the trace:
+
+```
+call                                   resolved · book · pt_1003
+├── crm GET /patients                  6 ms
+├── pre_call                           7 ms
+└── agent_session
+    ├── agent_turn
+    │   └── function_tool              find_open_slots
+    │       └── crm GET /slots         1 ms
+    └── agent_turn
+        └── function_tool              book_appointment
+            ├── crm POST /appointments 2002 ms   ERROR timeout (committed, response lost)
+            └── crm POST /appointments 3 ms      same idempotency key, booking replayed
+```
 
 ### Phone calls
 
@@ -136,7 +162,7 @@ Two limits on what this shows. The model caller's goals are cooperative ("take t
 ## Check it
 
 ```bash
-uv run pytest                               # 39 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, all 12 scenarios
+uv run pytest                               # 40 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, the OpenTelemetry trace, all 12 scenarios
 uv run ruff check voiceagent tests
 uv run mypy voiceagent
 (cd web && npm run check && npm test)
@@ -173,6 +199,7 @@ voiceagent/
   crm/client.py           the resilient CRM client
   kb.py                   BM25 over knowledge/
   postcall.py             record, summary, signed webhook with outbox
+  telemetry.py            OpenTelemetry export: one trace per call, content off by default
   pricing.py, stats.py    cost and the dashboard aggregates
   store.py                SQLite call log (calls, events, webhook outbox and receipts)
   simulation.py           scripted callers through AgentSession in text mode
@@ -190,10 +217,12 @@ web/                      Vite + React + TypeScript + Tailwind dashboard
 - Replace a guard's phrase list with a small classifier and measure its misses on the scenarios.
 - Swap the cascade's STT or TTS for another LiveKit Inference model and compare the latency bars.
 - Add a second customer: a new workflow file, knowledge folder and CRM, with no code changes.
+- Send the traces to Langfuse or Grafana and build the alert a platform would page on: reply latency p95, or CRM errors per call.
 
 ## Sources
 
-- LiveKit Agents: [Gemini Live plugin](https://docs.livekit.io/agents/models/realtime/plugins/gemini/), [Gemini TTS](https://docs.livekit.io/agents/models/tts/plugins/gemini/), [LiveKit Inference](https://docs.livekit.io/agents/models/inference/), [testing in text mode](https://docs.livekit.io/testing/unit-tests.md)
+- LiveKit Agents: [Gemini Live plugin](https://docs.livekit.io/agents/models/realtime/plugins/gemini/), [Gemini TTS](https://docs.livekit.io/agents/models/tts/plugins/gemini/), [LiveKit Inference](https://docs.livekit.io/agents/models/inference/), [testing in text mode](https://docs.livekit.io/testing/unit-tests.md), [OpenTelemetry traces](https://docs.livekit.io/testing/observability/tracing.md)
+- [Langfuse OpenTelemetry endpoint](https://langfuse.com/integrations/native/opentelemetry) and [Jaeger](https://www.jaegertracing.io/), checked 2026-11-01
 - [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) and [LiveKit Inference pricing](https://livekit.com/pricing/inference), checked 2026-10-28
 - Related in this repository: [Tools, tool calling and unsafe execution](../tool-calling-safety/README.md) (why tools check ownership in code) and [Guardrails for AI agents](../../evaluations-reliability/agent-guardrails/README.md)
 

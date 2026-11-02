@@ -77,6 +77,8 @@ def create_api(store: CallStore | None = None) -> FastAPI:
                          "patient_id": p["id"]} for p in PATIENTS]
             + [{"phone": "+15550199999", "name": "Unknown caller", "patient_id": None}],
             "providers": PROVIDERS,
+            "tracing": {"enabled": bool(cfg.otel_exporter_otlp_endpoint),
+                        "content": cfg.trace_content, "ui_url": cfg.trace_ui_url},
             "prices": {"checked": pricing.CHECKED, "table": pricing.PRICES},
         }
 

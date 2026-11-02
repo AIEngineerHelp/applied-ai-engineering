@@ -65,6 +65,7 @@ export type Config = {
   models: { realtime: { llm: string; voice: string }; cascade: Models };
   callers: { phone: string; name: string; patient_id: string | null }[];
   prices: { checked: string; table: Record<string, Record<string, number>> };
+  tracing: { enabled: boolean; content: boolean; ui_url: string };
 };
 
 export type Check = { check: string; passed: boolean; detail: string };

@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     webhook_url: str = "http://127.0.0.1:4331/api/webhooks/receiver"
     webhook_secret: str = "dev-webhook-secret"
 
+    # OpenTelemetry export (voiceagent/telemetry.py). Off while the endpoint is empty; the
+    # OTLP exporter also reads OTEL_EXPORTER_OTLP_HEADERS for a backend's auth.
+    otel_exporter_otlp_endpoint: str = ""
+    trace_content: bool = False  # send transcripts, phone numbers and tool payloads too
+    trace_ui_url: str = ""  # e.g. http://127.0.0.1:16686/trace/{trace_id} for Jaeger
+
     host: str = "127.0.0.1"
     port: int = 4331
 

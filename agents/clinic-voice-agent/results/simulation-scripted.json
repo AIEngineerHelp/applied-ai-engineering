@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-10-29T20:51:44+05:30",
+  "ran_at": "2026-11-01T20:08:48+05:30",
   "mode": "scripted",
   "model": "scripted (rules, no model)",
   "callers": "fixed lines",
@@ -11,7 +11,7 @@
     {
       "scenario": "book-known-patient",
       "title": "A known patient books a visit",
-      "call_id": "call_a569e872c320",
+      "call_id": "call_f2a636418f1e",
       "passed": true,
       "checks": [
         {
@@ -40,7 +40,7 @@
           "detail": "expected 1 new, got 1"
         }
       ],
-      "seconds": 0.04,
+      "seconds": 0.05,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -55,7 +55,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ananya Rao or Monday, November 2 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -63,7 +63,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
+          "text": "You're booked for Monday, November 2 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -78,7 +78,7 @@
     {
       "scenario": "reschedule",
       "title": "A patient moves an existing appointment",
-      "call_id": "call_e9b6365ca4ea",
+      "call_id": "call_feecc9e42a97",
       "passed": true,
       "checks": [
         {
@@ -117,7 +117,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ravi Patel or Monday, November 2 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
         },
         {
           "role": "user",
@@ -125,7 +125,7 @@
         },
         {
           "role": "assistant",
-          "text": "Done, your appointment is now Friday, October 30 at 9 am. Anything else?"
+          "text": "Done, your appointment is now Monday, November 2 at 9 am. Anything else?"
         },
         {
           "role": "user",
@@ -140,7 +140,7 @@
     {
       "scenario": "cancel",
       "title": "A patient cancels",
-      "call_id": "call_bd4c5702d571",
+      "call_id": "call_e12dd3af5158",
       "passed": true,
       "checks": [
         {
@@ -184,7 +184,7 @@
     {
       "scenario": "clinic-question",
       "title": "An unknown caller asks about hours and parking",
-      "call_id": "call_143f958d6af6",
+      "call_id": "call_47b04ebd215a",
       "passed": true,
       "checks": [
         {
@@ -246,7 +246,7 @@
     {
       "scenario": "emergency-guard",
       "title": "Chest pain goes to the nurse line, not the model",
-      "call_id": "call_2a105de3ba8f",
+      "call_id": "call_eae1c64854fc",
       "passed": true,
       "checks": [
         {
@@ -302,7 +302,7 @@
     {
       "scenario": "unknown-caller-cannot-book",
       "title": "An unregistered caller cannot book",
-      "call_id": "call_6afb1e8e6747",
+      "call_id": "call_330da3f1dcfd",
       "passed": true,
       "checks": [
         {
@@ -336,7 +336,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9 am with Dr. Ananya Rao. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ravi Patel or Monday, November 2 at 9 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -359,7 +359,7 @@
     {
       "scenario": "billing-transfer",
       "title": "A billing question is transferred",
-      "call_id": "call_b7ee8dba7b60",
+      "call_id": "call_5a893d975f1f",
       "passed": true,
       "checks": [
         {
@@ -373,7 +373,7 @@
           "detail": "expected transferred, got transferred"
         }
       ],
-      "seconds": 0.0,
+      "seconds": 0.01,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -395,7 +395,7 @@
     {
       "scenario": "crm-down",
       "title": "The CRM is down for the whole call",
-      "call_id": "call_124ee1028a02",
+      "call_id": "call_c05188aa0b43",
       "passed": true,
       "checks": [
         {
@@ -424,7 +424,7 @@
           "detail": "expected asks_for_human, got asks_for_human"
         }
       ],
-      "seconds": 0.9,
+      "seconds": 0.75,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -454,7 +454,7 @@
     {
       "scenario": "crm-500-then-ok",
       "title": "One 500 from the CRM is retried",
-      "call_id": "call_46de27daa1d9",
+      "call_id": "call_46aa05d28088",
       "passed": true,
       "checks": [
         {
@@ -478,7 +478,7 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 0.13,
+      "seconds": 0.26,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -493,7 +493,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ananya Rao or Monday, November 2 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -501,7 +501,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
+          "text": "You're booked for Monday, November 2 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -516,7 +516,7 @@
     {
       "scenario": "crm-rate-limited",
       "title": "A 429 with Retry-After is waited out",
-      "call_id": "call_dbb2c0529501",
+      "call_id": "call_252e94697566",
       "passed": true,
       "checks": [
         {
@@ -540,7 +540,7 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 1.03,
+      "seconds": 1.04,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -555,7 +555,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ravi Patel or Monday, November 2 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
         },
         {
           "role": "user",
@@ -563,7 +563,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ravi Patel. Anything else?"
+          "text": "You're booked for Monday, November 2 at 9 am with Dr. Ravi Patel. Anything else?"
         },
         {
           "role": "user",
@@ -578,7 +578,7 @@
     {
       "scenario": "lost-response-no-double-booking",
       "title": "A booking whose response is lost is retried without booking twice",
-      "call_id": "call_5944906ed286",
+      "call_id": "call_b703f3893c9b",
       "passed": true,
       "checks": [
         {
@@ -597,7 +597,7 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 2.05,
+      "seconds": 2.08,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
@@ -612,7 +612,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
+          "text": "I have Monday, November 2 at 9 am with Dr. Ananya Rao or Monday, November 2 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -620,7 +620,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
+          "text": "You're booked for Monday, November 2 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -635,7 +635,7 @@
     {
       "scenario": "crm-bad-data",
       "title": "Malformed CRM data is caught, not read out",
-      "call_id": "call_2b695cd2e35f",
+      "call_id": "call_7e5dcbd5fe0c",
       "passed": true,
       "checks": [
         {
@@ -654,7 +654,7 @@
           "detail": "expected 0 new, got 0"
         }
       ],
-      "seconds": 0.01,
+      "seconds": 0.02,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,

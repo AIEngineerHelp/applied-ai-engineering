@@ -26,6 +26,7 @@ import yaml
 from livekit.agents import AgentSession
 from pydantic import BaseModel, Field
 
+from . import telemetry
 from .agent import ClinicAgent
 from .call import CallState, run_pre_call
 from .callers import MAX_CALLER_TURNS, Caller, FixedCaller, ModelCaller
@@ -147,6 +148,7 @@ async def run_scenario(sc: Scenario, *, live: bool, store: CallStore, kb: Knowle
                       caller_phone=sc.phone, scenario=sc.name)
     caller = caller or make_caller(sc, model_callers=False)
     started = time.monotonic()
+    token = telemetry.attach(state)  # LiveKit's session spans nest under the call span
     greeting = await run_pre_call(state)
     if live:
         from livekit.plugins import google
@@ -181,6 +183,7 @@ async def run_scenario(sc: Scenario, *, live: bool, store: CallStore, kb: Knowle
     finally:
         await crm.aclose()
     await finish_call(state, close_reason=None, error=error, use_llm=live, deliver=False)
+    telemetry.detach(token)
     call = store.get_call(state.call_id) or {}
     created = len(crm_state.appointments) - before
     checks = check(sc.expect, call, created)
@@ -203,6 +206,7 @@ async def run_scenario(sc: Scenario, *, live: bool, store: CallStore, kb: Knowle
 async def run_all(*, live: bool, model_callers: bool = True, only: list[str] | None = None,
                   store: CallStore | None = None) -> dict[str, Any]:
     model_callers = live and model_callers  # offline there is no model to play the caller
+    telemetry.setup()
     store = store or CallStore()
     kb = KnowledgeBase()
     scenarios = [s for s in load_scenarios() if not only or s.name in only]
@@ -212,6 +216,7 @@ async def run_all(*, live: bool, model_callers: bool = True, only: list[str] | N
     for sc in scenarios:  # one at a time: the call log keeps calls in order
         results.append(await run_scenario(sc, live=live, store=store, kb=kb,
                                           caller=make_caller(sc, model_callers)))
+    telemetry.flush()
     mode = ("live" if model_callers else "live-fixed-callers") if live else "scripted"
     caller_tokens = {k: sum((r["caller_usage"] or {}).get(k, 0) for r in results)
                      for k in ("input", "output")}

@@ -13,6 +13,8 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
     "pyyaml>=6.0",
+    "opentelemetry-sdk~=1.45",
+    "opentelemetry-exporter-otlp-proto-http~=1.45",
 ]
 
 [dependency-groups]

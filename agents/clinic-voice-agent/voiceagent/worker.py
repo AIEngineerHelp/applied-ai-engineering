@@ -19,6 +19,7 @@ from typing import Any
 from livekit import rtc
 from livekit.agents import AgentServer, JobContext, JobProcess, cli
 
+from . import telemetry
 from .agent import ClinicAgent, speak
 from .call import CallState, run_pre_call
 from .config import settings
@@ -68,6 +69,7 @@ def caller_details(ctx: JobContext, participant: rtc.RemoteParticipant) -> tuple
 @server.rtc_session(agent_name=settings().agent_name)
 async def entrypoint(ctx: JobContext) -> None:
     cfg = settings()
+    telemetry.setup()
     workflow = default_workflow()
     await ctx.connect()
     participant = await ctx.wait_for_participant()
@@ -82,6 +84,8 @@ async def entrypoint(ctx: JobContext) -> None:
         store=store, source=source, pipeline=pipeline, models=models_for(pipeline, cfg),
         caller_phone=phone)
     state.event("call_started", room=ctx.room.name, participant=participant.identity)
+    # The call's root span is current from here, so LiveKit's session spans nest under it.
+    telemetry.attach(state)
 
     greeting = await run_pre_call(state)
     try:
@@ -90,6 +94,7 @@ async def entrypoint(ctx: JobContext) -> None:
         log.exception("could not build the %s pipeline", pipeline)
         await finish_call(state, error=f"{type(exc).__name__}: {exc}", deliver=False)
         await crm.aclose()
+        telemetry.flush()
         ctx.shutdown(reason="pipeline unavailable")
         return
     session.userdata = state
@@ -112,6 +117,7 @@ async def entrypoint(ctx: JobContext) -> None:
                               use_llm=bool(cfg.gemini_api_key))
         finally:
             await crm.aclose()
+            telemetry.flush()
 
     ctx.add_shutdown_callback(on_shutdown)
     await session.start(agent=ClinicAgent(state, greeting), room=ctx.room)

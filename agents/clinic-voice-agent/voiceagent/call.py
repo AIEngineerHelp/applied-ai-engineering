@@ -12,6 +12,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import telemetry
 from .crm.client import Appointment, Attempt, CRMClient, CRMError, Patient, Slot
 from .kb import KnowledgeBase
 from .pricing import UsageMeter
@@ -44,18 +45,21 @@ class CallState:
     guard_fired: str | None = None
     ended_by_agent: bool = False
     meter: UsageMeter = field(default_factory=UsageMeter)
+    span: Any = None  # the call's OpenTelemetry root span, when tracing is on
 
     def __post_init__(self) -> None:
         self.store.start_call(
             self.call_id, source=self.source, pipeline=self.pipeline, models=self.models,
             caller_phone=self.caller_phone, scenario=self.scenario, started_at=self.started_wall)
         self.crm.on_attempt = self._crm_attempt
+        telemetry.start_call(self)
 
     def at(self) -> float:
         return time.monotonic() - self.started
 
     def event(self, kind: str, **data: Any) -> None:
         self.store.add_event(self.call_id, self.at(), kind, data)
+        telemetry.record(self, kind, data)
 
     def _crm_attempt(self, attempt: Attempt) -> None:
         self.event("crm_attempt", method=attempt.method, path=attempt.path,
