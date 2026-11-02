@@ -35,14 +35,20 @@ def models_for(pipeline: str, cfg: Settings) -> dict[str, str]:
 
 
 def build_session(pipeline: str, cfg: Settings, vad: Any = None) -> AgentSession[CallState]:
-    from livekit.plugins import google
+    from livekit.plugins import google, silero
 
     if pipeline == "realtime":
-        return AgentSession(llm=google.realtime.RealtimeModel(
-            model=cfg.realtime_model, voice=cfg.realtime_voice, api_key=cfg.gemini_api_key,
-            temperature=0.6))
+        # Gemini decides when the caller's turn ends. The local VAD only marks when they
+        # stopped speaking, which LiveKit needs to time the reply (e2e_latency). Without it
+        # AgentSession falls back to LiveKit Inference's hosted VAD, which a local server
+        # does not have, and realtime calls record no reply latency at all.
+        return AgentSession(
+            llm=google.realtime.RealtimeModel(
+                model=cfg.realtime_model, voice=cfg.realtime_voice, api_key=cfg.gemini_api_key,
+                temperature=0.6),
+            vad=vad or silero.VAD.load(),
+        )
     from livekit.agents import inference
-    from livekit.plugins import silero
 
     return AgentSession(
         stt=inference.STT(model=cfg.cascade_stt, language="en"),
