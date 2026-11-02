@@ -95,7 +95,7 @@ export function SimulationPage() {
         </Empty>
       )}
 
-      <div className="space-y-3">
+      <div className="stagger space-y-3">
         {scenarios.map((sc) => {
           const r = byName.get(sc.name);
           const isOpen = open === sc.name;

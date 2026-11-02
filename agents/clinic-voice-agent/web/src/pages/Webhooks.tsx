@@ -20,7 +20,7 @@ export function WebhooksPage() {
         title="Webhooks"
         lede="After each voice call the agent posts its record to the customer's system. Here that system is a demo receiver in this app: it verifies the HMAC signature and timestamp, and treats a repeated idempotency key as a duplicate, so retries are safe."
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Sent (outbox)">
           {!data?.outbox.length && <Empty>Nothing sent yet. Simulations do not send webhooks; voice calls do.</Empty>}
           <ul className="divide-y divide-rule">

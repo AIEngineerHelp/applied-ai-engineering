@@ -51,7 +51,7 @@ export function CallsPage() {
 
       {pipelines.length === 0 && <Empty>No calls yet. Make one from “Talk to the agent”, or run the simulation.</Empty>}
 
-      <div className="space-y-6">
+      <div className="stagger space-y-6">
         {pipelines.map(([pipeline, p]) => {
           const resolved = p.end_status.resolved ?? 0;
           const transferred = p.end_status.transferred ?? 0;
@@ -153,7 +153,7 @@ export function CallsPage() {
                 </thead>
                 <tbody>
                   {shown.map((c) => (
-                    <tr key={c.id} className="cursor-pointer border-t border-rule hover:bg-paper" onClick={() => (window.location.hash = `#/calls/${c.id}`)}>
+                    <tr key={c.id} className="bubble-in cursor-pointer border-t border-rule transition-colors hover:bg-paper" onClick={() => (window.location.hash = `#/calls/${c.id}`)}>
                       <td className="px-5 py-2.5 whitespace-nowrap text-ink-2">{when(c.started_at)}</td>
                       <td className="py-2.5">
                         <div className="text-ink">{c.scenario ?? c.patient_id ?? "Unknown caller"}</div>
@@ -199,10 +199,13 @@ function LatencyBreakdown({ latency, parts }: { latency: Stats["pipelines"][stri
               <div className={isTotal ? "font-medium text-ink" : "text-ink-2"}>{p.label}</div>
               <div className="relative h-3 rounded-sm bg-paper">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-sm"
-                  style={{ width: `${((v.p50 ?? 0) / max) * 100}%`, background: isTotal ? PART_COLOURS[4] : PART_COLOURS[i % 4] }}
+                  className="grow-x absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-[var(--ease-out-soft)]"
+                  style={{ width: `${((v.p50 ?? 0) / max) * 100}%`, background: isTotal ? PART_COLOURS[4] : PART_COLOURS[i % 4], ["--i" as string]: i }}
                 />
-                <div className="absolute inset-y-[-3px] w-px bg-ink-2" style={{ left: `${((v.p95 ?? 0) / max) * 100}%` }} />
+                <div
+                  className="rise absolute inset-y-[-3px] w-px bg-ink-2 transition-[left] duration-700"
+                  style={{ left: `${((v.p95 ?? 0) / max) * 100}%`, ["--i" as string]: i + 8 }}
+                />
               </div>
               <div className="text-right text-ink-2 tabular-nums">
                 {ms(v.p50)} <span className="text-ink-3">/ {ms(v.p95)}</span>

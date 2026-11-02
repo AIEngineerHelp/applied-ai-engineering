@@ -127,10 +127,10 @@ export const api = {
   runSimulation: () => request<SimulationReport>("/api/simulations/run", { method: "POST", body: "{}" }),
   faults: () => request<{ fault: Fault; remaining: number; recent: { path: string; fault: string; method: string; at: string }[] }>("/api/faults"),
   setFault: (fault: Partial<Fault>) => request("/api/faults", { method: "PUT", body: JSON.stringify(fault) }),
-  session: (pipeline: string, caller_phone: string | null) =>
+  session: (pipeline: string, caller_phone: string | null, caller_name?: string) =>
     request<{ url: string; token: string; room: string }>("/api/session", {
       method: "POST",
-      body: JSON.stringify({ pipeline, caller_phone }),
+      body: JSON.stringify({ pipeline, caller_phone, caller_name }),
     }),
   webhooks: () =>
     request<{

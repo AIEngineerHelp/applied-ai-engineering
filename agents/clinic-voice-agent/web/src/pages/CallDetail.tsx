@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, type CallDetail, type CallEvent } from "../api";
-import { Badge, Card, Mono, Stat, outcomeTone, statusTone } from "../components/ui";
+import { Badge, Card, Mono, Skeleton, Stat, outcomeTone, statusTone } from "../components/ui";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
 const HIDDEN = new Set(["agent_say", "metric"]);
@@ -33,7 +33,7 @@ export function CallDetailPage({ id }: { id: string }) {
         No trace for <Mono>{id}</Mono> yet. If the call just started, the agent may still be joining. <a className="text-accent underline" href="#/calls">Back to calls</a>
       </div>
     );
-  if (!call) return <div className="text-ink-3">Loading…</div>;
+  if (!call) return <Card><Skeleton rows={5} /></Card>;
 
   const s = call.summary;
   // A scripted simulation has no audio and no model, so its turn timings mean nothing.
@@ -49,7 +49,7 @@ export function CallDetailPage({ id }: { id: string }) {
       <a href="#/calls" className="text-[14px] text-ink-3 hover:text-ink">
         ← Calls
       </a>
-      <div className="mt-3 mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="rise mt-3 mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-serif text-[32px] leading-tight text-ink">{call.scenario ?? call.caller_phone ?? "Unknown caller"}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-ink-3">
@@ -63,7 +63,7 @@ export function CallDetailPage({ id }: { id: string }) {
         <Badge tone={statusTone(call.end_status)}>{statusLabel(call.end_status)}</Badge>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card
           title="Trace"
           aside={
@@ -73,11 +73,12 @@ export function CallDetailPage({ id }: { id: string }) {
             </label>
           }
         >
-          <ol className="space-y-3">
+          <ol className="stagger relative space-y-3 before:absolute before:top-1 before:bottom-1 before:left-[63px] before:w-px before:bg-rule">
             {events.map((e) => (
               <li key={e.seq} className="grid grid-cols-[52px_minmax(0,1fr)] gap-3">
                 <div className="pt-0.5 text-right font-mono text-[12px] text-ink-3 tabular-nums">+{e.at.toFixed(1)}s</div>
-                <div className="min-w-0">
+                <div className="relative min-w-0 pl-3">
+                  <span aria-hidden className="absolute top-[7px] left-[-4.5px] h-2 w-2 rounded-full border-2 border-card bg-rule-2" />
                   <EventRow event={e} />
                 </div>
               </li>

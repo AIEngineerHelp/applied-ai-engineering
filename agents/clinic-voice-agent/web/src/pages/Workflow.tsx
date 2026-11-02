@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "../api";
-import { Badge, Card, Mono, PageHeader } from "../components/ui";
+import { Badge, Card, Mono, PageHeader, Skeleton } from "../components/ui";
 
 const TOOL_NOTES: Record<string, string> = {
   find_open_slots: "Pages through the CRM's calendar; remembers what it offered.",
@@ -17,7 +17,7 @@ export function WorkflowPage() {
   useEffect(() => {
     api.workflow().then(setData).catch(() => undefined);
   }, []);
-  if (!data) return <div className="text-ink-3">Loading…</div>;
+  if (!data) return <Card><Skeleton rows={5} /></Card>;
   const wf = data.workflow;
 
   return (
@@ -31,7 +31,7 @@ export function WorkflowPage() {
           </>
         }
       />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Stage n="1" title="Before the call" lede="Runs while the phone is ringing.">
           <Step title="Look up the caller">
             Find the patient by phone number and load their upcoming appointments, within{" "}
