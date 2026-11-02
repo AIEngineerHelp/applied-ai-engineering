@@ -83,6 +83,21 @@ class CRMState:
             slot = self.all_slots(patient["primary_provider"])[3 + i * 5]
             self._insert(patient["id"], slot["id"], "Annual check-up")
 
+    def register(self, first_name: str, last_name: str, phone: str) -> dict[str, Any]:
+        """Add a demo patient so a visitor can call as themselves. A number that is already
+        on file returns that patient unchanged rather than renaming them."""
+        existing = next((p for p in self.patients if p["phone"] == phone), None)
+        if existing:
+            return existing
+        patient = {"id": f"pt_{2001 + len(self.patients) - len(PATIENTS)}",
+                   "first_name": first_name, "last_name": last_name, "phone": phone,
+                   "date_of_birth": "", "primary_provider": "dr_rao"}
+        self.patients.append(patient)
+        # Like the seeded patients, give them one visit to move or cancel.
+        free = [s for s in self.all_slots("dr_rao") if s["id"] not in self.taken()]
+        self._insert(patient["id"], free[len(self.patients) % 7]["id"], "Annual check-up")
+        return patient
+
     def all_slots(self, provider: str | None = None) -> list[dict[str, Any]]:
         """Weekday 20-minute slots for the next 14 days, 9:00-16:40 local time."""
         slots = []

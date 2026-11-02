@@ -10,6 +10,7 @@ checks the signature and drops duplicates by idempotency key, as a real receiver
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import timedelta
 from typing import Any
@@ -17,7 +18,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import pricing
 from .config import settings
@@ -34,6 +35,17 @@ WEB_DIST = ROOT / "web" / "dist"
 class SessionRequest(BaseModel):
     pipeline: str = "realtime"
     caller_phone: str | None = None
+    # When set, the caller is added to the mock CRM first, so a visitor can call as
+    # themselves and be greeted by name. Nothing is dialled: the call stays in the browser.
+    caller_name: str | None = Field(default=None, max_length=60)
+
+
+def normalize_phone(raw: str) -> str:
+    digits = re.sub(r"\D", "", raw)
+    if not 7 <= len(digits) <= 15:
+        raise HTTPException(400, "Enter a phone number with 7 to 15 digits,"
+                                 " including the country code.")
+    return f"+{digits}"
 
 
 class SimulationRequest(BaseModel):
@@ -84,6 +96,13 @@ def create_api(store: CallStore | None = None) -> FastAPI:
             raise HTTPException(400, "pipeline must be realtime or cascade")
         if not cfg.gemini_api_key:
             raise HTTPException(400, "Set GEMINI_API_KEY to talk to the agent.")
+        if body.caller_name is not None:
+            name = " ".join(body.caller_name.split())
+            if not name or not body.caller_phone:
+                raise HTTPException(400, "Enter a name and a phone number.")
+            body.caller_phone = normalize_phone(body.caller_phone)
+            first, _, last = name.partition(" ")
+            crm_app.state.crm.register(first, last, body.caller_phone)
         room = f"call-{uuid.uuid4().hex[:10]}"
         meta = json.dumps({"pipeline": body.pipeline, "caller_phone": body.caller_phone})
         token = (

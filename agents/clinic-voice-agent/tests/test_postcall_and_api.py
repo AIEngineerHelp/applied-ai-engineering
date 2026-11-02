@@ -81,3 +81,26 @@ def test_fault_switch_reaches_mounted_crm(store) -> None:  # type: ignore[no-unt
 def test_crm_requires_auth(store) -> None:  # type: ignore[no-untyped-def]
     client = TestClient(create_api(store))
     assert client.get("/crm/patients", params={"phone": "x"}).status_code == 401
+
+
+def test_a_visitor_can_call_as_themselves(store, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from voiceagent import api as api_module
+
+    monkeypatch.setattr(api_module.settings(), "gemini_api_key", "test-key")
+    client = TestClient(create_api(store))
+    r = client.post("/api/session", json={"caller_name": "  Anjali   Desai ",
+                                          "caller_phone": "+91 98765-43210"})
+    assert r.status_code == 200
+    headers = {"Authorization": "Bearer dev-crm-key"}
+    found = client.get("/crm/patients", params={"phone": "+919876543210"}, headers=headers)
+    patient = found.json()["data"][0]
+    assert (patient["first_name"], patient["last_name"]) == ("Anjali", "Desai")
+    visits = client.get(f"/crm/patients/{patient['id']}/appointments", headers=headers)
+    assert len(visits.json()["data"]) == 1
+    # Calling again with the same number reuses the record instead of adding another.
+    client.post("/api/session",
+                json={"caller_name": "Anjali Desai", "caller_phone": "919876543210"})
+    found = client.get("/crm/patients", params={"phone": "+919876543210"}, headers=headers)
+    assert len(found.json()["data"]) == 1
+    bad = client.post("/api/session", json={"caller_name": "A", "caller_phone": "12"})
+    assert bad.status_code == 400
