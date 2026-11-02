@@ -57,6 +57,8 @@ Travel Lab compares Gemini-only coordination with Jev agent and tool selection, 
 
 [LLM vs RAG vs AI agent vs agentic AI](careers-learning/llm-rag-agent-agentic/README.md) explains the four terms as layers, each the previous one plus one capability: retrieval, tools in a loop, then coordination of several agents. Animated figures show each level as a bench, short Python snippets show RAG and an agent loop, and a table helps you pick the lowest level that does the job. The snippets' tests use a mocked model and need no API key. Written by Nagaraju Poralla.
 
+[Clinic voice agent](agents/clinic-voice-agent/README.md) is a phone receptionist for a fictional clinic, built on LiveKit Agents and Gemini the way a voice platform ships one to a business. It looks the caller up in a CRM before answering, books and moves appointments with tools, answers from a knowledge base, and hands emergencies and requests for a person to code-level guards that transfer the call before the model is asked. After the call it writes a record from the tool calls and posts it by signed webhook. Talk to it in the browser over a realtime (Gemini Live) or cascade (STT → LLM → TTS) pipeline, break its CRM mid-call, and read each call's trace: latency by component, tool calls, retries and cost per minute. Twelve simulated callers, including a lost booking response that must not book twice, run offline with no key.
+
 ## Contributing
 
 1. Choose the category matching the main lesson of your contribution.

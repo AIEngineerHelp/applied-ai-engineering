@@ -1,0 +1,151 @@
+# Simulated callers. Each scenario sets the CRM's fault switch, plays the caller's turns
+# as text, and checks what the workflow did: tools, guards, transfers, CRM writes and the
+# end status. The checks are about behaviour that must hold whatever the model says.
+#
+# Phones: +15550142201 Maya (pt_1001), ...202 Daniel, ...203 Grace, ...204 Samir.
+# Any other number is an unknown caller.
+
+- name: book-known-patient
+  title: A known patient books a visit
+  phone: "+15550142201"
+  turns:
+    - "Hi, I'd like to book an appointment for a sore throat."
+    - "Yes, the first one works."
+    - "No, that's all. Bye."
+  expect:
+    pre_call: matched
+    tools_ok: [find_open_slots, book_appointment]
+    end_status: resolved
+    crm_new_appointments: 1
+
+- name: reschedule
+  title: A patient moves an existing appointment
+  phone: "+15550142202"
+  turns:
+    - "I need to reschedule my appointment."
+    - "Yes, that works."
+    - "That's all, thanks. Goodbye."
+  expect:
+    tools_ok: [find_open_slots, reschedule_appointment]
+    end_status: resolved
+    crm_new_appointments: 0
+
+- name: cancel
+  title: A patient cancels
+  phone: "+15550142203"
+  turns:
+    - "I want to cancel my appointment please."
+    - "That's it, goodbye."
+  expect:
+    tools_ok: [cancel_appointment]
+    end_status: resolved
+
+- name: clinic-question
+  title: An unknown caller asks about hours and parking
+  phone: "+15550199999"
+  turns:
+    - "What are your hours on Saturday?"
+    - "Is there parking at the clinic?"
+    - "Great, that's all. Bye."
+  expect:
+    pre_call: no_match
+    tools_ok: [search_clinic_info]
+    tools_not_called: [book_appointment]
+    end_status: resolved
+
+- name: emergency-guard
+  title: Chest pain goes to the nurse line, not the model
+  phone: "+15550142204"
+  turns:
+    - "I have chest pain and my left arm feels numb."
+  expect:
+    guard: emergency
+    transfer: nurse_line
+    tools_not_called: [find_open_slots, book_appointment, search_clinic_info]
+    end_status: transferred
+
+- name: unknown-caller-cannot-book
+  title: An unregistered caller cannot book
+  phone: "+15550199998"
+  turns:
+    - "I'd like to book an appointment."
+    - "Yes, the first one."
+    - "Okay, that's all. Bye."
+  expect:
+    pre_call: no_match
+    tool_outcomes: {book_appointment: refused}
+    crm_new_appointments: 0
+
+- name: billing-transfer
+  title: A billing question is transferred
+  phone: "+15550142201"
+  turns:
+    - "I have a question about my bill from last month."
+  expect:
+    transfer: billing
+    end_status: transferred
+
+- name: crm-down
+  title: The CRM is down for the whole call
+  phone: "+15550142201"
+  fault: {mode: down}
+  turns:
+    - "I'd like to book an appointment."
+    - "Can I speak to a person?"
+  expect:
+    pre_call: crm_unavailable
+    tool_outcomes: {find_open_slots: crm_unavailable}
+    guard: asks_for_human
+    transfer: front_desk
+    crm_new_appointments: 0
+
+- name: crm-500-then-ok
+  title: One 500 from the CRM is retried
+  phone: "+15550142201"
+  fault: {mode: error_500, count: 1, path_prefix: /slots}
+  turns:
+    - "Hi, I'd like to book an appointment for a check-up."
+    - "Yes, that works."
+    - "That's all, bye."
+  expect:
+    tools_ok: [find_open_slots, book_appointment]
+    crm_retries: 1
+    crm_new_appointments: 1
+
+- name: crm-rate-limited
+  title: A 429 with Retry-After is waited out
+  phone: "+15550142202"
+  fault: {mode: rate_limit, count: 1, path_prefix: /slots}
+  turns:
+    - "Do you have any appointments available?"
+    - "Yes, the first one."
+    - "That's all, goodbye."
+  expect:
+    tools_ok: [find_open_slots, book_appointment]
+    crm_retries: 1
+    crm_new_appointments: 1
+
+- name: lost-response-no-double-booking
+  title: A booking whose response is lost is retried without booking twice
+  phone: "+15550142203"
+  fault: {mode: lost_response, count: 1, path_prefix: /appointments}
+  turns:
+    - "I'd like to book an appointment for my blood pressure."
+    - "Yes please."
+    - "That's all. Bye."
+  expect:
+    tools_ok: [book_appointment]
+    crm_retries: 1
+    crm_new_appointments: 1
+
+- name: crm-bad-data
+  title: Malformed CRM data is caught, not read out
+  phone: "+15550142204"
+  fault: {mode: bad_data, path_prefix: /slots}
+  turns:
+    - "Can I book an appointment?"
+    - "Can I speak to a person?"
+  expect:
+    tool_outcomes: {find_open_slots: crm_bad_data}
+    transfer: front_desk
+    crm_new_appointments: 0

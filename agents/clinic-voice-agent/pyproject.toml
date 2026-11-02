@@ -1,0 +1,41 @@
+[project]
+name = "clinic-voice-agent"
+version = "0.1.0"
+description = "A production-shaped voice agent for a clinic front desk, built on LiveKit Agents and Gemini"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "livekit-agents[google,silero]~=1.8.9",
+    "livekit-api~=1.2",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "httpx>=0.28",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.8", "mypy>=1.13", "types-pyyaml"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["voiceagent"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
