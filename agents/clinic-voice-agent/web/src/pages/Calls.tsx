@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Call, type Stats } from "../api";
-import { Badge, Card, Empty, Mono, PageHeader, Stat, outcomeTone, statusTone } from "../components/ui";
+import { Badge, Card, DownloadMenu, Empty, Mono, PageHeader, Stat, outcomeTone, statusTone } from "../components/ui";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
 const SOURCES = [
@@ -34,6 +34,22 @@ export function CallsPage() {
         title="Calls"
         lede="Every call, voice or simulated, writes an event trace: pre-call lookup, each turn's latency by component, tool calls, CRM attempts, guards, transfers and the post-call record."
         aside={
+          <div className="flex flex-wrap items-center gap-3">
+          <DownloadMenu
+            label="Export CSV"
+            options={[
+              {
+                label: "Without phone numbers",
+                hint: "One row per call: outcome, intent, duration, reply latency, CRM failures, cost.",
+                href: `/api/calls.csv${source ? `?source=${source}` : ""}`,
+              },
+              {
+                label: "With phone numbers",
+                hint: "Adds each caller's number. Contains patient details.",
+                href: `/api/calls.csv?content=true${source ? `&source=${source}` : ""}`,
+              },
+            ]}
+          />
           <div className="flex gap-1 rounded-lg border border-rule bg-card p-1">
             {SOURCES.map((s) => (
               <button
@@ -45,6 +61,7 @@ export function CallsPage() {
                 {s.label}
               </button>
             ))}
+          </div>
           </div>
         }
       />

@@ -12,10 +12,10 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from . import pricing
 from .config import settings
 from .crm.server import PATIENTS, PROVIDERS, FaultConfig, create_app
+from .export import call_export, calls_csv
 from .postcall import verify
 from .simulation import RESULTS, load_scenarios, run_all
 from .stats import summarize
@@ -125,6 +126,26 @@ def create_api(store: CallStore | None = None) -> FastAPI:
         if source:
             rows = [c for c in rows if c["source"] == source]
         return {"data": rows}
+
+    @app.get("/api/calls.csv")
+    async def calls_export(source: str | None = None, content: bool = False) -> Response:
+        """The call log as a spreadsheet. Phone numbers only with content=true."""
+        stamp = datetime.now().strftime("%Y%m%d-%H%M")
+        return Response(calls_csv(store, source=source, content=content), media_type="text/csv",
+                        headers={"Content-Disposition":
+                                 f'attachment; filename="calls-{source or "all"}-{stamp}.csv"'})
+
+    @app.get("/api/calls/{call_id}/export")
+    async def call_download(call_id: str, content: bool = False) -> Response:
+        """One call as a JSON file. Transcript, phone and tool payloads only with content=true."""
+        found = store.get_call(call_id)
+        if found is None:
+            raise HTTPException(404, "unknown call")
+        body = json.dumps(call_export(found, content=content), indent=2)
+        suffix = "" if content else "-redacted"
+        return Response(body, media_type="application/json",
+                        headers={"Content-Disposition":
+                                 f'attachment; filename="{call_id}{suffix}.json"'})
 
     @app.get("/api/calls/{call_id}")
     async def call(call_id: str) -> dict[str, Any]:

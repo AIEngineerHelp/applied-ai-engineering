@@ -30,6 +30,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
 from opentelemetry.trace import Status, StatusCode
 
 from .config import settings
+from .export import CONTENT_FIELDS  # kept only with TRACE_CONTENT
 
 if TYPE_CHECKING:
     from .call import CallState
@@ -38,10 +39,6 @@ SERVICE = "clinic-voice-agent"
 
 _provider: TracerProvider | None = None
 _tracer: trace.Tracer = trace.NoOpTracer()
-
-# Event fields that carry what a patient said or who they are. Kept only with TRACE_CONTENT.
-CONTENT_FIELDS = {"text", "args", "result", "phone", "caller_phone", "phrase", "reason",
-                  "error", "summary", "participant"}
 
 
 class CallIdProcessor(SpanProcessor):

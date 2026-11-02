@@ -153,3 +153,32 @@ export function Skeleton({ rows = 3 }: { rows?: number }) {
     </div>
   );
 }
+
+/** A download button with a short menu: the redacted file first, the full one second. */
+export function DownloadMenu({ label, options }: { label: string; options: { label: string; hint: string; href: string }[] }) {
+  return (
+    <details className="group relative">
+      <summary className="lift flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-rule-2 bg-card px-3 py-1.5 text-[13px] font-medium whitespace-nowrap text-ink hover:bg-paper [&::-webkit-details-marker]:hidden">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        </svg>
+        {label}
+        <span className="text-ink-3 transition-transform duration-200 group-open:rotate-180">▾</span>
+      </summary>
+      <div className="rise absolute right-0 z-20 mt-1.5 w-72 overflow-hidden rounded-xl border border-rule bg-card shadow-[0_18px_40px_-20px_rgb(28_27_25/0.35)]">
+        {options.map((o) => (
+          <a
+            key={o.href}
+            href={o.href}
+            download
+            onClick={(e) => (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open")}
+            className="block border-b border-rule px-4 py-2.5 last:border-b-0 hover:bg-paper"
+          >
+            <div className="text-[13.5px] font-medium text-ink">{o.label}</div>
+            <div className="text-[12.5px] leading-snug text-ink-3">{o.hint}</div>
+          </a>
+        ))}
+      </div>
+    </details>
+  );
+}

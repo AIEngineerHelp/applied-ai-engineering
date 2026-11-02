@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, type CallDetail, type CallEvent } from "../api";
-import { Badge, Card, Mono, Skeleton, Stat, outcomeTone, statusTone } from "../components/ui";
+import { Badge, Card, DownloadMenu, Mono, Skeleton, Stat, outcomeTone, statusTone } from "../components/ui";
 import { duration, ms, pipelineLabel, statusLabel, usd, when } from "../format";
 
 const HIDDEN = new Set(["agent_say", "metric", "trace"]);
@@ -67,6 +67,21 @@ export function CallDetailPage({ id }: { id: string }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <DownloadMenu
+            label="Download call"
+            options={[
+              {
+                label: "Without patient details",
+                hint: "Events, CRM attempts, latency, cost and outcome. No transcript, phone number or tool payloads.",
+                href: `/api/calls/${call.id}/export`,
+              },
+              {
+                label: "Everything, with transcript",
+                hint: "Adds what was said, the phone number and tool arguments. Contains patient details.",
+                href: `/api/calls/${call.id}/export?content=true`,
+              },
+            ]}
+          />
           {traceId && traceUi && (
             <a
               href={traceUi.replace("{trace_id}", traceId)}

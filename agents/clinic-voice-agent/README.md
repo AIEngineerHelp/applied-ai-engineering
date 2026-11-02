@@ -107,6 +107,10 @@ call                                   resolved · book · pt_1003
             └── crm POST /appointments 3 ms      same idempotency key, booking replayed
 ```
 
+### Export calls
+
+On a call's page, **Download call** saves it as one JSON file: the call, its post-call record, every event in order and the latency of each turn. On **Calls**, **Export CSV** saves one row per call for the selected source: outcome, intent, transfer, duration, reply latency p50 and p95, tool calls, CRM attempts and failures, and cost. Both default to leaving out patient details (phone numbers, what was said, tool arguments and results, the summary); the second option in each menu includes them. The same files come from `GET /api/calls/{id}/export` and `GET /api/calls.csv`, with `?content=true` for the full version.
+
 ### Phone calls
 
 [`docs/telephony.md`](docs/telephony.md) shows how to point a Twilio or Telnyx number at the agent over LiveKit SIP. Nothing is provisioned by this example.
@@ -162,7 +166,7 @@ Two limits on what this shows. The model caller's goals are cooperative ("take t
 ## Check it
 
 ```bash
-uv run pytest                               # 40 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, the OpenTelemetry trace, all 12 scenarios
+uv run pytest                               # 42 tests: CRM client, guards, KB, pricing, webhooks, API (including calling as yourself), callers, the OpenTelemetry trace, exports, all 12 scenarios
 uv run ruff check voiceagent tests
 uv run mypy voiceagent
 (cd web && npm run check && npm test)
@@ -200,6 +204,7 @@ voiceagent/
   kb.py                   BM25 over knowledge/
   postcall.py             record, summary, signed webhook with outbox
   telemetry.py            OpenTelemetry export: one trace per call, content off by default
+  export.py               a call as JSON and the call log as CSV, redacted by default
   pricing.py, stats.py    cost and the dashboard aggregates
   store.py                SQLite call log (calls, events, webhook outbox and receipts)
   simulation.py           scripted callers through AgentSession in text mode
