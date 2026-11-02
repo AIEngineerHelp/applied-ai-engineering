@@ -6,6 +6,8 @@ Meera, the agent, answers the phone for Birchwood Family Clinic. Before saying a
 
 It runs on [LiveKit Agents](https://docs.livekit.io/agents/) 1.8 (Python) with Gemini, and includes a TypeScript dashboard.
 
+**Try it live:** https://clinic-voice-agent-one.vercel.app. Call Meera from your browser (a few calls per visitor per hour, 3 minutes each), break the CRM mid-call, and read the call's trace. The rest of the site is a snapshot of the recorded simulation runs. See [Deploy a public demo](#deploy-a-public-demo).
+
 ## What it teaches
 
 **The model talks; the workflow decides.** A voice agent for a business is mostly not the model. Here the model chooses words and tools, and code owns everything that has to go the same way every time:
