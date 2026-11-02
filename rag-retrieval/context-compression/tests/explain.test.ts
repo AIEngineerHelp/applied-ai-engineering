@@ -31,3 +31,29 @@ test("unselected headings explain dependencies and MMR labels base scores", () =
   assert.match(explanation.how, /not MMR priority/);
   assert.match(explanation.reasons[0].reason, /dependencies/);
 });
+
+
+test("zero-score explanation walks from normalized terms to the actual arithmetic", () => {
+  const options = { ...defaults, query: "Can I get a refund after exporting?", threshold: 0, remove: 60 };
+  const result = compress("Prices exclude local taxes.", options);
+  const explanation = explainCut({ start: 0, end: 26 }, result, options);
+  assert.ok(explanation.queryTerms?.includes("refund"));
+  const steps = explanation.reasons[0].calculation!.join("\n");
+  assert.match(steps, /Terms: price, exclude, local, taxe/);
+  assert.match(steps, /no terms match/);
+  assert.match(steps, /0.000 \/ √4 = 0.000/);
+  assert.match(steps, /not a probability/);
+});
+
+test("positive-score arithmetic includes heading matches and the selected read focus", () => {
+  const options = { ...defaults, query: "billing", focus: "taxes", useFocus: true, threshold: 0, remove: 90 };
+  const source = "## Billing\n\nPrices exclude local taxes.";
+  const result = compress(source, options);
+  const explanation = explainCut({ start: 12, end: source.length }, result, options);
+  assert.deepEqual(explanation.queryTerms, ["billing", "taxe"]);
+  const steps = explanation.reasons[0].calculation!.join("\n");
+  assert.match(steps, /plus its required headings/);
+  assert.match(steps, /billing: df=1, weight=0.693/);
+  assert.match(steps, /taxe: df=1, weight=0.693/);
+  assert.match(steps, /1.386 \/ √5 = 0.620/);
+});

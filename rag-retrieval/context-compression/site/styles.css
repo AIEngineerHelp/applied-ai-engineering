@@ -1830,3 +1830,6 @@ footer p a {
 .cut-explanation ul { margin: 0; padding-left: 18px; }
 .cut-explanation q { font-weight: 600; }
 .cut summary { white-space: normal; overflow-wrap: anywhere; }
+
+.score-calculation { padding-left: 20px; margin: 10px 0; }
+.score-calculation li { margin-bottom: 10px; overflow-wrap: anywhere; }
