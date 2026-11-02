@@ -10,3 +10,5 @@ web/node_modules/
 web/dist/
 web/dist-api/
 site/
+livekit.toml
+.vercel-link/

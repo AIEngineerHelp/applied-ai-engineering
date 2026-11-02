@@ -20,5 +20,7 @@ ENV PYTHONUNBUFFERED=1 HF_HOME=/app/.cache \
 RUN useradd --uid 10001 --create-home appuser
 WORKDIR /app
 COPY --from=build --chown=appuser:appuser /app /app
+# The call log (runs/calls.db) is written per call; /app itself is root-owned.
+RUN mkdir -p /app/runs && chown appuser:appuser /app/runs
 USER appuser
 CMD ["uv", "run", "--no-sync", "python", "-m", "voiceagent.worker", "start"]

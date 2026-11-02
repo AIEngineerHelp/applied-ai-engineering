@@ -62,8 +62,16 @@ def export_site(out: Path = SITE, store: CallStore | None = None) -> dict[str, i
         r.raise_for_status()
         return r.json() if "json" in r.headers.get("content-type", "") else r.text
 
+    # Keep the Vercel project link (site/.vercel) across exports, so redeploys reuse it.
+    link = out / ".vercel"
+    kept = link.parent.with_name(".vercel-link") if link.exists() else None
+    if kept:
+        shutil.rmtree(kept, ignore_errors=True)
+        shutil.move(str(link), kept)
     shutil.rmtree(out, ignore_errors=True)
     shutil.copytree(WEB_DIST, out)
+    if kept:
+        shutil.move(str(kept), link)
     data = out / "data"
 
     config = get("/api/config")
