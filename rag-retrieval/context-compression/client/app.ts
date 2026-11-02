@@ -1,3 +1,4 @@
+import { explainCut, methodNames } from "../src/explain.ts";
 import { checkEvidence, compress, defaults, isModelMethod, type Options, type Result } from "../src/compress.ts";
 import type { ExperimentResult, Lane } from "../src/experiments.ts";
 import { formatPassages, retrieve, scenarios, type Question } from "../src/fixtures.ts";
@@ -16,6 +17,10 @@ const dropLabel = (text: string) => {
   const count = text.trim().split(/\s+/).length;
   return `${number(count)} ${count === 1 ? "word" : "words"} dropped`;
 };
+function renderCut(seg: { start: number; end: number; text: string }, result: Result, options: Options) {
+  const explanation = explainCut(seg, result, options);
+  return `<details class="cut"><summary>${dropLabel(seg.text)} · ${escape(methodNames[options.method])} <span aria-hidden="true">+</span></summary><div class="cut-explanation"><strong>Why this cut?</strong><p>${escape(explanation.how)}</p><ul>${explanation.reasons.slice(0, 8).map((item) => `<li><q>${escape(item.text.length > 160 ? item.text.slice(0, 157) + "…" : item.text)}</q><p>${escape(item.reason)}</p></li>`).join("")}</ul>${explanation.reasons.length > 8 ? `<p>Showing 8 of ${explanation.reasons.length} unit decisions. Export the trace to inspect all recorded decisions.</p>` : ""}<p>Dropping a span does not prove it is unimportant or safe to remove.</p></div><div class="dropped-text">${escape(seg.text)}</div></details>`;
+}
 let scenario = scenarios[0];
 let custom: string | null = null;
 let result: Result;
@@ -143,7 +148,7 @@ function update() {
     $("original").innerHTML = source ? result.segments.map((seg) => `<span class="source-span ${seg.kept ? "selected" : "unselected"}">${escape(seg.text)}</span>`).join("") : `<p class="empty">No source text. Paste a document below.</p>`;
     $("compressed").innerHTML = source ? result.segments.map((seg) => seg.kept
       ? `<span class="kept-span">${escape(seg.text)}</span>`
-      : seg.text.trim() ? `<details class="cut"><summary>${dropLabel(seg.text)} <span aria-hidden="true">+</span></summary><div class="dropped-text">${escape(seg.text)}</div></details>` : "").join("") : `<p class="empty">Nothing to compress yet.</p>`;
+      : seg.text.trim() ? renderCut(seg, result, options) : "").join("") : `<p class="empty">Nothing to compress yet.</p>`;
     if (outputOnly) {
       $("original").textContent = source;
       $("compressed").innerHTML = `<p class="hint">Model-returned text · no source offsets supplied. Expandable cuts are unavailable.</p><span class="kept-span">${escape(result.text)}</span>`;

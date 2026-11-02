@@ -22,7 +22,7 @@ The initial example compresses a 462-token synthetic customer handbook to 184 to
 
 ## What to try
 
-1. **Read a document.** Compare the full customer handbook with the selected spans. Expand any “words dropped” marker. Switch from sentence to paragraph units and compare how much surrounding context survives.
+1. **Read a document.** Compare the full customer handbook with the selected spans. Each “words dropped” marker names the technique. Expand it to see the removed text and recorded per-unit reasons: nonpositive relevance or the candidate token count that exceeded the budget. Truncation explains its prefix cutoff. MMR uses a redundancy-aware order, with base relevance scores labeled separately. Switch from sentence to paragraph units and compare how much surrounding context survives.
 2. **Find the breaking point.** Try 90% removal, then compare five budgets. The refund example loses the general eligibility rule. Switch to prefix truncation to see a different failure mode.
 3. **Separate retrieval from compression.** In “Compress retrieval,” select “Two sources required” and set retrieved passages to one. The runbook condition is marked **Not retrieved**; increasing the compression budget cannot bring it back. Restore three passages and inspect the difference.
 4. **Give a tool read its intent.** In “Trim a tool result,” switch between pricing and launch focus. The top-level question and captured timeline stay the same. Turn off “Include the read’s focus” and inspect the changed ranking. This is a captured synthetic tool output, not a running agent loop.

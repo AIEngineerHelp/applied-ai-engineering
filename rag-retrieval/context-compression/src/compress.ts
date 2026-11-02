@@ -31,7 +31,9 @@ export const defaults: Options = {
   method: "relevance", remove: 60, dynamic: false, minFactor: 2, maxFactor: 6, threshold: 80,
 };
 export interface Segment extends Span { text: string; kept: boolean }
+export interface UnitDecision { id: number; outcome: "kept" | "no-relevance" | "over-budget"; candidateTokens?: number }
 export interface Result {
+  decisions?: UnitDecision[];
   text: string;
   units: Unit[];
   selected: number[];
@@ -202,6 +204,7 @@ export function compress(source: string, options: Options, scoring?: Scoring): R
   const passthrough = originalTokens < options.threshold || originalTokens === 0 || options.remove === 0 && !options.dynamic;
   let spans: Span[] = [];
   const selected: number[] = [];
+  const decisions: UnitDecision[] = [];
   let text = "";
   if (passthrough) {
     spans = source.length ? [{ start: 0, end: source.length }] : [];
@@ -236,12 +239,14 @@ export function compress(source: string, options: Options, scoring?: Scoring): R
         remaining.sort((a, b) => mmr(b) - mmr(a) || a.start - b.start);
       }
       const unit = remaining.shift()!;
-      if (options.queryAware && unit.score <= 0) continue;
+      if (options.queryAware && unit.score <= 0) { decisions.push({ id: unit.id, outcome: "no-relevance" }); continue; }
       const candidate = mergeSpans([...spans, unit, ...unit.headings]);
       const candidateText = render(source, candidate);
-      if (countTokens(candidateText) <= budget) {
+      const candidateTokens = countTokens(candidateText);
+      if (candidateTokens <= budget) {
         spans = candidate; text = candidateText; selected.push(unit.id);
-      }
+        decisions.push({ id: unit.id, outcome: "kept", candidateTokens });
+      } else decisions.push({ id: unit.id, outcome: "over-budget", candidateTokens });
     }
     if (!selected.length) reason += " No eligible whole unit fits; try a larger budget or sentence units.";
   }
@@ -249,7 +254,7 @@ export function compress(source: string, options: Options, scoring?: Scoring): R
   if (options.method === "words") reason += " Lexical word deletion: this is not a learned token classifier. Deletion can break grammar and remove negation.";
   if (scoring) reason += ` ${scoring.description}`;
   const compressedTokens = countTokens(text);
-  return { text, units, selected, spans, segments: segmentsFor(source, spans), originalTokens,
+  return { text, units, selected, decisions, spans, segments: segmentsFor(source, spans), originalTokens,
     compressedTokens, budget, removed: originalTokens ? 1 - compressedTokens / originalTokens : 0,
     status: originalTokens === 0 ? "empty" : originalTokens < options.threshold ? "small-input" : "compressed", reason };
 }

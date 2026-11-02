@@ -1824,3 +1824,9 @@ footer p a {
 .comparison-section h4 { font-size: 12px; margin-bottom: 0; }
 .run-disclaimer, .judge-result { background: var(--blue-soft); padding: 16px; border-radius: 6px; margin-top: 22px; font-size: 13px; }
 @media(max-width:700px) { .comparison-section { padding: 22px 14px; } .run-lanes { grid-template-columns: 1fr; } .comparison-controls { gap: 10px; } .comparison-controls > div { min-width: 0; width: 100%; flex-basis: 100%; } .site-header nav { gap: 12px; } }
+
+.cut-explanation { padding: 14px; background: #f4f6fb; color: #38445b; font: 12px/1.7 var(--sans); white-space: normal; }
+.cut-explanation p { margin: 6px 0 12px; }
+.cut-explanation ul { margin: 0; padding-left: 18px; }
+.cut-explanation q { font-weight: 600; }
+.cut summary { white-space: normal; overflow-wrap: anywhere; }
