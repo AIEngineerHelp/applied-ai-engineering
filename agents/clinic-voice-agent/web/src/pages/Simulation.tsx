@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import { api, type Scenario, type SimulationReport } from "../api";
+import { api, type Mode, type Scenario, type SimulationReport } from "../api";
+import { usd } from "../format";
+
+const MODES: { key: Mode; label: string }[] = [
+  { key: "scripted", label: "Offline (free)" },
+  { key: "live", label: "Gemini, model callers" },
+  { key: "live-fixed-callers", label: "Gemini, fixed lines" },
+];
 import { Badge, Button, Card, Empty, Mono, PageHeader } from "../components/ui";
 
 export function SimulationPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [reports, setReports] = useState<Partial<Record<"scripted" | "live", SimulationReport>>>({});
-  const [mode, setMode] = useState<"scripted" | "live">("scripted");
+  const [reports, setReports] = useState<Partial<Record<Mode, SimulationReport>>>({});
+  const [mode, setMode] = useState<Mode>("scripted");
   const [running, setRunning] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
 
@@ -36,7 +43,7 @@ export function SimulationPage() {
     <>
       <PageHeader
         title="Simulation"
-        lede="Simulated callers, played as text through the same agent, tools, guards and CRM client as a voice call. Each sets the CRM's fault switch and checks what must hold whatever the model says: which tools ran, whether a guard fired, how many bookings the CRM received, how the call ended."
+        lede="Simulated callers, played as text through the same agent, tools, guards and CRM client as a voice call. Each sets the CRM's fault switch and checks what must hold whatever the model says: which tools ran, whether a guard fired, how many bookings the CRM received, how the call ended. Offline, callers read fixed lines; live, a second model plays each caller towards a goal and answers what the agent actually asks."
         aside={
           <Button onClick={run} disabled={running}>
             {running ? "Running…" : "Run offline"}
@@ -46,14 +53,14 @@ export function SimulationPage() {
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="flex gap-1 rounded-lg border border-rule bg-card p-1">
-          {(["scripted", "live"] as const).map((m) => (
+          {MODES.map((m) => (
             <button
-              key={m}
+              key={m.key}
               type="button"
-              onClick={() => setMode(m)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] ${mode === m ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}
+              onClick={() => setMode(m.key)}
+              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] whitespace-nowrap ${mode === m.key ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}
             >
-              {m === "scripted" ? "Scripted model (free)" : "Gemini (live)"}
+              {m.label}
             </button>
           ))}
         </div>
@@ -62,7 +69,9 @@ export function SimulationPage() {
             <b className="font-medium text-ink">
               {report.passed}/{report.total}
             </b>{" "}
-            passed · {report.model} · {new Date(report.ran_at).toLocaleString()}
+            passed · agent {report.model} · callers {report.callers ?? "fixed lines"}
+            {report.agent_cost_usd != null && <> · {usd((report.agent_cost_usd ?? 0) + (report.caller_cost_usd ?? 0), 2)}</>} ·{" "}
+            {new Date(report.ran_at).toLocaleString()}
           </div>
         )}
       </div>
@@ -73,10 +82,16 @@ export function SimulationPage() {
           transfers. It says nothing about how a real model behaves; the live run does.
         </p>
       )}
-      {mode === "live" && !report && (
+      {mode === "live-fixed-callers" && report && (
+        <p className="mb-6 max-w-3xl text-[14px] leading-relaxed text-ink-3">
+          Gemini as the agent, but callers reading the offline lines. When the agent asked a sensible follow-up question, the caller's next
+          fixed line no longer fit, which is why model callers exist.
+        </p>
+      )}
+      {mode !== "scripted" && !report && (
         <Empty>
-          No live run yet. Run <Mono>uv run python -m voiceagent simulate --live</Mono> with a Gemini key; it makes paid calls, about 30 short
-          requests.
+          No run yet. Run <Mono>uv run python -m voiceagent simulate --live{mode === "live-fixed-callers" ? " --fixed-callers" : ""}</Mono>{" "}
+          with a Gemini key; it makes paid calls, a few cents per run.
         </Empty>
       )}
 
@@ -94,6 +109,12 @@ export function SimulationPage() {
               </button>
               {isOpen && (
                 <div className="mt-4 grid grid-cols-1 gap-5 border-t border-rule pt-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <div className="text-[12px] tracking-wide text-ink-3 uppercase">Caller</div>
+                    <div className="mt-1 text-[14px] text-ink-2">
+                      {sc.persona} <span className="text-ink">Goal: {sc.goal}</span>
+                    </div>
+                  </div>
                   <div>
                     <div className="mb-2 text-[12px] tracking-wide text-ink-3 uppercase">Conversation</div>
                     <div className="space-y-2">

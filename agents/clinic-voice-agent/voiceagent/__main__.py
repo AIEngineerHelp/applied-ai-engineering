@@ -23,6 +23,8 @@ def main() -> None:
     crm.add_argument("--port", type=int, default=4332)
     sim = sub.add_parser("simulate")
     sim.add_argument("--live", action="store_true", help="use Gemini as the model (paid)")
+    sim.add_argument("--fixed-callers", action="store_true",
+                     help="with --live, callers read fixed lines instead of a model playing them")
     sim.add_argument("--only", nargs="*", help="scenario names to run")
     sub.add_parser("retry-webhooks")
     args = parser.parse_args()
@@ -42,12 +44,12 @@ def main() -> None:
 
         uvicorn.run(create_app(), host="127.0.0.1", port=args.port)
     elif args.command == "simulate":
-        sys.exit(asyncio.run(simulate(args.live, args.only)))
+        sys.exit(asyncio.run(simulate(args.live, not args.fixed_callers, args.only)))
     elif args.command == "retry-webhooks":
         asyncio.run(retry_webhooks())
 
 
-async def simulate(live: bool, only: list[str] | None) -> int:
+async def simulate(live: bool, model_callers: bool, only: list[str] | None) -> int:
     from .config import settings
     from .simulation import run_all
 
@@ -55,8 +57,9 @@ async def simulate(live: bool, only: list[str] | None) -> int:
         print("--live needs GEMINI_API_KEY in the environment or .env")
         return 2
     if live:
-        print(f"Live simulation: every scenario makes paid calls to {settings().cascade_llm}.")
-    report = await run_all(live=live, only=only)
+        who = f"; callers played by {settings().caller_model}" if model_callers else ""
+        print(f"Live simulation: paid calls to {settings().cascade_llm}{who}.")
+    report = await run_all(live=live, model_callers=model_callers, only=only)
     for r in report["results"]:
         mark = "PASS" if r["passed"] else "FAIL"
         print(f"{mark}  {r['scenario']:<34} {r['seconds']:>6.2f}s")
@@ -64,6 +67,8 @@ async def simulate(live: bool, only: list[str] | None) -> int:
             if not c["passed"]:
                 print(f"        x {c['check']}: {c['detail']}")
     print(f"\n{report['passed']}/{report['total']} scenarios passed ({report['mode']})")
+    if live:
+        print(f"Cost: agent ${report['agent_cost_usd']}, callers ${report['caller_cost_usd']}")
     return 0 if report["passed"] == report["total"] else 1
 
 

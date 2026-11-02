@@ -119,7 +119,7 @@ def create_api(store: CallStore | None = None) -> FastAPI:
     @app.get("/api/simulations")
     async def simulations() -> dict[str, Any]:
         reports = {}
-        for mode in ("scripted", "live"):
+        for mode in ("scripted", "live", "live-fixed-callers"):
             path = RESULTS / f"simulation-{mode}.json"
             if path.exists():
                 reports[mode] = json.loads(path.read_text())

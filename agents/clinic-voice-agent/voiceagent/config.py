@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     cascade_tts: str = "gemini-3.1-flash-tts-preview"
     cascade_tts_voice: str = "Kore"
     extraction_model: str = "gemini-3.8-flash"
+    caller_model: str = "gemini-3.8-flash"  # plays the caller in live simulations
 
     crm_url: str = "http://127.0.0.1:4331/crm"
     crm_api_key: str = "dev-crm-key"

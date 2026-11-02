@@ -1,6 +1,6 @@
 {
   "ran_at": "2026-10-29T07:25:24+05:30",
-  "mode": "live",
+  "mode": "live-fixed-callers",
   "model": "gemini-3.8-flash",
   "passed": 5,
   "total": 12,
@@ -606,5 +606,6 @@
         }
       ]
     }
-  ]
+  ],
+  "callers": "fixed lines"
 }

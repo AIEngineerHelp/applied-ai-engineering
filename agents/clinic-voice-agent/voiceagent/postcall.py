@@ -107,7 +107,7 @@ async def finish_call(
     summary = rule_summary(state, transcript)
     if use_llm and transcript:
         try:
-            summary = await asyncio.wait_for(llm_summary(transcript, state.facts), timeout=20)
+            summary = await asyncio.wait_for(llm_summary(transcript, state.facts), timeout=40)
             summary_source = settings().extraction_model
         except Exception as exc:  # the record must still be written
             state.event("error", where="post_call_summary", error=type(exc).__name__)

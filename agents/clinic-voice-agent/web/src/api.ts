@@ -77,10 +77,14 @@ export type ScenarioResult = {
   seconds: number;
   transcript: { role: string; text: string }[];
 };
+export type Mode = "scripted" | "live" | "live-fixed-callers";
 export type SimulationReport = {
   ran_at: string;
-  mode: "scripted" | "live";
+  mode: Mode;
   model: string;
+  callers?: string;
+  agent_cost_usd?: number;
+  caller_cost_usd?: number;
   passed: number;
   total: number;
   results: ScenarioResult[];
@@ -89,6 +93,8 @@ export type Scenario = {
   name: string;
   title: string;
   phone: string | null;
+  persona: string;
+  goal: string;
   turns: string[];
   fault: { mode: string; count: number; path_prefix: string } | null;
   expect: Record<string, unknown>;
@@ -115,7 +121,7 @@ export const api = {
   call: (id: string) => request<CallDetail>(`/api/calls/${id}`),
   workflow: () => request<{ workflow: any; knowledge: string[]; yaml: string }>("/api/workflow"),
   simulations: () =>
-    request<{ scenarios: Scenario[]; reports: Partial<Record<"scripted" | "live", SimulationReport>> }>(
+    request<{ scenarios: Scenario[]; reports: Partial<Record<Mode, SimulationReport>> }>(
       "/api/simulations",
     ),
   runSimulation: () => request<SimulationReport>("/api/simulations/run", { method: "POST", body: "{}" }),

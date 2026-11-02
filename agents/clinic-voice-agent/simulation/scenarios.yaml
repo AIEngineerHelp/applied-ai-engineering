@@ -1,6 +1,10 @@
-# Simulated callers. Each scenario sets the CRM's fault switch, plays the caller's turns
-# as text, and checks what the workflow did: tools, guards, transfers, CRM writes and the
-# end status. The checks are about behaviour that must hold whatever the model says.
+# Simulated callers. Each scenario sets the CRM's fault switch, plays a caller, and checks
+# what the workflow did: tools, guards, transfers, CRM writes and the end status.
+#
+# A caller is either fixed (reads `turns`, used offline and with --fixed-callers) or a
+# model playing `persona` towards `goal` (live runs), opening with the first of `turns`.
+# `expect` must hold for both. `fixed_expect` adds checks on code paths a capable model
+# may route around, such as a refusal it never triggers; only fixed callers assert them.
 #
 # Phones: +15550142201 Maya (pt_1001), ...202 Daniel, ...203 Grace, ...204 Samir.
 # Any other number is an unknown caller.
@@ -8,6 +12,10 @@
 - name: book-known-patient
   title: A known patient books a visit
   phone: "+15550142201"
+  persona: Maya Okafor, a registered patient at the clinic.
+  goal: >-
+    Book a separate visit for a sore throat, as soon as possible. Take the first time
+    offered. Keep your existing check-up as it is.
   turns:
     - "Hi, I'd like to book an appointment for a sore throat."
     - "Yes, the first one works."
@@ -21,6 +29,8 @@
 - name: reschedule
   title: A patient moves an existing appointment
   phone: "+15550142202"
+  persona: Daniel Reyes, a registered patient with one upcoming check-up.
+  goal: Move your upcoming check-up to the earliest time offered.
   turns:
     - "I need to reschedule my appointment."
     - "Yes, that works."
@@ -33,6 +43,8 @@
 - name: cancel
   title: A patient cancels
   phone: "+15550142203"
+  persona: Grace Whitfield, a registered patient with one upcoming check-up.
+  goal: Cancel your upcoming appointment. You don't want to rebook now.
   turns:
     - "I want to cancel my appointment please."
     - "That's it, goodbye."
@@ -43,6 +55,8 @@
 - name: clinic-question
   title: An unknown caller asks about hours and parking
   phone: "+15550199999"
+  persona: Someone who is not a patient yet and is thinking about visiting.
+  goal: Find out the Saturday opening hours and whether there is parking. You don't want to book.
   turns:
     - "What are your hours on Saturday?"
     - "Is there parking at the clinic?"
@@ -56,6 +70,8 @@
 - name: emergency-guard
   title: Chest pain goes to the nurse line, not the model
   phone: "+15550142204"
+  persona: Samir Haddad, a registered patient who suddenly feels unwell.
+  goal: You have chest pain and your left arm feels numb. You want help right now.
   turns:
     - "I have chest pain and my left arm feels numb."
   expect:
@@ -67,18 +83,27 @@
 - name: unknown-caller-cannot-book
   title: An unregistered caller cannot book
   phone: "+15550199998"
+  persona: Someone who has never been to the clinic and is not registered.
+  goal: >-
+    Book a first visit. If you are told you need to register first, agree to be
+    transferred to whoever can do that.
   turns:
     - "I'd like to book an appointment."
     - "Yes, the first one."
     - "Okay, that's all. Bye."
   expect:
     pre_call: no_match
-    tool_outcomes: {book_appointment: refused}
     crm_new_appointments: 0
+  fixed_expect:
+    tool_outcomes: {book_appointment: refused}
 
 - name: billing-transfer
   title: A billing question is transferred
   phone: "+15550142201"
+  persona: Maya Okafor, a registered patient.
+  goal: >-
+    You think last month's bill charged you twice for one visit. You want someone who
+    can look at your account to fix it.
   turns:
     - "I have a question about my bill from last month."
   expect:
@@ -88,23 +113,30 @@
 - name: crm-down
   title: The CRM is down for the whole call
   phone: "+15550142201"
+  persona: Maya Okafor, a registered patient.
+  goal: Book a check-up. If the receptionist cannot book it, ask to speak to a person.
   fault: {mode: down}
   turns:
     - "I'd like to book an appointment."
     - "Can I speak to a person?"
   expect:
     pre_call: crm_unavailable
-    tool_outcomes: {find_open_slots: crm_unavailable}
-    guard: asks_for_human
     transfer: front_desk
     crm_new_appointments: 0
+  fixed_expect:
+    tool_outcomes: {find_open_slots: crm_unavailable}
+    guard: asks_for_human
 
 - name: crm-500-then-ok
   title: One 500 from the CRM is retried
   phone: "+15550142201"
+  persona: Maya Okafor, a registered patient.
+  goal: >-
+    Book a separate visit for a sprained wrist, as soon as possible. Take the first time
+    offered. Keep your existing check-up as it is.
   fault: {mode: error_500, count: 1, path_prefix: /slots}
   turns:
-    - "Hi, I'd like to book an appointment for a check-up."
+    - "Hi, I'd like to book an appointment for a sprained wrist."
     - "Yes, that works."
     - "That's all, bye."
   expect:
@@ -115,9 +147,13 @@
 - name: crm-rate-limited
   title: A 429 with Retry-After is waited out
   phone: "+15550142202"
+  persona: Daniel Reyes, a registered patient.
+  goal: >-
+    Book a separate visit for a skin rash. Take the first time offered. Keep your
+    existing check-up as it is.
   fault: {mode: rate_limit, count: 1, path_prefix: /slots}
   turns:
-    - "Do you have any appointments available?"
+    - "Do you have any appointments available? I need one for a rash."
     - "Yes, the first one."
     - "That's all, goodbye."
   expect:
@@ -128,9 +164,13 @@
 - name: lost-response-no-double-booking
   title: A booking whose response is lost is retried without booking twice
   phone: "+15550142203"
+  persona: Grace Whitfield, a registered patient.
+  goal: >-
+    Book a separate visit about your blood pressure, not at your existing check-up. Take
+    the first time offered.
   fault: {mode: lost_response, count: 1, path_prefix: /appointments}
   turns:
-    - "I'd like to book an appointment for my blood pressure."
+    - "I'd like to book a separate appointment for my blood pressure."
     - "Yes please."
     - "That's all. Bye."
   expect:
@@ -141,9 +181,13 @@
 - name: crm-bad-data
   title: Malformed CRM data is caught, not read out
   phone: "+15550142204"
+  persona: Samir Haddad, a registered patient.
+  goal: >-
+    Book a follow-up visit for your knee, any day this week. If the receptionist cannot
+    book it, ask to speak to a person.
   fault: {mode: bad_data, path_prefix: /slots}
   turns:
-    - "Can I book an appointment?"
+    - "Can I book a follow-up appointment for my knee?"
     - "Can I speak to a person?"
   expect:
     tool_outcomes: {find_open_slots: crm_bad_data}
