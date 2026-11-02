@@ -4,12 +4,12 @@
 clinic:
   name: Birchwood Family Clinic
   timezone: America/Chicago
-  agent_name: Robin
+  agent_name: Meera
 
 greeting:
-  known_caller: "Hi {first_name}, this is Robin at Birchwood Family Clinic. How can I help you today?"
-  unknown_caller: "Thanks for calling Birchwood Family Clinic, this is Robin. How can I help you today?"
-  crm_unavailable: "Thanks for calling Birchwood Family Clinic, this is Robin. Our records system is slow right now, so I may ask for a few details. How can I help?"
+  known_caller: "Hi {first_name}, this is Meera at Birchwood Family Clinic. How can I help you today?"
+  unknown_caller: "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
+  crm_unavailable: "Thanks for calling Birchwood Family Clinic, this is Meera. Our records system is slow right now, so I may ask for a few details. How can I help?"
 
 pre_call:
   # Look the caller up by phone number before the agent says a word, so the greeting

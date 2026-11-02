@@ -23,7 +23,7 @@ async def test_model_caller_opens_fixed_then_answers_the_transcript() -> None:
         prompts.append(prompt)
         return CallerReply(say="The first one, please.", hang_up=False), {"input": 10, "output": 3}
 
-    caller = ModelCaller(persona="Maya", goal="Book a visit.", opening="Hi there.",
+    caller = ModelCaller(persona="Priya", goal="Book a visit.", opening="Hi there.",
                          clinic="Birchwood", generate=fake)
     first = await caller.next_line([])
     assert first is not None and first.text == "Hi there." and not prompts

@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-10-29T07:29:51+05:30",
+  "ran_at": "2026-10-29T20:51:44+05:30",
   "mode": "scripted",
   "model": "scripted (rules, no model)",
   "callers": "fixed lines",
@@ -11,7 +11,7 @@
     {
       "scenario": "book-known-patient",
       "title": "A known patient books a visit",
-      "call_id": "call_12167573afb9",
+      "call_id": "call_a569e872c320",
       "passed": true,
       "checks": [
         {
@@ -47,7 +47,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Maya, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -55,7 +55,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Alice Lin or Thursday, October 29 at 9:20 am with Dr. Alice Lin. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -63,7 +63,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Thursday, October 29 at 9 am with Dr. Alice Lin. Anything else?"
+          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -78,7 +78,7 @@
     {
       "scenario": "reschedule",
       "title": "A patient moves an existing appointment",
-      "call_id": "call_8d578c8b6f35",
+      "call_id": "call_e9b6365ca4ea",
       "passed": true,
       "checks": [
         {
@@ -109,7 +109,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Daniel, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Arjun, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -117,7 +117,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Ravi Patel or Thursday, October 29 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
         },
         {
           "role": "user",
@@ -125,7 +125,7 @@
         },
         {
           "role": "assistant",
-          "text": "Done, your appointment is now Thursday, October 29 at 9 am. Anything else?"
+          "text": "Done, your appointment is now Friday, October 30 at 9 am. Anything else?"
         },
         {
           "role": "user",
@@ -140,7 +140,7 @@
     {
       "scenario": "cancel",
       "title": "A patient cancels",
-      "call_id": "call_595dfd209dc8",
+      "call_id": "call_bd4c5702d571",
       "passed": true,
       "checks": [
         {
@@ -161,7 +161,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Grace, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Lakshmi, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -184,7 +184,7 @@
     {
       "scenario": "clinic-question",
       "title": "An unknown caller asks about hours and parking",
-      "call_id": "call_b16ea1d14cda",
+      "call_id": "call_143f958d6af6",
       "passed": true,
       "checks": [
         {
@@ -215,7 +215,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Thanks for calling Birchwood Family Clinic, this is Robin. How can I help you today?"
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
         },
         {
           "role": "user",
@@ -246,7 +246,7 @@
     {
       "scenario": "emergency-guard",
       "title": "Chest pain goes to the nurse line, not the model",
-      "call_id": "call_57c11d91df8d",
+      "call_id": "call_2a105de3ba8f",
       "passed": true,
       "checks": [
         {
@@ -287,7 +287,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Samir, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Rahul, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -302,7 +302,7 @@
     {
       "scenario": "unknown-caller-cannot-book",
       "title": "An unregistered caller cannot book",
-      "call_id": "call_c1520ad156e0",
+      "call_id": "call_6afb1e8e6747",
       "passed": true,
       "checks": [
         {
@@ -328,7 +328,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Thanks for calling Birchwood Family Clinic, this is Robin. How can I help you today?"
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. How can I help you today?"
         },
         {
           "role": "user",
@@ -336,7 +336,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Alice Lin or Thursday, October 29 at 9 am with Dr. Ravi Patel. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -359,7 +359,7 @@
     {
       "scenario": "billing-transfer",
       "title": "A billing question is transferred",
-      "call_id": "call_a3d7c38f9db2",
+      "call_id": "call_b7ee8dba7b60",
       "passed": true,
       "checks": [
         {
@@ -380,7 +380,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Maya, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -395,7 +395,7 @@
     {
       "scenario": "crm-down",
       "title": "The CRM is down for the whole call",
-      "call_id": "call_dbe27e128a08",
+      "call_id": "call_124ee1028a02",
       "passed": true,
       "checks": [
         {
@@ -424,14 +424,14 @@
           "detail": "expected asks_for_human, got asks_for_human"
         }
       ],
-      "seconds": 0.93,
+      "seconds": 0.9,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
       "transcript": [
         {
           "role": "assistant",
-          "text": "Thanks for calling Birchwood Family Clinic, this is Robin. Our records system is slow right now, so I may ask for a few details. How can I help?"
+          "text": "Thanks for calling Birchwood Family Clinic, this is Meera. Our records system is slow right now, so I may ask for a few details. How can I help?"
         },
         {
           "role": "user",
@@ -454,7 +454,7 @@
     {
       "scenario": "crm-500-then-ok",
       "title": "One 500 from the CRM is retried",
-      "call_id": "call_29c964c87880",
+      "call_id": "call_46de27daa1d9",
       "passed": true,
       "checks": [
         {
@@ -478,14 +478,14 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 0.04,
+      "seconds": 0.13,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Maya, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Priya, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -493,7 +493,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Alice Lin or Thursday, October 29 at 9:20 am with Dr. Alice Lin. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -501,7 +501,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Thursday, October 29 at 9 am with Dr. Alice Lin. Anything else?"
+          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -516,7 +516,7 @@
     {
       "scenario": "crm-rate-limited",
       "title": "A 429 with Retry-After is waited out",
-      "call_id": "call_67b67de6d0b8",
+      "call_id": "call_dbb2c0529501",
       "passed": true,
       "checks": [
         {
@@ -540,14 +540,14 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 1.02,
+      "seconds": 1.03,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Daniel, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Arjun, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -555,7 +555,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Ravi Patel or Thursday, October 29 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ravi Patel or Friday, October 30 at 9:20 am with Dr. Ravi Patel. Would the first one work?"
         },
         {
           "role": "user",
@@ -563,7 +563,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Thursday, October 29 at 9 am with Dr. Ravi Patel. Anything else?"
+          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ravi Patel. Anything else?"
         },
         {
           "role": "user",
@@ -578,7 +578,7 @@
     {
       "scenario": "lost-response-no-double-booking",
       "title": "A booking whose response is lost is retried without booking twice",
-      "call_id": "call_ad8e9a88f2e6",
+      "call_id": "call_5944906ed286",
       "passed": true,
       "checks": [
         {
@@ -597,14 +597,14 @@
           "detail": "expected at least 1, got 1"
         }
       ],
-      "seconds": 2.09,
+      "seconds": 2.05,
       "cost_usd": 0.0,
       "caller": "fixed",
       "caller_usage": null,
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Grace, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Lakshmi, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",
@@ -612,7 +612,7 @@
         },
         {
           "role": "assistant",
-          "text": "I have Thursday, October 29 at 9 am with Dr. Alice Lin or Thursday, October 29 at 9:20 am with Dr. Alice Lin. Would the first one work?"
+          "text": "I have Friday, October 30 at 9 am with Dr. Ananya Rao or Friday, October 30 at 9:20 am with Dr. Ananya Rao. Would the first one work?"
         },
         {
           "role": "user",
@@ -620,7 +620,7 @@
         },
         {
           "role": "assistant",
-          "text": "You're booked for Thursday, October 29 at 9 am with Dr. Alice Lin. Anything else?"
+          "text": "You're booked for Friday, October 30 at 9 am with Dr. Ananya Rao. Anything else?"
         },
         {
           "role": "user",
@@ -635,7 +635,7 @@
     {
       "scenario": "crm-bad-data",
       "title": "Malformed CRM data is caught, not read out",
-      "call_id": "call_20a724d59dff",
+      "call_id": "call_2b695cd2e35f",
       "passed": true,
       "checks": [
         {
@@ -661,7 +661,7 @@
       "transcript": [
         {
           "role": "assistant",
-          "text": "Hi Samir, this is Robin at Birchwood Family Clinic. How can I help you today?"
+          "text": "Hi Rahul, this is Meera at Birchwood Family Clinic. How can I help you today?"
         },
         {
           "role": "user",

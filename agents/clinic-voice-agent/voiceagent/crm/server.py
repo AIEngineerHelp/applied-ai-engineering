@@ -28,19 +28,19 @@ FaultMode = Literal[
 FAULT_MODES: list[str] = list(FaultMode.__args__)  # type: ignore[attr-defined]
 
 PATIENTS: list[dict[str, Any]] = [
-    {"id": "pt_1001", "first_name": "Maya", "last_name": "Okafor", "phone": "+15550142201",
-     "date_of_birth": "1988-03-14", "primary_provider": "dr_lin"},
-    {"id": "pt_1002", "first_name": "Daniel", "last_name": "Reyes", "phone": "+15550142202",
+    {"id": "pt_1001", "first_name": "Priya", "last_name": "Sharma", "phone": "+15550142201",
+     "date_of_birth": "1988-03-14", "primary_provider": "dr_rao"},
+    {"id": "pt_1002", "first_name": "Arjun", "last_name": "Mehta", "phone": "+15550142202",
      "date_of_birth": "1975-11-02", "primary_provider": "dr_patel"},
-    {"id": "pt_1003", "first_name": "Grace", "last_name": "Whitfield", "phone": "+15550142203",
-     "date_of_birth": "1952-07-29", "primary_provider": "dr_lin"},
-    {"id": "pt_1004", "first_name": "Samir", "last_name": "Haddad", "phone": "+15550142204",
-     "date_of_birth": "1999-01-21", "primary_provider": "np_moore"},
+    {"id": "pt_1003", "first_name": "Lakshmi", "last_name": "Iyer", "phone": "+15550142203",
+     "date_of_birth": "1952-07-29", "primary_provider": "dr_rao"},
+    {"id": "pt_1004", "first_name": "Rahul", "last_name": "Verma", "phone": "+15550142204",
+     "date_of_birth": "1999-01-21", "primary_provider": "np_nair"},
 ]
 PROVIDERS: dict[str, str] = {
-    "dr_lin": "Dr. Alice Lin",
+    "dr_rao": "Dr. Ananya Rao",
     "dr_patel": "Dr. Ravi Patel",
-    "np_moore": "Jordan Moore, NP",
+    "np_nair": "Kavya Nair, NP",
 }
 
 

@@ -2,7 +2,7 @@
 
 A phone receptionist for a fictional clinic, built the way a voice-AI platform ships one to a business: a fixed workflow around a model, wired into the clinic's CRM, tested with simulated callers before launch, and measured on every call.
 
-Robin, the agent, answers the phone for Birchwood Family Clinic. Before saying a word it looks the caller up by phone number. During the call it finds open times, books, moves and cancels appointments, answers policy questions from a small knowledge base, and transfers to a person when it should. After the call it writes a record and posts it to the clinic's system by webhook. You can talk to it in the browser, break its CRM in the middle of a call, and read the trace afterwards: where each second of latency went, every tool call and retry, and what the minute cost.
+Meera, the agent, answers the phone for Birchwood Family Clinic. Before saying a word it looks the caller up by phone number. During the call it finds open times, books, moves and cancels appointments, answers policy questions from a small knowledge base, and transfers to a person when it should. After the call it writes a record and posts it to the clinic's system by webhook. You can talk to it in the browser, break its CRM in the middle of a call, and read the trace afterwards: where each second of latency went, every tool call and retry, and what the minute cost.
 
 It runs on [LiveKit Agents](https://docs.livekit.io/agents/) 1.8 (Python) with Gemini, and includes a TypeScript dashboard.
 

@@ -184,7 +184,7 @@ class ClinicAgent(Agent):
 
         Args:
             day: Date to search, as YYYY-MM-DD. Leave empty for the next available times.
-            provider_id: dr_lin, dr_patel or np_moore. Leave empty for any provider.
+            provider_id: dr_rao, dr_patel or np_nair. Leave empty for any provider.
         """
         async def body() -> Any:
             # Without a named provider, try the caller's own doctor first.

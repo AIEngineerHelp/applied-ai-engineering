@@ -6,13 +6,13 @@
 # `expect` must hold for both. `fixed_expect` adds checks on code paths a capable model
 # may route around, such as a refusal it never triggers; only fixed callers assert them.
 #
-# Phones: +15550142201 Maya (pt_1001), ...202 Daniel, ...203 Grace, ...204 Samir.
+# Phones: +15550142201 Priya (pt_1001), ...202 Arjun, ...203 Lakshmi, ...204 Rahul.
 # Any other number is an unknown caller.
 
 - name: book-known-patient
   title: A known patient books a visit
   phone: "+15550142201"
-  persona: Maya Okafor, a registered patient at the clinic.
+  persona: Priya Sharma, a registered patient at the clinic.
   goal: >-
     Book a separate visit for a sore throat, as soon as possible. Take the first time
     offered. Keep your existing check-up as it is.
@@ -29,7 +29,7 @@
 - name: reschedule
   title: A patient moves an existing appointment
   phone: "+15550142202"
-  persona: Daniel Reyes, a registered patient with one upcoming check-up.
+  persona: Arjun Mehta, a registered patient with one upcoming check-up.
   goal: Move your upcoming check-up to the earliest time offered.
   turns:
     - "I need to reschedule my appointment."
@@ -43,7 +43,7 @@
 - name: cancel
   title: A patient cancels
   phone: "+15550142203"
-  persona: Grace Whitfield, a registered patient with one upcoming check-up.
+  persona: Lakshmi Iyer, a registered patient with one upcoming check-up.
   goal: Cancel your upcoming appointment. You don't want to rebook now.
   turns:
     - "I want to cancel my appointment please."
@@ -70,7 +70,7 @@
 - name: emergency-guard
   title: Chest pain goes to the nurse line, not the model
   phone: "+15550142204"
-  persona: Samir Haddad, a registered patient who suddenly feels unwell.
+  persona: Rahul Verma, a registered patient who suddenly feels unwell.
   goal: You have chest pain and your left arm feels numb. You want help right now.
   turns:
     - "I have chest pain and my left arm feels numb."
@@ -100,7 +100,7 @@
 - name: billing-transfer
   title: A billing question is transferred
   phone: "+15550142201"
-  persona: Maya Okafor, a registered patient.
+  persona: Priya Sharma, a registered patient.
   goal: >-
     You think last month's bill charged you twice for one visit. You want someone who
     can look at your account to fix it.
@@ -113,7 +113,7 @@
 - name: crm-down
   title: The CRM is down for the whole call
   phone: "+15550142201"
-  persona: Maya Okafor, a registered patient.
+  persona: Priya Sharma, a registered patient.
   goal: Book a check-up. If the receptionist cannot book it, ask to speak to a person.
   fault: {mode: down}
   turns:
@@ -130,7 +130,7 @@
 - name: crm-500-then-ok
   title: One 500 from the CRM is retried
   phone: "+15550142201"
-  persona: Maya Okafor, a registered patient.
+  persona: Priya Sharma, a registered patient.
   goal: >-
     Book a separate visit for a sprained wrist, as soon as possible. Take the first time
     offered. Keep your existing check-up as it is.
@@ -147,7 +147,7 @@
 - name: crm-rate-limited
   title: A 429 with Retry-After is waited out
   phone: "+15550142202"
-  persona: Daniel Reyes, a registered patient.
+  persona: Arjun Mehta, a registered patient.
   goal: >-
     Book a separate visit for a skin rash. Take the first time offered. Keep your
     existing check-up as it is.
@@ -164,7 +164,7 @@
 - name: lost-response-no-double-booking
   title: A booking whose response is lost is retried without booking twice
   phone: "+15550142203"
-  persona: Grace Whitfield, a registered patient.
+  persona: Lakshmi Iyer, a registered patient.
   goal: >-
     Book a separate visit about your blood pressure, not at your existing check-up. Take
     the first time offered.
@@ -181,7 +181,7 @@
 - name: crm-bad-data
   title: Malformed CRM data is caught, not read out
   phone: "+15550142204"
-  persona: Samir Haddad, a registered patient.
+  persona: Rahul Verma, a registered patient.
   goal: >-
     Book a follow-up visit for your knee, any day this week. If the receptionist cannot
     book it, ask to speak to a person.

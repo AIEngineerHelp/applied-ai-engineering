@@ -14,7 +14,7 @@ def set_fault(state, **kwargs):  # type: ignore[no-untyped-def]
 async def test_finds_patient_by_phone(make_client) -> None:  # type: ignore[no-untyped-def]
     client = make_client()
     patient = await client.find_patient("+15550142201")
-    assert patient is not None and patient.first_name == "Maya"
+    assert patient is not None and patient.first_name == "Priya"
     assert await client.find_patient("+15550000000") is None
 
 
