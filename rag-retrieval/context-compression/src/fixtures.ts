@@ -6,6 +6,8 @@ export interface Question {
   focus?: string;
   evidence: Evidence[];
   lesson: string;
+  /** Rewordings that ask for exactly the same facts, so the evidence check still applies. */
+  paraphrases?: string[];
 }
 export interface Passage {
   id: string;
@@ -61,6 +63,9 @@ export const scenarios: Scenario[] = [
       {
         id: "refund",
         text: "Can I get a refund for an annual subscription after exporting client archives?",
+        paraphrases: [
+          "Can I get my money back on a yearly plan once I've downloaded my client files?",
+        ],
         evidence: [
           {
             label: "The general eligibility rule",

@@ -83,7 +83,7 @@ export interface Result {
   backend?: { method: string; model: string; durationMs: number; fallback: boolean };
 }
 
-const STOP = new Set(
+export const STOP = new Set(
   "a an the and or but for of in on at to from by with is are was were be been it its this that these those what which who how when where why does do did can could should would will our we as about any their they them per than then my i me please tell give has have had not".split(
     " ",
   ),

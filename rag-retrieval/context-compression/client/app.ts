@@ -9,6 +9,7 @@ import {
 } from "../src/compress.ts";
 import type { ExperimentResult, Lane } from "../src/experiments.ts";
 import { formatPassages, retrieve, scenarios, type Question } from "../src/fixtures.ts";
+import { initTour, type LabRequest } from "./tour.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => {
   const element = document.getElementById(id);
@@ -222,7 +223,7 @@ function update() {
               : "Lexical overlap with an inverse-document-frequency weight, divided by √unique terms. Heading words count too. MMR adds a changing redundancy penalty during selection; displayed scores are base relevance. Evidence labels never influence selection.";
     latestOptions = options;
     const matchesPreset =
-      options.query === question.text &&
+      (options.query === question.text || question.paraphrases?.includes(options.query)) &&
       (scenario.id !== "agent" || options.focus === question.focus);
     annotations = custom === null && matchesPreset ? question.evidence : [];
     const facts = checkEvidence(source, result.spans, annotations).map((fact) =>
@@ -378,6 +379,38 @@ $("scenario-tabs").addEventListener("click", (event) => {
   if (button) setScenario(button.dataset.scenario!);
 });
 select("question-preset").addEventListener("change", applyQuestion);
+// Model adapters stay out of the method menu until asked for: they need the
+// local server and explicit setup, and the tour explains them as cards.
+const modelGroup = select("method").querySelector("optgroup:last-of-type")!;
+function showModelMethods(show: boolean) {
+  if (show && !modelGroup.isConnected) select("method").append(modelGroup);
+  if (!show && modelGroup.isConnected) {
+    if (isModelMethod(select("method").value as Options["method"]))
+      select("method").value = "relevance";
+    modelGroup.remove();
+  }
+}
+showModelMethods(false);
+input("show-models").addEventListener("change", () => {
+  showModelMethods(input("show-models").checked);
+  update();
+});
+function openInLab(request: LabRequest) {
+  setScenario("document");
+  select("question-preset").value = "refund";
+  applyQuestion();
+  if (request.query) textarea("question").value = request.query;
+  select("method").value = request.method;
+  select("granularity").value = "sentence";
+  select("budget-mode").value = "fixed";
+  input("aware").checked = true;
+  input("remove").value = String(request.remove);
+  input("diversity").value = String(request.diversity ?? 0.65);
+  update();
+  $("lab").scrollIntoView({ behavior: "smooth" });
+  announce(`Lab set to ${methodNames[request.method]} with ${request.remove}% removal.`);
+}
+initTour($("tour"), openInLab);
 for (const id of [
   "method",
   "granularity",
