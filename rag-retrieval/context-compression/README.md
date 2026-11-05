@@ -20,7 +20,17 @@ Open **http://127.0.0.1:4325**. `PORT=4500 npm start` selects another local port
 
 The initial example compresses a 462-token synthetic customer handbook to 184 tokens at the default 60% removal target, retaining both annotated refund facts. Counts use the bundled **cl100k_base** BPE encoding. They are exact for that encoding, not estimates for Gemini or every other model. Only source context and its rendered separators are counted; system instructions, chat framing and questions are outside the displayed budget.
 
-## What to try
+## How the page teaches
+
+The page has five parts, in order:
+
+1. **The techniques.** A guided tour of the four browser techniques (lexical relevance, MMR, word deletion and prefix truncation) on one handbook, one question and the two facts its answer depends on. Each technique is a short sequence of steps you click through, such as split → find key words → weight rare words → score → pack → read the result. Every number on screen is computed live by the same `compress()` the lab uses. Each chapter ends with what the technique is good at, when it breaks and where you meet it in practice. It also has a **See it break** demo: reword the question (lexical), penalize repetition harder at a tight budget (MMR), give word deletion nine times more room (it still drops “not”), or find how much of the handbook truncation needs. **Compare all four** puts the techniques side by side with a budget slider and a sentence-by-sentence map of what survived.
+2. **Beyond lexical.** One card per model method (BGE, LLMLingua-2, LLMLingua, LongLLMLingua, Laya, Compresr): what it scores, how it works, which failure from the tour it would address and what to watch out for. The cards describe the methods; none of them is run on the page and no result is claimed.
+3. **Your turn.** The lab, with all three scenarios, every setting and your own text. Tour chapters and demos open their exact case here. Model adapters are hidden from the method menu until you tick **List model adapters**.
+4. **Trade-offs.** Budget stress tests and a five-budget sweep.
+5. **Compare runs.** The advanced answering, blind-judge and agent workflows described below.
+
+## What to try in the lab
 
 1. **Read a document.** Compare the full customer handbook with the selected spans. Each “words dropped” marker names the technique. Expand it to see the removed text and recorded per-unit reasons: nonpositive relevance or the candidate token count that exceeded the budget. Lexical explanations show normalized question/unit terms, term matches, rarity weights and the score calculation. Truncation explains its prefix cutoff. MMR uses a redundancy-aware order, with base relevance scores labeled separately. Switch from sentence to paragraph units and compare how much surrounding context survives.
 2. **Find the breaking point.** Try 90% removal, then compare five budgets. The refund example loses the general eligibility rule. Switch to prefix truncation to see a different failure mode.
@@ -55,6 +65,7 @@ The synthetic agent corpus is fixed by the selected example. Custom pasted text 
 
 ## How our implementation works
 
+- **Tour:** `src/tour.ts` builds each walkthrough from `compress()` results (term weights, score breakdowns, pack decisions, MMR rounds, the truncation cutoff and sentence coverage). `client/tour.ts` renders it. Tests check that the MMR rounds replay `compress()` exactly and that each “See it break” case behaves as described.
 - **Units:** `src/compress.ts` splits Markdown-like text into paragraphs or sentences with original UTF-16 offsets. It preserves fenced code blocks as atomic units. A selected unit requires its ancestor headings. This is a small parser, not a full Markdown AST; tables, lists and other structures are not specially protected.
 - **Relevance:** tokenize into unique lowercase letter/number terms, remove common stop words, and strip a trailing `s` from longer words. For every query term present in the unit or its headings, add `ln(1 + N / df(term))`. Divide by the square root of the unit's unique-term count (including headings). `N` is the number of units and `df` is the number of units containing the term. This is lexical overlap, not BM25 or a semantic model. A query term contributes at most once per unit.
 - **Query awareness off:** use generic term rarity with the same normalization. Both question and focus are ignored.
@@ -72,7 +83,7 @@ The synthetic agent corpus is fixed by the selected example. Custom pasted text 
 
 ## Optional model/API adapters
 
-Selecting a model displays **Not run** until the user explicitly requests a run. It does not reuse a lexical result as if it came from a model. Changing inputs requires another run; up to eight results are cached in browser memory for inspection. See [`models/README.md`](models/README.md) for the disabled local adapters, their separate dependency lockfile, resource requirements and unverified inference status.
+Model methods are listed in the lab only after **List model adapters** is ticked. Selecting a model displays **Not run** until the user explicitly requests a run. It does not reuse a lexical result as if it came from a model. Changing inputs requires another run; up to eight results are cached in browser memory for inspection. See [`models/README.md`](models/README.md) for the disabled local adapters, their separate dependency lockfile, resource requirements and unverified inference status.
 
 | Method | Implementation and status |
 | --- | --- |
@@ -102,10 +113,11 @@ npm run check
 npm run eval
 npm run eval:workflows
 npm run export
+npm run format:check
 python3 -m unittest discover -s models -p 'test_*.py'
 ```
 
-- Tests cover offsets, whitespace, Unicode, heading dependencies, code fences, strict budgets, pass-through boundaries, query/focus behavior, dynamic bounds, literal special-token input, evidence accounting and retrieval misses.
+- Tests cover offsets, whitespace, Unicode, heading dependencies, code fences, strict budgets, pass-through boundaries, query/focus behavior, dynamic bounds, literal special-token input, evidence accounting, retrieval misses and the tour's walkthroughs and failure demos.
 - `eval:workflows` exercises 12 scripted paired/agent control-flow fixtures. Its deterministic report is [`results/workflow-fixtures.json`](results/workflow-fixtures.json). No local/remote model executes.
 - `check` type-checks browser, core, tests and scripts.
 - `eval` runs **140 deterministic fixture cases**: seven questions × four methods × five removal targets. It measures token counts and annotated evidence retention, not answer accuracy, model speed or provider cost. No remote calls occur.
@@ -117,7 +129,7 @@ A reproducible sweep is committed at [`results/offline.json`](results/offline.js
 node --import=tsx scripts/evaluate.ts --json > results/offline.json
 ```
 
-Browser QA covers desktop and narrow/mobile layouts, MMR and word-deletion switching, disabled model gates, dropped-text expansion, retrieval misses, focus switching, dynamic budgeting, baseline control states, budget sweeps, small custom inputs and literal HTML rendering. This is manual QA; the project does not install an automated browser test runner.
+Browser QA covers desktop and 390 px mobile layouts with no horizontal overflow, every tour chapter and its demo, the compare slider, tour-to-lab handoff, MMR and word-deletion switching, disabled model gates, dropped-text expansion, retrieval misses, focus switching, dynamic budgeting, baseline control states, budget sweeps, small custom inputs and literal HTML rendering. This is manual QA; the project does not install an automated browser test runner.
 
 Stop the server with Ctrl-C. Remove `node_modules/`, `site/build/` and `dist/` to clean generated files. No background jobs, cloud resources or paid services are provisioned.
 
