@@ -15,7 +15,9 @@
     "test": "node --import=tsx --test tests/*.test.ts",
     "eval": "node --import=tsx scripts/evaluate.ts",
     "export": "npm run build && node --import=tsx scripts/export.ts",
-    "eval:workflows": "node --import=tsx scripts/workflow-evaluate.ts"
+    "eval:workflows": "node --import=tsx scripts/workflow-evaluate.ts",
+    "format": "prettier --write \"src/**/*.ts\" \"client/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"client/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\""
   },
   "dependencies": {
     "js-tiktoken": "1.0.21"
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
+    "prettier": "3.6.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
