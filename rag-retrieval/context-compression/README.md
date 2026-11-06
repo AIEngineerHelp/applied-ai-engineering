@@ -6,6 +6,8 @@ The default app runs four transparent browser methods: **lexical ranking, MMR, w
 
 **Local model execution is disabled until the laptop owner explicitly authorizes it.** No local inference, weight downloads or paid calls have been run for these extensions. Model adapters are covered by mocks; the default browser methods need no accounts, keys, downloads, GPU or configuration.
 
+**Live:** [context-compression-pink.vercel.app](https://context-compression-pink.vercel.app). The hosted copy is static: the tour and the browser methods work, while model adapters and Compare runs need the local server below.
+
 ## Run locally
 
 Requires **Node.js 22.12+** and npm. Verified with Node.js 26.6.0. From the repository root:
@@ -121,7 +123,7 @@ python3 -m unittest discover -s models -p 'test_*.py'
 - `eval:workflows` exercises 12 scripted paired/agent control-flow fixtures. Its deterministic report is [`results/workflow-fixtures.json`](results/workflow-fixtures.json). No local/remote model executes.
 - `check` type-checks browser, core, tests and scripts.
 - `eval` runs **140 deterministic fixture cases**: seven questions × four methods × five removal targets. It measures token counts and annotated evidence retention, not answer accuracy, model speed or provider cost. No remote calls occur.
-- `export` type-checks, builds and copies the static app to Git-ignored `dist/`. It does not deploy anything. The static export supports browser methods only; model adapters require the local Node server. `site/build/` is also ignored. The approximately 1.1 MB JS bundle includes the offline tokenizer vocabulary.
+- `export` type-checks, builds and copies the static app to Git-ignored `dist/`. It does not deploy anything and keeps `dist/.vercel`. The static export supports browser methods only; model adapters require the local Node server. `site/build/` is also ignored. The approximately 1.1 MB JS bundle includes the offline tokenizer vocabulary.
 
 A reproducible sweep is committed at [`results/offline.json`](results/offline.json), with interpretation in [`results/README.md`](results/README.md). To regenerate it:
 
@@ -131,7 +133,11 @@ node --import=tsx scripts/evaluate.ts --json > results/offline.json
 
 Browser QA covers desktop and 390 px mobile layouts with no horizontal overflow, every tour chapter and its demo, the compare slider, tour-to-lab handoff, MMR and word-deletion switching, disabled model gates, dropped-text expansion, retrieval misses, focus switching, dynamic budgeting, baseline control states, budget sweeps, small custom inputs and literal HTML rendering. This is manual QA; the project does not install an automated browser test runner.
 
-Stop the server with Ctrl-C. Remove `node_modules/`, `site/build/` and `dist/` to clean generated files. No background jobs, cloud resources or paid services are provisioned.
+Stop the server with Ctrl-C. Remove `node_modules/`, `site/build/` and `dist/` to clean generated files. Running locally provisions no background jobs, cloud resources or paid services.
+
+## Deployment
+
+The static export is deployed to Vercel at [context-compression-pink.vercel.app](https://context-compression-pink.vercel.app), in the project `exclusive1s-projects/context-compression`. It makes no API calls, so serving it costs nothing beyond hosting. To redeploy, run `npm run export`, then `vercel deploy --prod` from `dist/`. The export keeps `dist/.vercel`, the local project link.
 
 ## Important limits
 
