@@ -366,7 +366,7 @@ const chapters: Chapter[] = [
       "Meaning depends on small words: not, only, except, before. Grammar falls apart, and the model has to guess.",
     seenIn:
       "The starting idea behind learned token-deletion compressors such as LLMLingua-2, which learn which small words matter.",
-    demoLabel: "Give it nine times more room",
+    demoLabel: "Give it more than twice the room",
     demo: () => {
       const before = wordWalkthrough();
       const after = wordWalkthrough({ remove: 10 });
