@@ -428,7 +428,7 @@ function compareResults(remove: number) {
     .join("")}</div>`;
 }
 const compareControls = (remove: number) =>
-  `<div class="compare-controls"><label for="tour-remove">Remove <output id="tour-remove-value">${remove}%</output> of the handbook</label><input id="tour-remove" type="range" min="0" max="95" step="5" value="${remove}"><div class="range-ends"><span>Keep everything</span><span>Keep 5%</span></div></div><div id="compare-results" aria-live="polite">${compareResults(remove)}</div><p class="visual-note">Same handbook, question and budget for all four. Drag the slider to see which technique loses the facts first. Each bar is a sentence; the fill shows how much of it survived.</p>`;
+  `<div class="compare-controls"><label for="tour-remove">Share of the handbook removed <output id="tour-remove-value">${remove}%</output></label><input id="tour-remove" type="range" min="0" max="95" step="5" value="${remove}"><div class="range-ends"><span>Keep everything</span><span>Keep 5%</span></div></div><div id="compare-results" aria-live="polite">${compareResults(remove)}</div><p class="visual-note">Same handbook, question and budget for all four. Drag the slider to see which technique loses the facts first. Each bar is a sentence; the fill shows how much of it survived.</p>`;
 const compareCache = new Map<number, ReturnType<typeof compareAll>>();
 function compareAllCache(remove: number) {
   if (!compareCache.has(remove)) compareCache.set(remove, compareAll(remove));
